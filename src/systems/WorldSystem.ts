@@ -184,7 +184,7 @@ export class WorldSystem {
   }
 
   private buildNodeMesh(type: NodeType, def: ResourceDef, gx: number, gy: number): THREE.Group {
-    const variant = Math.floor(seeded(gx, gy)() * 1000);
+const mat = getTerrainMaterial(t.terrainType);
     if (type === "TREE") return makeTree(variant + def.levelReq);
     if (type === "ROCK") return makeRock(variant + def.levelReq);
     const spot = new THREE.Group();
