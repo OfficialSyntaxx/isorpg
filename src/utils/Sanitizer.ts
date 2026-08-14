@@ -1,6 +1,7 @@
 // State rollback & anti-corruption guard (GDD §6.B).
 // Sanitizes an arbitrary parsed payload into a valid SaveState, returning
 // { ok, state, reason }. Never throws on malformed input.
+import { BUILDING_TYPES } from "../data/Buildings";
 
 export interface Sanitized<T> {
   ok: boolean;
@@ -56,19 +57,21 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     }
   }
 
-  // town buildings (milestone-safe; parsed but unused until settlement update)
+  // town buildings — only known building types with in-bounds coordinates survive
   const town = (r.town ?? {}) as Record<string, unknown>;
   const rawBuildings = Array.isArray(town.buildings) ? town.buildings : [];
-  const buildings = rawBuildings.map((b) => {
-    const bb = (b ?? {}) as Record<string, unknown>;
-    return {
-      id: typeof bb.id === "string" ? bb.id : "b_" + Math.random().toString(36).slice(2, 8),
-      type: typeof bb.type === "string" ? bb.type : "MISC",
-      x: clampNonNeg(bb.x, 0),
-      y: clampNonNeg(bb.y, 0),
-      level: Math.max(1, clampNonNeg(bb.level, 1)),
-    };
-  });
+  const buildings = rawBuildings
+    .map((b) => {
+      const bb = (b ?? {}) as Record<string, unknown>;
+      return {
+        id: typeof bb.id === "string" ? bb.id : "b_" + Math.random().toString(36).slice(2, 8),
+        type: typeof bb.type === "string" ? bb.type : "",
+        x: clampNonNeg(bb.x, 0),
+        y: clampNonNeg(bb.y, 0),
+        level: Math.max(1, clampNonNeg(bb.level, 1)),
+      };
+    })
+    .filter((b) => (BUILDING_TYPES as string[]).includes(b.type) && b.x < 200 && b.y < 200);
 
   // collection log
   const rawLog = Array.isArray(r.collectionLog) ? r.collectionLog : (r as any).collectionLog?.unlocked ?? [];

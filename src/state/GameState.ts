@@ -5,12 +5,21 @@ import type { SkillComponent } from "../components/Skills";
 import type { InventoryComponent } from "../components/Inventory";
 import type { Grid } from "../world/Grid";
 import type { ResourceNode } from "../world/ResourceNode";
+import type { BuildingType } from "../data/Buildings";
 import { createPosition } from "../components/Position";
 import { createHealth } from "../components/Health";
 import { createSkillComponent } from "../components/Skills";
 import { createInventory } from "../components/Inventory";
 
 export const SAVE_VERSION = "1.0.0";
+
+export interface TownBuilding {
+  id: string;
+  type: BuildingType;
+  x: number;
+  y: number;
+  level: number;
+}
 
 export interface GameState {
   version: string;
@@ -25,6 +34,9 @@ export interface GameState {
   world: {
     grid: Grid;
     nodes: Map<string, ResourceNode>;
+  };
+  town: {
+    buildings: TownBuilding[];
   };
   collectionLog: Set<string>;
 }
@@ -42,6 +54,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       inventory: createInventory(),
     },
     world: { grid, nodes: new Map() },
+    town: { buildings: [] },
     collectionLog: new Set(),
   };
 }

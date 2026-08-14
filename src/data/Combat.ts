@@ -114,8 +114,10 @@ export const MONSTER_STYLES: Record<string, { body: string; accent: string; ears
 export interface FoodDef { heal: number; tier: number; }
 export const FOODS: Record<string, FoodDef> = {
   raw_rat_meat: { heal: 3, tier: 1 },
+  cooked_rat_meat: { heal: 4, tier: 1 },
   cooked_shrimp: { heal: 6, tier: 2 },
   shrimp_food: { heal: 6, tier: 2 },
+  cooked_trout: { heal: 14, tier: 3 },
 };
 
 export function getWeapon(itemId: string | null): WeaponDef {

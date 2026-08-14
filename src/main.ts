@@ -8,6 +8,8 @@ import { WorldSystem } from "./systems/WorldSystem";
 import { MovementSystem } from "./systems/MovementSystem";
 import { SkillSystem } from "./systems/SkillSystem";
 import { CombatSystem } from "./systems/CombatSystem";
+import { CraftingSystem } from "./systems/CraftingSystem";
+import { BuildSystem } from "./systems/BuildSystem";
 import { SaveSystem } from "./systems/SaveSystem";
 import { InputController } from "./core/InputController";
 import { UI } from "./ui/UI";
@@ -17,6 +19,7 @@ import { guarded, EngineLogger } from "./utils/Logger";
 import { ITEMS as ITEM_NAMES } from "./data/Items";
 import { levelFromXp } from "./data/XPTable";
 import { SKILLS, COMBAT_SKILLS, SKILL_IDS, type SkillId } from "./data/Skills";
+import { BUILDINGS } from "./data/Buildings";
 import type { ResourceNode } from "./world/ResourceNode";
 import { nodeKey } from "./world/ResourceNode";
 import { animFor } from "./generators/Nature";
@@ -30,6 +33,8 @@ class Game {
   movement!: MovementSystem;
   skill!: SkillSystem;
   combat!: CombatSystem;
+  craft!: CraftingSystem;
+  build!: BuildSystem;
   save!: SaveSystem;
   input!: InputController;
   ui!: UI;
@@ -51,15 +56,20 @@ class Game {
     this.world = new WorldSystem(this.engine.scene, this.grid, this.combat);
     this.movement = new MovementSystem(this.state.player.pos, this.hero);
     this.skill = new SkillSystem(this.state, this.world.consume.bind(this.world));
+    this.build = new BuildSystem(this.engine.scene, this.grid, this.state);
+    this.craft = new CraftingSystem(this.state, this.build.hasBuilding.bind(this.build));
     this.save = new SaveSystem(this.state);
+    this.save.setOfflineCapProvider(() => this.build.offlineCapHours);
     this.ui = new UI(this.state, {
       onExport: () => this.doExport(),
       onImport: (j) => this.doImport(j),
       onDeleteSave: () => this.doDelete(),
     });
+    this.ui.attachSystems(this.craft, this.build);
 
     // Fresh state, then load
     const loaded = await this.save.load();
+    this.build.rehydrate();
 
     // Snap hero to town center (fresh) / current tile (saved)
     const { cx, cy } = adjustedStart(this.state, this.grid);
@@ -111,6 +121,31 @@ class Game {
       onLevelUp: (skill, lvl) => this.ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"),
     });
 
+    // Crafting (Cooking / Smithing / Carpentry) events → HUD
+    this.craft.setCallbacks({
+      onStart: (r) => { this.skill.interrupt(); this.activeSkill = r.skill; this.hero.setAction("chop"); },
+      onCraft: (e) => {
+        this.activeSkill = e.recipe.skill;
+        if (e.burned) showToast(`Burnt the ${ITEM_NAMES[e.recipe.inputs[0]?.itemId]?.name ?? "batch"}…`, "error", 1200);
+        else this.ui.flashGather(nameOf(e.recipe.output.itemId), e.amount, e.preserved);
+      },
+      onEnd: (r, reason) => {
+        this.hero.setAction("idle");
+        if (!r) return;
+        if (reason === "level_shortfall") showToast(`Need ${r.levelReq} ${SKILLS[r.skill].name}`, "error");
+        else if (reason === "missing_materials") showToast("Out of materials", "error");
+        else if (reason === "missing_building") showToast(`Requires a ${r.requiresBuilding ? BUILDINGS[r.requiresBuilding].name : "building"}`, "error");
+        else if (reason === "inventory_full") showToast("Your pouch is full", "error");
+      },
+    });
+
+    // Settlement building events → HUD
+    this.build.setCallbacks({
+      onPlacingChanged: (type) => this.ui.setPlacing(type),
+      onDenied: (_reason, msg) => showToast(msg, "error"),
+      onPlaced: (b) => showToast(`${BUILDINGS[b.type].icon} ${BUILDINGS[b.type].name} built!`, "success"),
+    });
+
     // Engine hooks
     this.engine.onTick((idx, dt) => this.tick(idx, dt));
     this.engine.onFrame((dt) => this.frame(dt));
@@ -131,6 +166,8 @@ class Game {
 
   // ————— Tap routing —————
   private onTileTap(gx: number, gy: number) {
+    if (this.build.placing) { this.build.tryPlaceAt(gx, gy); return; }
+
     const node = this.world.nodeAt(gx, gy);
     if (node) {
       if (node.depleted) { showToast("That spot is still growing back…", "info", 1200); return; }
@@ -142,7 +179,7 @@ class Game {
     if (m) { this.routeToMonster(m); return; }
 
     const t = this.grid.at(gx, gy);
-    if (t?.walkable) { this.skill.interrupt(); this.pendingNode = null; this.setPath(gx, gy); }
+    if (t?.walkable) { this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.setPath(gx, gy); }
   }
 
   private routeToNode(node: ResourceNode) {
@@ -175,6 +212,7 @@ class Game {
 
   private beginGather(node: ResourceNode) {
     this.skill.interrupt();
+    this.craft.stop();
     if (this.skill.startGathering(node)) this.pendingNode = node;
     else this.pendingNode = null;
   }
@@ -182,15 +220,18 @@ class Game {
   // ————— Tick / frame —————
   private tick(_tick: number, dtMs: number) {
     guarded("Skill", () => this.skill.tick(dtMs));
+    guarded("Crafting", () => this.craft.tick(dtMs));
     guarded("Combat", () => this.combat.tick(dtMs, Date.now()));
+    guarded("Combat", () => this.combat.update(dtMs, Date.now()));
     guarded("World", () => this.world.updateRespawns(Date.now()));
+    guarded("Build", () => this.build.tick(dtMs));
     guarded("Save", () => this.save.tick(dtMs));
   }
 
   private frame(dt: number) {
     guarded("Movement", () => { this.movement.update(dt); this.movement.syncToModel(); });
     guarded("World", () => this.world.update(dt * 1000));
-    if (this.skill.hasActive) {
+    if (this.skill.hasActive || this.craft.hasActive) {
       const t = performance.now() / 1000;
       this.hero.armR.rotation.x = Math.sin(t * 14) * 0.5;
       this.hero.bobAnchor.position.y = 0.62 + Math.abs(Math.sin(t * 14)) * 0.04;

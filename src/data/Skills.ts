@@ -2,7 +2,7 @@
 
 export type SkillId =
   | "woodcutting" | "mining" | "fishing"
-  | "cooking" | "smithing" | "carpentry"
+  | "cooking" | "smithing" | "carpentry" | "construction"
   | "attack" | "strength" | "defense" | "hitpoints";
 
 export interface SkillDef {
@@ -22,6 +22,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   cooking: { id: "cooking", name: "Cooking", short: "COOK", icon: "🍳", kind: "artisan" },
   smithing: { id: "smithing", name: "Smelting", short: "SMITH", icon: "🔨", kind: "artisan" },
   carpentry: { id: "carpentry", name: "Carpentry", short: "CARP", icon: "🪚", kind: "artisan" },
+  construction: { id: "construction", name: "Construction", short: "CON", icon: "🏗️", kind: "artisan" },
   attack: { id: "attack", name: "Attack", short: "ATK", icon: "⚔️", kind: "combat_skill" },
   strength: { id: "strength", name: "Strength", short: "STR", icon: "💪", kind: "combat_skill" },
   defense: { id: "defense", name: "Defense", short: "DEF", icon: "🛡️", kind: "combat_skill" },
@@ -29,8 +30,10 @@ export const SKILLS: Record<SkillId, SkillDef> = {
 };
 
 export const SKILL_IDS: SkillId[] = [
-  "attack", "strength", "defense", "hitpoints", "cooking", "smithing", "carpentry", "woodcutting", "mining", "fishing",
+  "attack", "strength", "defense", "hitpoints", "cooking", "smithing", "carpentry", "construction", "woodcutting", "mining", "fishing",
 ];
+/** Skills craftable via the Craft panel (artisan, excludes construction which uses the Build panel). */
+export const CRAFT_SKILLS: SkillId[] = ["cooking", "smithing", "carpentry"];
 /** The three skills visible in the gather quick-bar (M1 era) + combat trio. */
 export const GATHER_SKILLS: SkillId[] = ["woodcutting", "mining", "fishing"];
 export const COMBAT_SKILLS: SkillId[] = ["attack", "strength", "defense", "hitpoints"];

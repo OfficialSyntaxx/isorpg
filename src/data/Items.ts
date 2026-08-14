@@ -45,6 +45,13 @@ export const ITEMS: Record<string, Item> = {
   raw_shrimp: { id: "raw_shrimp", name: "Raw Shrimp", type: "FISH", xp: { fishing: 10 }, value: 5, desc: "A fresh little shrimp.", stack: true },
   raw_trout: { id: "raw_trout", name: "Raw Trout", type: "FISH", xp: { fishing: 50 }, levelReq: { fishing: 20 }, value: 15, desc: "A lively spotted trout.", stack: true },
 
+  // ——— Smithing (bars) ———
+  bronze_bar: { id: "bronze_bar", name: "Bronze Bar", type: "BAR", xp: { smithing: 30 }, value: 15, desc: "Smelted copper and tin.", stack: true },
+  iron_bar: { id: "iron_bar", name: "Iron Bar", type: "BAR", xp: { smithing: 60 }, levelReq: { smithing: 20 }, value: 40, desc: "Smelted with coal for extra heat.", stack: true },
+
+  // ——— Carpentry (planks) ———
+  plank: { id: "plank", name: "Plank", type: "MATERIAL", xp: { carpentry: 20 }, value: 8, desc: "Sawn, seasoned timber — settlement building material.", stack: true },
+
   // ——— Tools ——— (starter gear handed to new heroes)
   bronze_axe: { id: "bronze_axe", name: "Bronze Axe", type: "TOOL", value: 1, desc: "A starter woodcutting axe.", stack: false },
   bronze_pickaxe: { id: "bronze_pickaxe", name: "Bronze Pickaxe", type: "TOOL", value: 1, desc: "A starter mining pickaxe.", stack: false },
@@ -56,6 +63,8 @@ export const ITEMS: Record<string, Item> = {
   raw_rat_meat: { id: "raw_rat_meat", name: "Raw Rat Meat", type: "FOOD", xp: { cooking: 12 }, value: 4, desc: "Edible once cooked. Heals a little raw.", stack: true },
   cooked_shrimp: { id: "cooked_shrimp", name: "Cooked Shrimp", type: "FOOD", value: 12, desc: "A tasty cooked shrimp. Heals 6.", stack: true },
   shrimp_food: { id: "shrimp_food", name: "Cooked Shrimp", type: "FOOD", value: 12, desc: "A tasty cooked shrimp. Heals 6.", stack: true },
+  cooked_trout: { id: "cooked_trout", name: "Cooked Trout", type: "FOOD", value: 32, desc: "Flaky and filling. Heals 14.", stack: true },
+  cooked_rat_meat: { id: "cooked_rat_meat", name: "Cooked Rat Meat", type: "FOOD", value: 9, desc: "Better than it sounds. Heals 4.", stack: true },
   bronze_dagger: { id: "bronze_dagger", name: "Bronze Dagger", type: "TOOL", value: 12, desc: "Fast but small. 3-tick attack.", stack: false },
   bronze_sword: { id: "bronze_sword", name: "Bronze Sword", type: "TOOL", value: 20, desc: "A solid starter sword. 4-tick attack.", stack: false },
   bronze_2h: { id: "bronze_2h", name: "Bronze 2H Sword", type: "TOOL", value: 30, desc: "Slow but heavy. 6-tick attack.", stack: false },
