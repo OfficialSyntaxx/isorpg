@@ -15,20 +15,28 @@ vanilla TypeScript (no UI framework), fully **offline-capable**.
   JSON import/export, rollback recovery, offline idle progression.
 - **A\* pathfinding** (8-way, diagonal, dynamic obstacles).
 
-## Current milestone (M1 — playable core)
+## Current milestone (M3 — artisan skills & settlement building)
 
 - Isometric render, camera pan/zoom (touch-drag + pinch on mobile; mouse/wheel + WASD on desktop).
 - 20×20 procedural world: terrain (grass/dirt/sand/rock/water), zones, occupancy.
 - Tap-to-walk with A\* routing (trees/rocks are approached then harvested).
 - **Woodcutting, Mining, Fishing** with OSRS XP curve, per-item mastery (double-drop
   and speed bonuses), weighted drops, depleting & respawning nodes.
+- **Combat**: 600ms tick engine, OSRS-style damage rolls, auto-eat, weighted
+  main/tertiary/pet drop tables, boss KC, monster respawns.
+- **Cooking / Smithing / Carpentry**: tick-based active crafting with item
+  mastery (preserve-material chance + speed), cooking burn chance. Smithing
+  and Carpentry recipes require the matching settlement building.
+- **Settlement building**: tap-to-place Town Hall, Storehouse, Sawmill,
+  Smelter, Granary with tile validation (green highlight). Passive per-tick
+  yields (logs→planks, ore→bars, food trickle, gold tax), Storehouse raises
+  inventory cap, Town Hall extends offline idle cap (8h→12h).
 - Inventory + HUD, settings (export/import/reset), toasts, offline-away summary.
 
-## Up next (M2+)
+## Up next (M4+)
 
-Combat (600ms tick, damage rolls, auto-eat), settlement building (drag placement,
-Town Hall/Sawmill/Smelter/Storehouse), collection log, cooking/carpentry/smithing,
-dungeons & boss KC, more zones.
+Collection log UI + milestone rewards, dungeons & boss chambers, more
+wilderness zones, equipment/armor slots, region unlocking.
 
 ## Run it
 
