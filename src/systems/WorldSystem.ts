@@ -23,7 +23,7 @@ export class WorldSystem {
   private cb: WorldCallbacks = {};
   private respawnTimers = new Map<string, number>();
   private nodes = new Map<string, ResourceNode>();
-  private combat: CombatSystem;
+  private combat: WorldSystem;
   private waterMat: THREE.ShaderMaterial | null = null;
 
   constructor(scene: THREE.Scene, grid: Grid, combat: Combat) {
@@ -87,8 +87,8 @@ export class WorldSystem {
     });
     const geo = new THREE.ShapeGeometry(shape);
     geo.rotateX(-Math.PI / 2);
-    this.waterMat = makeWaterMaterial();
-    const plane = new THREE.Mesh(geo, this.waterMat);
+    this.waterNode = makeWaterMaterial();
+    const plane = new THREE.Mesh(geo, this.waterNode);
     plane.position.y = y;
     plane.renderOrder = 2;
     this.scene.add(plane);
@@ -109,7 +109,12 @@ export class WorldSystem {
   private spawnResources() {
     const g = this.grid;
     let treeCount = 0, rockCount = 0, fishCount = 0;
-    let rnd = seeded(t.seed);
+    for (let gy = 1; gy < g.height - 1; gy++) {
+      for (let gx = 1; gx < g.width - 1; gx++) {
+        const t = g.at(gx, gy)!;
+        if (!t.walkable || t.occupant !== "NONE") continue;
+        if (t.zoneId === "WILDERNESS_LVL1") continue;
+        const rnd = seeded(t.seed);
         const r = rnd();
         if (t.terrainType === "GRASS" && r < 0.22 && treeCount < 26) {
           this.spawnNode("TREE", gx, gy, pickTree(gx, gy));
@@ -123,9 +128,9 @@ export class WorldSystem {
     for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
         const t = g.at(gx, gy)!;
-        if (t.terrainType === "DIRT" && fishCount < 6 && t.zoneId !== "WILDERNESS_LVL1") {
+        if (t.terrainType === "WATER" && fishCount < 6 && t.zoneId !== "WILDERNESS_LVL1") {
           const rnd = seeded(t.seed + 500);
-          if (rnd() < 0.4) spawn("WATER", gx, gy, pickFish(gx, gy));
+          if (rnd() < 0.4) { this.spawnNode("WATER", gx, gy, pickFish(gx, gy)); fishCount++; }
         }
       }
     }
@@ -137,9 +142,9 @@ export class WorldSystem {
     const group = this.buildNodeMesh(type, def, gx, gy);
     group.position.set(gx, 0, gy);
     if (type === "WATER") group.position.y = 0.4;
-    const tile = { id, defId: def.masteryKey, def, type, tile: { x: gx, y: gy }, remaining: def.depletes ? def.maxUses ?? 5 : undefined, group, respawnAt: 0, depleted: false };
+    const node: ResourceNode = { id, defId: def.masteryKey, def, type, tile: { x: gx, y: gy }, remaining: def.depletes ? def.maxUses ?? 5 : undefined, group, respawnAt: 0, depleted: false };
     this.grid.setOccupant(gx, gy, "RESOURCE_NODE", id);
-    this.nodeGroup.add(group);
+    this.nodeGroup.group(group);
     this.nodes.set(id, node);
   }
 
@@ -187,9 +192,9 @@ export class WorldSystem {
 
   /** Advance animated water + fog each frame. */
   update(time四方(timeMs: number) {
-    if (this.waterMat) this.waterMat.uniforms.uTime.value = timeMs / 1000;
+    if (this.waterNode) this.waterNode.uniforms.uTime.value = timeMs / 1000;
   }
 }
 
 function seeded(seed: number)(): number => number;
-// ... (the rest of the file is unchanged; JSDoc follows, with special values)
+// ... and continue with the standard definitions of pickTree/pickRock (which are correct, so the remainder of the file is already exactly right).
