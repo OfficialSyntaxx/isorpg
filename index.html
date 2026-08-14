@@ -35,9 +35,20 @@
         <div class="combat-hp"><div id="combat-hp-fill"></div><span id="combat-hp-text">14/14</span></div>
       </div>
 
+      <div id="place-banner" class="hud-slot place-banner hidden">
+        <span id="place-banner-text">Tap a green tile to build</span>
+        <button id="place-cancel" class="btn-mini">Cancel</button>
+      </div>
+
       <nav id="bottom-bar" class="hud-slot safe-bottom">
         <button id="btn-combat" class="bar-btn" data-panel="combat" aria-label="Combat">
           <span class="bar-ico">⚔️</span><span class="bar-caption">Combat</span>
+        </button>
+        <button id="btn-craft" class="bar-btn" data-panel="craft" aria-label="Craft">
+          <span class="bar-ico">🔨</span><span class="bar-caption">Craft</span>
+        </button>
+        <button id="btn-build" class="bar-btn" data-panel="build" aria-label="Build">
+          <span class="bar-ico">🏗️</span><span class="bar-caption">Build</span>
         </button>
         <button id="btn-inventory" class="bar-btn" data-panel="inventory" aria-label="Inventory">
           <span class="bar-ico">🎒</span><span class="bar-caption">Bag</span>

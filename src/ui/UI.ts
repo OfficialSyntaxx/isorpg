@@ -2,11 +2,16 @@
 import type { GameState } from "../state/GameState";
 import { levelProgress, levelFromXp } from "../data/XPTable";
 import { ITEMS } from "../data/Items";
-import { SKILLS, type SkillId } from "../data/Skills";
+import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
 import { WEAPONS } from "../data/Combat";
 import { CombatSystem } from "../systems/CombatSystem";
+import type { CraftingSystem } from "../systems/CraftingSystem";
+import type { BuildSystem } from "../systems/BuildSystem";
+import { recipesFor, type CraftRecipe } from "../data/Recipes";
+import { BUILDINGS, BUILDING_TYPES, type BuildingType } from "../data/Buildings";
+import { countItem } from "../components/Inventory";
 
 export interface UIEvents {
   onExport?: () => void;
@@ -18,6 +23,11 @@ export interface UIEvents {
 export class UI {
   private state: GameState;
   private ev: UIEvents = {};
+  private craft: CraftingSystem | null = null;
+  private build: BuildSystem | null = null;
+  private craftTab: SkillId = "cooking";
+  private placeBanner = document.getElementById("place-banner")!;
+  private placeBannerText = document.getElementById("place-banner-text")!;
   private modalRoot = document.getElementById("modal-root")!;
   private panel = document.getElementById("side-panel")!;
   private panelTitle = document.getElementById("panel-title")!;
@@ -40,6 +50,13 @@ export class UI {
     this.fileInput.style.display = "none";
     document.body.appendChild(this.fileInput);
     this.fileInput.addEventListener("change", this.onFilePick);
+    this.$("#place-cancel").addEventListener("click", () => this.build?.cancelPlacing());
+  }
+
+  /** Wire in the artisan crafting + settlement build systems (main.ts, after construction). */
+  attachSystems(craft: CraftingSystem, build: BuildSystem) {
+    this.craft = craft;
+    this.build = build;
   }
 
   private $(sel: string): HTMLElement { return document.querySelector(sel) as HTMLElement; }
@@ -47,19 +64,30 @@ export class UI {
   private bindPanels() {
     this.$("#btn-inventory").addEventListener("click", () => this.openPanel("inventory"));
     this.$("#btn-settings").addEventListener("click", () => this.openPanel("settings"));
+    this.$("#btn-craft")?.addEventListener("click", () => this.openPanel("craft"));
+    this.$("#btn-build")?.addEventListener("click", () => this.openPanel("build"));
     const combatBtn = this.$("#btn-combat");
     combatBtn?.addEventListener("click", () => this.openPanel("combat"));
     this.$("#panel-close").addEventListener("click", () => this.closePanel());
     this.panel.addEventListener("click", (e) => { if (e.target === this.panel) this.closePanel(); });
   }
 
-  openPanel(id: "inventory" | "settings" | "combat") {
+  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build") {
     if (id === "inventory") this.renderInventory();
     else if (id === "combat") this.renderCombat();
+    else if (id === "craft") this.renderCraft();
+    else if (id === "build") this.renderBuild();
     else this.renderSettings();
     this.panel.classList.remove("hidden");
   }
   closePanel() { this.panel.classList.add("hidden"); }
+
+  /** Show/hide the "tap a green tile" banner while a building is armed for placement. */
+  setPlacing(type: BuildingType | null) {
+    if (!type) { this.placeBanner.classList.add("hidden"); return; }
+    this.placeBannerText.textContent = `Tap a green tile to build ${BUILDINGS[type].name}`;
+    this.placeBanner.classList.remove("hidden");
+  }
 
   // ————— Combat / HP / floating text —————
   setPlayerHp(hp: number, max: number) {
@@ -111,8 +139,9 @@ export class UI {
   }
 
   private renderInventory() {
-    this.panelTitle.textContent = `Inventory (${this.state.player.inventory.items.length})`;
     const inv = this.state.player.inventory.items;
+    const stored = inv.reduce((a, i) => a + i.amount, 0);
+    this.panelTitle.textContent = `Inventory (${stored.toLocaleString()}/${this.state.player.inventory.storageCap.toLocaleString()})`;
     if (!inv.length) {
       this.panelBody.innerHTML = `<div class="empty">Nothing yet. Tap a tree, rock or fishing spot to gather.</div>`;
       return;
@@ -128,6 +157,98 @@ export class UI {
       })
       .join("");
     this.panelBody.innerHTML = rows;
+  }
+
+  // ————— Crafting (Cooking / Smithing / Carpentry) —————
+  private renderCraft() {
+    const craft = this.craft;
+    this.panelTitle.textContent = "Craft";
+    if (!craft) { this.panelBody.innerHTML = `<div class="empty">Crafting isn't ready yet.</div>`; return; }
+
+    const tabs = CRAFT_SKILLS.map(
+      (id) => `<button class="tab-btn${id === this.craftTab ? " active" : ""}" data-skill="${id}">${SKILLS[id].icon} ${SKILLS[id].short}</button>`
+    ).join("");
+
+    const active = craft.activeRecipe;
+    const cards = recipesFor(this.craftTab)
+      .map((r) => this.recipeCard(r, active?.id === r.id))
+      .join("");
+
+    this.panelBody.innerHTML = `<div class="tab-row">${tabs}</div>${cards}`;
+
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-skill]").forEach((btn) => {
+      btn.addEventListener("click", () => { this.craftTab = btn.dataset.skill as SkillId; this.renderCraft(); });
+    });
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-recipe]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.recipe!;
+        if (craft.activeRecipe?.id === id) { craft.stop(); this.renderCraft(); return; }
+        const r = recipesFor(this.craftTab).find((rr) => rr.id === id);
+        if (r) { craft.start(r); this.renderCraft(); }
+      });
+    });
+  }
+
+  private recipeCard(r: CraftRecipe, isActive: boolean): string {
+    const craft = this.craft!;
+    const lvl = levelFromXp(this.state.player.skills[r.skill].xp);
+    const locked = lvl < r.levelReq;
+    const missingBuilding = r.requiresBuilding && !this.build?.hasBuilding(r.requiresBuilding);
+    const have = r.inputs.every((i) => countItem(this.state.player.inventory, i.itemId) >= i.qty);
+    const inputsTxt = r.inputs
+      .map((i) => `<b>${countItem(this.state.player.inventory, i.itemId)}/${i.qty}</b> ${ITEMS[i.itemId]?.name ?? i.itemId}`)
+      .join(" + ");
+    const buildingNote = r.requiresBuilding
+      ? `<div class="recipe-sub">Requires: ${BUILDINGS[r.requiresBuilding].name}${missingBuilding ? " (not built)" : " ✓"}</div>`
+      : "";
+    const disabled = locked || missingBuilding || (!have && !isActive);
+    const progress = isActive ? `<div class="progress-track"><div class="progress-fill" style="width:${Math.round(craft.progress * 100)}%"></div></div>` : "";
+    const btnLabel = isActive ? "Stop" : locked ? `Requires Lv ${r.levelReq}` : missingBuilding ? "Missing building" : !have ? "Missing materials" : "Craft";
+    return `
+      <div class="recipe-card${locked ? " locked" : ""}">
+        <div class="recipe-head"><span class="recipe-title">${r.name}</span><span class="recipe-sub">Lv ${r.levelReq} · +${r.xp} xp</span></div>
+        <div class="recipe-inputs">${inputsTxt} → ${r.output.qty}× ${ITEMS[r.output.itemId]?.name ?? r.output.itemId}</div>
+        ${buildingNote}
+        ${progress}
+        <button class="card-btn${isActive ? " stop" : ""}" data-recipe="${r.id}" ${disabled && !isActive ? "disabled" : ""}>${btnLabel}</button>
+      </div>`;
+  }
+
+  // ————— Settlement building —————
+  private renderBuild() {
+    const build = this.build;
+    this.panelTitle.textContent = "Build";
+    if (!build) { this.panelBody.innerHTML = `<div class="empty">Building isn't ready yet.</div>`; return; }
+
+    const conLvl = levelFromXp(this.state.player.skills.construction.xp);
+    const cards = BUILDING_TYPES.map((type) => {
+      const def = BUILDINGS[type];
+      const count = build.count(type);
+      const locked = conLvl < def.levelReq;
+      const maxed = count >= def.maxCount;
+      const afford = build.canAfford(type);
+      const costTxt = def.baseCost
+        .map((c) => `<b>${countItem(this.state.player.inventory, c.itemId)}/${c.qty}</b> ${ITEMS[c.itemId]?.name ?? c.itemId}`)
+        .join(" + ");
+      const disabled = locked || maxed || !afford;
+      const label = maxed ? "Max built" : locked ? `Requires Lv ${def.levelReq}` : !afford ? "Missing materials" : "Place";
+      return `
+        <div class="building-card${locked ? " locked" : ""}">
+          <div class="building-head"><span class="building-title">${def.icon} ${def.name}</span><span class="building-sub">${count}/${def.maxCount} built</span></div>
+          <div class="building-sub">${def.desc}</div>
+          <div class="building-sub"><b>Effect:</b> ${def.effect}</div>
+          <div class="building-cost">${costTxt}</div>
+          <button class="card-btn" data-build="${type}" ${disabled ? "disabled" : ""}>${label}</button>
+        </div>`;
+    }).join("");
+
+    this.panelBody.innerHTML = `<div class="set-val">Construction Lv ${conLvl}</div>${cards}`;
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-build]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        build.startPlacing(btn.dataset.build as BuildingType);
+        this.closePanel();
+      });
+    });
   }
 
   private renderSettings() {

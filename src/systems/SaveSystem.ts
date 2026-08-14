@@ -11,7 +11,7 @@ import { addItem } from "../components/Inventory";
 import { TICK_MS } from "../core/Engine";
 
 const AUTOSAVE_EVERY_TICKS = 20; // ~12s
-const OFFLINE_CAP_S = 8 * 3600; // 8 hours
+const DEFAULT_OFFLINE_CAP_S = 8 * 3600; // 8 hours (Town Hall extends to 12h)
 
 export interface OfflineSummary {
   capApplied: boolean;
@@ -24,8 +24,12 @@ export class SaveSystem {
   private state: GameState;
   private tickCount = 0;
   private lastSaveTs = Date.now();
+  private offlineCapHours: () => number = () => DEFAULT_OFFLINE_CAP_S / 3600;
 
   constructor(state: GameState) { this.state = state; }
+
+  /** Wire in BuildSystem's Town Hall bonus once it exists (main.ts). */
+  setOfflineCapProvider(fn: () => number) { this.offlineCapHours = fn; }
 
   /** Serialize exactly the GDD schema. */
   serialize(): Record<string, unknown> {
@@ -45,7 +49,7 @@ export class SaveSystem {
         skills,
         inventory: p.inventory.items.map((i) => ({ id: i.id, amount: i.amount })),
       },
-      town: { buildings: [] },
+      town: { buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })) },
       collectionLog: { unlocked: [...this.state.collectionLog] },
     };
   }
@@ -72,6 +76,9 @@ export class SaveSystem {
       }
     }
     p.inventory.items = (s.player.inventory ?? []).map((i: any) => ({ id: String(i.id), amount: i.amount }));
+    this.state.town.buildings = (s.town?.buildings ?? []).map((b: any) => ({
+      id: String(b.id), type: b.type, x: b.x, y: b.y, level: b.level,
+    }));
     this.state.collectionLog = new Set((s.collectionLog?.unlocked ?? []).map(String));
     return { ok: true, summary: undefined };
   }
@@ -114,8 +121,9 @@ export class SaveSystem {
     const now = Date.now();
     const awayMs = now - (this.state.timestamp || now);
     const awayS = Math.max(0, Math.round(awayMs / 1000));
-    const capApplied = awayS > OFFLINE_CAP_S;
-    const capS = Math.min(awayS, OFFLINE_CAP_S);
+    const capSeconds = this.offlineCapHours() * 3600;
+    const capApplied = awayS > capSeconds;
+    const capS = Math.min(awayS, capSeconds);
 
     const lines: string[] = [];
     let xpEarned = 0;
