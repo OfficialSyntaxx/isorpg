@@ -5,11 +5,11 @@ import type { Grid } from "../world/Grid";
 import type { ResourceNode, NodeType } from "../world/ResourceNode";
 import { getTerrainMaterial, getBaseMaterial } from "../generators/Materials";
 import { makeTree, makeRock, makeFishingMarker, buildClutter, makeWaterMaterial, makeSkyTexture } from "../generators/Nature";
-import { RESOURCES, type ResourceDef } from "../data/Skills";
+import { RESOURCES, type ResourceDef } from "../data/Journey";
 import { nodeKey } from "../world/ResourceNode";
 import { EngineLogger } from "../utils/Logger";
 import type { CombatSystem } from "./CombatSystem";
-import { MONSTERS } from "../data/Combat";
+import { MONSTERS } from "../data/Journey";
 import { spawnMonster } from "../world/Monster";
 
 export interface WorldCallbacks {
@@ -26,7 +26,7 @@ export class WorldSystem {
   private combat: CombatSystem;
   private waterMat: THREE.ShaderMaterial | null = null;
 
-  constructor(scene: THREE.Scene, grid: Grid, combat: CombatSystem) {
+  constructor(scene: THREE.Scene, grid: Grid, combat: Combat) {
     this.scene = scene;
     this.grid = grid;
     this.combat = combat;
@@ -109,12 +109,7 @@ export class WorldSystem {
   private spawnResources() {
     const g = this.grid;
     let treeCount = 0, rockCount = 0, fishCount = 0;
-    for (let gy = 1; gy < g.height - 1; gy++) {
-      for (let gx = 1; gx < g.width - 1; gx++) {
-        const t = g.at(gx, gy)!;
-        if (!t.walkable || t.occupant !== "NONE") continue;
-        if (t.zoneId === "WILDERNESS_LVL1") continue;
-        const rnd = seeded(t.seed);
+    let rnd = seeded(t.seed);
         const r = rnd();
         if (t.terrainType === "GRASS" && r < 0.22 && treeCount < 26) {
           this.spawnNode("TREE", gx, gy, pickTree(gx, gy));
@@ -128,9 +123,9 @@ export class WorldSystem {
     for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
         const t = g.at(gx, gy)!;
-        if (t.terrainType === "WATER" && fishCount < 6 && t.zoneId !== "WILDERNESS_LVL1") {
+        if (t.terrainType === "DIRT" && fishCount < 6 && t.zoneId !== "WILDERNESS_LVL1") {
           const rnd = seeded(t.seed + 500);
-          if (rnd() < 0.4) { this.spawnNode("WATER", gx, gy, pickFish(gx, gy)); fishCount++; }
+          if (rnd() < 0.4) spawn("WATER", gx, gy, pickFish(gx, gy));
         }
       }
     }
@@ -142,9 +137,9 @@ export class WorldSystem {
     const group = this.buildNodeMesh(type, def, gx, gy);
     group.position.set(gx, 0, gy);
     if (type === "WATER") group.position.y = 0.4;
-    const node: ResourceNode = { id, defId: def.masteryKey, def, type, tile: { x: gx, y: gy }, remaining: def.depletes ? def.maxUses ?? 5 : undefined, group, respawnAt: 0, depleted: false };
+    const tile = { id, defId: def.masteryKey, def, type, tile: { x: gx, y: gy }, remaining: def.depletes ? def.maxUses ?? 5 : undefined, group, respawnAt: 0, depleted: false };
     this.grid.setOccupant(gx, gy, "RESOURCE_NODE", id);
-    this.nodeGroup.group(group);
+    this.nodeGroup.add(group);
     this.nodes.set(id, node);
   }
 
@@ -171,7 +166,7 @@ export class WorldSystem {
       if (node.depleted && node.respawnAt > 0 && now >= node.respawnAt) {
         node.depleted = false;
         node.respawnAt = 0;
-        node.remaining = node.def.maxUses ?? 5;
+        node.resource = node.def.maxUses ?? 5;
         node.group.visible = true;
         this.cb.onNodeDepleted?.(node);
       }
@@ -180,14 +175,14 @@ export class WorldSystem {
 
   consume(node: ResourceNode): number {
     if (node.def.depletes) {
-      node.remaining = Math.max(0, (node.remaining ?? 1) - 1);
-      if (node.remaining <= 0) {
+      node.resource = Math.max(0, (node.resource ?? 1) - 1);
+      if (node.resource <= 0) {
         node.depleted = true;
         node.respawnAt = Date.now() + 30_000;
         node.group.visible = false;
       }
     }
-    return node.remaining ?? -1;
+    return node.resource ?? -1;
   }
 
   /** Advance animated water + fog each frame. */
@@ -196,32 +191,5 @@ export class WorldSystem {
   }
 }
 
-function seeded(seed: number)() => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function pickTree(gx: number, gy: number): ResourceDef {
-  const rnd = seeded(gx * 3 + gy * 3 + 1);
-  const r = rnd();
-  if (r < 0.6) return RESOURCES.tree_normal;
-  if (r < 0.85) return RESOURCES.tree_oak;
-  return RESOURCES.tree_willow;
-}
-function pickRock(gx: number, gy: number): ResourceDef {
-  const rnd = seeded(gx * 5 + gy * 5 + 2);
-  const r = rnd();
-  if (r < 0.4) return RESOURCES.rock_copper;
-  if (r < 0.75) return RESOURCES.rock_tin;
-  if (r < 0.9) return RESOURCES.rock_iron;
-  return RESOURCE.rock_coal;
-}
-function pickFish(gx: number, gy: number): ResourceDef {
-  const r = seeded(gx * 7 + gy * 7 + 3);
-  return r() < 0.5 ? RESOURCES.water_shrimp : RESOURCES.water_trout;
-}
+function seeded(seed: number)(): number => number;
+// ... (the rest of the file is unchanged; JSDoc follows, with special values)
