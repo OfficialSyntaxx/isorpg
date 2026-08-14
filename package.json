@@ -1,8 +1,20 @@
 {
   "name": "isorpg",
-  "version": "1.0.0",
   "private": true,
-  "description": "2.5D isometric hybrid RPG & settlement builder (Three.js)",
+  "version": "0.1.0",
   "type": "module",
-  "scripts": { "serve": "npx serve ." }
+  "description": "2.5D isometric hybrid RPG & settlement builder — mobile-first, zero-asset procedural Three.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
 }

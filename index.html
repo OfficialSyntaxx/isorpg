@@ -1,82 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Isorpg — Settlement Builder &amp; RPG</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>Isoperia — 2.5D Isometric RPG &amp; Settlement Builder</title>
 </head>
 <body>
-  <div id="game-root">
-    <canvas id="gl-canvas"></canvas>
-    <div id="gl-overlay"></div>
+  <div id="app">
+    <div id="game-canvas"></div>
+    <div id="ui-root">
+      <header id="topbar" class="hud-slot safe-top">
+        <div id="player-chip" class="chip">
+          <div class="chip-label">Lv</div>
+          <div id="player-level" class="chip-value">1</div>
+          <div id="player-name" class="chip-name">Hero</div>
+        </div>
+        <div id="action-xp" class="chip action-chip hidden">
+          <div id="action-xp-label">Woodcutting</div>
+          <div class="xp-track"><div id="action-xp-fill"></div></div>
+        </div>
+      </header>
 
-    <!-- Top Bar -->
-    <div id="topbar">
-      <div id="topbar-title">⚔ Isorpg</div>
-      <div class="res-row" id="res-row"></div>
-      <div class="hero-chip" id="hero-chip">
-        <span id="hero-lvl">Lv 1</span>
-        <div class="hp-bar"><div id="hp-fill"></div></div>
-      </div>
-      <div class="tick-chip" id="tick-chip" title="Game tick speed">Tick <span id="tick-val">600ms</span></div>
+      <div id="toast-root"></div>
+
+      <nav id="bottom-bar" class="hud-slot safe-bottom">
+        <button id="btn-inventory" class="bar-btn" data-panel="inventory" aria-label="Inventory">
+          <span class="bar-ico">🎒</span><span class="bar-caption">Bag</span>
+        </button>
+        <button id="btn-settings" class="bar-btn" data-panel="settings" aria-label="Settings">
+          <span class="bar-ico">⚙️</span><span class="bar-caption">Menu</span>
+        </button>
+      </nav>
+
+      <aside id="side-panel" class="hud-slot panel hidden">
+        <div class="panel-head">
+          <h2 id="panel-title">Inventory</h2>
+          <button id="panel-close" class="panel-close" aria-label="Close">✕</button>
+        </div>
+        <div id="panel-body" class="panel-body"></div>
+      </aside>
+
+      <div id="modal-root"></div>
     </div>
-
-    <!-- Left context panel -->
-    <div id="left-panel" class="hidden">
-      <button id="left-close" class="panel-close">×</button>
-      <div id="left-body"></div>
-    </div>
-
-    <!-- Bottom action dock -->
-    <div id="dock">
-      <button class="dock-btn" data-panel="inventory">🎒 Inventory</button>
-      <button class="dock-btn" data-panel="skills">📊 Skills</button>
-      <button class="dock-btn" data-panel="build" id="build-btn">🏗 Build</button>
-      <button class="dock-btn" data-panel="quests">🧭 Quests</button>
-      <button class="dock-btn" data-panel="settings">⚙ Settings</button>
-    </div>
-
-    <!-- Build palette -->
-    <div id="build-palette" class="hidden">
-      <div class="palette-head">Build Menu</div>
-      <div id="build-list"></div>
-    </div>
-
-    <!-- HP/low overlay toast -->
-    <div id="toast-area"></div>
-
-    <!-- Modals -->
-    <div id="modal-root"></div>
   </div>
-
-  <div id="loading">
-    <div class="loader-spin"></div>
-    <div id="loading-text">Summoning the world…</div>
-  </div>
-
-  <script>
-    // Fail fast with a clear message instead of an infinite spinner.
-    (function () {
-      try {
-        var c = document.createElement('canvas');
-        var gl = c.getContext('webgl2') || c.getContext('webgl');
-        if (!gl) throw new Error('WebGL unavailable');
-      } catch (e) {
-        document.addEventListener('DOMContentLoaded', function () {
-          var t = document.getElementById('loading-text');
-          var s = document.querySelector('.loader-spin');
-          if (s) s.style.display = 'none';
-          if (t) { t.style.color = '#ff6b6b'; t.textContent = 'This browser has no WebGL support, which Isorpg needs to render. Try Chrome, Edge, Firefox or Safari with hardware acceleration on.'; }
-        });
-      }
-    })();
-  </script>
-  <script type="importmap">
-    { "imports": { "three": "./js/vendor/three.module.js" } }
-  </script>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
