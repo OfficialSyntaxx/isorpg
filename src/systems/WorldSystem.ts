@@ -184,12 +184,12 @@ export class WorldSystem {
   }
 
   private buildNodeMesh(type: NodeType, def: ResourceDef, gx: number, gy: number): THREE.Group {
-    const variant = Math.floor(seeded(gx, gy)() * 1000);
+    const variant = Math.floor(seeded(gx * 131 + gy * 733)() * 1000);
     if (type === "TREE") return makeTree(variant + def.levelReq);
     if (type === "ROCK") return makeRock(variant + def.levelReq);
     const spot = new THREE.Group();
     spot.add(makeFishingMarker());
-    spot.rotation.y = seeded(gx, gy)() * Math.PI;
+    spot.rotation.y = seeded(gx * 131 + gy * 733 + 1)() * Math.PI;
     return spot;
   }
 
