@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Isorpg — Settlement Builder &amp; RPG</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="game-root">
+    <canvas id="gl-canvas"></canvas>
+    <div id="gl-overlay"></div>
+
+    <!-- Top Bar -->
+    <div id="topbar">
+      <div id="topbar-title">⚔ Isorpg</div>
+      <div class="res-row" id="res-row"></div>
+      <div class="hero-chip" id="hero-chip">
+        <span id="hero-lvl">Lv 1</span>
+        <div class="hp-bar"><div id="hp-fill"></div></div>
+      </div>
+      <div class="tick-chip" id="tick-chip" title="Game tick speed">Tick <span id="tick-val">600ms</span></div>
+    </div>
+
+    <!-- Left context panel -->
+    <div id="left-panel" class="hidden">
+      <button id="left-close" class="panel-close">×</button>
+      <div id="left-body"></div>
+    </div>
+
+    <!-- Bottom action dock -->
+    <div id="dock">
+      <button class="dock-btn" data-panel="inventory">🎒 Inventory</button>
+      <button class="dock-btn" data-panel="skills">📊 Skills</button>
+      <button class="dock-btn" data-panel="build" id="build-btn">🏗 Build</button>
+      <button class="dock-btn" data-panel="quests">🧭 Quests</button>
+      <button class="dock-btn" data-panel="settings">⚙ Settings</button>
+    </div>
+
+    <!-- Build palette -->
+    <div id="build-palette" class="hidden">
+      <div class="palette-head">Build Menu</div>
+      <div id="build-list"></div>
+    </div>
+
+    <!-- HP/low overlay toast -->
+    <div id="toast-area"></div>
+
+    <!-- Modals -->
+    <div id="modal-root"></div>
+  </div>
+
+  <div id="loading">
+    <div class="loader-spin"></div>
+    <div id="loading-text">Summoning the world…</div>
+  </div>
+
+  <script>
+    // Fail fast with a clear message instead of an infinite spinner.
+    (function () {
+      try {
+        var c = document.createElement('canvas');
+        var gl = c.getContext('webgl2') || c.getContext('webgl');
+        if (!gl) throw new Error('WebGL unavailable');
+      } catch (e) {
+        document.addEventListener('DOMContentLoaded', function () {
+          var t = document.getElementById('loading-text');
+          var s = document.querySelector('.loader-spin');
+          if (s) s.style.display = 'none';
+          if (t) { t.style.color = '#ff6b6b'; t.textContent = 'This browser has no WebGL support, which Isorpg needs to render. Try Chrome, Edge, Firefox or Safari with hardware acceleration on.'; }
+        });
+      }
+    })();
+  </script>
+  <script type="importmap">
+    { "imports": { "three": "./js/vendor/three.module.js" } }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

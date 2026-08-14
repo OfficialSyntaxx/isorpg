@@ -1,0 +1,8 @@
+{
+  "name": "isorpg",
+  "version": "1.0.0",
+  "private": true,
+  "description": "2.5D isometric hybrid RPG & settlement builder (Three.js)",
+  "type": "module",
+  "scripts": { "serve": "npx serve ." }
+}
