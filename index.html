@@ -18,6 +18,9 @@
           <div id="player-level" class="chip-value">1</div>
           <div id="player-name" class="chip-name">Hero</div>
         </div>
+        <div id="player-hp" class="hpbar">
+          <div class="hpbar-core"><span id="player-hp-text">10/10</span><div class="hpbar-fill-wrap"><div id="player-hp-fill"></div></div></div>
+        </div>
         <div id="action-xp" class="chip action-chip hidden">
           <div id="action-xp-label">Woodcutting</div>
           <div class="xp-track"><div id="action-xp-fill"></div></div>
@@ -25,8 +28,17 @@
       </header>
 
       <div id="toast-root"></div>
+      <div id="float-layer"></div>
+
+      <div id="combat-tray" class="hud-slot combat-tray hidden">
+        <div class="combat-name" id="combat-name">Goblin</div>
+        <div class="combat-hp"><div id="combat-hp-fill"></div><span id="combat-hp-text">14/14</span></div>
+      </div>
 
       <nav id="bottom-bar" class="hud-slot safe-bottom">
+        <button id="btn-combat" class="bar-btn" data-panel="combat" aria-label="Combat">
+          <span class="bar-ico">⚔️</span><span class="bar-caption">Combat</span>
+        </button>
         <button id="btn-inventory" class="bar-btn" data-panel="inventory" aria-label="Inventory">
           <span class="bar-ico">🎒</span><span class="bar-caption">Bag</span>
         </button>

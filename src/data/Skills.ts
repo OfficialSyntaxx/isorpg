@@ -1,23 +1,39 @@
 // Skill definitions shared by components, systems and UI.
 
-export type SkillId = "woodcutting" | "mining" | "fishing";
+export type SkillId =
+  | "woodcutting" | "mining" | "fishing"
+  | "cooking" | "smithing" | "carpentry"
+  | "attack" | "strength" | "defense" | "hitpoints";
 
 export interface SkillDef {
   id: SkillId;
   name: string;
   short: string;
   icon: string; // emoji placeholder, glyph-free procedural later
+  kind: "gathering" | "artisan" | "combat_lvl" | "combat_skill";
   // Resource node / action types this skill drives
   nodeKind?: "TREE" | "ROCK" | "WATER";
 }
 
 export const SKILLS: Record<SkillId, SkillDef> = {
-  woodcutting: { id: "woodcutting", name: "Woodcutting", short: "WC", icon: "🪓", nodeKind: "TREE" },
-  mining: { id: "mining", name: "Mining", short: "MIN", icon: "⛏️", nodeKind: "ROCK" },
-  fishing: { id: "fishing", name: "Fishing", short: "FISH", icon: "🎣", nodeKind: "WATER" },
+  woodcutting: { id: "woodcutting", name: "Woodcutting", short: "WC", icon: "🪓", kind: "gathering", nodeKind: "TREE" },
+  mining: { id: "mining", name: "Mining", short: "MIN", icon: "⛏️", kind: "gathering", nodeKind: "ROCK" },
+  fishing: { id: "fishing", name: "Fishing", short: "FISH", icon: "🎣", kind: "gathering", nodeKind: "WATER" },
+  cooking: { id: "cooking", name: "Cooking", short: "COOK", icon: "🍳", kind: "artisan" },
+  smithing: { id: "smithing", name: "Smelting", short: "SMITH", icon: "🔨", kind: "artisan" },
+  carpentry: { id: "carpentry", name: "Carpentry", short: "CARP", icon: "🪚", kind: "artisan" },
+  attack: { id: "attack", name: "Attack", short: "ATK", icon: "⚔️", kind: "combat_skill" },
+  strength: { id: "strength", name: "Strength", short: "STR", icon: "💪", kind: "combat_skill" },
+  defense: { id: "defense", name: "Defense", short: "DEF", icon: "🛡️", kind: "combat_skill" },
+  hitpoints: { id: "hitpoints", name: "Hitpoints", short: "HP", icon: "❤️", kind: "combat_lvl" },
 };
 
-export const SKILL_IDS: SkillId[] = ["woodcutting", "mining", "fishing"];
+export const SKILL_IDS: SkillId[] = [
+  "attack", "strength", "defense", "hitpoints", "cooking", "smithing", "carpentry", "woodcutting", "mining", "fishing",
+];
+/** The three skills visible in the gather quick-bar (M1 era) + combat trio. */
+export const GATHER_SKILLS: SkillId[] = ["woodcutting", "mining", "fishing"];
+export const COMBAT_SKILLS: SkillId[] = ["attack", "strength", "defense", "hitpoints"];
 
 export interface ResourceDrop {
   itemId: string;

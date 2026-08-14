@@ -1,13 +1,16 @@
-// WorldSystem: builds the tile meshes, spawns deterministic resource nodes,
-// and answers "what is on this tile" for the input/routing logic.
+// WorldSystem: terrain, procedural clutter, animated water, sky, resource
+// nodes and monster spawning (deterministic from the grid seed).
 import * as THREE from "three";
 import type { Grid } from "../world/Grid";
 import type { ResourceNode, NodeType } from "../world/ResourceNode";
 import { getTerrainMaterial, getBaseMaterial } from "../generators/Materials";
-import { makeTree, makeRock, makeFishingMarker } from "../generators/Nature";
+import { makeTree, makeRock, makeFishingMarker, buildClutter, makeWaterMaterial, makeSkyTexture } from "../generators/Nature";
 import { RESOURCES, type ResourceDef } from "../data/Skills";
 import { nodeKey } from "../world/ResourceNode";
 import { EngineLogger } from "../utils/Logger";
+import type { CombatSystem } from "./CombatSystem";
+import { MONSTERS } from "../data/Combat";
+import { spawnMonster } from "../world/Monster";
 
 export interface WorldCallbacks {
   onNodeDepleted?: (node: ResourceNode) => void;
@@ -19,43 +22,87 @@ export class WorldSystem {
   private nodeGroup: THREE.Group;
   private cb: WorldCallbacks = {};
   private respawnTimers = new Map<string, number>();
+  private nodes = new Map<string, ResourceNode>();
+  private combat: CombatSystem;
+  private waterMat: THREE.ShaderMaterial | null = null;
 
-  constructor(scene: THREE.Scene, grid: Grid) {
+  constructor(scene: THREE.Scene, grid: Grid, combat: CombatSystem) {
     this.scene = scene;
     this.grid = grid;
+    this.combat = combat;
     this.nodeGroup = new THREE.Group();
     scene.add(this.nodeGroup);
     this.buildTerrain();
+    this.buildSky();
+    this.buildClutter();
     this.spawnResources();
+    this.spawnMonsters();
   }
 
   setCallbacks(cb: WorldCallbacks) { this.cb = cb; }
 
+  private buildSky() {
+    this.scene.background = makeSkyTexture();
+    this.scene.fog = new THREE.Fog(0xe8d9b0, 42, 88);
+  }
+
   private buildTerrain() {
     const root = new THREE.Group();
     root.name = "terrain";
-
-    // Base slab under everything (dark earth)
     const baseGeo = new THREE.PlaneGeometry(this.grid.width, this.grid.height);
     baseGeo.rotateX(-Math.PI / 2);
     const base = new THREE.Mesh(baseGeo, getBaseMaterial());
-    base.position.set(this.grid.width / 2 - 0.5, -0.12, this.grid.height / 2 - 0.5);
+    base.position.set(this.grid.width / 2 - 0.5, -0.14, this.grid.height / 2 - 0.5);
     root.add(base);
 
     const yFor = (elev: number) => elev * 0.6 + 0.3;
+    const waterTiles: { x: number; y: number }[] = [];
     for (let gy = 0; gy < this.grid.height; gy++) {
       for (let gx = 0; gx < this.grid.width; gx++) {
         const t = this.grid.at(gx, gy)!;
         const mat = getTerrainMaterial(t.terrainType);
-        const geo = new THREE.BoxGeometry(1, 0.6, 1);
-        const mesh = new THREE.Mesh(geo, mat);
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 0.6, 1), mat);
         mesh.position.set(gx, yFor(t.elevation), gy);
         mesh.receiveShadow = true;
         mesh.userData.tile = { x: gx, y: gy };
         root.add(mesh);
+        if (t.terrainType === "WATER") waterTiles.push({ x: gx, y: gy });
       }
     }
     this.scene.add(root);
+    this.buildWater(waterTiles, yFor(-0.25) + 0.15 + 0.015);
+  }
+
+  /** One animated plane hugging only the water tiles. */
+  private buildWater(tiles: { x: number; y: number }[], y: number) {
+    if (!tiles.length) return;
+    const shape = new THREE.Shape();
+    tiles.forEach((t, i) => {
+      const x = t.x - 0.5, z = t.y - 0.5;
+      if (i === 0) shape.moveTo(x, z);
+      shape.lineTo(x + 1, z);
+      shape.lineTo(x + 1, z + 1);
+      shape.lineTo(x, z + 1);
+      shape.lineTo(x, z);
+    });
+    const geo = new THREE.ShapeGeometry(shape);
+    geo.rotateX(-Math.PI / 2);
+    this.waterMat = makeWaterMaterial();
+    const plane = new THREE.Mesh(geo, this.waterMat);
+    plane.position.y = y;
+    plane.renderOrder = 2;
+    this.scene.add(plane);
+  }
+
+  private buildClutter() {
+    const tiles = [];
+    for (let gy = 1; gy < this.grid.height - 1; gy++) {
+      for (let gx = 1; gx < this.grid.width - 1; gx++) {
+        const t = this.grid.at(gx, gy)!;
+        tiles.push({ x: gx, y: gy, terrain: t.terrainType, seed: t.seed });
+      }
+    }
+    this.scene.add(buildClutter(tiles));
   }
 
   /** Deterministically place resources from the grid seed. */
@@ -65,34 +112,25 @@ export class WorldSystem {
     for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
         const t = g.at(gx, gy)!;
-        // Only interior, walkable tiles in unlocked-ish regions get nodes.
-        if (!t.walkable) continue;
-        if (t.zoneId === "WILDERNESS_LVL1" && !g.isRegionUnlocked(gx, gy)) continue;
-
-        const rnd = seeded(gx, gy);
+        if (!t.walkable || t.occupant !== "NONE") continue;
+        if (t.zoneId === "WILDERNESS_LVL1") continue;
+        const rnd = seeded(t.seed);
         const r = rnd();
-
         if (t.terrainType === "GRASS" && r < 0.22 && treeCount < 26) {
-          const tier = pickTree(gx, gy);
-          this.spawnNode("TREE", gx, gy, tier);
+          this.spawnNode("TREE", gx, gy, pickTree(gx, gy));
           treeCount++;
         } else if ((t.terrainType === "DIRT" || t.terrainType === "GRASS") && r >= 0.22 && r < 0.30 && rockCount < 14) {
-          const tier = pickRock(gx, gy);
-          this.spawnNode("ROCK", gx, gy, tier);
+          this.spawnNode("ROCK", gx, gy, pickRock(gx, gy));
           rockCount++;
         }
       }
     }
-    // Fishing spots on interior water
     for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
         const t = g.at(gx, gy)!;
         if (t.terrainType === "WATER" && fishCount < 6 && t.zoneId !== "WILDERNESS_LVL1") {
-          const rnd = seeded(gx + 500, gy + 500);
-          if (rnd() < 0.4) {
-            this.spawnNode("WATER", gx, gy, pickFish(gx, gy));
-            fishCount++;
-          }
+          const rnd = seeded(t.seed + 500);
+          if (rnd() < 0.4) { this.spawnNode("WATER", gx, gy, pickFish(gx, gy)); fishCount++; }
         }
       }
     }
@@ -103,48 +141,31 @@ export class WorldSystem {
     const id = nodeKey(type, gx, gy);
     const group = this.buildNodeMesh(type, def, gx, gy);
     group.position.set(gx, 0, gy);
-    // Fishing spots sit at water level
-    if (type === "WATER") group.position.y = 0.16;
-    const node: ResourceNode = {
-      id, defId: def.masteryKey, def, type,
-      tile: { x: gx, y: gy },
-      remaining: def.depletes ? def.maxUses ?? 5 : undefined,
-      group,
-      respawnAt: 0,
-      depleted: false,
-    };
+    if (type === "WATER") group.position.y = 0.4;
+    const node: ResourceNode = { id, defId: def.masteryKey, def, type, tile: { x: gx, y: gy }, remaining: def.depletes ? def.maxUses ?? 5 : undefined, group, respawnAt: 0, depleted: false };
     this.grid.setOccupant(gx, gy, "RESOURCE_NODE", id);
-    this.nodeGroup.add(group);
-    // Not in state map here — spawned fresh each load. Register on the live grid.
+    this.nodeGroup.group(group);
     this.nodes.set(id, node);
   }
 
   private buildNodeMesh(type: NodeType, def: ResourceDef, gx: number, gy: number): THREE.Group {
-    const rnd = seeded(gx, gy);
-    const variant = Math.floor(rnd() * 1000);
+    const variant = Math.floor(seeded(gx, gy)() * 1000);
     if (type === "TREE") return makeTree(variant + def.levelReq);
     if (type === "ROCK") return makeRock(variant + def.levelReq);
-    // WATER fishing spot
     const spot = new THREE.Group();
     spot.add(makeFishingMarker());
-    spot.rotation.y = rnd() * Math.PI;
+    spot.rotation.y = seeded(gx, gy)() * Math.PI;
     return spot;
   }
-
-  // Live registry (kept in Parallel to the grid occupants)
-  private nodes = new Map<string, ResourceNode>();
 
   get nodeRegistry() { return this.nodes; }
 
   nodeAt(gx: number, gy: number): ResourceNode | null {
     const t = this.grid.at(gx, gy);
-    if (t && t.occupant === "RESOURCE_NODE" && t.occupantId) {
-      return this.nodes.get(t.occupantId) ?? null;
-    }
+    if (t && t.occupant === "RESOURCE_NODE" && t.occupantId) return this.nodes.get(t.occupantId) ?? null;
     return null;
   }
 
-  /** Called on a tick: any depleted node past its respawn timer comes back. */
   updateRespawns(now: number) {
     for (const node of this.nodes.values()) {
       if (node.depleted && node.respawnAt > 0 && now >= node.respawnAt) {
@@ -157,23 +178,26 @@ export class WorldSystem {
     }
   }
 
-  /** Deplete/harvest result: reduce remaining, hide when empty. Returns new remaining. */
   consume(node: ResourceNode): number {
     if (node.def.depletes) {
       node.remaining = Math.max(0, (node.remaining ?? 1) - 1);
       if (node.remaining <= 0) {
         node.depleted = true;
-        node.respawnAt = Date.now() + 30_000; // 30s respawn for milestone 1
+        node.respawnAt = Date.now() + 30_000;
         node.group.visible = false;
       }
     }
     return node.remaining ?? -1;
   }
+
+  /** Advance animated water + fog each frame. */
+  update(time四方(timeMs: number) {
+    if (this.waterMat) this.waterMat.uniforms.uTime.value = timeMs / 1000;
+  }
 }
 
-function seeded(sx: number, sy: number): () => number {
-  let a = sx * 374761393 + sy * 668265263;
-  a = (a ^ (a >> 13)) >>> 0;
+function seeded(seed: number)() => number {
+  let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
@@ -183,23 +207,21 @@ function seeded(sx: number, sy: number): () => number {
 }
 
 function pickTree(gx: number, gy: number): ResourceDef {
-  const rnd = seeded(gx * 3 + 1, gy * 3 + 1);
+  const rnd = seeded(gx * 3 + gy * 3 + 1);
   const r = rnd();
   if (r < 0.6) return RESOURCES.tree_normal;
   if (r < 0.85) return RESOURCES.tree_oak;
   return RESOURCES.tree_willow;
 }
-
 function pickRock(gx: number, gy: number): ResourceDef {
-  const rnd = seeded(gx * 5 + 2, gy * 5 + 2);
+  const rnd = seeded(gx * 5 + gy * 5 + 2);
   const r = rnd();
   if (r < 0.4) return RESOURCES.rock_copper;
   if (r < 0.75) return RESOURCES.rock_tin;
   if (r < 0.9) return RESOURCES.rock_iron;
-  return RESOURCES.rock_coal;
+  return RESOURCE.rock_coal;
 }
-
 function pickFish(gx: number, gy: number): ResourceDef {
-  const rnd = seeded(gx * 7 + 3, gy * 7 + 3);
-  return rnd() < 0.5 ? RESOURCES.water_shrimp : RESOURCES.water_trout;
+  const r = seeded(gx * 7 + gy * 7 + 3);
+  return r() < 0.5 ? RESOURCES.water_shrimp : RESOURCES.water_trout;
 }

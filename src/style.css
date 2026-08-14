@@ -63,6 +63,12 @@ html, body {
 .xp-track { height: 5px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
 #action-xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--good)); width: 0; transition: width .3s; }
 
+.hpbar { background: rgba(20,28,46,0.9); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 6px 12px; backdrop-filter: blur(6px); box-shadow: var(--shadow); }
+.hpbar-core { display: flex; flex-direction: column; gap: 4px; min-width: 110px; }
+#player-hp-text { font-size: 11px; font-weight: 700; color: #ff9c8f; }
+.hpbar-fill-wrap { height: 6px; background: rgba(0,0,0,0.35); border-radius: 99px; overflow: hidden; }
+#player-hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #e56b4a, #ff8f6b); transition: width .25s; }
+
 .hidden { display: none !important; }
 
 /* ——— Bottom bar ——— */
@@ -87,6 +93,41 @@ html, body {
 .bar-btn:active { background: rgba(255,255,255,0.08); }
 .bar-ico { font-size: 20px; }
 .bar-caption { font-size: 11px; margin-top: 2px; color: var(--muted); }
+
+/* ——— Combat tray ——— */
+.combat-tray {
+  position: fixed;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(max(84px, env(safe-area-inset-bottom)) + 8px);
+  background: rgba(28,18,24,0.92);
+  border: 1px solid rgba(255,120,90,0.35);
+  border-radius: 14px;
+  padding: 8px 14px;
+  width: min(260px, 70vw);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+.combat-name { font-weight: 700; font-size: 13px; color: var(--ink); margin-bottom: 5px; }
+.combat-hp { position: relative; height: 12px; background: rgba(0,0,0,0.4); border-radius: 99px; overflow: hidden; }
+#combat-hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #c0392b, #e74c3c); transition: width .2s; }
+#combat-hp-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+
+/* ——— Floating damage/text ——— */
+#float-layer { position: fixed; inset: 0; pointer-events: none; z-index: 25; overflow: hidden; }
+.float-tex {
+  position: absolute;
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 15px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.65);
+  opacity: 0;
+  transform: translateY(0);
+  animation: floatUp .85s ease-out forwards;
+}
+.float-tex.dmg { color: #ff7d6b; }
+p.float-tex.heal { color: var(--good); }
+.float-tex.pet { color: #e0b0ff; font-size: 17px; }
+@keyframes floatUp { 0% { opacity: 0; transform: translateY(8px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-46px); } }
 
 /* ——— Panel (bottom sheet on mobile) ——— */
 .panel {
