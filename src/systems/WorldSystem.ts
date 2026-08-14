@@ -5,11 +5,11 @@ import type { Grid } from "../world/Grid";
 import type { ResourceNode, NodeType } from "../world/ResourceNode";
 import { getTerrainMaterial, getBaseMaterial } from "../generators/Materials";
 import { makeTree, makeRock, makeFishingMarker, buildClutter, makeWaterMaterial, makeSkyTexture } from "../generators/Nature";
-import { RESOURCES, type ResourceDef } from "../data/Journey";
+import { RESOURCES, type ResourceDef } from "../data/Skills";
 import { nodeKey } from "../world/ResourceNode";
 import { EngineLogger } from "../utils/Logger";
 import type { CombatSystem } from "./CombatSystem";
-import { MONSTERS } from "../data/Journey";
+import { MONSTERS } from "../data/Combat";
 import { spawnMonster } from "../world/Monster";
 
 export interface WorldCallbacks {
@@ -23,10 +23,10 @@ export class WorldSystem {
   private cb: WorldCallbacks = {};
   private respawnTimers = new Map<string, number>();
   private nodes = new Map<string, ResourceNode>();
-  private combat: WorldSystem;
+  private combat: CombatSystem;
   private waterMat: THREE.ShaderMaterial | null = null;
 
-  constructor(scene: THREE.Scene, grid: Grid, combat: Combat) {
+  constructor(scene: THREE.Scene, grid: Grid, combat: CombatSystem) {
     this.scene = scene;
     this.grid = grid;
     this.combat = combat;
@@ -87,8 +87,8 @@ export class WorldSystem {
     });
     const geo = new THREE.ShapeGeometry(shape);
     geo.rotateX(-Math.PI / 2);
-    this.waterNode = makeWaterMaterial();
-    const plane = new THREE.Mesh(geo, this.waterNode);
+    this.waterMat = makeWaterMaterial();
+    const plane = new THREE.Mesh(geo, this.waterMat);
     plane.position.y = y;
     plane.renderOrder = 2;
     this.scene.add(plane);
@@ -137,6 +137,41 @@ export class WorldSystem {
     EngineLogger.info(`Spawned ${treeCount} trees, ${rockCount} rocks, ${fishCount} fishing spots`);
   }
 
+  /** Spawn a deterministic monster population in the wilderness ring. */
+  private spawnMonsters() {
+    const g = this.grid;
+    const layout: { type: keyof typeof MONSTERS; cap: number }[] = [
+      { type: "giant_rat", cap: 4 },
+      { type: "goblin", cap: 3 },
+      { type: "skeleton", cap: 2 },
+      { type: "zombie", cap: 1 },
+    ];
+    const counts: Record<string, number> = {};
+    for (let gy = 1; gy < g.height - 1; gy++) {
+      for (let gx = 1; gx < g.width - 1; gx++) {
+        if (!g.isRegionUnlocked(gx, gy)) continue;
+        const t = g.at(gx, gy)!;
+        if (t.zoneId !== "WILDERNESS_LVL1") continue;
+        if (!t.walkable || t.occupant !== "NONE") continue;
+        const rnd = seeded(t.seed * 3 + 7);
+        const r = rnd();
+        const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
+        const d = Math.max(Math.abs(gx - cx), Math.abs(gy - cy));
+        const pool: (keyof typeof MONSTERS)[] = d >= 8 ? ["skeleton", "zombie"] : ["giant_rat", "goblin"];
+        const type = pool[Math.floor(r * pool.length) % pool.length] as keyof typeof MONSTERS;
+        const defCfg = layout.find((l) => l.type === type)!;
+        if ((counts[type] ?? 0) >= defCfg.cap) continue;
+        if (r > 0.5) continue; // thin density
+        const def = MONSTERS[type];
+        const m = spawnMonster(type, def, gx, gy);
+        this.combat.addMonster(m);
+        this.nodeGroup.add(m.group);
+        counts[type] = (counts[type] ?? 0) + 1;
+      }
+    }
+    EngineLogger.info("Monsters: " + JSON.stringify(counts));
+  }
+
   private spawnNode(type: NodeType, gx: number, gy: number, def: ResourceDef) {
     const id = nodeKey(type, gx, gy);
     const group = this.buildNodeMesh(type, def, gx, gy);
@@ -144,7 +179,7 @@ export class WorldSystem {
     if (type === "WATER") group.position.y = 0.4;
     const node: ResourceNode = { id, defId: def.masteryKey, def, type, tile: { x: gx, y: gy }, remaining: def.depletes ? def.maxUses ?? 5 : undefined, group, respawnAt: 0, depleted: false };
     this.grid.setOccupant(gx, gy, "RESOURCE_NODE", id);
-    this.nodeGroup.group(group);
+    this.nodeGroup.add(group);
     this.nodes.set(id, node);
   }
 
@@ -171,7 +206,7 @@ export class WorldSystem {
       if (node.depleted && node.respawnAt > 0 && now >= node.respawnAt) {
         node.depleted = false;
         node.respawnAt = 0;
-        node.resource = node.def.maxUses ?? 5;
+        node.remaining = node.def.maxUses ?? 5;
         node.group.visible = true;
         this.cb.onNodeDepleted?.(node);
       }
@@ -180,21 +215,48 @@ export class WorldSystem {
 
   consume(node: ResourceNode): number {
     if (node.def.depletes) {
-      node.resource = Math.max(0, (node.resource ?? 1) - 1);
-      if (node.resource <= 0) {
+      node.remaining = Math.max(0, (node.remaining ?? 1) - 1);
+      if (node.remaining <= 0) {
         node.depleted = true;
         node.respawnAt = Date.now() + 30_000;
         node.group.visible = false;
       }
     }
-    return node.resource ?? -1;
+    return node.remaining ?? -1;
   }
 
-  /** Advance animated water + fog each frame. */
-  update(time四方(timeMs: number) {
-    if (this.waterNode) this.waterNode.uniforms.uTime.value = timeMs / 1000;
+  /** Advance animated water each frame. */
+  update(timeMs: number) {
+    if (this.waterMat) this.waterMat.uniforms.uTime.value = timeMs / 1000;
   }
 }
 
-function seeded(seed: number)(): number => number;
-// ... and continue with the standard definitions of pickTree/pickRock (which are correct, so the remainder of the file is already exactly right).
+function seeded(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function pickTree(gx: number, gy: number): ResourceDef {
+  const rnd = seeded(gx * 3 + gy * 3 + 1);
+  const r = rnd();
+  if (r < 0.6) return RESOURCES.tree_normal;
+  if (r < 0.85) return RESOURCES.tree_oak;
+  return RESOURCES.tree_willow;
+}
+function pickRock(gx: number, gy: number): ResourceDef {
+  const rnd = seeded(gx * 5 + gy * 5 + 2);
+  const r = rnd();
+  if (r < 0.4) return RESOURCES.rock_copper;
+  if (r < 0.75) return RESOURCES.rock_tin;
+  if (r < 0.9) return RESOURCES.rock_iron;
+  return RESOURCES.rock_coal;
+}
+function pickFish(gx: number, gy: number): ResourceDef {
+  const rnd = seeded(gx * 7 + gy * 7 + 3);
+  return rnd() < 0.5 ? RESOURCES.water_shrimp : RESOURCES.water_trout;
+}
