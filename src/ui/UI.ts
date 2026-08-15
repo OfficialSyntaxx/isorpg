@@ -2,6 +2,7 @@
 import type { GameState } from "../state/GameState";
 import { levelProgress, levelFromXp } from "../data/XPTable";
 import { ITEMS } from "../data/Items";
+import { itemIcon } from "../data/Items";
 import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
@@ -188,7 +189,7 @@ export class UI {
       .map((s) => {
         const id = eq[s]!;
         const it = ITEMS[id];
-        return `<div class="inv-row"><div class="inv-name"><span class="inv-count">${SLOT_NAMES[s]}</span> ${it ? it.name : id}</div><button class="btn btn-mini" data-act="unequip" data-slot="${s}">Unequip</button></div>`;
+        return `<div class="inv-row"><span class="inv-ico">${itemIcon(id)}</span><div class="inv-name"><span class="inv-count">${SLOT_NAMES[s]}</span> ${it ? it.name : id}</div><button class="btn btn-mini" data-act="unequip" data-slot="${s}">Unequip</button></div>`;
       })
       .join("");
 
@@ -205,7 +206,7 @@ export class UI {
         const name = it ? it.name : s.id;
         const desc = it ? it.desc : "";
         const equipBtn = it?.equip ? `<button class="btn btn-mini" data-act="equip" data-item="${s.id}">Equip</button>` : "";
-        return `<div class="inv-row"><div class="inv-name"><span class="inv-count">${s.amount.toLocaleString()}</span> ${name}</div><div class="inv-desc">${desc}</div>${equipBtn}</div>`;
+        return `<div class="inv-row"><span class="inv-ico">${itemIcon(s.id)}</span><div class="inv-name"><span class="inv-count">${s.amount.toLocaleString()}</span> ${name}</div><div class="inv-desc">${desc}</div>${equipBtn}</div>`;
       })
       .join("");
 

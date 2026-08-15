@@ -127,6 +127,29 @@ export function getItem(id: string): Item {
   return it;
 }
 
+/** Emoji placeholder icons for the bag UI (zero-asset, readable on mobile). */
+export const ITEM_ICONS: Record<string, string> = {
+  normal_log: "🪵", oak_log: "🌳", willow_log: "🌿",
+  copper_ore: "🟠", tin_ore: "⚪", iron_ore: "⚙️", coal: "⚫",
+  raw_shrimp: "🦐", raw_trout: "🐟",
+  bronze_bar: "🟤", iron_bar: "🔩", steel_bar: "⛓️",
+  plank: "🪵",
+  bronze_axe: "🪓", iron_axe: "🪓", steel_axe: "🪓",
+  bronze_pickaxe: "⛏️", iron_pickaxe: "⛏️", steel_pickaxe: "⛏️",
+  small_net: "🥅", fly_rod: "🎣",
+  coins: "🪙", bones: "🦴",
+  raw_rat_meat: "🍖", cooked_shrimp: "🍤", shrimp_food: "🍤", cooked_trout: "🍣", cooked_rat_meat: "🍗",
+  bronze_dagger: "🗡️", bronze_sword: "⚔️", bronze_2h: "⚔️", iron_sword: "⚔️", shortbow: "🏹",
+  bronze_helm: "⛑️", bronze_plate: "🛡️", bronze_legs: "🦵",
+  iron_helm: "⛑️", iron_plate: "🛡️", iron_legs: "🦵",
+  goblin_key: "🗝️", rat_bone: "🦴", loop_half_key: "🗝️", zombie_flesh: "🧟",
+  pet_rat: "🐀", pet_goblin: "👹", pet_skeleton: "💀", pet_zombie: "🧟",
+};
+
+export function itemIcon(id: string): string {
+  return ITEM_ICONS[id] ?? "❔";
+}
+
 /** Best owned gathering tool for a skill (P2). Null = no tool for it. */
 export function getBestTool(inv: InventoryComponent, skill: SkillId): { tier: number; speedPct: number } | null {
   let best: { tier: number; speedPct: number } | null = null;

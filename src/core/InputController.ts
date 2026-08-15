@@ -60,6 +60,8 @@ export class InputController {
   }
 
   private applyCamera() {
+    // While a finger/mouse is down, the camera tracks input 1:1 (no slide).
+    this.engine.snapPan = this.pointerDown || this.pinching;
     this.engine.updateCameraTarget({ x: this.panWorld.x, z: this.panWorld.z }, this.pan.zoom);
     this.cbs.onCameraChanged?.({ ...this.pan, panX: this.panWorld.x, panZ: this.panWorld.z });
   }
@@ -113,7 +115,20 @@ export class InputController {
       if (this.pinching) {
         const d = this.dist(ts[0], ts[1]);
         const scale = this.pinchDist > 0 ? d / this.pinchDist : 1;
-        this.pan.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, this.pinchStartZoom * scale));
+        const nextZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, this.pinchStartZoom * scale));
+        if (nextZoom !== this.pan.zoom) {
+          // Anchor the zoom on the pinch midpoint: the world point under the
+          // fingers stays put while the zoom changes.
+          const midX = (ts[0].clientX + ts[1].clientX) / 2;
+          const midY = (ts[0].clientY + ts[1].clientY) / 2;
+          const before = this.pickWorld(midX, midY);
+          this.pan.zoom = nextZoom;
+          const after = this.pickWorld(midX, midY);
+          if (before && after) {
+            this.panWorld.x += before.x - after.x;
+            this.panWorld.z += before.z - after.z;
+          }
+        }
         this.applyCamera();
       }
       return;
@@ -241,14 +256,19 @@ export class InputController {
    *  perspective-like ray from the camera position, so taps away from screen
    *  centre hit the WRONG tile — the root cause of "tap to walk misses".
    */
-  private raycastTap(clientX: number, clientY: number) {
+  private pickWorld(clientX: number, clientY: number): THREE.Vector3 | null {
     const cam = this.engine.camera;
     const rect = this.engine.renderer.domElement.getBoundingClientRect();
     const ndcX = ((clientX - rect.left) / rect.width) * 2 - 1;
     const ndcY = -(((clientY - rect.top) / rect.height) * 2 - 1);
     this.ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), cam);
     const hit = new THREE.Vector3();
-    if (!this.ray.ray.intersectPlane(this.groundPlane, hit)) return;
+    return this.ray.ray.intersectPlane(this.groundPlane, hit) ? hit : null;
+  }
+
+  private raycastTap(clientX: number, clientY: number) {
+    const hit = this.pickWorld(clientX, clientY);
+    if (!hit) return;
     const tile = this.grid.at(Math.round(hit.x), Math.round(hit.z));
     if (tile) this.cbs.onTileTap(tile.x, tile.y);
   }

@@ -196,10 +196,20 @@ class Game {
       this.ui.showOffline(resumed.summary.awaySeconds, resumed.summary.capApplied, resumed.summary.lines, resumed.summary.xpEarned);
     } else if (resumed.recoveredFrom === "fresh" || resumed.recoveredFrom === "indexeddb") {
       if (resumed.recoveredFrom === "fresh") {
-        // P2: hand new heroes a starter tool kit so they can begin gathering.
-        for (const id of STARTER_TOOLS) addItem(this.state.player.inventory, id, 1);
+        // Starter stash so a brand-new hero has something to cook/build with.
+        addItem(this.state.player.inventory, "normal_log", 5);
+        addItem(this.state.player.inventory, "raw_shrimp", 2);
+        addItem(this.state.player.inventory, "coins", 5);
       }
       showToast("Welcome to Isoperia — tap a tree to begin gathering!", "info", 4200);
+    }
+    // Every load: grant any missing starter tool (covers old saves created
+    // before the kit existed), so gathering always works.
+    {
+      const inv = this.state.player.inventory;
+      if (getToolTier(inv, "woodcutting") === 0) addItem(inv, "bronze_axe", 1);
+      if (getToolTier(inv, "mining") === 0) addItem(inv, "bronze_pickaxe", 1);
+      if (getToolTier(inv, "fishing") === 0) addItem(inv, "small_net", 1);
     }
   }
 
@@ -402,7 +412,6 @@ const NODE_NAMES: Record<string, string> = {
 };
 const ACTION_FOR: Record<string, string> = { TREE: "Chop", ROCK: "Mine", WATER: "Fish" };
 const TOOL_NAMES: Record<string, string> = { woodcutting: "axe", mining: "pickaxe", fishing: "net or rod" };
-const STARTER_TOOLS = ["bronze_axe", "bronze_pickaxe", "small_net"];
 
 // Boot guarded so a failure surfaces as a toast instead of a white screen
 guarded("main", () => {

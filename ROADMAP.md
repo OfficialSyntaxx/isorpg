@@ -174,3 +174,44 @@ Depends: P2, P4, P5. Final phase — the seasoning on the rest.
 
 > Every phase above keeps zero-asset procedural look per GDD — sound/3D assets remain a
 > trailing "final pass" only after outright.
+
+---
+
+## Remaining phases (after P1–P3 shipped)
+
+| Phase | Name | Depends on | Risk | Notes |
+|---|---|---|---|---|
+| 3.5 | Settlement polish (campfire cooking station UI, day counter persistence in saves) | P3 | Low | polish backlog |
+| **P4** | **Combat depth** — aggro/chase AI, ranged/magic weapons, boss archetypes, hit feedback | P2 gear, P1 labels | Med–High | gates P5 |
+| **P5** | **Dungeons** — procedural floors, keys, miniboss, chests | P4, P2 | High | |
+| **P6** | **World scale + onboarding** — bigger world, biomes, quest/tutorial chain, meta | P2, P4, P5 | Med | |
+| Cross-cut | Audio (ambient/music/SFX) · final art pass · full UI purpose audit | all | — | per credits below |
+
+## Graphics direction & asset plan (PRICED — approval required per credit)
+
+**Important:** *every* image/video/audio/3D generation in this chat bills your credits —
+there is **no credit-free generation tier here**. "Free" work = the procedural,
+zero-asset code path we already use (all current visuals are code-generated). So the
+plan below is a menu; nothing is generated until you approve line items.
+
+**Recommended direction:** keep the zero-asset procedural look as the base art style
+(it's distinctive, coherent, mobile-friendly), and spend credits only where code
+cannot reach. Priority order:
+
+| # | Asset | Tool | Est. credits | Why it matters |
+|---|---|---|---|---|
+| A1 | Player avatar / hero mesh (3D) | image→3D mesh | ~2–4 per mesh | biggest single visual upgrade |
+| A2 | NPC/villager + critter meshes (3D) | image→3D | ~2–4 each | replaces boxes |
+| A3 | Skybox / day-night gradient textures | image gen | ~1–2 each | atmosphere |
+| A4 | Water / terrain detail textures | image gen | ~1 each | ground feel |
+| A5 | Music (title + day/night ambient) | audio gen | ~1–2 per track | mood |
+| A6 | SFX pack (chop/mine/fish/hit/levelup) | audio gen | ~1–2 per sfx | feedback |
+| A7 | Cover/OG/branding refresh | image gen | ~1–3 | marketing (already have one) |
+
+Rough total if we did everything: **~25–45 credits** (estimate; actual pricing varies
+by model/length and I'll confirm exact cost before submitting). Suggested first
+splurge: **A1 hero mesh + A3 skybox** (~5–8 credits) — the two things players see
+every second.
+
+> Rule: per your standing instruction, nothing above gets generated without you
+> approving the specific line items and budget first.

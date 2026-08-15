@@ -18,6 +18,9 @@ export class Engine {
   readonly renderer: THREE.WebGLRenderer;
   cameraTarget = new THREE.Vector3(0, 0, 0);
   cameraZoom = 1;
+  /** While the player is actively dragging/pinching, the camera follows input
+   *  1:1 (no smoothing "slide"); smoothing resumes once they let go. */
+  snapPan = false;
   private ambient: THREE.AmbientLight | null = null;
   private sun: THREE.DirectionalLight | null = null;
   // Smoothed position the camera actually renders at — eases toward
@@ -150,10 +153,15 @@ export class Engine {
     guarded("RenderSystem", () => {
       for (const h of this.frameHandlers) h(dt, now / 1000);
       this.camera.zoom = THREE.MathUtils.lerp(this.camera.zoom, this.cameraZoom, Math.min(1, dt * 5));
-      // Critically-damped follow: settle in ~0.14s, no overshoot, smooth on mobile.
-      const k = 1 - Math.exp(-dt * 7);
-      this.smoothTarget.x += (this.cameraTarget.x - this.smoothTarget.x) * k;
-      this.smoothTarget.z += (this.cameraTarget.z - this.smoothTarget.z) * k;
+      // Critically-damped follow: settle in ~0.14s, no overshoot. During an
+      // active drag the camera snaps 1:1 to the finger (no sliding).
+      if (this.snapPan) {
+        this.smoothTarget.copy(this.cameraTarget);
+      } else {
+        const k = 1 - Math.exp(-dt * 7);
+        this.smoothTarget.x += (this.cameraTarget.x - this.smoothTarget.x) * k;
+        this.smoothTarget.z += (this.cameraTarget.z - this.smoothTarget.z) * k;
+      }
       this.camera.updateProjectionMatrix();
       this.positionCamera();
       this.renderer.render(this.scene, this.camera);
