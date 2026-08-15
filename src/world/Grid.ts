@@ -85,7 +85,7 @@ export class Grid implements GridLike {
         const zoneId = zoneAt(x, y);
         row.push({
           x, y,
-          elevation: terrainType === "WATER" ? -0.25 : 0,
+          elevation: terrainType === "WATER" ? -0.25 : this.rollElevation(x, y),
           terrainType,
           walkable,
           buildable: walkable,
@@ -114,6 +114,13 @@ export class Grid implements GridLike {
     if (r < 0.06) return "ROCK";
     if (r < 0.13) return "DIRT";
     return "GRASS";
+  }
+
+  /** Subtle large-scale rolling so the isometric ground isn't dead flat. */
+  private rollElevation(x: number, y: number): number {
+    return Math.max(0, Math.min(0.22,
+      0.05 + Math.sin(x * 0.55) * Math.cos(y * 0.5) * 0.09 + Math.sin((x + y) * 0.37) * 0.05
+    ));
   }
 
   at(x: number, y: number): Tile | null {

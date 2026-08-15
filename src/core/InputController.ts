@@ -45,6 +45,11 @@ export class InputController {
   private keys: Record<string, boolean> = {};
   private keyPan = { x: 0, z: 0 };
 
+  // Reusable ortho raycast objects (created once, not per tap)
+  private ray = new THREE.Raycaster();
+  private groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  private followTarget: { x: number; z: number } | null = null;
+
   constructor(engine: Engine, grid: Grid, cbs: InputCallbacks) {
     this.engine = engine;
     this.grid = grid;
@@ -230,18 +235,39 @@ export class InputController {
     return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
   }
 
-  /** Cast from screen coords to the ground plane (ortho → unproject). */
+  /** Cast from screen coords to the ground plane. Uses THREE.Raycaster's
+   *  setFromCamera, which handles ORTHOGRAPHIC cameras correctly (rays are
+   *  parallel to the view axis). The old manual unproject built a
+   *  perspective-like ray from the camera position, so taps away from screen
+   *  centre hit the WRONG tile — the root cause of "tap to walk misses".
+   */
   private raycastTap(clientX: number, clientY: number) {
     const cam = this.engine.camera;
     const rect = this.engine.renderer.domElement.getBoundingClientRect();
     const ndcX = ((clientX - rect.left) / rect.width) * 2 - 1;
     const ndcY = -(((clientY - rect.top) / rect.height) * 2 - 1);
-    const ndc = new THREE.Vector3(ndcX, ndcY, 0.5).unproject(cam);
-    const origin = ndc.clone().sub(cam.position).normalize();
-    const t = -cam.position.y / origin.y; // hit ground plane y=0
-    const hit = cam.position.clone().add(origin.multiplyScalar(t));
+    this.ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), cam);
+    const hit = new THREE.Vector3();
+    if (!this.ray.ray.intersectPlane(this.groundPlane, hit)) return;
     const tile = this.grid.at(Math.round(hit.x), Math.round(hit.z));
     if (tile) this.cbs.onTileTap(tile.x, tile.y);
+  }
+
+  /** Ask the camera to drift toward a world point while the hero walks. */
+  setFollow(p: { x: number; z: number } | null) { this.followTarget = p; }
+
+  /** Called each frame: gently move the camera toward the follow target unless
+   *  the player is actively panning (their input takes precedence). */
+  updateFollow(dt: number) {
+    if (!this.followTarget || this.pointerDown || this.pinching) return;
+    const k = 1 - Math.exp(-dt * 5);
+    const nx = this.panWorld.x + (this.followTarget.x - this.panWorld.x) * k;
+    const nz = this.panWorld.z + (this.followTarget.z - this.panWorld.z) * k;
+    if (Math.abs(nx - this.panWorld.x) > 0.001 || Math.abs(nz - this.panWorld.z) > 0.001) {
+      this.panWorld.x = nx;
+      this.panWorld.z = nz;
+      this.applyCamera();
+    }
   }
 
   getPanState(): PanState { return { panX: this.panWorld.x, panZ: this.panWorld.z, zoom: this.pan.zoom }; }

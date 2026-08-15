@@ -23,22 +23,23 @@ function noiseCanvas(size: number, base: string, speckles: string[], speckleCoun
   return tex;
 }
 
-const PALETTES: Record<TerrainType, { base: string; speckles: string }> = {
-  GRASS: { base: "#5c9e46", speckles: "#6fae55" },
-  DIRT: { base: "#9a744a", speckles: "#8a6640" },
-  SAND: { base: "#e0cf9a", speckles: "#d5c086" },
-  ROCK: { base: "#8b8f98", speckles: "#7a7e88" },
-  WATER: { base: "#3d7fb8", speckles: "#4e8fc3" },
-  ROAD: { base: "#6b6355", speckles: "#5f574a" },
+const PALETTES: Record<TerrainType, { base: string; speckles: string[] }> = {
+  GRASS: { base: "#5c9e46", speckles: ["#6fae55", "#4d8a3c", "#79b862", "#3f7a33"] },
+  DIRT: { base: "#9a744a", speckles: ["#8a6640", "#a8815a", "#7a5633", "#b08d63"] },
+  SAND: { base: "#e0cf9a", speckles: ["#d5c086", "#e8d9a8", "#c9b378", "#f0e2b8"] },
+  ROCK: { base: "#8b8f98", speckles: ["#7a7e88", "#9aa0ab", "#6f737d", "#a7acb6"] },
+  WATER: { base: "#3d7fb8", speckles: ["#4e8fc3", "#326fa6", "#5ba0d0", "#2c659b"] },
+  ROAD: { base: "#6b6355", speckles: ["#5f574a", "#776e5f", "#554e42", "#827a6b"] },
 };
 
 export function getTerrainMaterial(type: TerrainType): THREE.MeshStandardMaterial {
   const key = `terr_${type}`;
   if (cache.has(key)) return cache.get(key) as THREE.MeshStandardMaterial;
   const p = PALETTES[type];
-  const tex = noiseCanvas(128, p.base, [p.speckles], 260, 0.55);
+  const tex = noiseCanvas(128, p.base, p.speckles, 320, 0.5);
   const mat = new THREE.MeshStandardMaterial({
     map: tex,
+    vertexColors: true, // per-tile brightness variation (set in WorldSystem)
     flatShading: true,
     roughness: 0.95,
     metalness: 0,

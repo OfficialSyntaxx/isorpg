@@ -98,7 +98,8 @@ class Game {
         if (reason === "level_shortfall") {
           const sk = node.def.skill;
           const have = levelFromXp(this.state.player.skills[sk].xp);
-          showToast(`Need ${node.def.levelReq} ${SKILLS[sk].name} (you have ${have})`, "error");
+          const label = NODE_NAMES[node.def.masteryKey] ?? SKILLS[sk].name;
+          showToast(`${label} needs ${SKILLS[sk].name} ${node.def.levelReq} (you have ${have}) — chop a starter tree near town first`, "error");
         } else if (reason === "inventory_full") {
           showToast("Your pouch is full", "error");
         }
@@ -236,6 +237,9 @@ class Game {
       this.hero.armR.rotation.x = Math.sin(t * 14) * 0.5;
       this.hero.bobAnchor.position.y = 0.62 + Math.abs(Math.sin(t * 14)) * 0.04;
     }
+    // Camera drifts with the hero while he walks; a manual drag takes over.
+    this.input.setFollow(this.movement.isMoving ? { x: this.hero.group.position.x, z: this.hero.group.position.z } : null);
+    this.input.updateFollow(dt);
     this.input.updateKeyboard(dt);
     guarded("UI", () => this.ui.refresh(this.activeSkill));
   }
@@ -280,6 +284,12 @@ function adjustedStart(state: ReturnType<typeof createFreshState>, grid: Grid) {
 function nameOf(itemId: string): string {
   return ITEM_NAMES[itemId]?.name ?? itemId;
 }
+
+const NODE_NAMES: Record<string, string> = {
+  normal: "Ordinary tree", oak: "Oak tree", willow: "Willow tree",
+  copper: "Copper rock", tin: "Tin rock", iron: "Iron rock", coal: "Coal rock",
+  shrimp: "Fishing spot", trout: "Fishing spot",
+};
 
 // Boot guarded so a failure surfaces as a toast instead of a white screen
 guarded("main", () => {

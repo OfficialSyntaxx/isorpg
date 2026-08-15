@@ -18,6 +18,9 @@ export class Engine {
   readonly renderer: THREE.WebGLRenderer;
   cameraTarget = new THREE.Vector3(0, 0, 0);
   cameraZoom = 1;
+  // Smoothed position the camera actually renders at — eases toward
+  // cameraTarget each frame so panning is smooth instead of snapping.
+  private smoothTarget = new THREE.Vector3(0, 0, 0);
 
   private tickIndex = 0;
   private lastTickTime = 0;
@@ -53,8 +56,8 @@ export class Engine {
     const y = radius * Math.sin(PITCH);
     const z = radius * Math.cos(PITCH) * Math.cos(YAW);
     // yaw 45° -> from the SW looking NE in typical isometric
-    this.camera.position.set(this.cameraTarget.x + x, this.cameraTarget.y + y, this.cameraTarget.z + z);
-    this.camera.lookAt(this.cameraTarget);
+    this.camera.position.set(this.smoothTarget.x + x, this.smoothTarget.y + y, this.smoothTarget.z + z);
+    this.camera.lookAt(this.smoothTarget);
   }
 
   private setupLights() {
@@ -134,6 +137,10 @@ export class Engine {
     guarded("RenderSystem", () => {
       for (const h of this.frameHandlers) h(dt, now / 1000);
       this.camera.zoom = THREE.MathUtils.lerp(this.camera.zoom, this.cameraZoom, Math.min(1, dt * 5));
+      // Critically-damped follow: settle in ~0.14s, no overshoot, smooth on mobile.
+      const k = 1 - Math.exp(-dt * 7);
+      this.smoothTarget.x += (this.cameraTarget.x - this.smoothTarget.x) * k;
+      this.smoothTarget.z += (this.cameraTarget.z - this.smoothTarget.z) * k;
       this.camera.updateProjectionMatrix();
       this.positionCamera();
       this.renderer.render(this.scene, this.camera);

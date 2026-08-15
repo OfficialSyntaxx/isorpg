@@ -65,6 +65,13 @@ export class WorldSystem {
         mesh.position.set(gx, yFor(t.elevation), gy);
         mesh.receiveShadow = true;
         mesh.userData.tile = { x: gx, y: gy };
+        // Per-tile brightness tint so adjacent ground isn't one flat sheet.
+        const tint = seeded(t.seed * 7 + 3);
+        const v = 0.9 + tint() * 0.18;
+        const n = mesh.geometry.attributes.position.count;
+        const colors = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) { colors[i * 3] = v; colors[i * 3 + 1] = v; colors[i * 3 + 2] = v; }
+        mesh.geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
         root.add(mesh);
         if (t.terrainType === "WATER") waterTiles.push({ x: gx, y: gy });
       }
@@ -117,7 +124,7 @@ export class WorldSystem {
         const rnd = seeded(t.seed);
         const r = rnd();
         if (t.terrainType === "GRASS" && r < 0.22 && treeCount < 26) {
-          this.spawnNode("TREE", gx, gy, pickTree(gx, gy));
+          this.spawnNode("TREE", gx, gy, pickTree(gx, gy, g));
           treeCount++;
         } else if ((t.terrainType === "DIRT" || t.terrainType === "GRASS") && r >= 0.22 && r < 0.30 && rockCount < 14) {
           this.spawnNode("ROCK", gx, gy, pickRock(gx, gy));
@@ -241,11 +248,16 @@ function seeded(seed: number): () => number {
   };
 }
 
-function pickTree(gx: number, gy: number): ResourceDef {
+function pickTree(gx: number, gy: number, g: Grid): ResourceDef {
+  // Starter grove: every tree in a ring right around the settlement centre is
+  // a level-1 normal tree, so a brand-new player can ALWAYS start chopping.
+  const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
+  const d = Math.max(Math.abs(gx - cx), Math.abs(gy - cy));
+  if (d <= 5) return RESOURCES.tree_normal;
   const rnd = seeded(gx * 3 + gy * 3 + 1);
   const r = rnd();
-  if (r < 0.6) return RESOURCES.tree_normal;
-  if (r < 0.85) return RESOURCES.tree_oak;
+  if (r < 0.55) return RESOURCES.tree_normal;
+  if (r < 0.8) return RESOURCES.tree_oak;
   return RESOURCES.tree_willow;
 }
 function pickRock(gx: number, gy: number): ResourceDef {
