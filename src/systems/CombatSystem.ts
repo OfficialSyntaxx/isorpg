@@ -19,6 +19,7 @@ export interface CombatEvents {
 }
 
 const EAT_THRESHOLD = 0.4; // auto-eat below 40% HP
+const RANGED_RANGE = 5; // tiles: bows / ranged monsters engage from here
 
 export class CombatSystem {
   private state: GameState;
@@ -86,7 +87,7 @@ export class CombatSystem {
     const health = this.state.player.health;
     health.maxHp = this.maxHp();
     if (health.hp > health.maxHp) health.hp = health.maxHp;
-
+    this.aiChase();
     const target = this.target;
     if (!target || target.dead) {
       if (target && target.dead) this.target = null;
@@ -101,7 +102,7 @@ export class CombatSystem {
     }
 
     target.attackAcc++;
-    if (this.playerAdjacent(target) && target.attackAcc >= target.def.attackTick) {
+    if (this.monsterCanHit(target) && target.attackAcc >= target.def.attackTick) {
       target.attackAcc = 0;
       this.tryMonsterAttack(target);
     }
@@ -109,6 +110,80 @@ export class CombatSystem {
     if (health.hp > 0 && health.hp / health.maxHp < EAT_THRESHOLD) {
       this.autoEat();
     }
+  }
+
+  /** P4: can this monster actually hit the player right now (melee = adjacent,
+   *  ranged = within bow range)? */
+  private monsterCanHit(m: MonsterCombat): boolean {
+    const d = Math.max(Math.abs(m.tile.x - this.state.player.pos.gx), Math.abs(m.tile.y - this.state.player.pos.gy));
+    return m.def.ranged ? d >= 1 && d <= RANGED_RANGE : d <= 1;
+  }
+
+  /** P4: monsters hunt — approach the player when aggroed, back off (ranged) to
+   *  keep their distance, and leash back home when they stray too far. */
+  private aiChase() {
+    const p = this.state.player.pos;
+    for (const m of this.monsters.values()) {
+      if (m.dead) continue;
+      const d = Math.max(Math.abs(m.tile.x - p.gx), Math.abs(m.tile.y - p.gy));
+      if (!m.inCombat && d > m.def.aggroRange) { this.returnHome(m); continue; }
+      // Leash: too far from the spawn anchor — give up and head home.
+      if (Math.max(Math.abs(m.tile.x - m.home.x), Math.abs(m.tile.y - m.home.y)) > 8) {
+        m.inCombat = false;
+        this.step(m, m.home.x, m.home.y);
+        continue;
+      }
+      m.inCombat = true;
+      if (m.def.ranged) {
+        if (d < RANGED_RANGE - 1) this.stepAway(m, p.gx, p.gy); // too close — back off
+        else if (d > RANGED_RANGE) this.step(m, p.gx, p.gy); // too far — close distance
+      } else if (d > 1) {
+        this.step(m, p.gx, p.gy);
+      }
+    }
+  }
+
+  private returnHome(m: MonsterCombat) {
+    if (Math.max(Math.abs(m.tile.x - m.home.x), Math.abs(m.tile.y - m.home.y)) > 1) {
+      this.step(m, m.home.x, m.home.y);
+    }
+  }
+
+  /** Move one tile toward (tx,ty), never onto water/buildings/another monster. */
+  private step(m: MonsterCombat, tx: number, ty: number) {
+    const dirs: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    let best: { x: number; y: number } | null = null;
+    let bestScore = Infinity;
+    for (const [dx, dy] of dirs) {
+      const nx = m.tile.x + dx, ny = m.tile.y + dy;
+      const t = this.state.world.grid.at(nx, ny);
+      if (!t || !t.walkable || t.occupant !== "NONE") continue;
+      const score = Math.abs(nx - tx) + Math.abs(ny - ty);
+      if (score < bestScore) { bestScore = score; best = { x: nx, y: ny }; }
+    }
+    if (best) this.moveMonster(m, best.x, best.y);
+  }
+
+  /** Move one tile AWAY from (tx,ty) — ranged monsters keep their distance. */
+  private stepAway(m: MonsterCombat, tx: number, ty: number) {
+    const dirs: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    let best: { x: number; y: number } | null = null;
+    let bestScore = -Infinity;
+    for (const [dx, dy] of dirs) {
+      const nx = m.tile.x + dx, ny = m.tile.y + dy;
+      const t = this.state.world.grid.at(nx, ny);
+      if (!t || !t.walkable || t.occupant !== "NONE") continue;
+      const score = Math.abs(nx - tx) + Math.abs(ny - ty);
+      if (score > bestScore) { bestScore = score; best = { x: nx, y: ny }; }
+    }
+    if (best) this.moveMonster(m, best.x, best.y);
+  }
+
+  private moveMonster(m: MonsterCombat, nx: number, ny: number) {
+    this.state.world.grid.clearOccupant(m.tile.x, m.tile.y);
+    m.tile = { x: nx, y: ny };
+    this.state.world.grid.setOccupant(nx, ny, "MONSTER", m.id);
+    m.group.position.set(nx, 0, ny);
   }
 
   private tryPlayerAttack(target: MonsterCombat, weapon: WeaponDef, now: number) {

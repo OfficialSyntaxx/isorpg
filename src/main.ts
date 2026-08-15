@@ -58,6 +58,7 @@ class Game {
   private npcs!: NpcSystem;
   private clockMin = 0;
   private day = 1;
+  private heroFlashUntil = 0;
 
   async boot() {
     initToasts();
@@ -140,7 +141,10 @@ class Game {
     // Combat events → HUD
     this.combat.setCallbacks({
       onPlayerHit: (m, dmg) => this.ui.floatText(`${dmg}`, "dmg"),
-      onHurtByMonster: (d) => { this.ui.setPlayerHp(this.state.player.health.hp, this.state.player.health.maxHp); },
+      onHurtByMonster: (d) => {
+        this.ui.setPlayerHp(this.state.player.health.hp, this.state.player.health.maxHp);
+        this.heroFlashUntil = Date.now() + 250;
+      },
       onKill: (m, drops, kc) => {
         this.ui.setCombat(null, 0, 0);
         showToast(`⚔️ ${m.def.name} down! (+${kc} KC)`);
@@ -270,6 +274,13 @@ class Game {
 
   private routeToMonster(m: MonsterCombat) {
     const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
+    // P4: a ranged weapon fights from distance — no need to walk adjacent.
+    const dist = Math.max(Math.abs(m.tile.x - px), Math.abs(m.tile.y - py));
+    if (this.combat.equippedWeapon().kind === "ranged" && dist <= 5) {
+      this.combat.engage(m);
+      this.combat.confirmFight();
+      return;
+    }
     const path = findPath(this.grid, px, py, m.tile.x, m.tile.y, true);
     if (!path) { showToast("Can't reach that monster", "error", 1200); return; }
     if (path.length === 0) { this.combat.confirmFight(); return; }
@@ -351,6 +362,8 @@ class Game {
     guarded("Movement", () => { this.movement.update(dt); this.movement.syncToModel(); });
     guarded("World", () => this.world.update(dt * 1000));
     guarded("Npc", () => this.npcs.update(dt));
+    // P4: hero flashes red briefly when a monster lands a hit.
+    flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");
     if (this.skill.hasActive || this.craft.hasActive) {
       const t = performance.now() / 1000;
       this.hero.armR.rotation.x = Math.sin(t * 14) * 0.5;
@@ -403,6 +416,17 @@ function adjustedStart(state: ReturnType<typeof createFreshState>, grid: Grid) {
 
 function nameOf(itemId: string): string {
   return ITEM_NAMES[itemId]?.name ?? itemId;
+}
+
+/** P4: tint the hero's materials (red flash on hurt, black otherwise). */
+function flashHero(hero: ReturnType<typeof makeHero>, color: string) {
+  hero.group.traverse((o) => {
+    const mm = o as THREE.Mesh;
+    if (mm.isMesh && mm.material instanceof THREE.MeshStandardMaterial) {
+      mm.material.emissive.set(color);
+      mm.material.emissiveIntensity = color === "#000000" ? 0 : 1.4;
+    }
+  });
 }
 
 const NODE_NAMES: Record<string, string> = {

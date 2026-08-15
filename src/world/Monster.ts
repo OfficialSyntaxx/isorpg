@@ -7,6 +7,7 @@ export interface MonsterCombat {
   id: string;
   def: MonsterDef;
   tile: { x: number; y: number };
+  home: { x: number; y: number }; // spawn tile — leash/return anchor (P4 AI)
   seed: number;
   hp: number;
   maxHp: number;
@@ -80,7 +81,7 @@ export function spawnMonster(id: string, def: MonsterDef, gx: number, gy: number
   const group = buildMonsterMesh(id, seed);
   group.position.set(gx, 0, gy);
   return {
-    id, def, tile: { x: gx, y: gy }, seed,
+    id, def, tile: { x: gx, y: gy }, home: { x: gx, y: gy }, seed,
     hp: def.hp, maxHp: def.hp, group,
     dead: false, respawnAt: 0, inCombat: false, attackAcc: 0, flashUntil: 0,
   };
