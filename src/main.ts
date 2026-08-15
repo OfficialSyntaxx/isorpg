@@ -18,6 +18,7 @@ import { spawnBurst, updateFx, type FxPiece } from "./core/Fx";
 import { tickClock, dayFactor, iconFor } from "./core/Clock";
 import { NpcSystem } from "./systems/NpcSystem";
 import { DungeonSystem, DUNGEON_ORIGIN } from "./systems/DungeonSystem";
+import { QuestSystem } from "./systems/QuestSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -59,6 +60,7 @@ class Game {
   // P3: living world — clock + NPCs/wildlife.
   private npcs!: NpcSystem;
   private dungeon!: DungeonSystem;
+  private quest!: QuestSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private clockMin = 0;
   private day = 1;
@@ -92,6 +94,7 @@ class Game {
     this.npcs = new NpcSystem(this.engine.scene, this.grid, { getBuildings: () => this.state.town.buildings });
     this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid);
     this.dungeon.buildMeshes();
+    this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast);
     this.movement = new MovementSystem(this.state.player.pos, this.hero);
     this.skill = new SkillSystem(this.state, this.world.consume.bind(this.world));
     this.build = new BuildSystem(this.engine.scene, this.grid, this.state);
@@ -166,6 +169,10 @@ class Game {
         showToast("💀 You died… respawned in town.");
       },
       onKill: (m, drops, kc) => {
+        // P6: slaying the Cave Brute completes the dungeon onboarding quest.
+        if (m.def.id === "cave_brute" && this.dungeon.active) {
+          this.quest.notifyBruteDown(this.state.player.inventory);
+        }
         this.ui.setCombat(null, 0, 0);
         showToast(`⚔️ ${m.def.name} down! (+${kc} KC)`);
         if (drops.length) showToast(`Loot: ${drops.join(", ")}`, "info", 2000);
@@ -276,6 +283,8 @@ class Game {
     if (this.dungeon.active) { this.onDungeonTap(gx, gy); return; }
     // P5: the deep-wilderness door.
     if (gx === this.dungeon.entrance.x && gy === this.dungeon.entrance.y) { this.enterDungeon(); return; }
+    // P6: the tutorial guide NPC parked beside the dungeon door.
+    if (this.quest.isGuideTile(gx, gy)) { this.quest.talkGuide(); return; }
 
     const node = this.world.nodeAt(gx, gy);
     if (node) {
@@ -340,6 +349,7 @@ class Game {
           removeItem(this.state.player.inventory, "dungeon_key", 1);
           this.dungeon.unlock();
           showToast("🔓 The Iron Key turns — the door grinds open (key consumed).", "success", 2400);
+          this.quest.notifyDoorOpened(); // P6
         } else {
           showToast("🔒 Locked. Find the Iron Key in a side chamber.", "error", 2200);
         }
@@ -354,6 +364,7 @@ class Game {
         addItem(this.state.player.inventory, "dungeon_key", 1);
         this.dungeon.hideKey();
         showToast("🗝️ You found the Iron Key.", "success", 2000);
+        this.quest.notifyKeyFound(); // P6
       }
       this.setTarget("walk", gx, gy, "Iron Key", null);
       return;
@@ -514,6 +525,7 @@ class Game {
     guarded("Movement", () => { this.movement.update(dt); this.movement.syncToModel(); });
     guarded("World", () => this.world.update(dt * 1000));
     guarded("Npc", () => this.npcs.update(dt));
+    guarded("Quest", () => this.quest.update(dt));
     // P4: hero flashes red briefly when a monster lands a hit.
     flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");
     // P4b: advance kill-burst shards.
