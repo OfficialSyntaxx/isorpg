@@ -15,6 +15,7 @@ import { BUILDINGS, BUILDING_TYPES, type BuildingType } from "../data/Buildings"
 import { countItem } from "../components/Inventory";
 import { equipItem, unequipItem, EQUIP_SLOTS } from "../components/Equipment";
 import type { EquipSlot } from "../data/Items";
+import type { MapSnapshot } from "../systems/MapSystem";
 
 const SLOT_NAMES: Record<EquipSlot, string> = {
   weapon: "Weapon", offhand: "Offhand", head: "Helm", body: "Body", legs: "Legs",
@@ -49,6 +50,8 @@ export class UI {
   private xpLabel = document.getElementById("action-xp-label")!;
   private xpFill = document.getElementById("action-xp-fill") as HTMLElement;
   private fileInput: HTMLInputElement;
+  private mapSnapshot: (() => MapSnapshot | null) | null = null;
+  private mapTravel: ((id: string) => boolean) | null = null;
 
   constructor(state: GameState, ev: UIEvents = {}) {
     this.state = state;
@@ -74,6 +77,7 @@ export class UI {
 
   private bindPanels() {
     this.$("#btn-inventory").addEventListener("click", () => this.openPanel("inventory"));
+    this.$("#btn-map")?.addEventListener("click", () => this.openPanel("map"));
     this.$("#btn-settings").addEventListener("click", () => this.openPanel("settings"));
     this.$("#btn-craft")?.addEventListener("click", () => this.openPanel("craft"));
     this.$("#btn-build")?.addEventListener("click", () => this.openPanel("build"));
@@ -83,7 +87,7 @@ export class UI {
     this.panel.addEventListener("click", (e) => { if (e.target === this.panel) this.closePanel(); });
   }
 
-  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build") {
+  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map") {
     // Any render error must never silently keep the panel hidden. Render first;
     // on failure show a visible degraded panel + log, never a dead button.
     try {
@@ -91,6 +95,7 @@ export class UI {
       else if (id === "combat") this.renderCombat();
       else if (id === "craft") this.renderCraft();
       else if (id === "build") this.renderBuild();
+      else if (id === "map") this.renderMap();
       else this.renderSettings();
     } catch (err) {
       EngineLogger.logError(`panel:${id}`, err);
@@ -100,6 +105,58 @@ export class UI {
     this.panel.classList.remove("hidden");
   }
   closePanel() { this.panel.classList.add("hidden"); }
+
+  /** P6: wire the world-map data + fast-travel executor (main.ts). */
+  attachMap(snapshot: () => MapSnapshot | null, travel: (id: string) => boolean) {
+    this.mapSnapshot = snapshot;
+    this.mapTravel = travel;
+  }
+
+  // ————— World map —————
+  private renderMap() {
+    this.panelTitle.textContent = "World Map";
+    const snap = this.mapSnapshot?.();
+    if (!snap) { this.panelBody.innerHTML = `<div class="empty">Map unavailable.</div>`; return; }
+    const scale = 8;
+    const PX = (x: number) => (x + 0.5) * scale;
+    const PY = (y: number) => (y + 0.5) * scale;
+    const W = snap.size * scale;
+    let grid = "";
+    for (let i = 0; i <= snap.size; i++) {
+      grid += `<line x1="${i * scale}" y1="0" x2="${i * scale}" y2="${W}" stroke="#7fd0a0" stroke-opacity="0.08" stroke-width="1"/>`;
+      grid += `<line x1="0" y1="${i * scale}" x2="${W}" y2="${i * scale}" stroke="#7fd0a0" stroke-opacity="0.08" stroke-width="1"/>`;
+    }
+    let markers = "";
+    for (const p of snap.pois) {
+      if (!p.discovered) continue;
+      markers += `<circle cx="${PX(p.x)}" cy="${PY(p.y)}" r="5" fill="#ffd24a" stroke="#6b4a00" stroke-width="1.5"/>`;
+      markers += `<text x="${PX(p.x) + 8}" y="${PY(p.y) + 3.5}" font-size="8.5" fill="#ffe9a0" style="text-shadow:0 1px 0 #000">${p.name}</text>`;
+    }
+    const mapHtml = `<svg viewBox="0 0 ${W} ${W}" width="100%" height="auto" style="background:#1b2230;border-radius:10px;display:block">
+        <rect width="${W}" height="${W}" fill="#1b2230"/>${grid}${markers}
+        <circle cx="${PX(snap.player.x)}" cy="${PY(snap.player.y)}" r="6" fill="#ffffff">
+          <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </svg>`;
+    const lockChip = snap.unlocked
+      ? `<div class="set-val">Fast travel ready ✨</div>`
+      : `<div class="set-val">🔒 Fast travel unlocks when you finish Eldric's quest (defeat the Cave Brute).</div>`;
+    const rows = snap.pois.map((p) => {
+      if (!p.discovered) return `<div class="inv-row"><span class="inv-ico">❔</span><div class="inv-name">???</div><div class="inv-desc">Undiscovered</div></div>`;
+      const travel = snap.unlocked
+        ? `<button class="btn btn-mini" data-travel="${p.id}">Travel</button>`
+        : `<span class="inv-desc">🔒 Locked</span>`;
+      return `<div class="inv-row"><span class="inv-ico">${p.icon}</span><div class="inv-name">${p.name}</div><div class="inv-desc">(${p.x}, ${p.y})</div>${travel}</div>`;
+    }).join("");
+    this.panelBody.innerHTML = mapHtml + lockChip + rows;
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-travel]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.travel ?? "";
+        if (this.mapTravel?.(id)) this.closePanel();
+        else this.renderMap();
+      });
+    });
+  }
 
   /** P1: in-world label + action chip, anchored to a screen point (px, py). */
   showTargetChip(text: string, px: number, py: number) {

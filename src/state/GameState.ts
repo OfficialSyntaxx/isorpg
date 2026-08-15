@@ -33,6 +33,8 @@ export interface GameState {
     inventory: InventoryComponent;
     /** P2 equipment: which item is in each slot (itemId). */
     equipped: Partial<Record<EquipSlot, string>>;
+    /** P6: world-map state — discovered points of interest + fast-travel. */
+    map: { discovered: string[]; fastTravel: boolean };
   };
   world: {
     grid: Grid;
@@ -56,6 +58,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       skills: createSkillComponent(),
       inventory: createInventory(),
       equipped: {},
+      map: { discovered: [], fastTravel: false },
     },
     world: { grid, nodes: new Map() },
     town: { buildings: [] },

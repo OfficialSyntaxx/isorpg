@@ -52,6 +52,10 @@ export class SaveSystem {
       },
       town: { buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })) },
       collectionLog: { unlocked: [...this.state.collectionLog] },
+      map: {
+        discovered: [...this.state.player.map.discovered],
+        fastTravel: this.state.player.map.fastTravel,
+      },
     };
   }
 
@@ -82,6 +86,11 @@ export class SaveSystem {
       id: String(b.id), type: b.type, x: b.x, y: b.y, level: b.level,
     }));
     this.state.collectionLog = new Set((s.collectionLog?.unlocked ?? []).map(String));
+    // P6: world-map discovery + fast-travel unlock persist with the save.
+    p.map = {
+      discovered: (s.map?.discovered ?? []).map(String),
+      fastTravel: !!s.map?.fastTravel,
+    };
     return { ok: true, summary: undefined };
   }
 

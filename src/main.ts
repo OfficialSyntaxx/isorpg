@@ -19,6 +19,7 @@ import { tickClock, dayFactor, iconFor } from "./core/Clock";
 import { NpcSystem } from "./systems/NpcSystem";
 import { DungeonSystem, DUNGEON_ORIGIN } from "./systems/DungeonSystem";
 import { QuestSystem } from "./systems/QuestSystem";
+import { MapSystem } from "./systems/MapSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -61,6 +62,7 @@ class Game {
   private npcs!: NpcSystem;
   private dungeon!: DungeonSystem;
   private quest!: QuestSystem;
+  private mapSys!: MapSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private clockMin = 0;
   private day = 1;
@@ -95,6 +97,11 @@ class Game {
     this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid);
     this.dungeon.buildMeshes();
     this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast);
+    this.mapSys = new MapSystem(this.grid.width, this.dungeon, this.quest, this.state.player.map);
+    this.ui.attachMap(
+      () => this.mapSys.snapshot(this.state.player.pos.gx, this.state.player.pos.gy),
+      (id) => this.doFastTravel(id)
+    );
     this.movement = new MovementSystem(this.state.player.pos, this.hero);
     this.skill = new SkillSystem(this.state, this.world.consume.bind(this.world));
     this.build = new BuildSystem(this.engine.scene, this.grid, this.state);
@@ -172,6 +179,7 @@ class Game {
         // P6: slaying the Cave Brute completes the dungeon onboarding quest.
         if (m.def.id === "cave_brute" && this.dungeon.active) {
           this.quest.notifyBruteDown(this.state.player.inventory);
+          this.mapSys.unlockFastTravel(); // P6: beating the boss opens fast travel
         }
         this.ui.setCombat(null, 0, 0);
         showToast(`⚔️ ${m.def.name} down! (+${kc} KC)`);
@@ -426,6 +434,23 @@ class Game {
     showToast("Back above ground.", "info", 1800);
   }
 
+  /** P6: teleport to a discovered waypoint (fast travel, unlocked by the quest). */
+  private doFastTravel(id: string): boolean {
+    if (this.dungeon.active) { showToast("You must leave the dungeon to fast-travel.", "error", 2000); return false; }
+    const t = this.mapSys.travelTarget(id);
+    if (!t) {
+      showToast(this.mapSys.unlocked ? "Waypoint not discovered yet." : "Fast travel unlocks after you finish Eldric's quest.", "error", 2600);
+      return false;
+    }
+    const p = this.state.player.pos;
+    p.gx = t.x; p.gy = t.y; p.wx = t.x; p.wz = t.y;
+    this.hero.group.position.set(p.wx, 0, p.wz);
+    this.engine.updateCameraTarget({ x: p.wx, z: p.wz }, 1);
+    this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.target = null; this.combat.stop();
+    showToast(`🧭 Fast-travelled to ${this.mapSys.poiName(id)}`, "success", 2200);
+    return true;
+  }
+
   private routeToNode(node: ResourceNode) {
     const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
     const path = findPath(this.grid, px, py, node.tile.x, node.tile.y, true);
@@ -526,6 +551,10 @@ class Game {
     guarded("World", () => this.world.update(dt * 1000));
     guarded("Npc", () => this.npcs.update(dt));
     guarded("Quest", () => this.quest.update(dt));
+    guarded("Map", () => {
+      const fresh = this.mapSys.checkDiscoveries(this.state.player.pos.gx, this.state.player.pos.gy);
+      if (fresh.length) showToast(`📍 Explored: ${fresh.map((id) => this.mapSys.poiName(id)).join(", ")}`, "info", 3600);
+    });
     // P4: hero flashes red briefly when a monster lands a hit.
     flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");
     // P4b: advance kill-burst shards.
