@@ -32,6 +32,7 @@ export class UI {
   private panel = document.getElementById("side-panel")!;
   private panelTitle = document.getElementById("panel-title")!;
   private panelBody = document.getElementById("panel-body")!;
+  private targetChip = document.getElementById("target-chip")!;
   private playerLevel = document.getElementById("player-level")!;
   private playerName = document.getElementById("player-name")!;
   private xpWrap = document.getElementById("action-xp")!;
@@ -89,6 +90,15 @@ export class UI {
     this.panel.classList.remove("hidden");
   }
   closePanel() { this.panel.classList.add("hidden"); }
+
+  /** P1: in-world label + action chip, anchored to a screen point (px, py). */
+  showTargetChip(text: string, px: number, py: number) {
+    this.targetChip.textContent = text;
+    this.targetChip.style.left = `${Math.round(px)}px`;
+    this.targetChip.style.top = `${Math.round(py)}px`;
+    this.targetChip.classList.remove("hidden");
+  }
+  hideTargetChip() { this.targetChip.classList.add("hidden"); }
 
   /** Show/hide the "tap a green tile" banner while a building is armed for placement. */
   setPlacing(type: BuildingType | null) {

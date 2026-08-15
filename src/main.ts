@@ -1,5 +1,6 @@
 // Engine entry: wiring, tick runner, input routing, window bindings.
 import "./style.css";
+import * as THREE from "three";
 import { Engine } from "./core/Engine";
 import { Grid } from "./world/Grid";
 import { createFreshState } from "./state/GameState";
@@ -12,6 +13,7 @@ import { CraftingSystem } from "./systems/CraftingSystem";
 import { BuildSystem } from "./systems/BuildSystem";
 import { SaveSystem } from "./systems/SaveSystem";
 import { InputController } from "./core/InputController";
+import { makeSelectionRing, type SelectionRing } from "./generators/Selection";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -43,6 +45,11 @@ class Game {
   private pendingNode: ResourceNode | null = null;
   private activeSkill: SkillId | null = null;
 
+  // P1: targeting — in-world ring + floating label/action chip.
+  private ringGroup!: THREE.Group;
+  private ringUpdate!: (tMs: number) => void;
+  private target: { kind: "node" | "monster" | "walk"; label: string; p: THREE.Vector3; ref: ResourceNode | MonsterCombat | null } | null = null;
+
   async boot() {
     initToasts();
 
@@ -50,6 +57,13 @@ class Game {
     this.grid = new Grid(20, 20);
     this.hero = makeHero();
     this.engine.scene.add(this.hero.group);
+
+    // P1 targeting ring (hidden until the player taps something).
+    const ring: SelectionRing = makeSelectionRing();
+    this.ringGroup = ring.group;
+    this.ringUpdate = ring.update;
+    this.ringGroup.visible = false;
+    this.engine.scene.add(this.ringGroup);
 
     this.state = createFreshState(this.grid, "Hero", Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
     this.combat = new CombatSystem(this.state);
@@ -172,21 +186,35 @@ class Game {
     const node = this.world.nodeAt(gx, gy);
     if (node) {
       if (node.depleted) { showToast("That spot is still growing back…", "info", 1200); return; }
+      const verb = ACTION_FOR[node.type] ?? "Forage";
+      const name = NODE_NAMES[node.def.masteryKey] ?? node.def.masteryKey;
+      this.setTarget("node", node.tile.x, node.tile.y, `${verb} ${name}`, node);
       this.routeToNode(node);
       return;
     }
 
     const m = this.combat.monsterAt(gx, gy);
-    if (m) { this.routeToMonster(m); return; }
+    if (m) {
+      this.setTarget("monster", m.tile.x, m.tile.y, `Attack ${m.def.name}`, m);
+      this.routeToMonster(m);
+      return;
+    }
 
     const t = this.grid.at(gx, gy);
-    if (t?.walkable) { this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.setPath(gx, gy); }
+    if (t?.walkable) {
+      this.skill.interrupt(); this.craft.stop(); this.pendingNode = null;
+      this.setTarget("walk", gx, gy, "Walk", null);
+      this.setPath(gx, gy);
+      return;
+    }
+    showToast(t ? "That spot is blocked" : "Out of bounds", "error", 1100);
   }
 
   private routeToNode(node: ResourceNode) {
     const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
     const path = findPath(this.grid, px, py, node.tile.x, node.tile.y, true);
-    if (!path || path.length === 0) { this.beginGather(node); return; }
+    if (!path) { showToast("Can't reach that", "error", 1200); return; }
+    if (path.length === 0) { this.beginGather(node); return; }
     this.pendingNode = node;
     this.movement.setPath(path);
   }
@@ -194,7 +222,8 @@ class Game {
   private routeToMonster(m: MonsterCombat) {
     const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
     const path = findPath(this.grid, px, py, m.tile.x, m.tile.y, true);
-    if (!path || path.length === 0) { this.combat.confirmFight(); return; }
+    if (!path) { showToast("Can't reach that monster", "error", 1200); return; }
+    if (path.length === 0) { this.combat.confirmFight(); return; }
     this.combat.engage(m);
     this.movement.setPath(path);
   }
@@ -203,6 +232,34 @@ class Game {
     const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
     const path = findPath(this.grid, px, py, gx, gy, true);
     if (path) this.movement.setPath(path);
+    else showToast("Can't reach there", "error", 1200);
+  }
+
+  /** P1: aim the ring + label at whatever was tapped (replaces previous). */
+  private setTarget(kind: "node" | "monster" | "walk", gx: number, gy: number, label: string, ref: ResourceNode | MonsterCombat | null) {
+    this.target = { kind, label, p: new THREE.Vector3(gx, 0, gy), ref };
+  }
+
+  /** P1: each frame — move/pulse the ring under the target and pin the chip. */
+  private updateTarget(_dt: number) {
+    if (!this.target) { this.ringGroup.visible = false; this.ui.hideTargetChip(); return; }
+    const tgt = this.target;
+    if (tgt.kind === "node" && (tgt.ref as ResourceNode)?.depleted) this.target = null;
+    else if (tgt.kind === "monster" && (tgt.ref as MonsterCombat)?.dead) this.target = null;
+    if (!this.target) { this.ringGroup.visible = false; this.ui.hideTargetChip(); return; }
+
+    this.ringGroup.position.set(tgt.p.x, 0.02, tgt.p.z);
+    this.ringGroup.visible = true;
+    this.ringUpdate(performance.now());
+
+    const w = this.engine.renderer.domElement.clientWidth || window.innerWidth;
+    const h = window.innerHeight;
+    const v = new THREE.Vector3(tgt.p.x, 1.15, tgt.p.z).project(this.engine.camera);
+    if (v.z > -1 && v.z < 1) {
+      this.ui.showTargetChip(tgt.label, (v.x * 0.5 + 0.5) * w, (-v.y * 0.5 + 0.5) * h);
+    } else {
+      this.ui.hideTargetChip();
+    }
   }
 
   private onArrive(x: number, y: number) {
@@ -241,6 +298,7 @@ class Game {
     this.input.setFollow(this.movement.isMoving ? { x: this.hero.group.position.x, z: this.hero.group.position.z } : null);
     this.input.updateFollow(dt);
     this.input.updateKeyboard(dt);
+    guarded("Target", () => this.updateTarget(dt));
     guarded("UI", () => this.ui.refresh(this.activeSkill));
   }
 
@@ -290,6 +348,7 @@ const NODE_NAMES: Record<string, string> = {
   copper: "Copper rock", tin: "Tin rock", iron: "Iron rock", coal: "Coal rock",
   shrimp: "Fishing spot", trout: "Fishing spot",
 };
+const ACTION_FOR: Record<string, string> = { TREE: "Chop", ROCK: "Mine", WATER: "Fish" };
 
 // Boot guarded so a failure surfaces as a toast instead of a white screen
 guarded("main", () => {

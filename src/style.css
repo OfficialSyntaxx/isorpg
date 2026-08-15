@@ -135,6 +135,24 @@ html, body {
 
 /* ——— Floating damage/text ——— */
 #float-layer { position: fixed; inset: 0; pointer-events: none; z-index: 25; overflow: hidden; }
+
+/* ——— P1: in-world target label / action chip (positioned each frame) ——— */
+.target-chip {
+  position: absolute;
+  left: 0; top: 0;
+  transform: translate(-50%, -140%);
+  pointer-events: none;
+  z-index: 4;
+  background: rgba(10, 15, 30, 0.92);
+  border: 1px solid rgba(255, 215, 122, 0.5);
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font: 600 13px/1.2 system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
 .float-tex {
   position: absolute;
   color: var(--gold);
