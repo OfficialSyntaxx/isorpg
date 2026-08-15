@@ -74,10 +74,13 @@ export class WorldSystem {
         mesh.userData.tile = { x: gx, y: gy };
         // Per-tile brightness tint so adjacent ground isn't one flat sheet.
         const tint = seeded(t.seed * 7 + 3);
-        const v = 0.9 + tint() * 0.18;
+        // P6.1: the deep wilds read darker + cooler than the outer bands.
+        const zoneShade = t.zoneId === "WILDERNESS_LVL2" ? 0.84 : t.zoneId === "WILDERNESS_LVL1" ? 0.96 : 1.0;
+        const cold = t.zoneId === "WILDERNESS_LVL2" ? 0.07 : 0;
+        const v = (0.9 + tint() * 0.18) * zoneShade;
         const n = mesh.geometry.attributes.position.count;
         const colors = new Float32Array(n * 3);
-        for (let i = 0; i < n; i++) { colors[i * 3] = v; colors[i * 3 + 1] = v; colors[i * 3 + 2] = v; }
+        for (let i = 0; i < n; i++) { colors[i * 3] = v; colors[i * 3 + 1] = v; colors[i * 3 + 2] = v + cold; }
         mesh.geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
         root.add(mesh);
         if (t.terrainType === "WATER") waterTiles.push({ x: gx, y: gy });
@@ -163,20 +166,21 @@ export class WorldSystem {
       { type: "zombie", cap: 1 },
     ];
     const counts: Record<string, number> = {};
+    const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
     for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
-        if (!g.isRegionUnlocked(gx, gy)) continue;
         const t = g.at(gx, gy)!;
-        if (t.zoneId !== "WILDERNESS_LVL1") continue;
+        if (t.zoneId !== "WILDERNESS_LVL1" && t.zoneId !== "WILDERNESS_LVL2") continue;
         if (!t.walkable || t.occupant !== "NONE") continue;
         const rnd = seeded(t.seed * 3 + 7);
         const r = rnd();
-        const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
         const d = Math.max(Math.abs(gx - cx), Math.abs(gy - cy));
+        // P6.1: threat scales outward — the deep wilds get the meanest mix.
         const pool: (keyof typeof MONSTERS)[] =
           d <= 8 ? ["giant_rat", "goblin"] :
           d <= 13 ? ["dire_wolf", "goblin_archer"] :
-          ["skeleton", "zombie"];
+          d <= 19 ? ["skeleton", "zombie"] :
+          ["dire_wolf", "goblin_archer", "zombie"];
         const type = pool[Math.floor(r * pool.length) % pool.length] as keyof typeof MONSTERS;
         const defCfg = layout.find((l) => l.type === type)!;
         if ((counts[type] ?? 0) >= defCfg.cap) continue;
@@ -191,10 +195,8 @@ export class WorldSystem {
     EngineLogger.info("Monsters: " + JSON.stringify(counts));
 
     // P4b: one dormant boss prowls the deep wilderness (deterministic seed).
-    const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
     outer: for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
-        if (!g.isRegionUnlocked(gx, gy)) continue;
         const t = g.at(gx, gy)!;
         if (t.zoneId !== "WILDERNESS_LVL1" || !t.walkable || t.occupant !== "NONE") continue;
         if (Math.max(Math.abs(gx - cx), Math.abs(gy - cy)) < 6) continue;

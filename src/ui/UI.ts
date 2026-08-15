@@ -126,6 +126,16 @@ export class UI {
       grid += `<line x1="${i * scale}" y1="0" x2="${i * scale}" y2="${W}" stroke="#7fd0a0" stroke-opacity="0.08" stroke-width="1"/>`;
       grid += `<line x1="0" y1="${i * scale}" x2="${W}" y2="${i * scale}" stroke="#7fd0a0" stroke-opacity="0.08" stroke-width="1"/>`;
     }
+    // P6.1: faint tint over visited chunk blocks — the walk-range layer.
+    let exploredSvg = "";
+    const covCols = Math.max(1, Math.ceil(snap.size / 6));
+    for (let cb = 0; cb < covCols; cb++) {
+      for (let ca = 0; ca < covCols; ca++) {
+        if (snap.coverage.coarse[cb * covCols + ca] !== "E") continue;
+        const x0 = ca * 6 * scale, y0 = cb * 6 * scale, w = 6 * scale;
+        exploredSvg += `<rect x="${x0}" y="${y0}" width="${w}" height="${w}" fill="#7fd0a0" opacity="0.10"/>`;
+      }
+    }
     let markers = "";
     for (const p of snap.pois) {
       if (!p.discovered) continue;
@@ -137,11 +147,12 @@ export class UI {
       markers += `<text x="${PX(p.x) + 8}" y="${PY(p.y) + 3.5}" font-size="8.5" fill="${label}" style="text-shadow:0 1px 0 #000">${p.name}</text>`;
     }
     const mapHtml = `<svg viewBox="0 0 ${W} ${W}" width="100%" height="auto" style="background:#1b2230;border-radius:10px;display:block">
-        <rect width="${W}" height="${W}" fill="#1b2230"/>${grid}${markers}
+        <rect width="${W}" height="${W}" fill="#1b2230"/>${grid}${exploredSvg}${markers}
         <circle cx="${PX(snap.player.x)}" cy="${PY(snap.player.y)}" r="6" fill="#ffffff">
           <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite"/>
         </circle>
       </svg>`;
+    const covChip = `<div class="set-val">🗺️ Land explored: ${snap.coverage.pct}%</div>`;
     const lockChip = snap.unlocked
       ? `<div class="set-val">Fast travel ready ✨</div>`
       : `<div class="set-val">🔒 Fast travel unlocks when you finish Eldric's quest (defeat the Cave Brute).</div>`;
@@ -152,7 +163,7 @@ export class UI {
         : `<span class="inv-desc">🔒 Locked</span>`;
       return `<div class="inv-row"><span class="inv-ico">${p.icon}</span><div class="inv-name">${p.name}</div><div class="inv-desc">(${p.x}, ${p.y})</div>${travel}</div>`;
     }).join("");
-    this.panelBody.innerHTML = mapHtml + lockChip + rows;
+    this.panelBody.innerHTML = mapHtml + covChip + lockChip + rows;
     this.panelBody.querySelectorAll<HTMLButtonElement>("[data-travel]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.dataset.travel ?? "";

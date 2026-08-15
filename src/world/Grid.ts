@@ -20,10 +20,12 @@ export interface Tile {
 
 export const TILE_SIZE = 1;
 
-/** Chunk edge length for zoning/regions (6 → a 30x30 map yields real
- *  WILDERNESS corners beyond the town ring; a 10-tile chunk on small maps
- *  produced zero wilderness, so monsters never spawned in production). */
+/** Chunk edge length for zoning/regions (6 → a 42x42 map yields four bands:
+ *  town → settlement → wilderness → deep wilds). */
 export const GRID_CHUNK = 6;
+
+/** P6.1: world scale — 42×42 is the production size (7×7 chunks). */
+export const WORLD_SIZE = 42;
 
 /** Cheap deterministic PRNG so the world is stable across sessions. */
 function mulberry32(a: number): () => number {
@@ -42,7 +44,7 @@ export class Grid implements GridLike {
   tiles: Tile[][];
   regionUnlocked: boolean[][]; // chunks of 10x10
 
-  constructor(width = 20, height = 20) {
+  constructor(width = WORLD_SIZE, height = WORLD_SIZE) {
     this.width = width;
     this.height = height;
     this.tiles = [];
@@ -76,9 +78,12 @@ export class Grid implements GridLike {
       const rows = Math.ceil(h / GRID_CHUNK);
       const r = Math.floor(y / GRID_CHUNK), c = Math.floor(x / GRID_CHUNK);
       const cr = Math.floor(rows / 2), cc = Math.floor(cols / 2);
-      if (r === cr && c === cc) return "TOWN_CENTER";
-      if (r === cr - 1 || r === cr + 1 || c === cc - 1 || c === cc + 1) return "SETTLEMENT";
-      return "WILDERNESS_LVL1";
+      // P6.1: four concentric bands by chunk distance from centre.
+      const d = Math.max(Math.abs(r - cr), Math.abs(c - cc));
+      if (d === 0) return "TOWN_CENTER";
+      if (d === 1) return "SETTLEMENT";
+      if (d === 2) return "WILDERNESS_LVL1";
+      return "WILDERNESS_LVL2"; // the deep wilds
     };
 
     for (let y = 0; y < h; y++) {
@@ -164,6 +169,18 @@ export class Grid implements GridLike {
     const cols = Math.max(1, Math.ceil(this.width / GRID_CHUNK));
     const r = Math.floor(y / GRID_CHUNK), c = Math.floor(x / GRID_CHUNK);
     return Boolean(this.regionUnlocked?.[r]?.[c]);
+  }
+
+  /** P6.1: unlock the 3×3 chunk block around a position (exploration). */
+  unlockAround(x: number, y: number): void {
+    const cols = Math.max(1, Math.ceil(this.width / GRID_CHUNK));
+    const rows = Math.max(1, Math.ceil(this.height / GRID_CHUNK));
+    const r = Math.floor(y / GRID_CHUNK), c = Math.floor(x / GRID_CHUNK);
+    for (let rr = Math.max(0, r - 1); rr <= Math.min(rows - 1, r + 1); rr++) {
+      for (let cc = Math.max(0, c - 1); cc <= Math.min(cols - 1, c + 1); cc++) {
+        this.regionUnlocked[rr][cc] = true;
+      }
+    }
   }
 }
 

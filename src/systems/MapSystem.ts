@@ -4,6 +4,7 @@
 // the P6 onboarding quest is complete.
 import type { DungeonSystem } from "./DungeonSystem";
 import type { QuestSystem } from "./QuestSystem";
+import { GRID_CHUNK } from "../world/Grid";
 
 export interface PoiInfo {
   id: string;
@@ -16,17 +17,25 @@ export interface PoiInfo {
   boss?: boolean;
 }
 
+/** The player-owned subset of map state (persisted with the save). */
+export interface MapStore {
+  discovered: string[];
+  fastTravel: boolean;
+  /** P6.1: tile indices the player has walked (for the coverage meter). */
+  explored: number[];
+}
+
+export interface MapCoverage {
+  pct: number; // 0..100 of tiles explored
+  coarse: string[]; // one "E"/"." per chunk block, row-major
+}
+
 export interface MapSnapshot {
   size: number;
   player: { x: number; y: number };
   unlocked: boolean;
   pois: PoiInfo[];
-}
-
-/** The player-owned subset of map state (persisted with the save). */
-export interface MapStore {
-  discovered: string[];
-  fastTravel: boolean;
+  coverage: MapCoverage;
 }
 
 const POI_DISCOVER_RADIUS = 3; // tiles — step within this to "explore" a spot
@@ -38,6 +47,8 @@ export class MapSystem {
   private store: MapStore;
   /** P6b: resolves the Forest Ogre's current lair tile (its home). */
   private getOgre: () => { x: number; y: number } | null;
+  /** P6.1: per-tile exploration flags (indexed y * size + x). */
+  private explored = new Uint8Array(0);
 
   constructor(
     size: number,
@@ -52,11 +63,15 @@ export class MapSystem {
     this.store = store;
     this.getOgre = getOgre;
     if (!this.store.discovered.includes("town")) this.store.discovered.push("town");
+    this.store.explored ??= [];
+    this.explored = new Uint8Array(size * size);
+    for (const idx of this.store.explored) if (idx >= 0 && idx < this.explored.length) this.explored[idx] = 1;
   }
 
   private pois(): { id: string; name: string; icon: string; x: number; y: number; boss?: boolean }[] {
+    const cx = Math.floor(this.size / 2);
     const base = [
-      { id: "town", name: "Isoperia Centre", icon: "🏠", x: 15, y: 15 },
+      { id: "town", name: "Isoperia Centre", icon: "🏠", x: cx, y: cx },
       { id: "caves", name: "The Caves", icon: "🕳️", x: this.dungeon.entrance.x, y: this.dungeon.entrance.y },
       { id: "eldric", name: "Eldric's Camp", icon: "🧭", x: this.quest.guide.x, y: this.quest.guide.y },
     ];
@@ -80,7 +95,44 @@ export class MapSystem {
       player: { x: px, y: py },
       unlocked: this.store.fastTravel,
       pois: this.pois().map((p) => ({ ...p, discovered: this.store.discovered.includes(p.id) })),
+      coverage: this.coverage(),
     };
+  }
+
+  /** P6.1: mark the player's tile + 4-neighbours as walked (persisted). */
+  recordExplore(px: number, py: number): void {
+    const n = this.size;
+    if (px < 0 || py < 0 || px >= n || py >= n) return;
+    const mark = (x: number, y: number) => {
+      if (x < 0 || y < 0 || x >= n || y >= n) return;
+      const idx = y * n + x;
+      if (this.explored[idx]) return;
+      this.explored[idx] = 1;
+      this.store.explored.push(idx);
+    };
+    mark(px, py); mark(px + 1, py); mark(px - 1, py); mark(px, py + 1); mark(px, py - 1);
+  }
+
+  /** P6.1: coverage % + a coarse per-chunk exploration mask for the UI. */
+  private coverage(): MapCoverage {
+    const n = this.size;
+    let seen = 0;
+    for (let i = 0; i < this.explored.length; i++) if (this.explored[i]) seen++;
+    const cols = Math.max(1, Math.ceil(n / GRID_CHUNK));
+    const coarse: string[] = [];
+    for (let cb = 0; cb < cols; cb++) {
+      for (let ca = 0; ca < cols; ca++) {
+        let any = false;
+        for (let y = cb * GRID_CHUNK; y < Math.min(n, (cb + 1) * GRID_CHUNK); y++) {
+          for (let x = ca * GRID_CHUNK; x < Math.min(n, (ca + 1) * GRID_CHUNK); x++) {
+            if (this.explored[y * n + x]) { any = true; break; }
+          }
+          if (any) break;
+        }
+        coarse.push(any ? "E" : ".");
+      }
+    }
+    return { pct: Math.round((seen / (n * n)) * 1000) / 10, coarse };
   }
 
   /** Mark newly-explored POIs the player just walked near. Returns ids. */

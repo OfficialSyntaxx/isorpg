@@ -55,6 +55,7 @@ export class SaveSystem {
       map: {
         discovered: [...this.state.player.map.discovered],
         fastTravel: this.state.player.map.fastTravel,
+        explored: [...this.state.player.map.explored],
       },
     };
   }
@@ -90,6 +91,7 @@ export class SaveSystem {
     p.map = {
       discovered: (s.map?.discovered ?? []).map(String),
       fastTravel: !!s.map?.fastTravel,
+      explored: (s.map?.explored ?? []).map(Number).filter((n: unknown) => typeof n === "number" && Number.isFinite(n)) as number[],
     };
     return { ok: true, summary: undefined };
   }

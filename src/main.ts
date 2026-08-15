@@ -2,7 +2,7 @@
 import "./style.css";
 import * as THREE from "three";
 import { Engine } from "./core/Engine";
-import { Grid } from "./world/Grid";
+import { Grid, WORLD_SIZE } from "./world/Grid";
 import { createFreshState } from "./state/GameState";
 import { makeHero } from "./generators/Character";
 import { WorldSystem } from "./systems/WorldSystem";
@@ -75,7 +75,7 @@ class Game {
     initToasts();
 
     this.engine = new Engine(document.getElementById("game-canvas") as HTMLElement);
-    this.grid = new Grid(30, 30);
+    this.grid = new Grid(WORLD_SIZE, WORLD_SIZE);
     this.hero = makeHero();
     this.engine.scene.add(this.hero.group);
 
@@ -94,7 +94,7 @@ class Game {
     this.combat = new CombatSystem(this.state);
     this.world = new WorldSystem(this.engine.scene, this.grid, this.combat);
     this.npcs = new NpcSystem(this.engine.scene, this.grid, { getBuildings: () => this.state.town.buildings });
-    this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid);
+    this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid, this.grid.width);
     this.dungeon.buildMeshes();
     this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast);
     this.mapSys = new MapSystem(
@@ -564,8 +564,14 @@ class Game {
     guarded("Npc", () => this.npcs.update(dt));
     guarded("Quest", () => this.quest.update(dt));
     guarded("Map", () => {
-      const fresh = this.mapSys.checkDiscoveries(this.state.player.pos.gx, this.state.player.pos.gy);
+      const gx = this.state.player.pos.gx, gy = this.state.player.pos.gy;
+      const fresh = this.mapSys.checkDiscoveries(gx, gy);
       if (fresh.length) showToast(`📍 Explored: ${fresh.map((id) => this.mapSys.poiName(id)).join(", ")}`, "info", 3600);
+      if (!this.dungeon.active) {
+        // P6.1: track walked tiles + reveal region chunks as they are reached.
+        this.mapSys.recordExplore(gx, gy);
+        this.grid.unlockAround(gx, gy);
+      }
     });
     // P4: hero flashes red briefly when a monster lands a hit.
     flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");

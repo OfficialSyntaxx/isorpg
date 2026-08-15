@@ -41,6 +41,7 @@ export class DungeonSystem {
   private scene: THREE.Scene;
   private combat: CombatSystem;
   private tilesGrid: { isWalkable(x: number, y: number): boolean };
+  private size: number;
   tiles: string[][] = [];
   private group = new THREE.Group();
   private doorMesh = new THREE.Group();
@@ -48,10 +49,11 @@ export class DungeonSystem {
   private pickKeyMesh = new THREE.Group();
   private monsters: MonsterCombat[] = [];
 
-  constructor(scene: THREE.Scene, combat: CombatSystem, surfaceGrid: { isWalkable(x: number, y: number): boolean }) {
+  constructor(scene: THREE.Scene, combat: CombatSystem, surfaceGrid: { isWalkable(x: number, y: number): boolean }, worldWidth = 30) {
     this.scene = scene;
     this.combat = combat;
     this.tilesGrid = surfaceGrid;
+    this.size = worldWidth;
     this.group.position.set(DUNGEON_ORIGIN.x, 0, DUNGEON_ORIGIN.z);
     this.group.visible = false;
     scene.add(this.group);
@@ -61,16 +63,21 @@ export class DungeonSystem {
 
   // ————— generation —————
   private findEntrance() {
-    // Deterministic deep-wilderness door (scans from the map edge inward).
+    // P6.1: a door in the deep wilds — scan from the far corner inward for the
+    // first walkable tile in the outer quarter (sized to the world).
     const g = this.tilesGrid;
-    for (let gy = 0; gy < 30; gy++) {
-      for (let gx = 0; gx < 30; gx++) {
-        // Corners are wilderness with chunk=6; just pick an in-map walkable tile
-        // far from center and mark it — main validates zone.
-        if (gx >= 24 && gy >= 24 && g.isWalkable(gx, gy)) { this.entrance = { x: gx, y: gy }; return; }
+    const s = this.size;
+    for (let gy = s - 2; gy >= 2; gy--) {
+      for (let gx = s - 2; gx >= 2; gx--) {
+        if (gx >= s - 12 && gy >= s - 12 && g.isWalkable(gx, gy)) { this.entrance = { x: gx, y: gy }; return; }
       }
     }
-    this.entrance = { x: 26, y: 26 };
+    for (let gy = s - 2; gy >= 2; gy--) {
+      for (let gx = s - 2; gx >= 2; gx--) {
+        if (g.isWalkable(gx, gy)) { this.entrance = { x: gx, y: gy }; return; }
+      }
+    }
+    this.entrance = { x: s - 8, y: s - 8 };
   }
 
   private generate(): void {
