@@ -184,6 +184,26 @@ export class WorldSystem {
       }
     }
     EngineLogger.info("Monsters: " + JSON.stringify(counts));
+
+    // P4b: one dormant boss prowls the deep wilderness (deterministic seed).
+    const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
+    outer: for (let gy = 1; gy < g.height - 1; gy++) {
+      for (let gx = 1; gx < g.width - 1; gx++) {
+        if (!g.isRegionUnlocked(gx, gy)) continue;
+        const t = g.at(gx, gy)!;
+        if (t.zoneId !== "WILDERNESS_LVL1" || !t.walkable || t.occupant !== "NONE") continue;
+        if (Math.max(Math.abs(gx - cx), Math.abs(gy - cy)) < 6) continue;
+        const rnd = seeded(gx * 11 + gy * 13 + 99);
+        if (rnd() < 0.35) {
+          const def = MONSTERS.forest_ogre;
+          const m = spawnMonster("forest_ogre", def, gx, gy);
+          this.combat.addMonster(m);
+          this.nodeGroup.add(m.group);
+          EngineLogger.info(`Boss spawned: Forest Ogre at ${gx},${gy}`);
+          break outer;
+        }
+      }
+    }
   }
 
   private spawnNode(type: NodeType, gx: number, gy: number, def: ResourceDef) {

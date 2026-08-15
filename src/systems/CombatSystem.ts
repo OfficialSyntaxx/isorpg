@@ -16,6 +16,8 @@ export interface CombatEvents {
   onAutoEat?: (itemId: string, healed: number) => void;
   onDeath?: () => void;
   onLevelUp?: (skill: SkillId, level: number) => void;
+  /** P4b: boss telegraph ring — tile when winding up, null when it lands/fizzles. */
+  onBossTelegraph?: (tile: { x: number; y: number } | null) => void;
 }
 
 const EAT_THRESHOLD = 0.4; // auto-eat below 40% HP
@@ -27,6 +29,7 @@ export class CombatSystem {
   private monsters = new Map<string, MonsterCombat>();
   private target: MonsterCombat | null = null;
   private playerAtkAcc = 0;
+  private bossSlam: { x: number; y: number; at: number } | null = null;
 
   constructor(state: GameState) {
     this.state = state;
@@ -88,10 +91,20 @@ export class CombatSystem {
     health.maxHp = this.maxHp();
     if (health.hp > health.maxHp) health.hp = health.maxHp;
     this.aiChase();
+    // P4b: bosses enrage below half HP.
+    for (const mm of this.monsters.values()) {
+      if (mm.def.boss) mm.enraged = mm.hp > 0 && mm.hp <= mm.maxHp / 2;
+    }
+    this.updateBossSlam(now);
     const target = this.target;
     if (!target || target.dead) {
       if (target && target.dead) this.target = null;
       return;
+    }
+    // P4b: an enraged boss winds up a slam at the player's current tile.
+    if (target.def.boss && target.enraged && !this.bossSlam && Math.random() < 0.15) {
+      this.bossSlam = { x: this.state.player.pos.gx, y: this.state.player.pos.gy, at: now };
+      this.cb.onBossTelegraph?.({ x: this.bossSlam.x, y: this.bossSlam.y });
     }
     const weapon = this.equippedWeapon();
 
@@ -102,7 +115,8 @@ export class CombatSystem {
     }
 
     target.attackAcc++;
-    if (this.monsterCanHit(target) && target.attackAcc >= target.def.attackTick) {
+    const atkTick = target.def.boss && target.enraged ? 2 : target.def.attackTick;
+    if (this.monsterCanHit(target) && target.attackAcc >= atkTick) {
       target.attackAcc = 0;
       this.tryMonsterAttack(target);
     }
@@ -211,20 +225,41 @@ export class CombatSystem {
     const defLevel = levelFromXp(this.state.player.skills.defense.xp) + armorBonuses(this.state).defense;
     if (Math.random() > hitChance(target.def.attackRoll, 2 + defLevel)) return; // dodge
 
-    const damage = 1 + Math.floor(Math.random() * Math.max(1, target.def.maxHit));
+    const dmgMax = target.def.maxHit + (target.enraged ? 2 : 0); // P4b: enraged hits harder
+    const damage = 1 + Math.floor(Math.random() * Math.max(1, dmgMax));
     health.hp = Math.max(0, health.hp - damage);
     this.gain("defense", target.def.xp.defense);
     this.gain("hitpoints", Math.max(1, Math.round(target.def.xp.hitpoints * 0.5)));
     this.cb.onHurtByMonster?.(damage);
 
-    if (health.hp <= 0) {
-      this.cb.onDeath?.();
-      // Respawn the player at town center, healed.
-      const c = Math.floor(this.state.world.grid.width / 2);
-      this.state.player.pos.gx = c; this.state.player.pos.gy = c;
-      this.state.player.pos.wx = c; this.state.player.pos.wz = c;
-      health.hp = health.maxHp;
-      this.stop();
+    if (health.hp <= 0) this.diePlayer();
+  }
+
+  /** Player death: toast, respawn at town centre healed, clear the fight. */
+  private diePlayer() {
+    this.cb.onDeath?.();
+    const c = Math.floor(this.state.world.grid.width / 2);
+    this.state.player.pos.gx = c; this.state.player.pos.gy = c;
+    this.state.player.pos.wx = c; this.state.player.pos.wz = c;
+    this.state.player.health.hp = this.state.player.health.maxHp;
+    this.stop();
+  }
+
+  /** P4b: an armed boss slam lands ~1.6s after it was telegraphed. Standing on
+   *  the marked tile takes heavy damage — step off to dodge. */
+  private updateBossSlam(now: number) {
+    const slam = this.bossSlam;
+    if (!slam) return;
+    if (now >= slam.at + 1600) {
+      this.cb.onBossTelegraph?.(null);
+      this.bossSlam = null;
+      const p = this.state.player.pos;
+      if (p.gx === slam.x && p.gy === slam.y) {
+        const dmg = 6 + Math.floor(Math.random() * 5);
+        this.state.player.health.hp = Math.max(0, this.state.player.health.hp - dmg);
+        this.cb.onHurtByMonster?.(dmg);
+        if (this.state.player.health.hp <= 0) this.diePlayer();
+      }
     }
   }
 

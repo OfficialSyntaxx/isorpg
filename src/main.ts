@@ -13,7 +13,8 @@ import { CraftingSystem } from "./systems/CraftingSystem";
 import { BuildSystem } from "./systems/BuildSystem";
 import { SaveSystem } from "./systems/SaveSystem";
 import { InputController } from "./core/InputController";
-import { makeSelectionRing, type SelectionRing } from "./generators/Selection";
+import { makeSelectionRing, makeBossRing, type SelectionRing } from "./generators/Selection";
+import { spawnBurst, updateFx, type FxPiece } from "./core/Fx";
 import { tickClock, dayFactor, iconFor } from "./core/Clock";
 import { NpcSystem } from "./systems/NpcSystem";
 import { UI } from "./ui/UI";
@@ -59,6 +60,8 @@ class Game {
   private clockMin = 0;
   private day = 1;
   private heroFlashUntil = 0;
+  private bossRing!: THREE.Group;
+  private fx: FxPiece[] = [];
 
   async boot() {
     initToasts();
@@ -74,6 +77,10 @@ class Game {
     this.ringUpdate = ring.update;
     this.ringGroup.visible = false;
     this.engine.scene.add(this.ringGroup);
+
+    // P4b: boss slam telegraph ring (hidden until a slam winds up).
+    this.bossRing = makeBossRing();
+    this.engine.scene.add(this.bossRing);
 
     this.state = createFreshState(this.grid, "Hero", Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
     this.combat = new CombatSystem(this.state);
@@ -144,14 +151,24 @@ class Game {
       onHurtByMonster: (d) => {
         this.ui.setPlayerHp(this.state.player.health.hp, this.state.player.health.maxHp);
         this.heroFlashUntil = Date.now() + 250;
+        this.engine.addShake(0.4); // P4b: camera kick on hits
       },
       onKill: (m, drops, kc) => {
         this.ui.setCombat(null, 0, 0);
         showToast(`⚔️ ${m.def.name} down! (+${kc} KC)`);
         if (drops.length) showToast(`Loot: ${drops.join(", ")}`, "info", 2000);
+        this.engine.addShake(0.35); // P4b: kill thump + burst
+        this.fx.push(...spawnBurst(this.engine.scene, m.tile.x, 0.6, m.tile.y, "#c0392b"));
+        if (m.def.boss) this.fx.push(...spawnBurst(this.engine.scene, m.tile.x, 1.0, m.tile.y, "#ffd76a", 18));
       },
       onAutoEat: (food, healed) => this.ui.floatText(`+${healed}`, "heal"),
       onPet: (itemId) => this.ui.floatText("🐾 pet!", "pet"),
+      // P4b: boss telegraph ring follows the slam target, then clears.
+      onBossTelegraph: (tile) => {
+        if (!tile) { this.bossRing.visible = false; return; }
+        this.bossRing.position.set(tile.x, 0.05, tile.y);
+        this.bossRing.visible = true;
+      },
       onLevelUp: (skill, lvl) => this.ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"),
     });
 
@@ -364,6 +381,8 @@ class Game {
     guarded("Npc", () => this.npcs.update(dt));
     // P4: hero flashes red briefly when a monster lands a hit.
     flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");
+    // P4b: advance kill-burst shards.
+    this.fx = updateFx(this.fx, dt);
     if (this.skill.hasActive || this.craft.hasActive) {
       const t = performance.now() / 1000;
       this.hero.armR.rotation.x = Math.sin(t * 14) * 0.5;

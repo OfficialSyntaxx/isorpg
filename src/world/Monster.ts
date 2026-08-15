@@ -17,6 +17,7 @@ export interface MonsterCombat {
   inCombat: boolean;   // true once the player engages it
   attackAcc: number;   // ticks since its last strike
   flashUntil: number;  // timestamp of red hit-flash
+  enraged: boolean;    // P4b: boss below 50% HP — faster, hits harder
 }
 
 const fistGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
@@ -83,7 +84,7 @@ export function spawnMonster(id: string, def: MonsterDef, gx: number, gy: number
   return {
     id, def, tile: { x: gx, y: gy }, home: { x: gx, y: gy }, seed,
     hp: def.hp, maxHp: def.hp, group,
-    dead: false, respawnAt: 0, inCombat: false, attackAcc: 0, flashUntil: 0,
+    dead: false, respawnAt: 0, inCombat: false, attackAcc: 0, flashUntil: 0, enraged: false,
   };
 }
 
@@ -102,10 +103,12 @@ export function animateMonster(m: MonsterCombat, now: number) {
   m.group.rotation.y = Math.sin(t * 1.5 + m.seed * 0.01) * 0.08;
 
   const flash = now < m.flashUntil;
+  const enraged = m.enraged && !flash;
   m.group.traverse((o) => {
     const mm = o as THREE.Mesh;
     if (mm.isMesh && mm.material instanceof THREE.MeshStandardMaterial) {
       if (flash) { mm.material.emissive.set("#ff5a3a"); mm.material.emissiveIntensity = 1.6; }
+      else if (enraged) { mm.material.emissive.set("#ff2a1a"); mm.material.emissiveIntensity = 0.3 + Math.abs(Math.sin(t * 8)) * 0.5; }
       else { mm.material.emissive.set("#000000"); mm.material.emissiveIntensity = 0; }
     }
   });

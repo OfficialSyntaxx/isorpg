@@ -29,6 +29,7 @@ export interface MonsterDef {
   defenseRoll: number;
   ranged: boolean;
   aggroRange: number; // tiles; 0 = passive (attacks only when hit)
+  boss?: boolean; // P4b: boss archetype (enrages below 50% HP, telegraph slams)
   xp: { attack: number; strength: number; defense: number; hitpoints: number };
   main: DropEntry[];
   tertiary?: { itemId: string; chance: number; min: number; max: number }[];
@@ -100,6 +101,21 @@ export const MONSTERS: Record<string, MonsterDef> = {
     petTable: [{ itemId: "pet_zombie", chance: 0.0002 }],
     respawnMs: 50_000,
   },
+  forest_ogre: {
+    id: "forest_ogre", name: "Forest Ogre", level: 18, hp: 110, maxHit: 10, attackTick: 5,
+    attackRoll: 24, defenseRoll: 20, ranged: false, aggroRange: 5, boss: true,
+    xp: { attack: 42, strength: 28, defense: 28, hitpoints: 8 },
+    main: [
+      { itemId: "coins", weight: 60, min: 25, max: 80 },
+      { itemId: "cooked_trout", weight: 25, min: 1, max: 3 },
+      { itemId: "iron_ore", weight: 40, min: 2, max: 5 },
+      { itemId: "bronze_2h", weight: 10, min: 1, max: 1 },
+      { itemId: "iron_sword", weight: 6, min: 1, max: 1 },
+    ],
+    tertiary: [{ itemId: "goblin_key", chance: 0.2, min: 1, max: 1 }],
+    petTable: [{ itemId: "pet_skeleton", chance: 0.02 }],
+    respawnMs: 120_000,
+  },
 };
 
 /** Render variants keyed by monster id for the procedural generator. */
@@ -108,6 +124,7 @@ export const MONSTER_STYLES: Record<string, { body: string; accent: string; ears
   goblin: { body: "#6fae55", accent: "#c0392b", ears: true },
   skeleton: { body: "#d8ceb8", accent: "#8e8468" },
   zombie: { body: "#7c9a6a", accent: "#4a6a54" },
+  forest_ogre: { body: "#5f4e3c", accent: "#c98f4a", ears: true },
 };
 
 /** Food that triggers auto-eat, by item id. */

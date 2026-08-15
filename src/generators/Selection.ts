@@ -38,3 +38,23 @@ export function makeSelectionRing(): SelectionRing {
     },
   };
 }
+
+/** P4b: boss slam telegraph — a shrinking red ring over the threatened tile. */
+export function makeBossRing(): THREE.Group {
+  const g = new THREE.Group();
+  g.renderOrder = 6;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.42, 0.6, 28),
+    new THREE.MeshBasicMaterial({ color: "#ff4030", transparent: true, opacity: 0.95, depthWrite: false })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  g.add(ring);
+  const fill = new THREE.Mesh(
+    new THREE.CircleGeometry(0.44, 24),
+    new THREE.MeshBasicMaterial({ color: "#ff2a1a", transparent: true, opacity: 0.22, depthWrite: false })
+  );
+  fill.rotation.x = -Math.PI / 2;
+  g.add(fill);
+  g.visible = false;
+  return g;
+}

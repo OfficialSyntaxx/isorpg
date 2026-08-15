@@ -21,6 +21,11 @@ export class Engine {
   /** While the player is actively dragging/pinching, the camera follows input
    *  1:1 (no smoothing "slide"); smoothing resumes once they let go. */
   snapPan = false;
+  private shakeAmp = 0;
+  /** P4b: jar the camera (hits, kills). Adds to any existing shake, capped. */
+  addShake(amount: number) {
+    this.shakeAmp = Math.min(1.1, this.shakeAmp + amount);
+  }
   private ambient: THREE.AmbientLight | null = null;
   private sun: THREE.DirectionalLight | null = null;
   // Smoothed position the camera actually renders at — eases toward
@@ -164,6 +169,13 @@ export class Engine {
       }
       this.camera.updateProjectionMatrix();
       this.positionCamera();
+      // P4b: camera kick — decaying random jitter after hits.
+      if (this.shakeAmp > 0.002) {
+        this.camera.position.x += (Math.random() - 0.5) * this.shakeAmp * 0.7;
+        this.camera.position.z += (Math.random() - 0.5) * this.shakeAmp * 0.7;
+        this.camera.position.y += (Math.random() - 0.5) * this.shakeAmp * 0.35;
+        this.shakeAmp = Math.max(0, this.shakeAmp - dt * 2.4);
+      }
       this.renderer.render(this.scene, this.camera);
     });
   };
