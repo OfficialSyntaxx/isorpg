@@ -274,7 +274,6 @@ export class UI {
     const build = this.build;
     this.panelTitle.textContent = "Build";
     if (!build) { this.panelBody.innerHTML = `<div class="empty">Building isn't ready yet.</div>`; return; }
-
     const conLvl = levelFromXp(this.state.player.skills.construction.xp);
     const cards = BUILDING_TYPES.map((type) => {
       const def = BUILDINGS[type];
@@ -297,7 +296,7 @@ export class UI {
         </div>`;
     }).join("");
 
-    this.panelBody.innerHTML = `<div class="set-val">Construction Lv ${conLvl}</div>${cards}`;
+    this.panelBody.innerHTML = `<div class="set-val">Construction Lv ${conLvl} · Storage ${this.state.player.inventory.storageCap}</div>${cards}`;
     this.panelBody.querySelectorAll<HTMLButtonElement>("[data-build]").forEach((btn) => {
       btn.addEventListener("click", () => {
         build.startPlacing(btn.dataset.build as BuildingType);

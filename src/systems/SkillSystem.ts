@@ -89,6 +89,13 @@ export class SkillSystem {
     return Math.max(floor, Math.round(base * (1 - frac * 0.33) * (1 - speed / 100)));
   }
 
+  /** P2.3: early-game XP momentum — +50% at level 1, tapering to +0% by 16. */
+  private earlyBonus(skill: SkillId): number {
+    const lvl = levelFromXp(this.state.player.skills[skill].xp);
+    if (lvl >= 16) return 1;
+    return 1 + 0.5 * (1 - (lvl - 1) / 15);
+  }
+
   tick(dtMs: number): void {
     if (!this.active) return;
     this.tickAcc += dtMs;
@@ -122,7 +129,9 @@ export class SkillSystem {
     addItem(inv, itemId, amount);
 
     const baseXp = ITEMS[itemId]?.xp?.[skill] ?? 5;
-    const xpGained = Math.round(baseXp * (doubled ? 2 : 1));
+    // P2.3: early-game momentum — up to +50% XP below level 16, tapering to 0
+    // by level 16 so the 1→15 band feels snappy while the OSRS curve holds.
+    const xpGained = Math.round(baseXp * (doubled ? 2 : 1) * this.earlyBonus(skill));
     const masteryGained = def.yield * 4;
     sk[skill].xp += xpGained;
     addMasteryXp(sk, skill, def.masteryKey, masteryGained);

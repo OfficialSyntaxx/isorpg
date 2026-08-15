@@ -199,7 +199,15 @@ class Game {
       if (node.depleted) { showToast("That spot is still growing back…", "info", 1200); return; }
       const verb = ACTION_FOR[node.type] ?? "Forage";
       const name = NODE_NAMES[node.def.masteryKey] ?? node.def.masteryKey;
-      this.setTarget("node", node.tile.x, node.tile.y, `${verb} ${name}`, node);
+      let label = `${verb} ${name}`;
+      // P2.3: tell the player up-front what they still need for this node.
+      const haveLvl = levelFromXp(this.state.player.skills[node.def.skill].xp);
+      if (haveLvl < node.def.levelReq) {
+        label += ` · need ${SKILLS[node.def.skill].name} ${node.def.levelReq}`;
+      } else if (getToolTier(this.state.player.inventory, node.def.skill) < (node.def.toolTier ?? 1)) {
+        label += ` · need tier ${node.def.toolTier ?? 1} ${TOOL_NAMES[node.def.skill] ?? "tool"}`;
+      }
+      this.setTarget("node", node.tile.x, node.tile.y, label, node);
       this.routeToNode(node);
       return;
     }
