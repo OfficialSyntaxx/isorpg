@@ -190,6 +190,34 @@ export const MONSTERS: Record<string, MonsterDef> = {
     petTable: [{ itemId: "pet_goblin", chance: 0.01 }],
     respawnMs: 3_600_000, // never mid-visit — DungeonSystem.enter() revives it
   },
+  // P6.3: biome natives — the frozen north and the southern mires bring their
+  // own wildlife so every region reads as a distinct threat.
+  frost_imp: {
+    id: "frost_imp", name: "Frost Imp", level: 14, hp: 38, maxHit: 4, attackTick: 4,
+    attackRoll: 20, defenseRoll: 15, ranged: false, aggroRange: 6,
+    xp: { attack: 16, strength: 15, defense: 18, hitpoints: 3 },
+    main: [
+      { itemId: "coins", weight: 60, min: 6, max: 20 },
+      { itemId: "bones", weight: 50, min: 1, max: 1 },
+      { itemId: "raw_rat_meat", weight: 30, min: 1, max: 2 },
+    ],
+    tertiary: [{ itemId: "goblin_key", chance: 0.04, min: 1, max: 1 }],
+    petTable: [{ itemId: "pet_rat", chance: 0.005 }],
+    respawnMs: 30_000,
+  },
+  bog_husk: {
+    id: "bog_husk", name: "Bog Husk", level: 10, hp: 44, maxHit: 5, attackTick: 5,
+    attackRoll: 15, defenseRoll: 14, ranged: false, aggroRange: 6,
+    xp: { attack: 10, strength: 10, defense: 10, hitpoints: 2 },
+    main: [
+      { itemId: "coins", weight: 60, min: 4, max: 16 },
+      { itemId: "bones", weight: 60, min: 1, max: 1 },
+      { itemId: "raw_rat_meat", weight: 40, min: 1, max: 1 },
+    ],
+    tertiary: [{ itemId: "goblin_key", chance: 0.08, min: 1, max: 1 }],
+    petTable: [{ itemId: "pet_goblin", chance: 0.004 }],
+    respawnMs: 30_000,
+  },
 };
 
 /** Render variants keyed by monster id for the procedural generator. */
@@ -204,6 +232,8 @@ export const MONSTER_STYLES: Record<string, { body: string; accent: string; ears
   cave_bat: { body: "#4a4450", accent: "#c98f4a", ears: true },
   cave_slasher: { body: "#5f6a6e", accent: "#c0392b", ears: true },
   cave_brute: { body: "#6b7280", accent: "#a32a3a", ears: true },
+  frost_imp: { body: "#a9cfe0", accent: "#3f6f96", ears: true },
+  bog_husk: { body: "#4d5f3c", accent: "#7a5828", ears: true },
 };
 
 /** Food that triggers auto-eat, by item id. */

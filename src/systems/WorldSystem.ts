@@ -1,7 +1,7 @@
 // WorldSystem: terrain, procedural clutter, animated water, sky, resource
 // nodes and monster spawning (deterministic from the grid seed).
 import * as THREE from "three";
-import type { Grid } from "../world/Grid";
+import type { Grid, Biome } from "../world/Grid";
 import type { ResourceNode, NodeType } from "../world/ResourceNode";
 import { getTerrainMaterial, getBaseMaterial } from "../generators/Materials";
 import { makeTree, makeRock, makeFishingMarker, buildClutter, makeWaterMaterial, makeSkyTexture } from "../generators/Nature";
@@ -172,6 +172,8 @@ export class WorldSystem {
       { type: "goblin_archer", cap: 3 },
       { type: "skeleton", cap: 2 },
       { type: "zombie", cap: 1 },
+      { type: "frost_imp", cap: 3 },
+      { type: "bog_husk", cap: 3 },
     ];
     const counts: Record<string, number> = {};
     const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
@@ -183,12 +185,8 @@ export class WorldSystem {
         const rnd = seeded(t.seed * 3 + 7);
         const r = rnd();
         const d = Math.max(Math.abs(gx - cx), Math.abs(gy - cy));
-        // P6.1: threat scales outward — the deep wilds get the meanest mix.
-        const pool: (keyof typeof MONSTERS)[] =
-          d <= 8 ? ["giant_rat", "goblin"] :
-          d <= 13 ? ["dire_wolf", "goblin_archer"] :
-          d <= 19 ? ["skeleton", "zombie"] :
-          ["dire_wolf", "goblin_archer", "zombie"];
+        // P6.3: every region breeds its own threats (biome pools).
+        const pool = monsterPoolFor(t.biome, d);
         const type = pool[Math.floor(r * pool.length) % pool.length] as keyof typeof MONSTERS;
         const defCfg = layout.find((l) => l.type === type)!;
         if ((counts[type] ?? 0) >= defCfg.cap) continue;
@@ -288,6 +286,17 @@ function seeded(seed: number): () => number {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+/** P6.3: which monsters roam a tile — the inner band is tame, the outer
+ *  bands spawn biome-native threats (wolves in the woods, frost imps on the
+ *  snowfields, bog husks in the mire). */
+export function monsterPoolFor(biome: Biome | undefined, d: number): (keyof typeof MONSTERS)[] {
+  if (d <= 8) return ["giant_rat", "goblin"];
+  if (biome === "SWAMP") return ["bog_husk", "bog_husk", "skeleton"];
+  if (biome === "SNOW") return ["frost_imp", "frost_imp", "dire_wolf"];
+  if (biome === "FOREST") return ["dire_wolf", "dire_wolf", "skeleton"];
+  return ["dire_wolf", "goblin_archer"];
 }
 
 function pickTree(gx: number, gy: number, g: Grid): ResourceDef {
