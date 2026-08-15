@@ -3,6 +3,8 @@ import type { GridLike } from "../ai/AStar";
 
 export type TerrainType = "GRASS" | "WATER" | "ROCK" | "DIRT" | "SAND" | "ROAD";
 export type Occupant = "NONE" | "BUILDING" | "RESOURCE_NODE" | "MONSTER" | "NPC";
+/** P6.2: broad region flavours layered over the threat bands. */
+export type Biome = "MEADOW" | "FOREST" | "SNOW" | "SWAMP";
 
 export interface Tile {
   x: number;
@@ -14,6 +16,8 @@ export interface Tile {
   occupant: Occupant;
   occupantId: string | null;
   zoneId: string;
+  /** P6.2: biome flavour of the containing chunk region. */
+  biome: Biome;
   // Deterministic decoration seed (permanent, so visuals survive reloads)
   seed: number;
 }
@@ -72,10 +76,10 @@ export class Grid implements GridLike {
     const h = this.height;
     const seeded = (x: number, y: number) => mulberry32(x * 31 + y * 57 + 1337);
     this.tiles = [];
+    const cols = Math.ceil(w / GRID_CHUNK);
+    const rows = Math.ceil(h / GRID_CHUNK);
 
     const zoneAt = (x: number, y: number): string => {
-      const cols = Math.ceil(w / GRID_CHUNK);
-      const rows = Math.ceil(h / GRID_CHUNK);
       const r = Math.floor(y / GRID_CHUNK), c = Math.floor(x / GRID_CHUNK);
       const cr = Math.floor(rows / 2), cc = Math.floor(cols / 2);
       // P6.1: four concentric bands by chunk distance from centre.
@@ -84,6 +88,16 @@ export class Grid implements GridLike {
       if (d === 1) return "SETTLEMENT";
       if (d === 2) return "WILDERNESS_LVL1";
       return "WILDERNESS_LVL2"; // the deep wilds
+    };
+    // P6.2: biome by chunk quadrant — north-east snows, south-west marshes,
+    // the rest is deep woodland; the settled centre stays meadow.
+    const biomeAt = (x: number, y: number, zoneId: string): Biome => {
+      if (zoneId === "TOWN_CENTER" || zoneId === "SETTLEMENT") return "MEADOW";
+      const r = Math.floor(y / GRID_CHUNK), c = Math.floor(x / GRID_CHUNK);
+      const cr = Math.floor(rows / 2), cc = Math.floor(cols / 2);
+      if (r < cr && c >= cc) return "SNOW";
+      if (r >= cr && c < cc) return "SWAMP";
+      return "FOREST";
     };
 
     for (let y = 0; y < h; y++) {
@@ -102,6 +116,7 @@ export class Grid implements GridLike {
           occupant: "NONE",
           occupantId: null,
           zoneId,
+          biome: biomeAt(x, y, zoneId),
           seed: Math.floor(rnd() * 1e6),
         });
       }

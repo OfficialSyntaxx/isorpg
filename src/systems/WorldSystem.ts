@@ -74,13 +74,15 @@ export class WorldSystem {
         mesh.userData.tile = { x: gx, y: gy };
         // Per-tile brightness tint so adjacent ground isn't one flat sheet.
         const tint = seeded(t.seed * 7 + 3);
-        // P6.1: the deep wilds read darker + cooler than the outer bands.
-        const zoneShade = t.zoneId === "WILDERNESS_LVL2" ? 0.84 : t.zoneId === "WILDERNESS_LVL1" ? 0.96 : 1.0;
-        const cold = t.zoneId === "WILDERNESS_LVL2" ? 0.07 : 0;
-        const v = (0.9 + tint() * 0.18) * zoneShade;
+        // P6.2: per-biome tileset — bright cold snow, murky swamp, rich woods.
+        const pal = t.biome === "SNOW" ? { r: 1.14, g: 1.18, b: 1.28 }
+          : t.biome === "SWAMP" ? { r: 0.72, g: 0.84, b: 0.68 }
+          : t.biome === "FOREST" ? { r: 0.86, g: 1.02, b: 0.82 }
+          : { r: 1.0, g: 1.0, b: 1.0 };
+        const v = 0.9 + tint() * 0.18;
         const n = mesh.geometry.attributes.position.count;
         const colors = new Float32Array(n * 3);
-        for (let i = 0; i < n; i++) { colors[i * 3] = v; colors[i * 3 + 1] = v; colors[i * 3 + 2] = v + cold; }
+        for (let i = 0; i < n; i++) { colors[i * 3] = v * pal.r; colors[i * 3 + 1] = v * pal.g; colors[i * 3 + 2] = v * pal.b; }
         mesh.geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
         root.add(mesh);
         if (t.terrainType === "WATER") waterTiles.push({ x: gx, y: gy });
@@ -130,14 +132,20 @@ export class WorldSystem {
       for (let gx = 1; gx < g.width - 1; gx++) {
         const t = g.at(gx, gy)!;
         if (!t.walkable || t.occupant !== "NONE") continue;
-        if (t.zoneId === "WILDERNESS_LVL1") continue;
         const rnd = seeded(t.seed);
         const r = rnd();
-        if (t.terrainType === "GRASS" && r < 0.22 && treeCount < 26) {
-          this.spawnNode("TREE", gx, gy, pickTree(gx, gy, g));
+        // P6.2: what grows here depends on the biome — snow is barren but
+        // mineral-rich, swamps grow willow (a P2 skill gate), woods run dense.
+        const dense = t.biome === "FOREST" ? 0.32 : 0.2;
+        const isTree = t.biome !== "SNOW" && t.terrainType === "GRASS" && r < dense
+          && treeCount < (t.biome === "FOREST" ? 60 : 26);
+        if (isTree) {
+          this.spawnNode("TREE", gx, gy, t.biome === "SWAMP" ? pickSwampTree(gx, gy) : pickTree(gx, gy, g));
           treeCount++;
-        } else if ((t.terrainType === "DIRT" || t.terrainType === "GRASS") && r >= 0.22 && r < 0.30 && rockCount < 14) {
-          this.spawnNode("ROCK", gx, gy, pickRock(gx, gy));
+        } else if ((t.terrainType === "DIRT" || t.terrainType === "GRASS")
+          && (t.biome === "SNOW" ? r < 0.5 : r > 0.2 && r < 0.3)
+          && rockCount < (t.biome === "SNOW" ? 60 : 14)) {
+          this.spawnNode("ROCK", gx, gy, t.biome === "SNOW" ? pickColdRock(gx, gy) : pickRock(gx, gy));
           rockCount++;
         }
       }
@@ -145,7 +153,7 @@ export class WorldSystem {
     for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
         const t = g.at(gx, gy)!;
-        if (t.terrainType === "WATER" && fishCount < 6 && t.zoneId !== "WILDERNESS_LVL1") {
+        if (t.terrainType === "WATER" && fishCount < 6) {
           const rnd = seeded(t.seed + 500);
           if (rnd() < 0.4) { this.spawnNode("WATER", gx, gy, pickFish(gx, gy)); fishCount++; }
         }
@@ -305,4 +313,18 @@ function pickRock(gx: number, gy: number): ResourceDef {
 function pickFish(gx: number, gy: number): ResourceDef {
   const rnd = seeded(gx * 7 + gy * 7 + 3);
   return rnd() < 0.5 ? RESOURCES.water_shrimp : RESOURCES.water_trout;
+}
+/** P6.2: swamp trees skew willow (the P2 skill gate for swamp lumber). */
+function pickSwampTree(gx: number, gy: number): ResourceDef {
+  const rnd = seeded(gx * 13 + gy * 17 + 41);
+  return rnd() < 0.7 ? RESOURCES.tree_willow : RESOURCES.tree_oak;
+}
+/** P6.2: frozen crags are metal-heavy — iron and coal dominate. */
+function pickColdRock(gx: number, gy: number): ResourceDef {
+  const rnd = seeded(gx * 5 + gy * 5 + 2);
+  const r = rnd();
+  if (r < 0.12) return RESOURCES.rock_copper;
+  if (r < 0.4) return RESOURCES.rock_tin;
+  if (r < 0.8) return RESOURCES.rock_iron;
+  return RESOURCES.rock_coal;
 }
