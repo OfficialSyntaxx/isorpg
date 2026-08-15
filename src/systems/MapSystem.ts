@@ -12,6 +12,8 @@ export interface PoiInfo {
   x: number;
   y: number;
   discovered: boolean;
+  /** P6b: boss lairs render with a distinct (red) marker. */
+  boss?: boolean;
 }
 
 export interface MapSnapshot {
@@ -34,21 +36,35 @@ export class MapSystem {
   private quest: QuestSystem;
   private size: number;
   private store: MapStore;
+  /** P6b: resolves the Forest Ogre's current lair tile (its home). */
+  private getOgre: () => { x: number; y: number } | null;
 
-  constructor(size: number, dungeon: DungeonSystem, quest: QuestSystem, store: MapStore) {
+  constructor(
+    size: number,
+    dungeon: DungeonSystem,
+    quest: QuestSystem,
+    store: MapStore,
+    getOgre: () => { x: number; y: number } | null = () => null
+  ) {
     this.size = size;
     this.dungeon = dungeon;
     this.quest = quest;
     this.store = store;
+    this.getOgre = getOgre;
     if (!this.store.discovered.includes("town")) this.store.discovered.push("town");
   }
 
-  private pois(): { id: string; name: string; icon: string; x: number; y: number }[] {
-    return [
+  private pois(): { id: string; name: string; icon: string; x: number; y: number; boss?: boolean }[] {
+    const base = [
       { id: "town", name: "Isoperia Centre", icon: "🏠", x: 15, y: 15 },
       { id: "caves", name: "The Caves", icon: "🕳️", x: this.dungeon.entrance.x, y: this.dungeon.entrance.y },
       { id: "eldric", name: "Eldric's Camp", icon: "🧭", x: this.quest.guide.x, y: this.quest.guide.y },
     ];
+    const ogre = this.getOgre();
+    if (!ogre) return base;
+    // Skip the boss marker if it would sit exactly on another waypoint.
+    if (base.some((p) => p.x === ogre.x && p.y === ogre.y)) return base;
+    return [...base, { id: "ogre", name: "The Forest Ogre", icon: "👹", x: ogre.x, y: ogre.y, boss: true }];
   }
 
   get unlocked(): boolean { return this.store.fastTravel; }

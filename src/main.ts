@@ -97,7 +97,19 @@ class Game {
     this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid);
     this.dungeon.buildMeshes();
     this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast);
-    this.mapSys = new MapSystem(this.grid.width, this.dungeon, this.quest, this.state.player.map);
+    this.mapSys = new MapSystem(
+      this.grid.width,
+      this.dungeon,
+      this.quest,
+      this.state.player.map,
+      () => {
+        // P6b: the boss waypoint tracks the Forest Ogre's lair (its home tile).
+        for (const mm of this.combat.registry.values()) {
+          if (mm.def.id === "forest_ogre") return { x: mm.home.x, y: mm.home.y };
+        }
+        return null;
+      }
+    );
     this.ui.attachMap(
       () => this.mapSys.snapshot(this.state.player.pos.gx, this.state.player.pos.gy),
       (id) => this.doFastTravel(id)

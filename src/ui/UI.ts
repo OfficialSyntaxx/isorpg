@@ -129,8 +129,12 @@ export class UI {
     let markers = "";
     for (const p of snap.pois) {
       if (!p.discovered) continue;
-      markers += `<circle cx="${PX(p.x)}" cy="${PY(p.y)}" r="5" fill="#ffd24a" stroke="#6b4a00" stroke-width="1.5"/>`;
-      markers += `<text x="${PX(p.x) + 8}" y="${PY(p.y) + 3.5}" font-size="8.5" fill="#ffe9a0" style="text-shadow:0 1px 0 #000">${p.name}</text>`;
+      // P6b: boss lairs get a distinct red marker, waypoints stay gold.
+      const fill = p.boss ? "#ff5a4a" : "#ffd24a";
+      const stroke = p.boss ? "#8c0e08" : "#6b4a00";
+      const label = p.boss ? "#ffb0a4" : "#ffe9a0";
+      markers += `<circle cx="${PX(p.x)}" cy="${PY(p.y)}" r="5" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+      markers += `<text x="${PX(p.x) + 8}" y="${PY(p.y) + 3.5}" font-size="8.5" fill="${label}" style="text-shadow:0 1px 0 #000">${p.name}</text>`;
     }
     const mapHtml = `<svg viewBox="0 0 ${W} ${W}" width="100%" height="auto" style="background:#1b2230;border-radius:10px;display:block">
         <rect width="${W}" height="${W}" fill="#1b2230"/>${grid}${markers}
