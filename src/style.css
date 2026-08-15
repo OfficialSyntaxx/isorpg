@@ -137,6 +137,16 @@ html, body {
 #float-layer { position: fixed; inset: 0; pointer-events: none; z-index: 25; overflow: hidden; }
 
 /* ——— P1: in-world target label / action chip (positioned each frame) ——— */
+/* ——— P3: night dim overlay (driven by the day/night clock) ——— */
+#night-overlay {
+  position: fixed;
+  inset: 0;
+  background: #050a14;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 3s linear;
+}
 .target-chip {
   position: absolute;
   left: 0; top: 0;

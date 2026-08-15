@@ -151,7 +151,9 @@ export class BuildSystem {
   get offlineCapHours(): number { return this.hasBuilding("TOWN_HALL") ? 12 : 8; }
 
   private applyStorage() {
-    this.state.player.inventory.storageCap = 500 + this.storageBonus;
+    this.state.player.inventory.storageCap = 500
+      + this.count("STOREHOUSE") * 250
+      + this.count("STORAGE_BIN") * 50;
     this.cb.onStorageChanged?.();
   }
 

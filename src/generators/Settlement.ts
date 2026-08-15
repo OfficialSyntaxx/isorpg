@@ -45,6 +45,7 @@ function flatMat(color: string): THREE.MeshStandardMaterial {
 
 interface Palette { wall: string; grain: string; roof: string; trim: string; }
 const PALETTES: Record<BuildingType, Palette> = {
+  STORAGE_BIN: { wall: "#9c7a4a", grain: "#7f6238", roof: "#6b4a2a", trim: "#ffd76a" },
   TOWN_HALL: { wall: "#d8bd82", grain: "#c2a366", roof: "#8a3b3b", trim: "#ffd479" },
   STOREHOUSE: { wall: "#a68a5c", grain: "#8c7048", roof: "#5a4632", trim: "#e0cf9a" },
   SAWMILL: { wall: "#8a6a4a", grain: "#71543a", roof: "#6b4423", trim: "#c98f4a" },
@@ -60,6 +61,22 @@ const GROUND_Y = 0.6;
 export function makeBuilding(type: BuildingType): THREE.Group {
   const g = new THREE.Group();
   const p = PALETTES[type];
+
+  // Storage Bin: a small open-topped crate with a flat lid (tier-0 starter).
+  if (type === "STORAGE_BIN") {
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.5), wallMat(p.wall, p.grain));
+    body.position.y = GROUND_Y + 0.15;
+    body.castShadow = true; body.receiveShadow = true;
+    g.add(body);
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.54), flatMat(p.roof));
+    lid.position.y = GROUND_Y + 0.335;
+    lid.castShadow = true;
+    g.add(lid);
+    const latch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.04), flatMat(p.trim));
+    latch.position.set(0, GROUND_Y + 0.375, 0.26);
+    g.add(latch);
+    return g;
+  }
 
   const baseH = 0.5;
   const base = new THREE.Mesh(new THREE.BoxGeometry(0.82, baseH, 0.82), wallMat(p.wall, p.grain));

@@ -1,5 +1,5 @@
 // Settlement structures: placement cost, requirements, passive yields (GDD §5.B).
-export type BuildingType = "TOWN_HALL" | "STOREHOUSE" | "SAWMILL" | "SMELTER" | "GRANARY";
+export type BuildingType = "STORAGE_BIN" | "TOWN_HALL" | "STOREHOUSE" | "SAWMILL" | "SMELTER" | "GRANARY";
 
 export interface BuildingCost {
   itemId: string;
@@ -19,6 +19,17 @@ export interface BuildingDef {
 }
 
 export const BUILDINGS: Record<BuildingType, BuildingDef> = {
+  STORAGE_BIN: {
+    type: "STORAGE_BIN",
+    name: "Storage Bin",
+    icon: "📦",
+    desc: "A humble wooden crate for extra resources — perfect for new settlers.",
+    effect: "+50 inventory storage cap",
+    levelReq: 0,
+    maxCount: 5,
+    baseCost: [{ itemId: "normal_log", qty: 5 }],
+    buildXp: 25,
+  },
   TOWN_HALL: {
     type: "TOWN_HALL",
     name: "Town Hall",
@@ -76,4 +87,4 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
   },
 };
 
-export const BUILDING_TYPES: BuildingType[] = ["TOWN_HALL", "STOREHOUSE", "SAWMILL", "SMELTER", "GRANARY"];
+export const BUILDING_TYPES: BuildingType[] = ["STORAGE_BIN", "TOWN_HALL", "STOREHOUSE", "SAWMILL", "SMELTER", "GRANARY"];

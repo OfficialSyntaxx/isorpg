@@ -14,6 +14,8 @@ import { BuildSystem } from "./systems/BuildSystem";
 import { SaveSystem } from "./systems/SaveSystem";
 import { InputController } from "./core/InputController";
 import { makeSelectionRing, type SelectionRing } from "./generators/Selection";
+import { tickClock, dayFactor, iconFor } from "./core/Clock";
+import { NpcSystem } from "./systems/NpcSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -52,6 +54,11 @@ class Game {
   private ringUpdate!: (tMs: number) => void;
   private target: { kind: "node" | "monster" | "walk"; label: string; p: THREE.Vector3; ref: ResourceNode | MonsterCombat | null } | null = null;
 
+  // P3: living world — clock + NPCs/wildlife.
+  private npcs!: NpcSystem;
+  private clockMin = 0;
+  private day = 1;
+
   async boot() {
     initToasts();
 
@@ -70,6 +77,7 @@ class Game {
     this.state = createFreshState(this.grid, "Hero", Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
     this.combat = new CombatSystem(this.state);
     this.world = new WorldSystem(this.engine.scene, this.grid, this.combat);
+    this.npcs = new NpcSystem(this.engine.scene, this.grid);
     this.movement = new MovementSystem(this.state.player.pos, this.hero);
     this.skill = new SkillSystem(this.state, this.world.consume.bind(this.world));
     this.build = new BuildSystem(this.engine.scene, this.grid, this.state);
@@ -219,6 +227,13 @@ class Game {
       return;
     }
 
+    const npc = this.npcs.at(gx, gy);
+    if (npc) {
+      showToast(this.npcs.talk(npc), "info", 3200);
+      this.setTarget("walk", gx, gy, `Talk ${npc.def.name}`, null);
+      return;
+    }
+
     const t = this.grid.at(gx, gy);
     if (t?.walkable) {
       this.skill.interrupt(); this.craft.stop(); this.pendingNode = null;
@@ -296,11 +311,23 @@ class Game {
 
   // ————— Tick / frame —————
   private tick(_tick: number, dtMs: number) {
+    // P3: advance the in-game clock and drive day/night lighting.
+    const clk = tickClock(this.clockMin, this.day, 1);
+    this.clockMin = clk.minute;
+    this.day = clk.day;
+    const hour = this.clockMin / 60;
+    const d = dayFactor(hour);
+    this.engine.setDayNight(d);
+    this.world.setDayNight(d);
+    this.ui.setNight(0.38 * (1 - d));
+    this.ui.setDay(this.day, iconFor(hour));
+
     guarded("Skill", () => this.skill.tick(dtMs));
     guarded("Crafting", () => this.craft.tick(dtMs));
     guarded("Combat", () => this.combat.tick(dtMs, Date.now()));
     guarded("Combat", () => this.combat.update(dtMs, Date.now()));
     guarded("World", () => this.world.updateRespawns(Date.now()));
+    guarded("Npc", () => this.npcs.tick());
     guarded("Build", () => this.build.tick(dtMs));
     guarded("Save", () => this.save.tick(dtMs));
   }
@@ -308,6 +335,7 @@ class Game {
   private frame(dt: number) {
     guarded("Movement", () => { this.movement.update(dt); this.movement.syncToModel(); });
     guarded("World", () => this.world.update(dt * 1000));
+    guarded("Npc", () => this.npcs.update(dt));
     if (this.skill.hasActive || this.craft.hasActive) {
       const t = performance.now() / 1000;
       this.hero.armR.rotation.x = Math.sin(t * 14) * 0.5;

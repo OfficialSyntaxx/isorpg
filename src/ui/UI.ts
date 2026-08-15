@@ -39,6 +39,9 @@ export class UI {
   private panelTitle = document.getElementById("panel-title")!;
   private panelBody = document.getElementById("panel-body")!;
   private targetChip = document.getElementById("target-chip")!;
+  private nightOverlay = document.getElementById("night-overlay")!;
+  private dayIcon = document.getElementById("day-icon")!;
+  private dayLabel = document.getElementById("day-label")!;
   private playerLevel = document.getElementById("player-level")!;
   private playerName = document.getElementById("player-name")!;
   private xpWrap = document.getElementById("action-xp")!;
@@ -105,6 +108,17 @@ export class UI {
     this.targetChip.classList.remove("hidden");
   }
   hideTargetChip() { this.targetChip.classList.add("hidden"); }
+
+  /** P3: night dim overlay opacity (0 = day, ~0.35 = night). */
+  setNight(opacity: number) {
+    this.nightOverlay.style.opacity = String(Math.max(0, Math.min(0.4, opacity)));
+  }
+
+  /** P3: day counter + phase icon in the top bar. */
+  setDay(day: number, icon: string) {
+    this.dayLabel.textContent = `Day ${day}`;
+    if (this.dayIcon.textContent !== icon) this.dayIcon.textContent = icon;
+  }
 
   /** Show/hide the "tap a green tile" banner while a building is armed for placement. */
   setPlacing(type: BuildingType | null) {

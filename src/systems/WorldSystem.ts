@@ -25,6 +25,7 @@ export class WorldSystem {
   private nodes = new Map<string, ResourceNode>();
   private combat: CombatSystem;
   private waterMat: THREE.ShaderMaterial | null = null;
+  private fog: THREE.Fog | null = null;
 
   constructor(scene: THREE.Scene, grid: Grid, combat: CombatSystem) {
     this.scene = scene;
@@ -44,6 +45,12 @@ export class WorldSystem {
   private buildSky() {
     this.scene.background = makeSkyTexture();
     this.scene.fog = new THREE.Fog(0xe8d9b0, 42, 88);
+    this.fog = this.scene.fog;
+  }
+
+  /** P3: tint fog from night (deep blue) to day (warm haze). */
+  setDayNight(d: number) {
+    if (this.fog) this.fog.color.lerpColors(new THREE.Color("#0d1626"), new THREE.Color("#e8d9b0"), d);
   }
 
   private buildTerrain() {

@@ -18,6 +18,8 @@ export class Engine {
   readonly renderer: THREE.WebGLRenderer;
   cameraTarget = new THREE.Vector3(0, 0, 0);
   cameraZoom = 1;
+  private ambient: THREE.AmbientLight | null = null;
+  private sun: THREE.DirectionalLight | null = null;
   // Smoothed position the camera actually renders at — eases toward
   // cameraTarget each frame so panning is smooth instead of snapping.
   private smoothTarget = new THREE.Vector3(0, 0, 0);
@@ -62,9 +64,11 @@ export class Engine {
 
   private setupLights() {
     const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    this.ambient = ambient;
     this.scene.add(ambient);
 
     const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    this.sun = sun;
     sun.position.set(50, 80, 50);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
@@ -97,6 +101,15 @@ export class Engine {
   updateCameraTarget(target: { x: number; z: number }, zoom: number) {
     this.cameraTarget.set(target.x, 0, target.z);
     this.cameraZoom = zoom;
+  }
+
+  /** P3 day/night: drive light intensity + tint from a daylight factor (0..1). */
+  setDayNight(d: number) {
+    if (this.ambient) this.ambient.intensity = 0.25 + 0.45 * d;
+    if (this.sun) {
+      this.sun.intensity = 0.2 + 0.8 * d;
+      this.sun.color.lerpColors(new THREE.Color("#8fa2c4"), new THREE.Color("#fff3dd"), d);
+    }
   }
 
   onFrame(fn: FrameHandler) { this.frameHandlers.push(fn); }
