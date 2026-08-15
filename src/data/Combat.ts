@@ -143,6 +143,31 @@ export const MONSTERS: Record<string, MonsterDef> = {
     petTable: [{ itemId: "pet_skeleton", chance: 0.02 }],
     respawnMs: 120_000,
   },
+  cave_bat: {
+    id: "cave_bat", name: "Cave Bat", level: 6, hp: 14, maxHit: 3, attackTick: 3,
+    attackRoll: 9, defenseRoll: 5, ranged: false, aggroRange: 5,
+    xp: { attack: 8, strength: 5, defense: 5, hitpoints: 1 },
+    main: [
+      { itemId: "bones", weight: 60, min: 1, max: 1 },
+      { itemId: "coins", weight: 100, min: 1, max: 5 },
+    ],
+    petTable: [{ itemId: "pet_rat", chance: 0.003 }],
+    respawnMs: 20_000,
+  },
+  cave_slasher: {
+    id: "cave_slasher", name: "Cave Slasher", level: 12, hp: 52, maxHit: 8, attackTick: 4,
+    attackRoll: 18, defenseRoll: 13, ranged: false, aggroRange: 6,
+    xp: { attack: 26, strength: 16, defense: 14, hitpoints: 4 },
+    main: [
+      { itemId: "coins", weight: 130, min: 8, max: 30 },
+      { itemId: "bronze_sword", weight: 8, min: 1, max: 1 },
+      { itemId: "bronze_2h", weight: 4, min: 1, max: 1 },
+      { itemId: "cooked_trout", weight: 18, min: 1, max: 1 },
+    ],
+    tertiary: [{ itemId: "goblin_key", chance: 0.1, min: 1, max: 1 }],
+    petTable: [{ itemId: "pet_goblin", chance: 0.001 }],
+    respawnMs: 45_000,
+  },
 };
 
 /** Render variants keyed by monster id for the procedural generator. */
@@ -154,6 +179,8 @@ export const MONSTER_STYLES: Record<string, { body: string; accent: string; ears
   dire_wolf: { body: "#6b6f7d", accent: "#3c3f4a", ears: true },
   goblin_archer: { body: "#7a9a5a", accent: "#4a3a26", ears: true },
   forest_ogre: { body: "#5f4e3c", accent: "#c98f4a", ears: true },
+  cave_bat: { body: "#4a4450", accent: "#c98f4a", ears: true },
+  cave_slasher: { body: "#5f6a6e", accent: "#c0392b", ears: true },
 };
 
 /** Food that triggers auto-eat, by item id. */

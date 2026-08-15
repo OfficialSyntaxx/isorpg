@@ -17,6 +17,7 @@ import { makeSelectionRing, makeBossRing, type SelectionRing } from "./generator
 import { spawnBurst, updateFx, type FxPiece } from "./core/Fx";
 import { tickClock, dayFactor, iconFor } from "./core/Clock";
 import { NpcSystem } from "./systems/NpcSystem";
+import { DungeonSystem, DUNGEON_ORIGIN } from "./systems/DungeonSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -57,6 +58,8 @@ class Game {
 
   // P3: living world — clock + NPCs/wildlife.
   private npcs!: NpcSystem;
+  private dungeon!: DungeonSystem;
+  private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private clockMin = 0;
   private day = 1;
   private heroFlashUntil = 0;
@@ -87,6 +90,8 @@ class Game {
     this.combat = new CombatSystem(this.state);
     this.world = new WorldSystem(this.engine.scene, this.grid, this.combat);
     this.npcs = new NpcSystem(this.engine.scene, this.grid, { getBuildings: () => this.state.town.buildings });
+    this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid);
+    this.dungeon.buildMeshes();
     this.movement = new MovementSystem(this.state.player.pos, this.hero);
     this.skill = new SkillSystem(this.state, this.world.consume.bind(this.world));
     this.build = new BuildSystem(this.engine.scene, this.grid, this.state);
@@ -153,6 +158,12 @@ class Game {
         this.ui.setPlayerHp(this.state.player.health.hp, this.state.player.health.maxHp);
         this.heroFlashUntil = Date.now() + 250;
         this.engine.addShake(0.4); // P4b: camera kick on hits
+      },
+      onDeath: () => {
+        // P5: dying underground still respawns in town — but exit the dungeon
+        // first so the town-centre teleport lands on the surface.
+        if (this.dungeon.active) this.leaveDungeon();
+        showToast("💀 You died… respawned in town.");
       },
       onKill: (m, drops, kc) => {
         this.ui.setCombat(null, 0, 0);
@@ -250,7 +261,15 @@ class Game {
 
   // ————— Tap routing —————
   private onTileTap(gx: number, gy: number) {
-    if (this.build.placing) { this.build.tryPlaceAt(gx, gy); return; }
+    if (this.build.placing) {
+      if (this.dungeon.active) { showToast("Can't build down here", "error", 1100); }
+      else this.build.tryPlaceAt(gx, gy);
+      return;
+    }
+    // P5: inside the dungeon, all taps are dungeon actions.
+    if (this.dungeon.active) { this.onDungeonTap(gx, gy); return; }
+    // P5: the deep-wilderness door.
+    if (gx === this.dungeon.entrance.x && gy === this.dungeon.entrance.y) { this.enterDungeon(); return; }
 
     const node = this.world.nodeAt(gx, gy);
     if (node) {
@@ -292,6 +311,76 @@ class Game {
       return;
     }
     showToast(t ? "That spot is blocked" : "Out of bounds", "error", 1100);
+  }
+
+  /** P5: taps inside the dungeon — monster, chest, exit, floor. */
+  private onDungeonTap(gx: number, gy: number) {
+    const m = this.dungeon.monsterAt(gx, gy);
+    if (m) {
+      this.setTarget("monster", gx, gy, `Attack ${m.def.name}`, m);
+      const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
+      const path = findPath(this.dungeon, px, py, gx, gy, true);
+      if (!path) { showToast("Can't reach that", "error", 1200); return; }
+      this.combat.engage(m);
+      if (path.length === 0) this.combat.confirmFight();
+      else this.movement.setPath(path);
+      return;
+    }
+    if (gx === this.dungeon.chest.x && gy === this.dungeon.chest.y) {
+      this.setTarget("walk", gx, gy, "Open Chest", null);
+      if (!this.dungeon.openedChest) {
+        this.dungeon.openedChest = true;
+        const loot = this.dungeon.chestLoot();
+        for (const d of loot) addItem(this.state.player.inventory, d.itemId, d.qty);
+        showToast(`Chest looted: ${loot.map((d) => `${ITEM_NAMES[d.itemId]?.name ?? d.itemId} ×${d.qty}`).join(", ")}`, "success", 2400);
+      } else showToast("The chest is empty…", "info", 1100);
+      return;
+    }
+    if (gx === this.dungeon.exit.x && gy === this.dungeon.exit.y) { this.leaveDungeon(); return; }
+    if (this.dungeon.isWalkable(gx, gy)) {
+      this.skill.interrupt(); this.craft.stop(); this.pendingNode = null;
+      this.setTarget("walk", gx, gy, "Walk", null);
+      const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
+      const path = findPath(this.dungeon, px, py, gx, gy);
+      if (path) this.movement.setPath(path);
+    } else {
+      showToast("Solid stone walls.", "info", 900);
+    }
+  }
+
+  /** P5: descend through the deep-wilderness door into the dungeon level. */
+  private enterDungeon() {
+    if (this.dungeon.active) return;
+    const p = this.state.player.pos;
+    this.savedPos = { gx: p.gx, gy: p.gy, wx: p.wx, wz: p.wz };
+    this.dungeon.enter(this.combat);
+    this.combat.setActiveGrid(this.dungeon);
+    this.input.origin = { x: DUNGEON_ORIGIN.x, z: DUNGEON_ORIGIN.z };
+    p.gx = this.dungeon.spawn.x; p.gy = this.dungeon.spawn.y;
+    p.wx = this.dungeon.spawn.x; p.wz = this.dungeon.spawn.y;
+    this.hero.group.removeFromParent();
+    this.dungeon.worldGroup.add(this.hero.group);
+    this.hero.group.position.set(p.wx, 0, p.wz);
+    this.engine.updateCameraTarget({ x: DUNGEON_ORIGIN.x + p.wx, z: DUNGEON_ORIGIN.z + p.wz }, 1);
+    this.target = null;
+    showToast("You descend into the Caves…", "info", 2200);
+  }
+
+  /** P5: step back through the portal to the surface. */
+  private leaveDungeon() {
+    if (!this.dungeon.active) return;
+    this.dungeon.leave();
+    this.combat.setActiveGrid(null);
+    this.input.origin = { x: 0, z: 0 };
+    const p = this.state.player.pos;
+    p.gx = this.savedPos.gx; p.gy = this.savedPos.gy;
+    p.wx = this.savedPos.wx; p.wz = this.savedPos.wz;
+    this.hero.group.removeFromParent();
+    this.engine.scene.add(this.hero.group);
+    this.hero.group.position.set(p.wx, 0, p.wz);
+    this.engine.updateCameraTarget({ x: p.wx, z: p.wz }, 1);
+    this.target = null;
+    showToast("Back above ground.", "info", 1800);
   }
 
   private routeToNode(node: ResourceNode) {

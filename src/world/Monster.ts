@@ -77,10 +77,12 @@ export function buildMonsterMesh(id: string, seed: number): THREE.Group {
   return g;
 }
 
-export function spawnMonster(id: string, def: MonsterDef, gx: number, gy: number): MonsterCombat {
+export function spawnMonster(type: string, def: MonsterDef, gx: number, gy: number): MonsterCombat {
   const seed = gx * 31 + gy * 57 + 1000;
-  const group = buildMonsterMesh(id, seed);
+  const group = buildMonsterMesh(type, seed);
   group.position.set(gx, 0, gy);
+  // Unique id so multiple monsters of one type can coexist in the registry.
+  const id = `${type}_${gx}_${gy}`;
   return {
     id, def, tile: { x: gx, y: gy }, home: { x: gx, y: gy }, seed,
     hp: def.hp, maxHp: def.hp, group,

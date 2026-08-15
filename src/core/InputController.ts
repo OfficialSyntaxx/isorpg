@@ -45,6 +45,10 @@ export class InputController {
   private keys: Record<string, boolean> = {};
   private keyPan = { x: 0, z: 0 };
 
+  /** P5: world offset of the active dungeon (0,0 on the surface) — taps are
+   *  translated into the active grid's local coords. */
+  origin = { x: 0, z: 0 };
+
   // Reusable ortho raycast objects (created once, not per tap)
   private ray = new THREE.Raycaster();
   private groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -269,8 +273,11 @@ export class InputController {
   private raycastTap(clientX: number, clientY: number) {
     const hit = this.pickWorld(clientX, clientY);
     if (!hit) return;
-    const tile = this.grid.at(Math.round(hit.x), Math.round(hit.z));
-    if (tile) this.cbs.onTileTap(tile.x, tile.y);
+    // P5: translate into the active grid's local coords (dungeon offset).
+    const gx = Math.round(hit.x) - this.origin.x;
+    const gy = Math.round(hit.z) - this.origin.z;
+    if (!this.grid.at(gx, gy)) return;
+    this.cbs.onTileTap(gx, gy);
   }
 
   /** Ask the camera to drift toward a world point while the hero walks. */

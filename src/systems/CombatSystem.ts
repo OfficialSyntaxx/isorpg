@@ -32,12 +32,18 @@ export class CombatSystem {
   private target: MonsterCombat | null = null;
   private playerAtkAcc = 0;
   private bossSlam: { x: number; y: number; at: number } | null = null;
+  /** P5: active grid override (dungeon while in the dungeon). */
+  private activeGrid: { isWalkable(x: number, y: number): boolean; at(x: number, y: number): { occupant: string; walkable: boolean; zoneId: string } | null; setOccupant(x: number, y: number, t: string, id: string | null): void; clearOccupant(x: number, y: number): void } | null = null;
 
   constructor(state: GameState) {
     this.state = state;
   }
 
   setCallbacks(cb: CombatEvents) { this.cb = cb; }
+
+  /** P5: route monster AI/occupancy to a different grid (dungeon) while active. */
+  setActiveGrid(g: typeof CombatSystem.prototype.activeGrid) { this.activeGrid = g; }
+  private gridNow() { return this.activeGrid ?? this.state.world.grid; }
 
   get registry() { return this.monsters; }
   get engaged() { return this.target && !this.target.dead ? this.target : null; }
@@ -60,7 +66,7 @@ export class CombatSystem {
 
   addMonster(m: MonsterCombat) {
     this.monsters.set(m.id, m);
-    this.state.world.grid.setOccupant(m.tile.x, m.tile.y, "MONSTER", m.id);
+    this.gridNow().setOccupant(m.tile.x, m.tile.y, "MONSTER", m.id);
   }
 
   monsterAt(x: number, y: number): MonsterCombat | null {
@@ -186,7 +192,7 @@ export class CombatSystem {
     let bestScore = Infinity;
     for (const [dx, dy] of dirs) {
       const nx = m.tile.x + dx, ny = m.tile.y + dy;
-      const t = this.state.world.grid.at(nx, ny);
+      const t = this.gridNow().at(nx, ny);
       if (!t || !t.walkable || t.occupant !== "NONE") continue;
       if (avoidSafe && (t.zoneId === "TOWN_CENTER" || t.zoneId === "SETTLEMENT")) continue;
       const score = Math.abs(nx - tx) + Math.abs(ny - ty);
@@ -202,7 +208,7 @@ export class CombatSystem {
     let bestScore = -Infinity;
     for (const [dx, dy] of dirs) {
       const nx = m.tile.x + dx, ny = m.tile.y + dy;
-      const t = this.state.world.grid.at(nx, ny);
+      const t = this.gridNow().at(nx, ny);
       if (!t || !t.walkable || t.occupant !== "NONE") continue;
       if (avoidSafe && (t.zoneId === "TOWN_CENTER" || t.zoneId === "SETTLEMENT")) continue;
       const score = Math.abs(nx - tx) + Math.abs(ny - ty);
@@ -212,9 +218,9 @@ export class CombatSystem {
   }
 
   private moveMonster(m: MonsterCombat, nx: number, ny: number) {
-    this.state.world.grid.clearOccupant(m.tile.x, m.tile.y);
+    this.gridNow().clearOccupant(m.tile.x, m.tile.y);
     m.tile = { x: nx, y: ny };
-    this.state.world.grid.setOccupant(nx, ny, "MONSTER", m.id);
+    this.gridNow().setOccupant(nx, ny, "MONSTER", m.id);
     m.group.position.set(nx, 0, ny);
   }
 
