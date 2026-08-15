@@ -79,6 +79,8 @@ export class InputController {
 
   // ————— Touch —————
   private onTouchStart = (e: TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target?.closest?.(".hud-slot, .bar, .panel, .modal, button, a, input, .combat-tray, [data-hud]")) return; // HUD: let the browser fire the click
     e.preventDefault();
     const ts = Array.from(e.touches);
     if (ts.length === 2) {
@@ -98,6 +100,8 @@ export class InputController {
   };
 
   private onTouchMove = (e: TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target?.closest?.(".hud-slot, .bar, .panel, .modal, button, a, input, [data-hud]")) return;
     e.preventDefault();
     const ts = Array.from(e.touches);
     if (ts.length >= 2) {
@@ -118,8 +122,10 @@ export class InputController {
       // A pan gesture once movement exceeds the tap threshold — own it.
       this.el.style.touchAction = "none";
       this.moved = true;
-      this.panWorld.x -= dx * 0.05 / this.pan.zoom;
-      this.panWorld.z -= dy * 0.05 / this.pan.zoom;
+      const c = Math.SQRT1_2;
+      const s = 0.05 / this.pan.zoom;
+      this.panWorld.x -= (dx - dy) * c * s;
+      this.panWorld.z += (dx + dy) * c * s;
       this.applyCamera();
     }
   };
@@ -147,7 +153,8 @@ export class InputController {
     const t = e.changedTouches[0];
     // A tap: quick, short movement, released on the same finger
     const dur = performance.now() - this.startTime;
-    if (!this.moved && dur < TAP_DRAG_MS && t.identifier === this.startId) {
+    const hudTarget = (e.target as HTMLElement)?.closest?.(".hud-slot, .bar, .panel, .modal, button, a, input");
+    if (!hudTarget && !this.moved && dur < TAP_DRAG_MS && t.identifier === this.startId) {
       this.raycastTap(t.clientX, t.clientY);
     }
   };
