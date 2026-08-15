@@ -24,6 +24,13 @@ export class DungeonSystem {
   chest = { x: 0, y: 0 };
   exit = { x: 0, y: 0 };
 
+  // P5.2: locked door + Iron Key. The door tile is sealed (non-walkable) until
+  // unlock(); the key sits in a side room and is consumed on use.
+  door = { x: 0, y: 0 };
+  key = { x: 0, y: 0 };
+  keyTaken = false;
+  doorOpened = false;
+
   active = false;
   openedChest = false;
 
@@ -33,6 +40,8 @@ export class DungeonSystem {
   tiles: string[][] = [];
   private group = new THREE.Group();
   private doorMesh = new THREE.Group();
+  private lockedDoorMesh = new THREE.Group();
+  private pickKeyMesh = new THREE.Group();
   private monsters: MonsterCombat[] = [];
 
   constructor(scene: THREE.Scene, combat: CombatSystem, surfaceGrid: { isWalkable(x: number, y: number): boolean }) {
@@ -70,7 +79,7 @@ export class DungeonSystem {
       { x: 10, y: 2, w: 4, h: 5 },
       { x: 3, y: 12, w: 5, h: 4 },
       { x: 10, y: 10, w: 5, h: 5 },
-      { x: 6, y: 6, w: 4, h: 4 },
+      { x: 5, y: 17, w: 4, h: 3 }, // exit: isolated corner, single seam (7,16)
     ];
     for (const r of rooms) {
       for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) this.tiles[y][x] = FLOOR;
@@ -87,6 +96,27 @@ export class DungeonSystem {
     this.spawn = roomCenter(rooms[0]);
     this.chest = roomCenter(rooms[2]);
     this.exit = roomCenter(rooms[rooms.length - 1]);
+    // P5.2: the Iron Key sits in a side chamber (room 3, a dead-end branch).
+    this.key = roomCenter(rooms[3]);
+    // P5.2: lock the sole corridor seam leading into the exit room, so the
+    // exit is unreachable until the key is used.
+    const exr = rooms[rooms.length - 1], prv = rooms[rooms.length - 2];
+    const pc = roomCenter(prv);
+    const insideAnyRoom = (x: number, y: number) =>
+      rooms.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+    let bestDoor: { x: number; y: number } | null = null, bestD = 1e9;
+    for (let y = exr.y - 1; y <= exr.y + exr.h; y++) {
+      for (let x = exr.x - 1; x <= exr.x + exr.w; x++) {
+        if (insideAnyRoom(x, y)) continue;
+        if (this.tiles[y] && this.tiles[y][x] === FLOOR) {
+          const d = Math.abs(x - pc.x) + Math.abs(y - pc.y);
+          if (d < bestD) { bestD = d; bestDoor = { x, y }; }
+        }
+      }
+    }
+    this.door = bestDoor ?? this.exit;
+    this.tiles[this.door.y][this.door.x] = WALL; // sealed until the key is used
+    this.tiles[this.key.y][this.key.x] = FLOOR;
     this.tiles[this.spawn.y][this.spawn.x] = FLOOR;
     this.tiles[this.chest.y][this.chest.x] = FLOOR;
     this.tiles[this.exit.y][this.exit.x] = FLOOR;
@@ -147,6 +177,27 @@ export class DungeonSystem {
     portal.position.set(this.exit.x, 0.04, this.exit.y);
     portal.renderOrder = 5;
     this.group.add(portal);
+    // P5.2: locked iron door blocking the corridor — bars + glowing keyhole.
+    const locked = new THREE.Group();
+    const ldBar = new THREE.Mesh(new THREE.BoxGeometry(1, 1.6, 0.35), new THREE.MeshStandardMaterial({ color: "#3c4655", flatShading: true, metalness: 0.6, roughness: 0.5 }));
+    ldBar.position.set(this.door.x, 0.8, this.door.y);
+    locked.add(ldBar);
+    const keyhole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.4), new THREE.MeshStandardMaterial({ color: "#d9a441", flatShading: true, metalness: 0.6 }));
+    keyhole.position.set(this.door.x, 0.75, this.door.y);
+    locked.add(keyhole);
+    this.group.add(locked);
+    this.lockedDoorMesh = locked;
+    // P5.2: Iron Key pick-up marker in the side chamber.
+    const pick = new THREE.Group();
+    const kb = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.2), new THREE.MeshStandardMaterial({ color: "#ffd24a", emissive: "#8a6a00", flatShading: true, metalness: 0.5, roughness: 0.4 }));
+    kb.position.set(this.key.x, 0.45, this.key.y);
+    pick.add(kb);
+    const keyGlow = new THREE.Mesh(new THREE.CircleGeometry(0.18, 12), new THREE.MeshBasicMaterial({ color: "#ffe9a0", transparent: true, opacity: 0.55, depthWrite: false }));
+    keyGlow.rotation.x = -Math.PI / 2;
+    keyGlow.position.set(this.key.x, 0.04, this.key.y);
+    pick.add(keyGlow);
+    this.group.add(pick);
+    this.pickKeyMesh = pick;
     // Overworld door marker.
     const door = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.6, 0.9), new THREE.MeshStandardMaterial({ color: "#8a6a3a", flatShading: true }));
     door.position.set(this.entrance.x, 0.8, this.entrance.y);
@@ -161,8 +212,26 @@ export class DungeonSystem {
   enter(combat: CombatSystem): void {
     this.active = true;
     this.openedChest = false;
+    // Each descent is a fresh run: re-seal the door, put the key back.
+    this.keyTaken = false;
+    this.doorOpened = false;
+    this.tiles[this.door.y][this.door.x] = WALL;
+    if (this.lockedDoorMesh) this.lockedDoorMesh.visible = true;
+    if (this.pickKeyMesh) this.pickKeyMesh.visible = true;
     this.group.visible = true;
     if (this.monsters.length === 0) this.spawnPool(combat);
+  }
+
+  /** P5.2: call once the player has the Iron Key — opens the sealed door. */
+  unlock(): void {
+    this.doorOpened = true;
+    this.tiles[this.door.y][this.door.x] = FLOOR;
+    if (this.lockedDoorMesh) this.lockedDoorMesh.visible = false;
+  }
+
+  /** P5.2: the key has been picked up — remove its world marker. */
+  hideKey(): void {
+    if (this.pickKeyMesh) this.pickKeyMesh.visible = false;
   }
 
   leave(): void {
@@ -177,6 +246,11 @@ export class DungeonSystem {
       for (let x = 1; x < W - 1; x++) {
         if (this.tiles[y][x] !== FLOOR) continue;
         if (Math.abs(x - this.spawn.x) + Math.abs(y - this.spawn.y) < 6) continue;
+        // Don't park monsters on story tiles (chest, exit, door, key).
+        if ((x === this.chest.x && y === this.chest.y)
+          || (x === this.exit.x && y === this.exit.y)
+          || (x === this.door.x && y === this.door.y)
+          || (x === this.key.x && y === this.key.y)) continue;
         spots.push({ x, y });
       }
     }

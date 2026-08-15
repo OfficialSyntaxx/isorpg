@@ -24,7 +24,7 @@ import { findPath } from "./ai/AStar";
 import { guarded, EngineLogger } from "./utils/Logger";
 import { ITEMS as ITEM_NAMES } from "./data/Items";
 import { getToolTier } from "./data/Items";
-import { addItem } from "./components/Inventory";
+import { addItem, countItem, removeItem } from "./components/Inventory";
 import { levelFromXp } from "./data/XPTable";
 import { SKILLS, COMBAT_SKILLS, SKILL_IDS, type SkillId } from "./data/Skills";
 import { BUILDINGS } from "./data/Buildings";
@@ -324,6 +324,32 @@ class Game {
       this.combat.engage(m);
       if (path.length === 0) this.combat.confirmFight();
       else this.movement.setPath(path);
+      return;
+    }
+    // P5.2: the locked door — needs the Iron Key (consumed on use).
+    if (gx === this.dungeon.door.x && gy === this.dungeon.door.y) {
+      if (!this.dungeon.doorOpened) {
+        this.setTarget("walk", gx, gy, "Locked Door", null);
+        if (countItem(this.state.player.inventory, "dungeon_key") > 0) {
+          removeItem(this.state.player.inventory, "dungeon_key", 1);
+          this.dungeon.unlock();
+          showToast("🔓 The Iron Key turns — the door grinds open (key consumed).", "success", 2400);
+        } else {
+          showToast("🔒 Locked. Find the Iron Key in a side chamber.", "error", 2200);
+        }
+        return;
+      }
+      // Already open — fall through to walk through it.
+    }
+    // P5.2: pick up the Iron Key (consumed when the door is used).
+    if (gx === this.dungeon.key.x && gy === this.dungeon.key.y) {
+      if (!this.dungeon.keyTaken) {
+        this.dungeon.keyTaken = true;
+        addItem(this.state.player.inventory, "dungeon_key", 1);
+        this.dungeon.hideKey();
+        showToast("🗝️ You found the Iron Key.", "success", 2000);
+      }
+      this.setTarget("walk", gx, gy, "Iron Key", null);
       return;
     }
     if (gx === this.dungeon.chest.x && gy === this.dungeon.chest.y) {

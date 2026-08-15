@@ -110,6 +110,7 @@ export const ITEMS: Record<string, Item> = {
   iron_legs: { id: "iron_legs", name: "Iron Platelegs", type: "TOOL", value: 100, desc: "+2 defence, +10 HP.", stack: false, equip: { slot: "legs", tier: 2, bonus: { defense: 2, maxHp: 10 } } },
 
   goblin_key: { id: "goblin_key", name: "Goblin Key", type: "MISC", value: 5, desc: "Rusted and noisy.", stack: true },
+  dungeon_key: { id: "dungeon_key", name: "Iron Key", type: "MISC", value: 0, desc: "Fits the locked door that blocks the dungeon exit. Consumed on use.", stack: true },
   rat_bone: { id: "rat_bone", name: "Rat Bone (Triangular)", type: "MISC", value: 1, desc: "A curious irregular bone.", stack: true },
   loop_half_key: { id: "loop_half_key", name: "Loop Half of a Key", type: "MISC", value: 20, desc: "Half a mysterious key.", stack: true },
   zombie_flesh: { id: "zombie_flesh", name: "Zombie Flesh", type: "MISC", value: 3, desc: "Moves slightly on its own.", stack: true },
@@ -142,7 +143,7 @@ export const ITEM_ICONS: Record<string, string> = {
   bronze_dagger: "🗡️", bronze_sword: "⚔️", bronze_2h: "⚔️", iron_sword: "⚔️", shortbow: "🏹",
   bronze_helm: "⛑️", bronze_plate: "🛡️", bronze_legs: "🦵",
   iron_helm: "⛑️", iron_plate: "🛡️", iron_legs: "🦵",
-  goblin_key: "🗝️", rat_bone: "🦴", loop_half_key: "🗝️", zombie_flesh: "🧟",
+  goblin_key: "🗝️", dungeon_key: "🗝️", rat_bone: "🦴", loop_half_key: "🗝️", zombie_flesh: "🧟",
   pet_rat: "🐀", pet_goblin: "👹", pet_skeleton: "💀", pet_zombie: "🧟",
 };
 
