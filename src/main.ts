@@ -62,12 +62,13 @@ class Game {
   private heroFlashUntil = 0;
   private bossRing!: THREE.Group;
   private fx: FxPiece[] = [];
+  private shots: { mesh: THREE.Mesh; sx: number; sy: number; sz: number; tx: number; ty: number; tz: number; born: number; dur: number }[] = [];
 
   async boot() {
     initToasts();
 
     this.engine = new Engine(document.getElementById("game-canvas") as HTMLElement);
-    this.grid = new Grid(20, 20);
+    this.grid = new Grid(30, 30);
     this.hero = makeHero();
     this.engine.scene.add(this.hero.group);
 
@@ -168,6 +169,19 @@ class Game {
         if (!tile) { this.bossRing.visible = false; return; }
         this.bossRing.position.set(tile.x, 0.05, tile.y);
         this.bossRing.visible = true;
+      },
+      // P4c: ranged shots — fire a visible arrow at the struck monster.
+      onPlayerShot: (toX, toY) => {
+        const p = this.state.player.pos;
+        const dir = Math.atan2(toX - p.gx, toY - p.gy);
+        const mesh = new THREE.Mesh(
+          new THREE.ConeGeometry(0.045, 0.3, 6),
+          new THREE.MeshStandardMaterial({ color: "#d9b87a", flatShading: true, emissive: "#ffd889", emissiveIntensity: 0.3 })
+        );
+        mesh.rotation.z = Math.PI / 2;
+        mesh.rotation.y = -dir;
+        this.engine.scene.add(mesh);
+        this.shots.push({ mesh, sx: p.gx, sy: 1.0, sz: p.gy, tx: toX, ty: 0.9, tz: toY, born: performance.now(), dur: 0.26 });
       },
       onLevelUp: (skill, lvl) => this.ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"),
     });
@@ -383,6 +397,26 @@ class Game {
     flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");
     // P4b: advance kill-burst shards.
     this.fx = updateFx(this.fx, dt);
+    // P4c: fly ranged arrows to their target; spark on impact.
+    if (this.shots.length) {
+      const now = performance.now();
+      this.shots = this.shots.filter((s) => {
+        const t = Math.min(1, (now - s.born) / (s.dur * 1000));
+        s.mesh.position.set(
+          s.sx + (s.tx - s.sx) * t,
+          s.sy + (s.ty - s.sy) * t + Math.sin(t * Math.PI) * 0.25,
+          s.sz + (s.tz - s.sz) * t
+        );
+        if (t >= 1) {
+          s.mesh.removeFromParent();
+          s.mesh.geometry.dispose();
+          (s.mesh.material as THREE.Material).dispose();
+          this.fx.push(...spawnBurst(this.engine.scene, s.tx, s.ty, s.tz, "#d9b87a", 5));
+          return false;
+        }
+        return true;
+      });
+    }
     if (this.skill.hasActive || this.craft.hasActive) {
       const t = performance.now() / 1000;
       this.hero.armR.rotation.x = Math.sin(t * 14) * 0.5;

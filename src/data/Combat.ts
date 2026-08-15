@@ -101,6 +101,33 @@ export const MONSTERS: Record<string, MonsterDef> = {
     petTable: [{ itemId: "pet_zombie", chance: 0.0002 }],
     respawnMs: 50_000,
   },
+  dire_wolf: {
+    id: "dire_wolf", name: "Dire Wolf", level: 5, hp: 22, maxHit: 4, attackTick: 3,
+    attackRoll: 10, defenseRoll: 6, ranged: false, aggroRange: 5,
+    xp: { attack: 10, strength: 8, defense: 6, hitpoints: 2 },
+    main: [
+      { itemId: "raw_rat_meat", weight: 45, min: 1, max: 1 },
+      { itemId: "coins", weight: 140, min: 2, max: 8 },
+      { itemId: "bones", weight: 55, min: 1, max: 2 },
+    ],
+    tertiary: [{ itemId: "pet_rat", chance: 0.004, min: 1, max: 1 }],
+    petTable: [{ itemId: "pet_rat", chance: 0.0008 }],
+    respawnMs: 25_000,
+  },
+  goblin_archer: {
+    id: "goblin_archer", name: "Goblin Archer", level: 7, hp: 18, maxHit: 5, attackTick: 4,
+    attackRoll: 14, defenseRoll: 7, ranged: true, aggroRange: 6,
+    xp: { attack: 14, strength: 6, defense: 8, hitpoints: 2 },
+    main: [
+      { itemId: "coins", weight: 160, min: 3, max: 12 },
+      { itemId: "shortbow", weight: 2, min: 1, max: 1 },
+      { itemId: "goblin_key", weight: 12, min: 1, max: 1 },
+      { itemId: "raw_rat_meat", weight: 30, min: 1, max: 1 },
+    ],
+    tertiary: [{ itemId: "goblin_key", chance: 0.06, min: 1, max: 1 }],
+    petTable: [{ itemId: "pet_goblin", chance: 0.0006 }],
+    respawnMs: 30_000,
+  },
   forest_ogre: {
     id: "forest_ogre", name: "Forest Ogre", level: 18, hp: 110, maxHit: 10, attackTick: 5,
     attackRoll: 24, defenseRoll: 20, ranged: false, aggroRange: 5, boss: true,
@@ -124,6 +151,8 @@ export const MONSTER_STYLES: Record<string, { body: string; accent: string; ears
   goblin: { body: "#6fae55", accent: "#c0392b", ears: true },
   skeleton: { body: "#d8ceb8", accent: "#8e8468" },
   zombie: { body: "#7c9a6a", accent: "#4a6a54" },
+  dire_wolf: { body: "#6b6f7d", accent: "#3c3f4a", ears: true },
+  goblin_archer: { body: "#7a9a5a", accent: "#4a3a26", ears: true },
   forest_ogre: { body: "#5f4e3c", accent: "#c98f4a", ears: true },
 };
 

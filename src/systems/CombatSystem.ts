@@ -18,6 +18,8 @@ export interface CombatEvents {
   onLevelUp?: (skill: SkillId, level: number) => void;
   /** P4b: boss telegraph ring — tile when winding up, null when it lands/fizzles. */
   onBossTelegraph?: (tile: { x: number; y: number } | null) => void;
+  /** P4c: a ranged player attack connected — pitch a visible projectile. */
+  onPlayerShot?: (toX: number, toY: number) => void;
 }
 
 const EAT_THRESHOLD = 0.4; // auto-eat below 40% HP
@@ -134,11 +136,19 @@ export class CombatSystem {
   }
 
   /** P4: monsters hunt — approach the player when aggroed, back off (ranged) to
-   *  keep their distance, and leash back home when they stray too far. */
+   *  keep their distance, and leash back home when they stray too far. + safe
+   *  zones (4c): town/settlement tiles are no-place-for-monsters — they never
+   *  chase into them and leave immediately if they end up there. */
   private aiChase() {
     const p = this.state.player.pos;
     for (const m of this.monsters.values()) {
       if (m.dead) continue;
+      // Safe zone: inside the settlement ring ⇒ de-aggro and head home.
+      if (this.isSafeTile(m.tile.x, m.tile.y)) {
+        m.inCombat = false;
+        this.returnHome(m);
+        continue;
+      }
       const d = Math.max(Math.abs(m.tile.x - p.gx), Math.abs(m.tile.y - p.gy));
       if (!m.inCombat && d > m.def.aggroRange) { this.returnHome(m); continue; }
       // Leash: too far from the spawn anchor — give up and head home.
@@ -149,12 +159,17 @@ export class CombatSystem {
       }
       m.inCombat = true;
       if (m.def.ranged) {
-        if (d < RANGED_RANGE - 1) this.stepAway(m, p.gx, p.gy); // too close — back off
-        else if (d > RANGED_RANGE) this.step(m, p.gx, p.gy); // too far — close distance
+        if (d < RANGED_RANGE - 1) this.stepAway(m, p.gx, p.gy, true); // too close — back off
+        else if (d > RANGED_RANGE) this.step(m, p.gx, p.gy, true); // too far — close distance
       } else if (d > 1) {
-        this.step(m, p.gx, p.gy);
+        this.step(m, p.gx, p.gy, true); // chase, but never into the settlement
       }
     }
+  }
+
+  private isSafeTile(x: number, y: number): boolean {
+    const t = this.state.world.grid.at(x, y);
+    return !!t && (t.zoneId === "TOWN_CENTER" || t.zoneId === "SETTLEMENT");
   }
 
   private returnHome(m: MonsterCombat) {
@@ -163,8 +178,9 @@ export class CombatSystem {
     }
   }
 
-  /** Move one tile toward (tx,ty), never onto water/buildings/another monster. */
-  private step(m: MonsterCombat, tx: number, ty: number) {
+  /** Move one tile toward (tx,ty), never onto water/buildings/another monster,
+   *  and (with avoidSafe) never into the settlement ring. */
+  private step(m: MonsterCombat, tx: number, ty: number, avoidSafe = false) {
     const dirs: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
     let best: { x: number; y: number } | null = null;
     let bestScore = Infinity;
@@ -172,6 +188,7 @@ export class CombatSystem {
       const nx = m.tile.x + dx, ny = m.tile.y + dy;
       const t = this.state.world.grid.at(nx, ny);
       if (!t || !t.walkable || t.occupant !== "NONE") continue;
+      if (avoidSafe && (t.zoneId === "TOWN_CENTER" || t.zoneId === "SETTLEMENT")) continue;
       const score = Math.abs(nx - tx) + Math.abs(ny - ty);
       if (score < bestScore) { bestScore = score; best = { x: nx, y: ny }; }
     }
@@ -179,7 +196,7 @@ export class CombatSystem {
   }
 
   /** Move one tile AWAY from (tx,ty) — ranged monsters keep their distance. */
-  private stepAway(m: MonsterCombat, tx: number, ty: number) {
+  private stepAway(m: MonsterCombat, tx: number, ty: number, avoidSafe = false) {
     const dirs: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
     let best: { x: number; y: number } | null = null;
     let bestScore = -Infinity;
@@ -187,6 +204,7 @@ export class CombatSystem {
       const nx = m.tile.x + dx, ny = m.tile.y + dy;
       const t = this.state.world.grid.at(nx, ny);
       if (!t || !t.walkable || t.occupant !== "NONE") continue;
+      if (avoidSafe && (t.zoneId === "TOWN_CENTER" || t.zoneId === "SETTLEMENT")) continue;
       const score = Math.abs(nx - tx) + Math.abs(ny - ty);
       if (score > bestScore) { bestScore = score; best = { x: nx, y: ny }; }
     }
@@ -216,6 +234,7 @@ export class CombatSystem {
     this.gain("strength", target.def.xp.strength);
     this.gain("hitpoints", target.def.xp.hitpoints);
     this.cb.onPlayerHit?.(target, damage);
+    if (weapon.kind === "ranged") this.cb.onPlayerShot?.(target.tile.x, target.tile.y); // P4c arrow
 
     if (target.hp <= 0) this.onKill(target);
   }

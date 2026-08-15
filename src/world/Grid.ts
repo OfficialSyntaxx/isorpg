@@ -20,6 +20,11 @@ export interface Tile {
 
 export const TILE_SIZE = 1;
 
+/** Chunk edge length for zoning/regions (6 → a 30x30 map yields real
+ *  WILDERNESS corners beyond the town ring; a 10-tile chunk on small maps
+ *  produced zero wilderness, so monsters never spawned in production). */
+export const GRID_CHUNK = 6;
+
 /** Cheap deterministic PRNG so the world is stable across sessions. */
 function mulberry32(a: number): () => number {
   return () => {
@@ -46,9 +51,9 @@ export class Grid implements GridLike {
   }
 
   private initRegions(width: number, height: number): boolean[][] {
-    // Chunks of 10x10; center chunk unlocked.
-    const cols = Math.max(1, Math.ceil(width / 10));
-    const rows = Math.max(1, Math.ceil(height / 10));
+    // Chunks of GRID_CHUNK; center chunk unlocked.
+    const cols = Math.max(1, Math.ceil(width / GRID_CHUNK));
+    const rows = Math.max(1, Math.ceil(height / GRID_CHUNK));
     const grid: boolean[][] = [];
     for (let r = 0; r < rows; r++) {
       grid[r] = [];
@@ -67,9 +72,9 @@ export class Grid implements GridLike {
     this.tiles = [];
 
     const zoneAt = (x: number, y: number): string => {
-      const cols = Math.ceil(w / 10);
-      const rows = Math.ceil(h / 10);
-      const r = Math.floor(y / 10), c = Math.floor(x / 10);
+      const cols = Math.ceil(w / GRID_CHUNK);
+      const rows = Math.ceil(h / GRID_CHUNK);
+      const r = Math.floor(y / GRID_CHUNK), c = Math.floor(x / GRID_CHUNK);
       const cr = Math.floor(rows / 2), cc = Math.floor(cols / 2);
       if (r === cr && c === cc) return "TOWN_CENTER";
       if (r === cr - 1 || r === cr + 1 || c === cc - 1 || c === cc + 1) return "SETTLEMENT";
@@ -156,8 +161,8 @@ export class Grid implements GridLike {
   }
 
   isRegionUnlocked(x: number, y: number): boolean {
-    const cols = Math.max(1, Math.ceil(this.width / 10));
-    const r = Math.floor(y / 10), c = Math.floor(x / 10);
+    const cols = Math.max(1, Math.ceil(this.width / GRID_CHUNK));
+    const r = Math.floor(y / GRID_CHUNK), c = Math.floor(x / GRID_CHUNK);
     return Boolean(this.regionUnlocked?.[r]?.[c]);
   }
 }

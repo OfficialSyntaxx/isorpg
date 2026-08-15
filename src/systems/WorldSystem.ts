@@ -157,6 +157,8 @@ export class WorldSystem {
     const layout: { type: keyof typeof MONSTERS; cap: number }[] = [
       { type: "giant_rat", cap: 4 },
       { type: "goblin", cap: 3 },
+      { type: "dire_wolf", cap: 3 },
+      { type: "goblin_archer", cap: 3 },
       { type: "skeleton", cap: 2 },
       { type: "zombie", cap: 1 },
     ];
@@ -171,7 +173,10 @@ export class WorldSystem {
         const r = rnd();
         const cx = Math.floor(g.width / 2), cy = Math.floor(g.height / 2);
         const d = Math.max(Math.abs(gx - cx), Math.abs(gy - cy));
-        const pool: (keyof typeof MONSTERS)[] = d >= 8 ? ["skeleton", "zombie"] : ["giant_rat", "goblin"];
+        const pool: (keyof typeof MONSTERS)[] =
+          d <= 8 ? ["giant_rat", "goblin"] :
+          d <= 13 ? ["dire_wolf", "goblin_archer"] :
+          ["skeleton", "zombie"];
         const type = pool[Math.floor(r * pool.length) % pool.length] as keyof typeof MONSTERS;
         const defCfg = layout.find((l) => l.type === type)!;
         if ((counts[type] ?? 0) >= defCfg.cap) continue;
