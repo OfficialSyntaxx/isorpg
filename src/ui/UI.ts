@@ -260,7 +260,7 @@ export class UI {
       <div class="set-val">Collection Log: <b>${this.state.collectionLog.size}</b></div>
       <div class="set-row"><button class="btn" data-act="export">Export Save (.json)</button></div>
       <div class="set-row"><button class="btn" data-act="import">Import Save</button></div>
-      <div class="set-row"><button class="btn btn-danger" data-act="reset">New Save &amp; Reset</button></div>
+      <div class="set-row"><button class="btn btn-danger" data-act="delete">New Save &amp; Reset</button></div>
     `;
     this.panelBody.querySelector("[data-act='export']")!.addEventListener("click", () => this.ev.onExport?.());
     this.panelBody.querySelector("[data-act='import']")!.addEventListener("click", () => this.fileInput.click());
