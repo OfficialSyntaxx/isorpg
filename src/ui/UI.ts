@@ -73,11 +73,19 @@ export class UI {
   }
 
   openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build") {
-    if (id === "inventory") this.renderInventory();
-    else if (id === "combat") this.renderCombat();
-    else if (id === "craft") this.renderCraft();
-    else if (id === "build") this.renderBuild();
-    else this.renderSettings();
+    // Any render error must never silently keep the panel hidden. Render first;
+    // on failure show a visible degraded panel + log, never a dead button.
+    try {
+      if (id === "inventory") this.renderInventory();
+      else if (id === "combat") this.renderCombat();
+      else if (id === "craft") this.renderCraft();
+      else if (id === "build") this.renderBuild();
+      else this.renderSettings();
+    } catch (err) {
+      EngineLogger.logError(`panel:${id}`, err);
+      this.panelTitle.textContent = "Menu";
+      this.panelBody.innerHTML = `<div class="empty">That panel hit an error — try again.</div>`;
+    }
     this.panel.classList.remove("hidden");
   }
   closePanel() { this.panel.classList.add("hidden"); }
