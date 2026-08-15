@@ -52,6 +52,8 @@ export interface ResourceDef {
   masteryKey: string;
   // Level required to harvest this node type.
   levelReq: number;
+  // P2: minimum owned tool tier required (1 bronze, 2 iron, 3 steel).
+  toolTier?: number;
   // Time in ticks (600ms) per gathering action.
   ticksPerAction: number;
   // Units yielded per action (before mastery/double bonuses).
@@ -70,13 +72,13 @@ export const RESOURCES: Record<string, ResourceDef> = {
     depletes: true, maxUses: 4,
   },
   tree_oak: {
-    nodeType: "TREE", skill: "woodcutting", masteryKey: "oak", levelReq: 15,
+    nodeType: "TREE", skill: "woodcutting", masteryKey: "oak", levelReq: 15, toolTier: 2,
     ticksPerAction: 22, yield: 1,
     drops: [{ itemId: "oak_log", weight: 1, min: 1, max: 1 }],
     depletes: true, maxUses: 6,
   },
   tree_willow: {
-    nodeType: "TREE", skill: "woodcutting", masteryKey: "willow", levelReq: 30,
+    nodeType: "TREE", skill: "woodcutting", masteryKey: "willow", levelReq: 30, toolTier: 3,
     ticksPerAction: 28, yield: 1,
     drops: [{ itemId: "willow_log", weight: 1, min: 1, max: 1 }],
     depletes: true, maxUses: 8,
@@ -94,13 +96,13 @@ export const RESOURCES: Record<string, ResourceDef> = {
     depletes: true, maxUses: 5,
   },
   rock_iron: {
-    nodeType: "ROCK", skill: "mining", masteryKey: "iron", levelReq: 15,
+    nodeType: "ROCK", skill: "mining", masteryKey: "iron", levelReq: 15, toolTier: 2,
     ticksPerAction: 26, yield: 1,
     drops: [{ itemId: "iron_ore", weight: 1, min: 1, max: 1 }],
     depletes: true, maxUses: 6,
   },
   rock_coal: {
-    nodeType: "ROCK", skill: "mining", masteryKey: "coal", levelReq: 30,
+    nodeType: "ROCK", skill: "mining", masteryKey: "coal", levelReq: 30, toolTier: 3,
     ticksPerAction: 32, yield: 1,
     drops: [{ itemId: "coal", weight: 1, min: 1, max: 1 }],
     depletes: true, maxUses: 7,
@@ -112,7 +114,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
     depletes: false,
   },
   water_trout: {
-    nodeType: "WATER", skill: "fishing", masteryKey: "trout", levelReq: 20,
+    nodeType: "WATER", skill: "fishing", masteryKey: "trout", levelReq: 20, toolTier: 2,
     ticksPerAction: 18, yield: 1,
     drops: [{ itemId: "raw_trout", weight: 1, min: 1, max: 1 }],
     depletes: false,

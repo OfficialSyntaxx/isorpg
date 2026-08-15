@@ -12,6 +12,12 @@ import type { BuildSystem } from "../systems/BuildSystem";
 import { recipesFor, type CraftRecipe } from "../data/Recipes";
 import { BUILDINGS, BUILDING_TYPES, type BuildingType } from "../data/Buildings";
 import { countItem } from "../components/Inventory";
+import { equipItem, unequipItem, EQUIP_SLOTS } from "../components/Equipment";
+import type { EquipSlot } from "../data/Items";
+
+const SLOT_NAMES: Record<EquipSlot, string> = {
+  weapon: "Weapon", offhand: "Offhand", head: "Helm", body: "Body", legs: "Legs",
+};
 
 export interface UIEvents {
   onExport?: () => void;
@@ -160,10 +166,23 @@ export class UI {
     const inv = this.state.player.inventory.items;
     const stored = inv.reduce((a, i) => a + i.amount, 0);
     this.panelTitle.textContent = `Inventory (${stored.toLocaleString()}/${this.state.player.inventory.storageCap.toLocaleString()})`;
-    if (!inv.length) {
+    const eq = this.state.player.equipped;
+
+    // P2: equipped slots section (what is worn right now)
+    const eqRows = EQUIP_SLOTS
+      .filter((s) => eq[s])
+      .map((s) => {
+        const id = eq[s]!;
+        const it = ITEMS[id];
+        return `<div class="inv-row"><div class="inv-name"><span class="inv-count">${SLOT_NAMES[s]}</span> ${it ? it.name : id}</div><button class="btn btn-mini" data-act="unequip" data-slot="${s}">Unequip</button></div>`;
+      })
+      .join("");
+
+    if (!inv.length && !eqRows) {
       this.panelBody.innerHTML = `<div class="empty">Nothing yet. Tap a tree, rock or fishing spot to gather.</div>`;
       return;
     }
+
     const rows = inv
       .slice()
       .sort((a, b) => a.id.localeCompare(b.id))
@@ -171,10 +190,28 @@ export class UI {
         const it = ITEMS[s.id];
         const name = it ? it.name : s.id;
         const desc = it ? it.desc : "";
-        return `<div class="inv-row"><div class="inv-name"><span class="inv-count">${s.amount.toLocaleString()}</span> ${name}</div><div class="inv-desc">${desc}</div></div>`;
+        const equipBtn = it?.equip ? `<button class="btn btn-mini" data-act="equip" data-item="${s.id}">Equip</button>` : "";
+        return `<div class="inv-row"><div class="inv-name"><span class="inv-count">${s.amount.toLocaleString()}</span> ${name}</div><div class="inv-desc">${desc}</div>${equipBtn}</div>`;
       })
       .join("");
-    this.panelBody.innerHTML = rows;
+
+    this.panelBody.innerHTML = (eqRows ? `<div class="set-val">Equipped</div>${eqRows}` : "") + rows;
+
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-act='equip']").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.item ?? "";
+        if (equipItem(this.state, id)) {
+          showToast(`Equipped ${ITEMS[id]?.name ?? id}`, "success", 1200);
+          this.renderInventory();
+        }
+      });
+    });
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-act='unequip']").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        unequipItem(this.state, btn.dataset.slot as EquipSlot);
+        this.renderInventory();
+      });
+    });
   }
 
   // ————— Crafting (Cooking / Smithing / Carpentry) —————
@@ -307,6 +344,9 @@ export class UI {
   }
 
   private equippedWeapon() {
+    // P2: the equipped weapon slot wins; otherwise the best carried weapon.
+    const eq = this.state.player.equipped.weapon;
+    if (eq) for (const w of Object.values(WEAPONS)) if (w.itemId === eq) return w;
     for (const w of Object.values(WEAPONS)) {
       if (w.itemId && this.state.player.inventory.items.some((i) => i.id === w.itemId)) return w;
     }

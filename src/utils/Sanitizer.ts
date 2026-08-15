@@ -57,6 +57,15 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     }
   }
 
+  // equipped -> safe slot map (P2 equipment)
+  const EQUIP_SLOTS = ["weapon", "offhand", "head", "body", "legs"];
+  const rawEq = (p.equipped ?? {}) as Record<string, unknown>;
+  const equipped: Record<string, string> = {};
+  for (const slot of EQUIP_SLOTS) {
+    const v = rawEq[slot];
+    if (typeof v === "string" && v) equipped[slot] = v;
+  }
+
   // town buildings — only known building types with in-bounds coordinates survive
   const town = (r.town ?? {}) as Record<string, unknown>;
   const rawBuildings = Array.isArray(town.buildings) ? town.buildings : [];
@@ -82,7 +91,7 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     state: {
       version,
       timestamp,
-      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : "Hero", position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory },
+      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : "Hero", position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped },
       town: { buildings },
       collectionLog: { unlocked: collectionLog },
     },

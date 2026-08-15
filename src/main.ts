@@ -19,6 +19,8 @@ import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
 import { guarded, EngineLogger } from "./utils/Logger";
 import { ITEMS as ITEM_NAMES } from "./data/Items";
+import { getToolTier } from "./data/Items";
+import { addItem } from "./components/Inventory";
 import { levelFromXp } from "./data/XPTable";
 import { SKILLS, COMBAT_SKILLS, SKILL_IDS, type SkillId } from "./data/Skills";
 import { BUILDINGS } from "./data/Buildings";
@@ -114,6 +116,11 @@ class Game {
           const have = levelFromXp(this.state.player.skills[sk].xp);
           const label = NODE_NAMES[node.def.masteryKey] ?? SKILLS[sk].name;
           showToast(`${label} needs ${SKILLS[sk].name} ${node.def.levelReq} (you have ${have}) — chop a starter tree near town first`, "error");
+        } else if (reason === "tool_shortfall") {
+          const sk = node.def.skill;
+          const have = getToolTier(this.state.player.inventory, sk);
+          const label = NODE_NAMES[node.def.masteryKey] ?? SKILLS[sk].name;
+          showToast(`${label} needs a tier ${node.def.toolTier ?? 1} ${TOOL_NAMES[sk] ?? "tool"} (you own tier ${have || "none"})`, "error");
         } else if (reason === "inventory_full") {
           showToast("Your pouch is full", "error");
         }
@@ -175,6 +182,10 @@ class Game {
     if (resumed.summary?.lines.length) {
       this.ui.showOffline(resumed.summary.awaySeconds, resumed.summary.capApplied, resumed.summary.lines, resumed.summary.xpEarned);
     } else if (resumed.recoveredFrom === "fresh" || resumed.recoveredFrom === "indexeddb") {
+      if (resumed.recoveredFrom === "fresh") {
+        // P2: hand new heroes a starter tool kit so they can begin gathering.
+        for (const id of STARTER_TOOLS) addItem(this.state.player.inventory, id, 1);
+      }
       showToast("Welcome to Isoperia — tap a tree to begin gathering!", "info", 4200);
     }
   }
@@ -349,6 +360,8 @@ const NODE_NAMES: Record<string, string> = {
   shrimp: "Fishing spot", trout: "Fishing spot",
 };
 const ACTION_FOR: Record<string, string> = { TREE: "Chop", ROCK: "Mine", WATER: "Fish" };
+const TOOL_NAMES: Record<string, string> = { woodcutting: "axe", mining: "pickaxe", fishing: "net or rod" };
+const STARTER_TOOLS = ["bronze_axe", "bronze_pickaxe", "small_net"];
 
 // Boot guarded so a failure surfaces as a toast instead of a white screen
 guarded("main", () => {

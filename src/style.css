@@ -191,6 +191,7 @@ p.float-tex.heal { color: var(--good); }
 .inv-name { font-weight: 600; font-size: 15px; }
 .inv-count { color: var(--gold); font-weight: 800; }
 .inv-desc { color: var(--muted); font-size: 12px; text-align: right; max-width: 55%; }
+.inv-row .btn-mini { flex-shrink: 0; }
 .empty { color: var(--muted); text-align: center; padding: 24px 8px; }
 
 /* ——— Craft / Build lists ——— */

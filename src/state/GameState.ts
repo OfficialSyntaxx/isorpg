@@ -6,6 +6,7 @@ import type { InventoryComponent } from "../components/Inventory";
 import type { Grid } from "../world/Grid";
 import type { ResourceNode } from "../world/ResourceNode";
 import type { BuildingType } from "../data/Buildings";
+import type { EquipSlot } from "../data/Items";
 import { createPosition } from "../components/Position";
 import { createHealth } from "../components/Health";
 import { createSkillComponent } from "../components/Skills";
@@ -30,6 +31,8 @@ export interface GameState {
     health: HealthComponent;
     skills: SkillComponent;
     inventory: InventoryComponent;
+    /** P2 equipment: which item is in each slot (itemId). */
+    equipped: Partial<Record<EquipSlot, string>>;
   };
   world: {
     grid: Grid;
@@ -52,6 +55,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       health: createHealth(100),
       skills: createSkillComponent(),
       inventory: createInventory(),
+      equipped: {},
     },
     world: { grid, nodes: new Map() },
     town: { buildings: [] },

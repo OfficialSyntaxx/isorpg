@@ -6,6 +6,7 @@ import { levelFromXp } from "../data/XPTable";
 import { WEAPONS, FOODS, type WeaponDef, getWeapon, type MonsterDef } from "../data/Combat";
 import type { SkillId } from "../data/Skills";
 import { addItem, removeItem, type InventoryComponent } from "../components/Inventory";
+import { armorBonuses } from "../components/Equipment";
 
 export interface CombatEvents {
   onPlayerHit?: (monster: MonsterCombat, damage: number) => void;
@@ -41,11 +42,14 @@ export class CombatSystem {
   }
 
   equippedWeapon(): WeaponDef {
+    // P2: the equipped weapon slot wins; otherwise the best carried weapon.
+    const eq = this.state.player.equipped.weapon;
+    if (eq) return getWeapon(eq);
     return getWeapon(firstWeaponItem(this.state.player.inventory));
   }
 
   maxHp(): number {
-    return levelFromXp(this.state.player.skills.hitpoints.xp) + 9;
+    return levelFromXp(this.state.player.skills.hitpoints.xp) + 9 + armorBonuses(this.state).maxHp;
   }
 
   addMonster(m: MonsterCombat) {
@@ -108,12 +112,13 @@ export class CombatSystem {
   }
 
   private tryPlayerAttack(target: MonsterCombat, weapon: WeaponDef, now: number) {
+    const b = armorBonuses(this.state);
     const attackLevel = levelFromXp(this.state.player.skills.attack.xp);
-    const roll = weapon.accuracy + attackLevel;
+    const roll = weapon.accuracy + attackLevel + b.attack;
     if (Math.random() > hitChance(roll, target.def.defenseRoll)) return; // splash
 
     const strLevel = levelFromXp(this.state.player.skills.strength.xp);
-    const maxHit = weapon.maxHit + Math.floor(strLevel / 4);
+    const maxHit = weapon.maxHit + Math.floor(strLevel / 4) + b.strength;
     const damage = 1 + Math.floor(Math.random() * Math.max(1, maxHit));
 
     target.hp = Math.max(0, target.hp - damage);
@@ -128,7 +133,7 @@ export class CombatSystem {
 
   private tryMonsterAttack(target: MonsterCombat) {
     const health = this.state.player.health;
-    const defLevel = levelFromXp(this.state.player.skills.defense.xp);
+    const defLevel = levelFromXp(this.state.player.skills.defense.xp) + armorBonuses(this.state).defense;
     if (Math.random() > hitChance(target.def.attackRoll, 2 + defLevel)) return; // dodge
 
     const damage = 1 + Math.floor(Math.random() * Math.max(1, target.def.maxHit));

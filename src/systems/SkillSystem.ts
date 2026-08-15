@@ -8,6 +8,7 @@ import { addMasteryXp, masteryLevel } from "../components/Skills";
 import { levelFromXp } from "../data/XPTable";
 import { TICK_MS } from "../core/Engine";
 import { ITEMS } from "../data/Items";
+import { getBestTool, getToolTier } from "../data/Items";
 
 export interface GatherEvent {
   node: ResourceNode;
@@ -18,7 +19,7 @@ export interface GatherEvent {
   doubled: boolean;
 }
 
-export type ActionEndReason = "done" | "interrupted" | "level_shortfall" | "inventory_full";
+export type ActionEndReason = "done" | "interrupted" | "level_shortfall" | "tool_shortfall" | "inventory_full";
 
 export interface SkillCallbacks {
   onGather?: (e: GatherEvent) => void;
@@ -59,6 +60,13 @@ export class SkillSystem {
       this.cb.onActionEnd?.(node, "level_shortfall");
       return false;
     }
+    // P2: tool tier gating — higher-tier nodes need a better tool.
+    const needTier = def.toolTier ?? 1;
+    if (getToolTier(this.state.player.inventory, def.skill) < needTier) {
+      this.levelShortfall = false;
+      this.cb.onActionEnd?.(node, "tool_shortfall");
+      return false;
+    }
     this.levelShortfall = false;
     this.active = node;
     this.tickAcc = 0;
@@ -71,12 +79,14 @@ export class SkillSystem {
     return this.active ? this.active.def.levelReq : 1;
   }
 
-  /** Action duration (ticks) — faster with mastery, floored. */
+  /** Action duration (ticks) — faster with mastery AND a better tool. */
   private actionTicks(base: number, skill: SkillId): number {
     const m = stateMasteryLevel(this.state, skill);
     const frac = Math.min(1, m / 99);
     const floor = Math.max(4, Math.ceil(base * 0.6));
-    return Math.max(floor, Math.round(base * (1 - frac * 0.33)));
+    const tool = getBestTool(this.state.player.inventory, skill);
+    const speed = tool?.speedPct ?? 0;
+    return Math.max(floor, Math.round(base * (1 - frac * 0.33) * (1 - speed / 100)));
   }
 
   tick(dtMs: number): void {

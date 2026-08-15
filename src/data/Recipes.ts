@@ -34,8 +34,37 @@ export const RECIPES: CraftRecipe[] = [
     inputs: [{ itemId: "copper_ore", qty: 1 }, { itemId: "tin_ore", qty: 1 }], output: { itemId: "bronze_bar", qty: 1 },
     requiresBuilding: "SMELTER" },
   { id: "smelt_iron", skill: "smithing", name: "Smelt Iron Bar", levelReq: 20, ticks: 4, xp: 60,
-    inputs: [{ itemId: "iron_ore", qty: 1 }, { itemId: "coal", qty: 1 }], output: { itemId: "iron_bar", qty: 1 },
+    inputs: [{ itemId: "iron_ore", qty: 2 }], output: { itemId: "iron_bar", qty: 1 },
     requiresBuilding: "SMELTER" },
+  { id: "smelt_steel", skill: "smithing", name: "Smelt Steel Bar", levelReq: 30, ticks: 5, xp: 100,
+    inputs: [{ itemId: "iron_bar", qty: 1 }, { itemId: "coal", qty: 1 }], output: { itemId: "steel_bar", qty: 1 },
+    requiresBuilding: "SMELTER" },
+
+  // P2 tool smithing (bars -> tools/armour)
+  { id: "smith_bronze_axe", skill: "smithing", name: "Forge Bronze Axe", levelReq: 1, ticks: 4, xp: 40,
+    inputs: [{ itemId: "bronze_bar", qty: 3 }], output: { itemId: "bronze_axe", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_bronze_pick", skill: "smithing", name: "Forge Bronze Pickaxe", levelReq: 1, ticks: 4, xp: 40,
+    inputs: [{ itemId: "bronze_bar", qty: 3 }], output: { itemId: "bronze_pickaxe", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_iron_axe", skill: "smithing", name: "Forge Iron Axe", levelReq: 20, ticks: 5, xp: 70,
+    inputs: [{ itemId: "iron_bar", qty: 3 }], output: { itemId: "iron_axe", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_iron_pick", skill: "smithing", name: "Forge Iron Pickaxe", levelReq: 20, ticks: 5, xp: 70,
+    inputs: [{ itemId: "iron_bar", qty: 3 }], output: { itemId: "iron_pickaxe", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_steel_axe", skill: "smithing", name: "Forge Steel Axe", levelReq: 35, ticks: 6, xp: 110,
+    inputs: [{ itemId: "steel_bar", qty: 3 }], output: { itemId: "steel_axe", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_steel_pick", skill: "smithing", name: "Forge Steel Pickaxe", levelReq: 35, ticks: 6, xp: 110,
+    inputs: [{ itemId: "steel_bar", qty: 3 }], output: { itemId: "steel_pickaxe", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_bronze_helm", skill: "smithing", name: "Forge Bronze Helm", levelReq: 3, ticks: 3, xp: 30,
+    inputs: [{ itemId: "bronze_bar", qty: 2 }], output: { itemId: "bronze_helm", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_bronze_plate", skill: "smithing", name: "Forge Bronze Platebody", levelReq: 5, ticks: 4, xp: 45,
+    inputs: [{ itemId: "bronze_bar", qty: 3 }], output: { itemId: "bronze_plate", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_bronze_legs", skill: "smithing", name: "Forge Bronze Platelegs", levelReq: 4, ticks: 3, xp: 35,
+    inputs: [{ itemId: "bronze_bar", qty: 2 }], output: { itemId: "bronze_legs", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_iron_helm", skill: "smithing", name: "Forge Iron Helm", levelReq: 22, ticks: 4, xp: 65,
+    inputs: [{ itemId: "iron_bar", qty: 2 }], output: { itemId: "iron_helm", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_iron_plate", skill: "smithing", name: "Forge Iron Platebody", levelReq: 24, ticks: 5, xp: 85,
+    inputs: [{ itemId: "iron_bar", qty: 3 }], output: { itemId: "iron_plate", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_iron_legs", skill: "smithing", name: "Forge Iron Platelegs", levelReq: 23, ticks: 4, xp: 70,
+    inputs: [{ itemId: "iron_bar", qty: 2 }], output: { itemId: "iron_legs", qty: 1 }, requiresBuilding: "SMELTER" },
 
   // ——— Carpentry (requires a Sawmill built in the settlement) ———
   { id: "plank_normal", skill: "carpentry", name: "Saw Plank (Normal)", levelReq: 1, ticks: 2, xp: 20,
@@ -44,6 +73,8 @@ export const RECIPES: CraftRecipe[] = [
     inputs: [{ itemId: "oak_log", qty: 1 }], output: { itemId: "plank", qty: 2 }, requiresBuilding: "SAWMILL" },
   { id: "plank_willow", skill: "carpentry", name: "Saw Plank (Willow)", levelReq: 30, ticks: 4, xp: 80,
     inputs: [{ itemId: "willow_log", qty: 1 }], output: { itemId: "plank", qty: 3 }, requiresBuilding: "SAWMILL" },
+  { id: "craft_fly_rod", skill: "carpentry", name: "Carve Fly Rod", levelReq: 10, ticks: 4, xp: 55,
+    inputs: [{ itemId: "plank", qty: 2 }, { itemId: "bronze_bar", qty: 1 }], output: { itemId: "fly_rod", qty: 1 }, requiresBuilding: "SAWMILL" },
 ];
 
 export function recipesFor(skill: SkillId): CraftRecipe[] {

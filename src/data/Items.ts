@@ -12,22 +12,44 @@ export type ItemType =
   | "MATERIAL"
   | "MISC";
 
+/** Equip slots (P2 equipment system). Tools are NOT equipped — the best owned
+ *  tool is used automatically per skill. */
+export type EquipSlot = "weapon" | "offhand" | "head" | "body" | "legs";
+
+export interface EquipDef {
+  slot: EquipSlot;
+  tier: number; // 1 bronze, 2 iron, 3 steel…
+  bonus?: { attack?: number; strength?: number; defense?: number; maxHp?: number };
+}
+
+/** P2: gathering tool — used automatically from the inventory. */
+export interface ToolDef {
+  skill: import("./Skills").SkillId;
+  tier: number;
+  speedPct: number; // % faster gathering actions
+}
+
 export interface Item {
   id: string;
   name: string;
   type: ItemType;
   // Gather XP granted per successful action for each relevant skill
-  xp?: Partial<Record<SkillId, number>>;
+  xp?: Partial<Record<import("./Skills").SkillId, number>>;
   // Required skill level to obtain/craft
-  levelReq?: Partial<Record<SkillId, number>>;
+  levelReq?: Partial<Record<import("./Skills").SkillId, number>>;
   // NPC sell value per unit
   value: number;
   // Small blurb shown in inventory
   desc: string;
   stack: boolean;
+  /** P2 equipment: slot + tier + stat bonuses (weapons & armor). */
+  equip?: EquipDef;
+  /** P2 tool: which gathering skill it serves + tier + speed boost. */
+  tool?: ToolDef;
 }
 
 import type { SkillId } from "./Skills";
+import type { InventoryComponent } from "../components/Inventory";
 
 export const ITEMS: Record<string, Item> = {
   // ——— Woodcutting ———
@@ -47,15 +69,21 @@ export const ITEMS: Record<string, Item> = {
 
   // ——— Smithing (bars) ———
   bronze_bar: { id: "bronze_bar", name: "Bronze Bar", type: "BAR", xp: { smithing: 30 }, value: 15, desc: "Smelted copper and tin.", stack: true },
-  iron_bar: { id: "iron_bar", name: "Iron Bar", type: "BAR", xp: { smithing: 60 }, levelReq: { smithing: 20 }, value: 40, desc: "Smelted with coal for extra heat.", stack: true },
+  iron_bar: { id: "iron_bar", name: "Iron Bar", type: "BAR", xp: { smithing: 60 }, levelReq: { smithing: 20 }, value: 40, desc: "Smelted iron — hard and reliable.", stack: true },
+  steel_bar: { id: "steel_bar", name: "Steel Bar", type: "BAR", xp: { smithing: 100 }, levelReq: { smithing: 30 }, value: 90, desc: "Iron forged with coal. The good stuff.", stack: true },
 
   // ——— Carpentry (planks) ———
   plank: { id: "plank", name: "Plank", type: "MATERIAL", xp: { carpentry: 20 }, value: 8, desc: "Sawn, seasoned timber — settlement building material.", stack: true },
 
-  // ——— Tools ——— (starter gear handed to new heroes)
-  bronze_axe: { id: "bronze_axe", name: "Bronze Axe", type: "TOOL", value: 1, desc: "A starter woodcutting axe.", stack: false },
-  bronze_pickaxe: { id: "bronze_pickaxe", name: "Bronze Pickaxe", type: "TOOL", value: 1, desc: "A starter mining pickaxe.", stack: false },
-  small_net: { id: "small_net", name: "Small Fishing Net", type: "TOOL", value: 1, desc: "Catches shrimp in open water.", stack: false },
+  // ——— Tools ——— (starter gear handed to new heroes; used automatically)
+  bronze_axe: { id: "bronze_axe", name: "Bronze Axe", type: "TOOL", value: 1, desc: "A starter woodcutting axe.", stack: false, tool: { skill: "woodcutting", tier: 1, speedPct: 0 } },
+  iron_axe: { id: "iron_axe", name: "Iron Axe", type: "TOOL", value: 30, desc: "Cuts wood noticeably faster.", stack: false, tool: { skill: "woodcutting", tier: 2, speedPct: 15 } },
+  steel_axe: { id: "steel_axe", name: "Steel Axe", type: "TOOL", value: 90, desc: "Bites deep — swift and true.", stack: false, tool: { skill: "woodcutting", tier: 3, speedPct: 30 } },
+  bronze_pickaxe: { id: "bronze_pickaxe", name: "Bronze Pickaxe", type: "TOOL", value: 1, desc: "A starter mining pickaxe.", stack: false, tool: { skill: "mining", tier: 1, speedPct: 0 } },
+  iron_pickaxe: { id: "iron_pickaxe", name: "Iron Pickaxe", type: "TOOL", value: 30, desc: "Cracks ore clean off the rock.", stack: false, tool: { skill: "mining", tier: 2, speedPct: 15 } },
+  steel_pickaxe: { id: "steel_pickaxe", name: "Steel Pickaxe", type: "TOOL", value: 90, desc: "The miner's best friend.", stack: false, tool: { skill: "mining", tier: 3, speedPct: 30 } },
+  small_net: { id: "small_net", name: "Small Fishing Net", type: "TOOL", value: 1, desc: "Catches shrimp in open water.", stack: false, tool: { skill: "fishing", tier: 1, speedPct: 0 } },
+  fly_rod: { id: "fly_rod", name: "Fly Rod", type: "TOOL", value: 40, desc: "Lets you reach deeper, faster fish.", stack: false, tool: { skill: "fishing", tier: 2, speedPct: 15 } },
 
   // ——— Combat drops / gear ———
   coins: { id: "coins", name: "Coins", type: "MISC", value: 1, desc: "Shiny cur fers the merchants accept.", stack: true },
@@ -65,11 +93,22 @@ export const ITEMS: Record<string, Item> = {
   shrimp_food: { id: "shrimp_food", name: "Cooked Shrimp", type: "FOOD", value: 12, desc: "A tasty cooked shrimp. Heals 6.", stack: true },
   cooked_trout: { id: "cooked_trout", name: "Cooked Trout", type: "FOOD", value: 32, desc: "Flaky and filling. Heals 14.", stack: true },
   cooked_rat_meat: { id: "cooked_rat_meat", name: "Cooked Rat Meat", type: "FOOD", value: 9, desc: "Better than it sounds. Heals 4.", stack: true },
-  bronze_dagger: { id: "bronze_dagger", name: "Bronze Dagger", type: "TOOL", value: 12, desc: "Fast but small. 3-tick attack.", stack: false },
-  bronze_sword: { id: "bronze_sword", name: "Bronze Sword", type: "TOOL", value: 20, desc: "A solid starter sword. 4-tick attack.", stack: false },
-  bronze_2h: { id: "bronze_2h", name: "Bronze 2H Sword", type: "TOOL", value: 30, desc: "Slow but heavy. 6-tick attack.", stack: false },
-  iron_sword: { id: "iron_sword", name: "Iron Sword", type: "TOOL", value: 60, desc: "A sharp iron blade.", stack: false },
-  shortbow: { id: "shortbow", name: "Shortbow", type: "TOOL", value: 25, desc: "A quick bow. 3-tick attack.", stack: false },
+
+  // ——— Weapons (equip slot: weapon) ———
+  bronze_dagger: { id: "bronze_dagger", name: "Bronze Dagger", type: "TOOL", value: 12, desc: "Fast but small. 3-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
+  bronze_sword: { id: "bronze_sword", name: "Bronze Sword", type: "TOOL", value: 20, desc: "A solid starter sword. 4-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
+  bronze_2h: { id: "bronze_2h", name: "Bronze 2H Sword", type: "TOOL", value: 30, desc: "Slow but heavy. 6-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
+  iron_sword: { id: "iron_sword", name: "Iron Sword", type: "TOOL", value: 60, desc: "A sharp iron blade.", stack: false, equip: { slot: "weapon", tier: 2 } },
+  shortbow: { id: "shortbow", name: "Shortbow", type: "TOOL", value: 25, desc: "A quick bow. 3-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
+
+  // ——— Armor (equip slots: head / body / legs) ———
+  bronze_helm: { id: "bronze_helm", name: "Bronze Helm", type: "TOOL", value: 25, desc: "+1 defence, +5 HP.", stack: false, equip: { slot: "head", tier: 1, bonus: { defense: 1, maxHp: 5 } } },
+  bronze_plate: { id: "bronze_plate", name: "Bronze Platebody", type: "TOOL", value: 40, desc: "+2 defence, +10 HP.", stack: false, equip: { slot: "body", tier: 1, bonus: { defense: 2, maxHp: 10 } } },
+  bronze_legs: { id: "bronze_legs", name: "Bronze Platelegs", type: "TOOL", value: 30, desc: "+1 defence, +5 HP.", stack: false, equip: { slot: "legs", tier: 1, bonus: { defense: 1, maxHp: 5 } } },
+  iron_helm: { id: "iron_helm", name: "Iron Helm", type: "TOOL", value: 80, desc: "+2 defence, +10 HP.", stack: false, equip: { slot: "head", tier: 2, bonus: { defense: 2, maxHp: 10 } } },
+  iron_plate: { id: "iron_plate", name: "Iron Platebody", type: "TOOL", value: 130, desc: "+4 defence, +15 HP.", stack: false, equip: { slot: "body", tier: 2, bonus: { defense: 4, maxHp: 15 } } },
+  iron_legs: { id: "iron_legs", name: "Iron Platelegs", type: "TOOL", value: 100, desc: "+2 defence, +10 HP.", stack: false, equip: { slot: "legs", tier: 2, bonus: { defense: 2, maxHp: 10 } } },
+
   goblin_key: { id: "goblin_key", name: "Goblin Key", type: "MISC", value: 5, desc: "Rusted and noisy.", stack: true },
   rat_bone: { id: "rat_bone", name: "Rat Bone (Triangular)", type: "MISC", value: 1, desc: "A curious irregular bone.", stack: true },
   loop_half_key: { id: "loop_half_key", name: "Loop Half of a Key", type: "MISC", value: 20, desc: "Half a mysterious key.", stack: true },
@@ -86,4 +125,20 @@ export function getItem(id: string): Item {
   const it = ITEMS[id];
   if (!it) throw new Error(`Unknown item: ${id}`);
   return it;
+}
+
+/** Best owned gathering tool for a skill (P2). Null = no tool for it. */
+export function getBestTool(inv: InventoryComponent, skill: SkillId): { tier: number; speedPct: number } | null {
+  let best: { tier: number; speedPct: number } | null = null;
+  for (const s of inv.items) {
+    const t = ITEMS[s.id]?.tool;
+    if (!t || t.skill !== skill) continue;
+    if (!best || t.tier > best.tier) best = { tier: t.tier, speedPct: t.speedPct };
+  }
+  return best;
+}
+
+/** Highest owned tool tier for a skill (0 = none). */
+export function getToolTier(inv: InventoryComponent, skill: SkillId): number {
+  return getBestTool(inv, skill)?.tier ?? 0;
 }

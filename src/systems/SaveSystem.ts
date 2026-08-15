@@ -48,6 +48,7 @@ export class SaveSystem {
         stats: { hp: p.health.hp, maxHp: p.health.maxHp },
         skills,
         inventory: p.inventory.items.map((i) => ({ id: i.id, amount: i.amount })),
+        equipped: { ...p.equipped },
       },
       town: { buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })) },
       collectionLog: { unlocked: [...this.state.collectionLog] },
@@ -76,6 +77,7 @@ export class SaveSystem {
       }
     }
     p.inventory.items = (s.player.inventory ?? []).map((i: any) => ({ id: String(i.id), amount: i.amount }));
+    p.equipped = { ...((s.player as any).equipped ?? {}) };
     this.state.town.buildings = (s.town?.buildings ?? []).map((b: any) => ({
       id: String(b.id), type: b.type, x: b.x, y: b.y, level: b.level,
     }));
