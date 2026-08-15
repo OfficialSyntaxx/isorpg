@@ -1,5 +1,5 @@
 // Settlement structures: placement cost, requirements, passive yields (GDD §5.B).
-export type BuildingType = "STORAGE_BIN" | "TOWN_HALL" | "STOREHOUSE" | "SAWMILL" | "SMELTER" | "GRANARY";
+export type BuildingType = "STORAGE_BIN" | "CAMPFIRE" | "TOWN_HALL" | "STOREHOUSE" | "SAWMILL" | "SMELTER" | "GRANARY";
 
 export interface BuildingCost {
   itemId: string;
@@ -29,6 +29,17 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     maxCount: 5,
     baseCost: [{ itemId: "normal_log", qty: 5 }],
     buildXp: 25,
+  },
+  CAMPFIRE: {
+    type: "CAMPFIRE",
+    name: "Campfire",
+    icon: "🔥",
+    desc: "A crackling fire where villagers gather and food cooks faster.",
+    effect: "Cooking 25% faster · villagers gather here",
+    levelReq: 0,
+    maxCount: 3,
+    baseCost: [{ itemId: "normal_log", qty: 6 }],
+    buildXp: 20,
   },
   TOWN_HALL: {
     type: "TOWN_HALL",
@@ -87,4 +98,4 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
   },
 };
 
-export const BUILDING_TYPES: BuildingType[] = ["STORAGE_BIN", "TOWN_HALL", "STOREHOUSE", "SAWMILL", "SMELTER", "GRANARY"];
+export const BUILDING_TYPES: BuildingType[] = ["STORAGE_BIN", "CAMPFIRE", "TOWN_HALL", "STOREHOUSE", "SAWMILL", "SMELTER", "GRANARY"];

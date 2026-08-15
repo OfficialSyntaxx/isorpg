@@ -46,6 +46,7 @@ function flatMat(color: string): THREE.MeshStandardMaterial {
 interface Palette { wall: string; grain: string; roof: string; trim: string; }
 const PALETTES: Record<BuildingType, Palette> = {
   STORAGE_BIN: { wall: "#9c7a4a", grain: "#7f6238", roof: "#6b4a2a", trim: "#ffd76a" },
+  CAMPFIRE: { wall: "#8a5a33", grain: "#6f4526", roof: "#ff8c3a", trim: "#ffd76a" },
   TOWN_HALL: { wall: "#d8bd82", grain: "#c2a366", roof: "#8a3b3b", trim: "#ffd479" },
   STOREHOUSE: { wall: "#a68a5c", grain: "#8c7048", roof: "#5a4632", trim: "#e0cf9a" },
   SAWMILL: { wall: "#8a6a4a", grain: "#71543a", roof: "#6b4423", trim: "#c98f4a" },
@@ -75,6 +76,28 @@ export function makeBuilding(type: BuildingType): THREE.Group {
     const latch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.04), flatMat(p.trim));
     latch.position.set(0, GROUND_Y + 0.375, 0.26);
     g.add(latch);
+    return g;
+  }
+
+  // Campfire: stone ring, crossed logs and a lit flame.
+  if (type === "CAMPFIRE") {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.04, 6, 12), flatMat("#6b6b6b"));
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = GROUND_Y + 0.03;
+    g.add(ring);
+    for (let i = 0; i < 4; i++) {
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.34, 5), wallMat("#6f4526", "#5a3a1e"));
+      log.rotation.z = Math.PI / 2;
+      log.rotation.y = (i / 4) * Math.PI;
+      log.position.y = GROUND_Y + 0.1;
+      g.add(log);
+    }
+    const flame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.1, 0.24, 6),
+      new THREE.MeshStandardMaterial({ color: "#ff9c3a", emissive: "#ff6a1a", emissiveIntensity: 1.6, flatShading: true })
+    );
+    flame.position.y = GROUND_Y + 0.24;
+    g.add(flame);
     return g;
   }
 

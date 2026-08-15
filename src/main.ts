@@ -77,7 +77,7 @@ class Game {
     this.state = createFreshState(this.grid, "Hero", Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
     this.combat = new CombatSystem(this.state);
     this.world = new WorldSystem(this.engine.scene, this.grid, this.combat);
-    this.npcs = new NpcSystem(this.engine.scene, this.grid);
+    this.npcs = new NpcSystem(this.engine.scene, this.grid, { getBuildings: () => this.state.town.buildings });
     this.movement = new MovementSystem(this.state.player.pos, this.hero);
     this.skill = new SkillSystem(this.state, this.world.consume.bind(this.world));
     this.build = new BuildSystem(this.engine.scene, this.grid, this.state);
@@ -173,7 +173,12 @@ class Game {
     this.build.setCallbacks({
       onPlacingChanged: (type) => this.ui.setPlacing(type),
       onDenied: (_reason, msg) => showToast(msg, "error"),
-      onPlaced: (b) => showToast(`${BUILDINGS[b.type].icon} ${BUILDINGS[b.type].name} built!`, "success"),
+      onPlaced: (b) => {
+        showToast(`${BUILDINGS[b.type].icon} ${BUILDINGS[b.type].name} built!`, "success");
+        // P3.4: a nearby villager comments and walks over to inspect it.
+        const comment = this.npcs.onBuildingPlaced(b.type, b.x, b.y);
+        if (comment) setTimeout(() => showToast(comment, "info", 3800), 500);
+      },
     });
 
     // Engine hooks

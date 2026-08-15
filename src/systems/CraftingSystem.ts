@@ -77,7 +77,12 @@ export class CraftingSystem {
     const m = this.masteryLevelFor(recipe);
     const frac = Math.min(1, m / 99);
     const floor = Math.max(2, Math.ceil(recipe.ticks * 0.6));
-    return Math.max(floor, Math.round(recipe.ticks * (1 - frac * 0.33)));
+    let ticks = Math.max(floor, Math.round(recipe.ticks * (1 - frac * 0.33)));
+    // P3.4: a built Campfire makes cooking 25% faster.
+    if (recipe.skill === "cooking" && this.hasBuilding("CAMPFIRE")) {
+      ticks = Math.max(2, Math.round(ticks * 0.75));
+    }
+    return ticks;
   }
 
   private masteryLevelFor(recipe: CraftRecipe): number {
