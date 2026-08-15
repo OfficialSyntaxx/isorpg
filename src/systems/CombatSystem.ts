@@ -31,7 +31,7 @@ export class CombatSystem {
   private monsters = new Map<string, MonsterCombat>();
   private target: MonsterCombat | null = null;
   private playerAtkAcc = 0;
-  private bossSlam: { x: number; y: number; at: number } | null = null;
+  private bossSlam: { x: number; y: number; at: number; dmg: number } | null = null;
   /** P5: active grid override (dungeon while in the dungeon). */
   private activeGrid: { isWalkable(x: number, y: number): boolean; at(x: number, y: number): { occupant: string; walkable: boolean; zoneId: string } | null; setOccupant(x: number, y: number, t: string, id: string | null): void; clearOccupant(x: number, y: number): void } | null = null;
 
@@ -47,6 +47,9 @@ export class CombatSystem {
 
   get registry() { return this.monsters; }
   get engaged() { return this.target && !this.target.dead ? this.target : null; }
+  /** P5.3: true while a boss slam is telegraphed and waiting to land. */
+  get slamActive(): boolean { return this.bossSlam !== null; }
+  get slamTile(): { x: number; y: number } | null { return this.bossSlam ? { x: this.bossSlam.x, y: this.bossSlam.y } : null; }
   /** Map of monster id -> kill count (persisted alongside saves). */
   static kcCounts: Record<string, number> = {};
   static kcTotal(): number {
@@ -109,10 +112,17 @@ export class CombatSystem {
       if (target && target.dead) this.target = null;
       return;
     }
-    // P4b: an enraged boss winds up a slam at the player's current tile.
-    if (target.def.boss && target.enraged && !this.bossSlam && Math.random() < 0.15) {
-      this.bossSlam = { x: this.state.player.pos.gx, y: this.state.player.pos.gy, at: now };
-      this.cb.onBossTelegraph?.({ x: this.bossSlam.x, y: this.bossSlam.y });
+    // P4b/P5.3: a boss winds up a slam at the player's current tile. Enraged
+    // bosses slam every few ticks; slamChance bosses telegraph even at full HP.
+    if (target.def.boss && !this.bossSlam) {
+      const chance = target.enraged ? 0.15 : (target.def.slamChance ?? 0);
+      if (Math.random() < chance) {
+        this.bossSlam = {
+          x: this.state.player.pos.gx, y: this.state.player.pos.gy, at: now,
+          dmg: target.def.slamDmg ?? 6 + Math.floor(Math.random() * 5),
+        };
+        this.cb.onBossTelegraph?.({ x: this.bossSlam.x, y: this.bossSlam.y });
+      }
     }
     const weapon = this.equippedWeapon();
 
@@ -280,7 +290,7 @@ export class CombatSystem {
       this.bossSlam = null;
       const p = this.state.player.pos;
       if (p.gx === slam.x && p.gy === slam.y) {
-        const dmg = 6 + Math.floor(Math.random() * 5);
+        const dmg = slam.dmg;
         this.state.player.health.hp = Math.max(0, this.state.player.health.hp - dmg);
         this.cb.onHurtByMonster?.(dmg);
         if (this.state.player.health.hp <= 0) this.diePlayer();

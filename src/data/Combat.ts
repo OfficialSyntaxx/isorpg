@@ -30,6 +30,10 @@ export interface MonsterDef {
   ranged: boolean;
   aggroRange: number; // tiles; 0 = passive (attacks only when hit)
   boss?: boolean; // P4b: boss archetype (enrages below 50% HP, telegraph slams)
+  /** P5.3: bosses with slamChance telegraph a slam even at full HP (per tick). */
+  slamChance?: number;
+  /** P5.3: fixed slam damage if set (else the default 6–10 roll is used). */
+  slamDmg?: number;
   xp: { attack: number; strength: number; defense: number; hitpoints: number };
   main: DropEntry[];
   tertiary?: { itemId: string; chance: number; min: number; max: number }[];
@@ -168,6 +172,24 @@ export const MONSTERS: Record<string, MonsterDef> = {
     petTable: [{ itemId: "pet_goblin", chance: 0.001 }],
     respawnMs: 45_000,
   },
+  // P5.3: the dungeon mini-boss — guards the exit room just past the locked
+  // door. Telegraphs a slam even at full HP; revives fresh on every descent.
+  cave_brute: {
+    id: "cave_brute", name: "Cave Brute", level: 15, hp: 90, maxHit: 9, attackTick: 5,
+    attackRoll: 22, defenseRoll: 16, ranged: false, aggroRange: 6,
+    boss: true, slamChance: 0.08, slamDmg: 14,
+    xp: { attack: 40, strength: 26, defense: 26, hitpoints: 7 },
+    main: [
+      { itemId: "coins", weight: 60, min: 30, max: 120 },
+      { itemId: "cooked_trout", weight: 30, min: 1, max: 2 },
+      { itemId: "iron_ore", weight: 40, min: 2, max: 6 },
+      { itemId: "bronze_2h", weight: 8, min: 1, max: 1 },
+      { itemId: "iron_sword", weight: 10, min: 1, max: 1 },
+    ],
+    tertiary: [{ itemId: "goblin_key", chance: 0.25, min: 1, max: 1 }],
+    petTable: [{ itemId: "pet_goblin", chance: 0.01 }],
+    respawnMs: 3_600_000, // never mid-visit — DungeonSystem.enter() revives it
+  },
 };
 
 /** Render variants keyed by monster id for the procedural generator. */
@@ -181,6 +203,7 @@ export const MONSTER_STYLES: Record<string, { body: string; accent: string; ears
   forest_ogre: { body: "#5f4e3c", accent: "#c98f4a", ears: true },
   cave_bat: { body: "#4a4450", accent: "#c98f4a", ears: true },
   cave_slasher: { body: "#5f6a6e", accent: "#c0392b", ears: true },
+  cave_brute: { body: "#6b7280", accent: "#a32a3a", ears: true },
 };
 
 /** Food that triggers auto-eat, by item id. */

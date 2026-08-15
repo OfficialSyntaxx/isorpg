@@ -31,6 +31,10 @@ export class DungeonSystem {
   keyTaken = false;
   doorOpened = false;
 
+  // P5.3: the Cave Brute guard — the tile just past the locked door.
+  brute = { x: 0, y: 0 };
+  private bruteMonster: MonsterCombat | null = null;
+
   active = false;
   openedChest = false;
 
@@ -116,6 +120,9 @@ export class DungeonSystem {
     }
     this.door = bestDoor ?? this.exit;
     this.tiles[this.door.y][this.door.x] = WALL; // sealed until the key is used
+    // P5.3: the Cave Brute guard stands just past the door, inside the exit room.
+    this.brute = { x: this.door.x, y: Math.min(this.door.y + 1, H - 2) };
+    this.tiles[this.brute.y][this.brute.x] = FLOOR;
     this.tiles[this.key.y][this.key.x] = FLOOR;
     this.tiles[this.spawn.y][this.spawn.x] = FLOOR;
     this.tiles[this.chest.y][this.chest.x] = FLOOR;
@@ -220,6 +227,18 @@ export class DungeonSystem {
     if (this.pickKeyMesh) this.pickKeyMesh.visible = true;
     this.group.visible = true;
     if (this.monsters.length === 0) this.spawnPool(combat);
+    // P5.3: a fresh Cave Brute guards the exit room on every descent.
+    if (this.bruteMonster) {
+      this.bruteMonster.hp = this.bruteMonster.maxHp;
+      this.bruteMonster.dead = false;
+      this.bruteMonster.inCombat = false;
+      this.bruteMonster.attackAcc = 0;
+      this.bruteMonster.group.visible = true;
+    } else {
+      const b = spawnMonster("cave_brute", MONSTERS.cave_brute, this.brute.x, this.brute.y);
+      this.bruteMonster = b;
+      this.addMonster(b, combat);
+    }
   }
 
   /** P5.2: call once the player has the Iron Key — opens the sealed door. */
@@ -246,11 +265,12 @@ export class DungeonSystem {
       for (let x = 1; x < W - 1; x++) {
         if (this.tiles[y][x] !== FLOOR) continue;
         if (Math.abs(x - this.spawn.x) + Math.abs(y - this.spawn.y) < 6) continue;
-        // Don't park monsters on story tiles (chest, exit, door, key).
+        // Don't park monsters on story tiles (chest, exit, door, key, brute).
         if ((x === this.chest.x && y === this.chest.y)
           || (x === this.exit.x && y === this.exit.y)
           || (x === this.door.x && y === this.door.y)
-          || (x === this.key.x && y === this.key.y)) continue;
+          || (x === this.key.x && y === this.key.y)
+          || (x === this.brute.x && y === this.brute.y)) continue;
         spots.push({ x, y });
       }
     }

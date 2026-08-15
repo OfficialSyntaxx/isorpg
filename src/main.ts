@@ -170,15 +170,21 @@ class Game {
         showToast(`⚔️ ${m.def.name} down! (+${kc} KC)`);
         if (drops.length) showToast(`Loot: ${drops.join(", ")}`, "info", 2000);
         this.engine.addShake(0.35); // P4b: kill thump + burst
-        this.fx.push(...spawnBurst(this.engine.scene, m.tile.x, 0.6, m.tile.y, "#c0392b"));
-        if (m.def.boss) this.fx.push(...spawnBurst(this.engine.scene, m.tile.x, 1.0, m.tile.y, "#ffd76a", 18));
+        // P5.3: bursts go to world space — offset inside the dungeon.
+        const ox = this.dungeon.active ? DUNGEON_ORIGIN.x : 0;
+        const oz = this.dungeon.active ? DUNGEON_ORIGIN.z : 0;
+        this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 0.6, m.tile.y + oz, "#c0392b"));
+        if (m.def.boss) this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 1.0, m.tile.y + oz, "#ffd76a", 18));
       },
       onAutoEat: (food, healed) => this.ui.floatText(`+${healed}`, "heal"),
       onPet: (itemId) => this.ui.floatText("🐾 pet!", "pet"),
       // P4b: boss telegraph ring follows the slam target, then clears.
       onBossTelegraph: (tile) => {
         if (!tile) { this.bossRing.visible = false; return; }
-        this.bossRing.position.set(tile.x, 0.05, tile.y);
+        // P5.3: inside the dungeon the ring must sit at +DUNGEON_ORIGIN (world).
+        const ox = this.dungeon.active ? DUNGEON_ORIGIN.x : 0;
+        const oz = this.dungeon.active ? DUNGEON_ORIGIN.z : 0;
+        this.bossRing.position.set(tile.x + ox, 0.05, tile.y + oz);
         this.bossRing.visible = true;
       },
       // P4c: ranged shots — fire a visible arrow at the struck monster.

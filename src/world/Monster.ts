@@ -71,6 +71,7 @@ export function buildMonsterMesh(id: string, seed: number): THREE.Group {
     g.add(club);
   }
   if (id === "skeleton") g.scale.setScalar(1.15);
+  if (id === "cave_brute") g.scale.setScalar(1.55); // P5.3: hulking mini-boss
   void rnd;
 
   g.userData.monsterId = id;
