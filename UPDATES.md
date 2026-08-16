@@ -115,7 +115,7 @@ the game-repo commit, and the live build (cache-bust version at
   cycle), **Tobias the Elder** (🏛️ Elder's Due — a coin tribute per cycle).
   Perks stack with the veteran yield tiers, apply live and offline, and the
   Village panel shows "🎣 Fresh Catch · ⭐ Reliable · 10h worked".
-- Commit: _this round_ · cache-bust `v22`.
+- Commit `c8bcb8f` · cache-bust `v22`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
