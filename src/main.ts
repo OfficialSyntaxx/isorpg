@@ -96,7 +96,8 @@ class Game {
     this.npcs = new NpcSystem(this.engine.scene, this.grid, { getBuildings: () => this.state.town.buildings });
     this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid, this.grid.width);
     this.dungeon.buildMeshes();
-    this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast);
+    this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast, this.state.player.journal);
+    this.ui.attachQuestJournal(() => this.quest.journalSnapshot()); // P6.3
     this.mapSys = new MapSystem(
       this.grid.width,
       this.dungeon,
@@ -189,9 +190,13 @@ class Game {
       },
       onKill: (m, drops, kc) => {
         // P6: slaying the Cave Brute completes the dungeon onboarding quest.
-        if (m.def.id === "cave_brute" && this.dungeon.active) {
+if (m.def.id === "cave_brute" && this.dungeon.active) {
           this.quest.notifyBruteDown(this.state.player.inventory);
           this.mapSys.unlockFastTravel(); // P6: beating the boss opens fast travel
+        }
+        // P6.3: the surveyor's errand — slaying the Forest Ogre closes the quest.
+        if (m.def.id === "forest_ogre") {
+          this.quest.notifyOgreSlain(this.state.player.inventory);
         }
         this.ui.setCombat(null, 0, 0);
         showToast(`⚔️ ${m.def.name} down! (+${kc} KC)`);

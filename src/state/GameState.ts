@@ -35,6 +35,8 @@ export interface GameState {
     equipped: Partial<Record<EquipSlot, string>>;
     /** P6: world-map state — discovered points of interest + fast-travel. */
     map: { discovered: string[]; fastTravel: boolean; explored: number[] };
+    /** P6.3: quest-log — ids of quests the player has completed (persisted). */
+    journal: string[];
   };
   world: {
     grid: Grid;
@@ -59,6 +61,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       inventory: createInventory(),
       equipped: {},
       map: { discovered: [], fastTravel: false, explored: [] },
+      journal: [],
     },
     world: { grid, nodes: new Map() },
     town: { buildings: [] },

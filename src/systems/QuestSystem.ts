@@ -10,6 +10,16 @@ export type QuestStage = "INTRO" | "FIND_KEY" | "OPEN_DOOR" | "DEFEAT_BRUTE" | "
 
 type ToastFn = (msg: string, kind?: "info" | "success" | "error", ms?: number) => void;
 
+/** P6.3: one row of the quest journal (read-only view for the panel). */
+export interface QuestJournalEntry {
+  id: string;
+  title: string;
+  givenBy: string;
+  objective: string;
+  reward: string;
+  done: boolean;
+}
+
 const GUIDE_NAME = "🧭 Eldric the Cartographer";
 
 export class QuestSystem {
@@ -21,6 +31,10 @@ export class QuestSystem {
   private dungeon: DungeonSystem;
   private grid: { isWalkable(x: number, y: number): boolean };
   private toast: ToastFn;
+  /** P6.3: persisted quest-log (ids of completed quests, shared with the save). */
+  private journal: string[];
+  /** P6.3: second quest — the Forest Ogre (surveyor's errand). */
+  private ogreDone = false;
   private guideGroup = new THREE.Group();
   private hintRoot = new THREE.Group(); // lives inside the dungeon group
   private hintFloat = new THREE.Group();
@@ -30,12 +44,14 @@ export class QuestSystem {
     scene: THREE.Scene,
     dungeon: DungeonSystem,
     grid: { isWalkable(x: number, y: number): boolean },
-    toast: ToastFn
+    toast: ToastFn,
+    journal: string[] = []
   ) {
     this.scene = scene;
     this.dungeon = dungeon;
     this.grid = grid;
     this.toast = toast;
+    this.journal = journal;
     this.pickGuideTile();
     this.buildGuide();
     this.buildHint();
@@ -178,9 +194,55 @@ export class QuestSystem {
     if (this.stage !== "DEFEAT_BRUTE") return;
     this.stage = "DONE";
     this.syncHint();
+    if (!this.journal.includes("caves")) this.journal.push("caves");
     addItem(inv, "coins", 50 + Math.floor(Math.random() * 51));
     addItem(inv, "iron_ore", 4 + Math.floor(Math.random() * 5));
     addItem(inv, "cooked_trout", 2);
     this.toast("🏆 Quest complete — The Caves of the Deep! Reward: coins, iron ore, cooked trout.", "success", 5600);
+  }
+
+  /** P6.3: second quest — the Forest Ogre falls, the surveyor's errand ends. */
+  notifyOgreSlain(inv: InventoryComponent): void {
+    if (this.ogreDone || this.journal.includes("ogre")) return;
+    this.ogreDone = true;
+    if (!this.journal.includes("ogre")) this.journal.push("ogre");
+    addItem(inv, "coins", 250);
+    addItem(inv, "steel_bar", 1);
+    addItem(inv, "cooked_trout", 3);
+    this.toast("🏆 Quest complete — The Surveyor's Errand! Reward: 250 coins, a steel bar, cooked trout.", "success", 5600);
+  }
+
+  /** P6.3: read-only journal rows for the quest panel. */
+  journalSnapshot(): QuestJournalEntry[] {
+    const cavesDone = this.stage === "DONE" || this.journal.includes("caves");
+    const ogreDone = this.ogreDone || this.journal.includes("ogre");
+    return [
+      {
+        id: "caves",
+        title: "The Caves of the Deep",
+        givenBy: "Eldric",
+        objective: this.stageObjective(),
+        reward: "Coins, iron ore, cooked trout",
+        done: cavesDone,
+      },
+      {
+        id: "ogre",
+        title: "The Surveyor's Errand",
+        givenBy: "Eldric",
+        objective: ogreDone ? "The Forest Ogre is slain — the deep woods can breathe again." : "Slay the Forest Ogre that prowls the deep woods.",
+        reward: "250 coins, a steel bar, cooked trout",
+        done: ogreDone,
+      },
+    ];
+  }
+
+  private stageObjective(): string {
+    switch (this.stage) {
+      case "FIND_KEY": return "Find the Iron Key in a side chamber of the Caves.";
+      case "OPEN_DOOR": return "Use the Iron Key on the door locked shut.";
+      case "DEFEAT_BRUTE": return "Slay the Cave Brute that guards the exit portal.";
+      case "DONE": return "The treasure of the Caves is claimed.";
+      default: return "Talk to Eldric by the deep-wilds door to begin.";
+    }
   }
 }

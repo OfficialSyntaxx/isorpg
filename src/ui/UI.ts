@@ -16,6 +16,7 @@ import { countItem } from "../components/Inventory";
 import { equipItem, unequipItem, EQUIP_SLOTS } from "../components/Equipment";
 import type { EquipSlot } from "../data/Items";
 import type { MapSnapshot } from "../systems/MapSystem";
+import type { QuestJournalEntry } from "../systems/QuestSystem";
 
 const SLOT_NAMES: Record<EquipSlot, string> = {
   weapon: "Weapon", offhand: "Offhand", head: "Helm", body: "Body", legs: "Legs",
@@ -52,6 +53,7 @@ export class UI {
   private fileInput: HTMLInputElement;
   private mapSnapshot: (() => MapSnapshot | null) | null = null;
   private mapTravel: ((id: string) => boolean) | null = null;
+  private journalSource: (() => QuestJournalEntry[]) | null = null;
 
   constructor(state: GameState, ev: UIEvents = {}) {
     this.state = state;
@@ -78,6 +80,7 @@ export class UI {
   private bindPanels() {
     this.$("#btn-inventory").addEventListener("click", () => this.openPanel("inventory"));
     this.$("#btn-map")?.addEventListener("click", () => this.openPanel("map"));
+    this.$("#btn-quest")?.addEventListener("click", () => this.openPanel("quest"));
     this.$("#btn-settings").addEventListener("click", () => this.openPanel("settings"));
     this.$("#btn-craft")?.addEventListener("click", () => this.openPanel("craft"));
     this.$("#btn-build")?.addEventListener("click", () => this.openPanel("build"));
@@ -87,7 +90,7 @@ export class UI {
     this.panel.addEventListener("click", (e) => { if (e.target === this.panel) this.closePanel(); });
   }
 
-  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map") {
+  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest") {
     // Any render error must never silently keep the panel hidden. Render first;
     // on failure show a visible degraded panel + log, never a dead button.
     try {
@@ -96,6 +99,7 @@ export class UI {
       else if (id === "craft") this.renderCraft();
       else if (id === "build") this.renderBuild();
       else if (id === "map") this.renderMap();
+      else if (id === "quest") this.renderJournal();
       else this.renderSettings();
     } catch (err) {
       EngineLogger.logError(`panel:${id}`, err);
@@ -171,6 +175,30 @@ export class UI {
         else this.renderMap();
       });
     });
+  }
+
+  /** P6.3: main.ts feeds the quest journal rows. */
+  attachQuestJournal(snapshot: () => QuestJournalEntry[]) {
+    this.journalSource = snapshot;
+  }
+
+  // ————— Quest journal —————
+  private renderJournal() {
+    this.panelTitle.textContent = "Quests";
+    const entries = this.journalSource?.() ?? [];
+    if (!entries.length) {
+      this.panelBody.innerHTML = `<div class="empty">No quests yet — talk to Eldric by the deep-wilds door.</div>`;
+      return;
+    }
+    const rows = entries.map((q) => `
+      <div class="inv-row" style="align-items:flex-start">
+        <span class="inv-ico">${q.done ? "✅" : "📖"}</span>
+        <div class="inv-name">${q.title} <span class="inv-count">${q.done ? "Complete" : "Active"}</span>
+          <div class="inv-desc">${q.objective}</div>
+          <div class="inv-desc"><b>Given by ${q.givenBy}</b> · Reward: ${q.reward}</div>
+        </div>
+      </div>`).join("");
+    this.panelBody.innerHTML = rows;
   }
 
   /** P1: in-world label + action chip, anchored to a screen point (px, py). */
