@@ -126,7 +126,7 @@ the game-repo commit, and the live build (cache-bust version at
   static UI/dom audit (ids, panels, branches, attach call sites).
   **`QC_CHECKLIST.md`** manual gameplay sweep; stale `bugreporturl` credential
   file & stray `systems/` copy removed; `//bugreports` scaffolded.
-- Commit: _this round_ · cache-bust `v24`.
+- Commit `024084a` · cache-bust `v24`.
 
 ### 7.8 — Market rebalance (supply & demand)
 - Sell prices now slide down as an item floods the market (40% floor — a
