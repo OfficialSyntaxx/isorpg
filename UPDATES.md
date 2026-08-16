@@ -121,7 +121,7 @@ the game-repo commit, and the live build (cache-bust version at
 - Sell prices now slide down as an item floods the market (40% floor — a
   veteran village's oak/shrimp output stops printing coins); shop demand and a
   swelling coin pile push buy prices up (+25% inflation cap). Counters persist.
-- Commit: _this round_ · cache-bust `v23`.
+- Commit `81799ba` · cache-bust `v23`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
