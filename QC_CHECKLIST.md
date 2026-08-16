@@ -32,6 +32,17 @@ build — do it in your logged-in browser at `https://isoperia-rpg.higgsfield.ap
 ## 5. Save integrity
 - [ ] Menu → Export; import the .json into a fresh profile → labour assignments, market counters, journal completions, achievements, map coverage ALL survive (this was a QC-caught bug — pinned).
 - [ ] Reload from autosave (tab close) preserves the same.
+- [ ] **Offline payout**: play briefly, close the tab, reopen after a real gap (or
+      hand-edit the save's `timestamp` back a few hours) → the return screen lists
+      gathered items and XP, and the away duration matches the gap. An empty
+      return screen after a long absence is the regression this pins.
+
+## 5b. Progression & combat maths
+- [ ] Take a skill to 98 → the XP bar still fills and moves (a frozen bar means
+      the level-99 threshold regressed to `undefined`).
+- [ ] Kill a Zombie a few times → coin drops vary in the tens, not a flat 1 coin.
+- [ ] Engage a monster, then walk several tiles away → the hero stops landing hits
+      (melee); with a bow equipped the reach is longer but still finite.
 
 ## 6. Mobile feel
 - [ ] Tap-walk, drag-pan, pinch-zoom all smooth; all 10 HUD panels open and close; no toast/panel dead ends.

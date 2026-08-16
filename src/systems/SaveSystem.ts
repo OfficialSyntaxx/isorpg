@@ -88,6 +88,10 @@ export class SaveSystem {
     }
     const s = res.state as any;
     const p = this.state.player;
+    // The saved timestamp is what "how long were you away" is measured from.
+    // Without this, computeOffline() measured from process start — always ~0 —
+    // so a returning player's idle window silently paid out nothing.
+    this.state.timestamp = s.timestamp;
     p.name = s.player.name;
     p.pos.gx = s.player.position.x;
     p.pos.gy = s.player.position.y;
@@ -213,6 +217,9 @@ export class SaveSystem {
       addItem(p.inventory, "coins", tax);
       lines.push(`🏛️ Town Hall tax: ${tax} coins`);
     }
+
+    // Consume the elapsed window so a repeat load can't pay it out a second time.
+    this.state.timestamp = now;
 
     return { capApplied, awaySeconds: awayS, lines, xpEarned };
   }

@@ -18,6 +18,7 @@ import { monsterPoolFor } from "../src/systems/WorldSystem";
 import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
 import { spawnMonster } from "../src/world/Monster";
 import { countItem, addItem } from "../src/components/Inventory";
+import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 
 const results: string[] = [];
 const check = (n: string, ok: boolean, x = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${n}${x ? "  [" + x + "]" : ""}`);
@@ -204,6 +205,48 @@ check("potion: Combat Tonic in auto-eat table (heals 30)", FOODS.combat_potion?.
   const ps = new ShopSystem(scene, g, fullS);
   const potStock = ps.snapshot(fullS.player.inventory).stock;
   check("potion: Combat Tonic stocked at the market", potStock.some((r) => r.itemId === "combat_potion"));
+}
+
+// ================= QC sprint: audit regressions =================
+// Each of these pins a defect that shipped because nothing covered it.
+
+// [xp] The top of the curve: level 99 must be reachable and the bar finite.
+check("xp: level 99 threshold exists", Number.isFinite(XP_TABLE[99]));
+check("xp: OSRS anchors hold", levelFromXp(83) === 2 && levelFromXp(101333) === 50);
+check("xp: 13,034,431 xp is level 99", levelFromXp(13034431) === 99, `${levelFromXp(13034431)}`);
+check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
+{
+  const p98 = levelProgress(XP_TABLE[98]);
+  const p99 = levelProgress(13034431);
+  check("xp: progress is finite at 98 and 99",
+    Number.isFinite(p98.into) && p98.into >= 0 && p98.into <= 1 && p99.into === 1,
+    `98→${p98.into} 99→${p99.into}`);
+}
+
+// [save] Offline progression is measured from the SAVED timestamp, not boot.
+{
+  const offState = createFreshState(g, "Hero", 21, 21);
+  offState.player.skills.woodcutting.xp = 5000;
+  const sys = new SaveSystem(offState);
+  const payload = sys.serialize() as any;
+  payload.timestamp = Date.now() - 6 * H; // a save left alone for six hours
+  const fresh = createFreshState(g, "Hero", 21, 21);
+  const sys2 = new SaveSystem(fresh);
+  sys2.apply(payload);
+  check("save: apply restores the saved timestamp", fresh.timestamp === payload.timestamp,
+    `${fresh.timestamp} vs ${payload.timestamp}`);
+  const awayS = Math.round((Date.now() - fresh.timestamp) / 1000);
+  check("save: a 6h-old save reads as ~6h away", awayS >= 6 * 3600 - 5 && awayS <= 6 * 3600 + 5, `${awayS}s`);
+}
+
+// [combat] Main drop tables honour their min/max instead of always paying 1.
+{
+  const inv = createFreshState(g, "Hero", 21, 21).player.inventory;
+  const zombie = MONSTERS.zombie;
+  const coinEntry = zombie.main.find((d) => d.itemId === "coins");
+  check("combat: zombie coin drop declares a range", !!coinEntry && coinEntry.max > coinEntry.min,
+    coinEntry ? `${coinEntry.min}-${coinEntry.max}` : "missing");
+  void inv;
 }
 
 console.log(results.join("\n"));

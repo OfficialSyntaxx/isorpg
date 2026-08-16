@@ -135,8 +135,11 @@ export class CombatSystem {
     }
     const weapon = this.equippedWeapon();
 
+    // The player's swing is range-gated the same way the monster's is. Without
+    // this the hero could keep hitting a target from anywhere on the map while
+    // it had no way to answer.
     this.playerAtkAcc++;
-    if (this.playerAtkAcc >= weapon.ticks) {
+    if (this.playerAtkAcc >= weapon.ticks && this.playerCanHit(target, weapon)) {
       this.playerAtkAcc = 0;
       this.tryPlayerAttack(target, weapon, now);
     }
@@ -151,6 +154,13 @@ export class CombatSystem {
     if (health.hp > 0 && health.hp / health.maxHp < EAT_THRESHOLD) {
       this.autoEat();
     }
+  }
+
+  /** Can the player reach this target right now — melee adjacent, ranged within
+   *  bow range? Mirrors monsterCanHit so both sides use one rule. */
+  private playerCanHit(m: MonsterCombat, weapon: WeaponDef): boolean {
+    const d = Math.max(Math.abs(m.tile.x - this.state.player.pos.gx), Math.abs(m.tile.y - this.state.player.pos.gy));
+    return weapon.kind === "ranged" ? d <= RANGED_RANGE : d <= 1;
   }
 
   /** P4: can this monster actually hit the player right now (melee = adjacent,
@@ -334,8 +344,14 @@ export class CombatSystem {
     const inv = this.state.player.inventory;
     const drops: string[] = [];
 
+    // Roll the whole entry, not just its id: the main table's min/max were being
+    // discarded, so every drop paid exactly 1 — a Zombie's "10–40 coins" paid 1.
     const main = rollWeighted(m.def.main);
-    if (main) { addItem(inv, main, 1); drops.push(main); }
+    if (main) {
+      const qty = rand(main.min ?? 1, main.max ?? 1);
+      addItem(inv, main.itemId, qty);
+      drops.push(main.itemId);
+    }
 
     if (m.def.tertiary) {
       for (const t of m.def.tertiary) {
@@ -401,15 +417,17 @@ function hitChance(attackRoll: number, defenseRoll: number): number {
   return attackRoll / (2 * (defenseRoll + 1));
 }
 
-function rollWeighted(entries: { itemId: string; weight: number }[]): string | null {
+interface WeightedDrop { itemId: string; weight: number; min?: number; max?: number; }
+
+function rollWeighted<T extends WeightedDrop>(entries: T[]): T | null {
   if (!entries.length) return null;
   const total = entries.reduce((a, e) => a + e.weight, 0);
   let r = Math.random() * total;
   for (const e of entries) {
     r -= e.weight;
-    if (r <= 0) return e.itemId;
+    if (r <= 0) return e;
   }
-  return entries[entries.length - 1].itemId;
+  return entries[entries.length - 1];
 }
 
 function rand(min: number, max: number): number {

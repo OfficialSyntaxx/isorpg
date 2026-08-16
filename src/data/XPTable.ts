@@ -7,7 +7,10 @@ function buildXpTable(): number[] {
   // cumulative[level] = total xp required to reach `level`.
   const cumulative: number[] = [0]; // level 0 = 0 xp
   let total = 0;
-  for (let n = 1; n < MAX_LEVEL; n++) {
+  // Runs to n === MAX_LEVEL so cumulative[99] is written. Stopping at n < 99
+  // left the top threshold undefined, which capped every skill at 98 and made
+  // levelProgress() divide by undefined at level 98 (NaN width on the XP bar).
+  for (let n = 1; n <= MAX_LEVEL; n++) {
     // GDD formula: sum floor(n + 300·2^(n/7)) over n, THEN divide by 4 once.
     // To reach level L we sum terms n = 1..L-1, so record the threshold
     // from the accumulated terms BEFORE adding term n.
@@ -32,7 +35,10 @@ export function levelProgress(xp: number): { level: number; into: number } {
   if (level >= MAX_LEVEL) return { level, into: 1 };
   const cur = XP_TABLE[level];
   const next = XP_TABLE[level + 1];
-  return { level, into: (xp - cur) / (next - cur) };
+  // Belt-and-braces: this value is written straight into a CSS width, and a
+  // NaN there is silently dropped by the browser, freezing the bar.
+  const into = (xp - cur) / (next - cur);
+  return { level, into: Number.isFinite(into) ? Math.max(0, Math.min(1, into)) : 0 };
 }
 
 export function xpToNext(level: number): number {

@@ -6,6 +6,56 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · QC sprint — boot crash, offline idle, XP ceiling, drops, reach
+
+Full read-through of `src/` plus runtime probes against the compiled modules and
+a real headless-browser boot. Five defects, each reproduced before and after the
+fix.
+
+**The headline: the game had not booted since P6.3.**
+
+- **`boot()` threw on every launch — nothing rendered.** `cb2dcfb` (P6.3) added
+  `this.ui.attachQuestJournal(...)` at the top of `boot()`, but `this.ui` is not
+  assigned until ~60 lines later. Every launch threw
+  `Cannot read properties of undefined (reading 'attachQuestJournal')`, aborting
+  boot before `engine.start()` — so the render loop never began. The static HUD
+  from `index.html` still painted, which is why it looked alive: a full chrome
+  with an empty canvas behind it. `guarded("main", …)` caught the throw and
+  turned a hard crash into a silent one. Every phase from P6.3 to P8.3 shipped on
+  top of this. Fixed by constructing the UI before the systems that attach to it.
+  **`npm test` stayed green throughout — it exercises systems in isolation and
+  never boots the app.**
+
+Also fixed in the same sweep:
+
+- **Offline idle progression never paid out.** `SaveSystem.apply()` restored every
+  field *except* `timestamp`, so `computeOffline()` measured "time away" from
+  process start rather than the last save — a six-hour-old save reported
+  `awaySeconds: 0` and an empty return screen. The whole idle pillar was inert
+  for any returning player. Now restored on apply, and the elapsed window is
+  consumed at the end of the offline calc so it can't be paid twice.
+- **`boot()` loaded the save twice.** The second `load()` re-applied the payload
+  over the live state, discarding the first load's gains and recomputing the same
+  window. Collapsed to a single load.
+- **Level 99 was unreachable.** `buildXpTable()` looped `n < 99`, leaving
+  `XP_TABLE[99]` undefined: every skill capped at 98, and `levelProgress()` at 98
+  divided by `undefined` → `width: NaN%`, which browsers drop, freezing the XP
+  bar. Table now runs to 99; progress is clamped finite.
+- **Main drop tables always paid exactly 1.** `rollWeighted()` returned only an
+  item id, so the declared `min`/`max` were discarded — a Zombie's "10–40 coins"
+  paid 1 coin. It now returns the whole entry and rolls the range, matching the
+  tertiary path. This was suppressing coin income by roughly an order of magnitude.
+- **The player could attack from any distance.** The monster's swing was gated on
+  `monsterCanHit`; the hero's was gated only on the weapon cooldown. Added the
+  mirrored `playerCanHit` (melee adjacent, ranged within `RANGED_RANGE`).
+
+- 62/62 QC checks (8 new, pinning each of the above). Bundle 778 kB / 211 kB gzip.
+- **Follow-up owed:** the suite needs a real boot smoke test — headless page load,
+  assert the canvas renders and the console is clean. A unit suite cannot catch a
+  wiring-order crash, and that is exactly what hid this one for five phases.
+
+---
+
 ## 2026-08 · Phase 8.3 — Combat Tonic + drink SFX
 
 - **Combat Tonic** 🧪: new potion, buyable at the Town Market, auto-drinks on low

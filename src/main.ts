@@ -117,6 +117,17 @@ class Game {
     this.engine.scene.add(this.bossRing);
 
     this.state = createFreshState(this.grid, "Hero", Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
+
+    // The UI is constructed BEFORE the systems that attach panels to it. It
+    // needs only `state` plus callbacks that are invoked lazily on user action,
+    // so it is safe this early — and the attach* calls below would throw on an
+    // undefined `this.ui` otherwise, aborting boot before engine.start().
+    this.ui = new UI(this.state, {
+      onExport: () => this.doExport(),
+      onImport: (j) => this.doImport(j),
+      onDeleteSave: () => this.doDelete(),
+    });
+
     this.combat = new CombatSystem(this.state);
     this.world = new WorldSystem(this.engine.scene, this.grid, this.combat);
     this.npcs = new NpcSystem(this.engine.scene, this.grid, { getBuildings: () => this.state.town.buildings });
@@ -187,15 +198,12 @@ class Game {
     this.craft = new CraftingSystem(this.state, this.build.hasBuilding.bind(this.build));
     this.save = new SaveSystem(this.state);
     this.save.setOfflineCapProvider(() => this.build.offlineCapHours);
-    this.ui = new UI(this.state, {
-      onExport: () => this.doExport(),
-      onImport: (j) => this.doImport(j),
-      onDeleteSave: () => this.doDelete(),
-    });
     this.ui.attachSystems(this.craft, this.build);
 
-    // Fresh state, then load
-    const loaded = await this.save.load();
+    // Load exactly once. A second load() re-applied the payload over the live
+    // state, discarding the first load's offline gains and recomputing the same
+    // idle window.
+    const resumed = await this.save.load();
     this.build.rehydrate();
 
     // Snap hero to town center (fresh) / current tile (saved)
@@ -347,8 +355,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
 
     this.engine.start();
 
-    // Offline progression / new game
-    const resumed = await this.save.load();
+    // Offline progression / new game — reported from the single load above.
     if (resumed.summary?.lines.length) {
       this.ui.showOffline(resumed.summary.awaySeconds, resumed.summary.capApplied, resumed.summary.lines, resumed.summary.xpEarned);
     } else if (resumed.recoveredFrom === "fresh" || resumed.recoveredFrom === "indexeddb") {
