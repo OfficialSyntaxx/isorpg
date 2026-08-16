@@ -157,6 +157,9 @@ export class SaveSystem {
 
     const lines: string[] = [];
     let xpEarned = 0;
+    // P7.5: tell the player the Town Hall raised the off-the-clock ceiling.
+    const capHours = Math.round(capSeconds / 3600);
+    if (capHours > 8) lines.push(`🏛️ Town Hall: offline cap raised to ${capHours}h`);
     const p = this.state.player;
 
     // For each skill, idle on the best available resource at ~1 action/15 ticks.

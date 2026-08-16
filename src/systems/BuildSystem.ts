@@ -20,6 +20,7 @@ export interface BuildCallbacks {
 }
 
 const PASSIVE_INTERVAL_MS = 10 * TICK_MS; // ~6s per passive conversion cycle
+const MAX_BUILD_LEVEL = 3; // P7.5: upgrades go up to level 3
 
 export class BuildSystem {
   private scene: THREE.Scene;
@@ -148,7 +149,42 @@ export class BuildSystem {
 
   // ————— Passive effects —————
   get storageBonus(): number { return this.count("STOREHOUSE") * 250; }
-  get offlineCapHours(): number { return this.hasBuilding("TOWN_HALL") ? 12 : 8; }
+  /** P7.5: offline cap scales with the Town Hall's level (8 + 4h per level). */
+  get offlineCapHours(): number { return 8 + this.hallLevel() * 4; }
+
+  /** Level of the first installed building of a type (0 = none). */
+  levelOf(type: BuildingType): number {
+    const b = this.state.town.buildings.find((x) => x.type === type);
+    return b?.level ?? 0;
+  }
+
+  /** Town Hall level (0..3) — drives the offline cap and tax. */
+  hallLevel(): number { return this.levelOf("TOWN_HALL"); }
+
+  /** P7.5: buildings upgrade to level 3 (each level doubles its base cost). */
+  canUpgrade(type: BuildingType): boolean {
+    const lvl = this.levelOf(type);
+    if (lvl <= 0 || lvl >= MAX_BUILD_LEVEL) return false;
+    return this.upgradeCost(type).every((c) => countItem(this.state.player.inventory, c.itemId) >= c.qty);
+  }
+
+  upgradeCost(type: BuildingType): { itemId: string; qty: number }[] {
+    const next = this.levelOf(type) + 1;
+    return BUILDINGS[type].baseCost.map((c) => ({ itemId: c.itemId, qty: c.qty * next }));
+  }
+
+  /** Upgrade the first installed instance; consumes materials scaled to the new level. */
+  upgradeType(type: BuildingType): boolean {
+    const b = this.state.town.buildings.find((x) => x.type === type);
+    if (!b || b.level >= MAX_BUILD_LEVEL) return false;
+    const cost = this.upgradeCost(type);
+    if (!cost.every((c) => countItem(this.state.player.inventory, c.itemId) >= c.qty)) return false;
+    for (const c of cost) removeItem(this.state.player.inventory, c.itemId, c.qty);
+    b.level += 1;
+    const mesh = this.meshes.get(b.id);
+    if (mesh) mesh.scale.setScalar(1 + (b.level - 1) * 0.12);
+    return true;
+  }
 
   private applyStorage() {
     this.state.player.inventory.storageCap = 500
@@ -183,8 +219,8 @@ export class BuildSystem {
     const granaries = this.count("GRANARY");
     if (granaries > 0 && room()) addItem(inv, "raw_shrimp", granaries);
 
-    const townHalls = this.count("TOWN_HALL");
-    if (townHalls > 0) addItem(inv, "coins", townHalls * 2);
+    const tax = this.hallLevel();
+    if (tax > 0) addItem(inv, "coins", tax * 2);
   }
 }
 

@@ -94,6 +94,14 @@ the game-repo commit, and the live build (cache-bust version at
   it ("6 × Logs").
 - Commit `b9d06ce` · cache-bust `v19`.
 
+### 7.5 — Town Hall upgrade tiers
+- The Town Hall now **upgrades to level 3** (Build panel → Upgrade ⬆): each
+  level adds **+4h offline cap** (8h base → **12/16/20h**) and a level-scaled
+  coin tax. Upgrade costs scale with the level (base cost × next level).
+- The return screen announces the raised ceiling ("🏛️ Town Hall: offline cap
+  raised to 12h").
+- Commit: _this round_ · cache-bust `v20`.
+
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
   (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.

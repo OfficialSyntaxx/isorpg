@@ -559,6 +559,8 @@ export class UI {
           <div class="building-sub"><b>Effect:</b> ${def.effect}</div>
           <div class="building-cost">${costTxt}</div>
           <button class="card-btn" data-build="${type}" ${disabled ? "disabled" : ""}>${label}</button>
+          ${count > 0 ? `<div class="building-sub">Level ${build.levelOf(type)}/3</div>
+            ${build.levelOf(type) < 3 ? `<button class="card-btn" data-upgrade="${type}" ${build.canUpgrade(type) ? "" : "disabled"}>Upgrade ⬆</button>` : ""}` : ""}
         </div>`;
     }).join("");
 
@@ -567,6 +569,13 @@ export class UI {
       btn.addEventListener("click", () => {
         build.startPlacing(btn.dataset.build as BuildingType);
         this.closePanel();
+      });
+    });
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-upgrade]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const ok = build.upgradeType(btn.dataset.upgrade as BuildingType);
+        showToast(ok ? "Building upgraded." : "Cannot upgrade — materials or max level.", ok ? "success" : "error", 1400);
+        this.renderBuild();
       });
     });
   }
