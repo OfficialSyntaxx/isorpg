@@ -107,7 +107,7 @@ the game-repo commit, and the live build (cache-bust version at
   **Veteran** (2h) ×2 → **Reliable** (8h) ×3 → **Master** (20h) ×4. Live and
   offline production both pay the multiplier, hours accrue offline too, and the
   Village panel shows "⭐ tier · Xh worked".
-- Commit: _this round_ · cache-bust `v21`.
+- Commit `9966b36` · cache-bust `v21`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
