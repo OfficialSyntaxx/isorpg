@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node .qc-emit/tests/qc.test.js",
+    "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node scripts/verify-rig.cjs && node .qc-emit/tests/qc.test.js",
     "preview": "vite preview --port 4173",
     "test:smoke": "npm run build && node scripts/smoke.cjs"
   },
