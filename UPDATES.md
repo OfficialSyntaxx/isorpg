@@ -23,7 +23,7 @@ the game-repo commit, and the live build (cache-bust version at
 - 5 new achievements fed by persisted counters: First Purchase, Junk Trader
   (20 sold), Foreman (3 villagers hired), Quartermaster (50 stock collected),
   Spelunker (floor 2).
-- Commit: _this round_ · cache-bust `v18`.
+- Commit `130f955` · cache-bust `v18`.
 
 ### 6.3 Quest journal
 - **📖 Quests** panel listing active/complete quests, live objectives, givers and
