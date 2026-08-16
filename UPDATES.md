@@ -102,6 +102,13 @@ the game-repo commit, and the live build (cache-bust version at
   raised to 12h").
 - Commit `e852614` · cache-bust `v20`.
 
+### 7.6 — Villager output perks
+- Worked hours now raise a villager's **yield tier**: New hand ×1 →
+  **Veteran** (2h) ×2 → **Reliable** (8h) ×3 → **Master** (20h) ×4. Live and
+  offline production both pay the multiplier, hours accrue offline too, and the
+  Village panel shows "⭐ tier · Xh worked".
+- Commit: _this round_ · cache-bust `v21`.
+
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
   (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.

@@ -51,6 +51,8 @@ export interface GameState {
       assignments: Record<string, "woodcutting" | "mining">;
       stock: Record<string, number>;
       acc: Record<string, number>; // ms accrued per villager since last output
+      /** P7.6: ms each villager has worked (drives veteran yield tiers). */
+      worked: Record<string, number>;
     };
   };
   collectionLog: Set<string>;
@@ -73,7 +75,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       meta: { kills: {}, achievements: [], counters: {} },
     },
     world: { grid, nodes: new Map() },
-    town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {} } },
+    town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {}, worked: {} } },
     collectionLog: new Set(),
   };
 }

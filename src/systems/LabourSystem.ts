@@ -11,6 +11,9 @@ export interface LabourWorker {
   id: string;
   name: string;
   job: LabourJob | null;
+  /** P7.6: veteran tier label + worked hours (shown in the village panel). */
+  tier: string;
+  hours: string;
 }
 
 export interface LabourStockRow {
@@ -30,6 +33,24 @@ const MINE_MS = 30_000; // one ore per 30s per miner
 
 export const LABOUR_INTERVALS: Record<LabourJob, number> = { woodcutting: WOOD_MS, mining: MINE_MS };
 
+/** P7.6: veteran tiers — cumulative worked hours raise the yield multiplier. */
+export const VETERAN_TIERS: [minMs: number, label: string, mult: number][] = [
+  [0, "New hand", 1],
+  [2 * 3_600_000, "Veteran", 2],
+  [8 * 3_600_000, "Reliable", 3],
+  [20 * 3_600_000, "Master", 4],
+];
+
+export function veteranTier(workedMs: number): { label: string; mult: number } {
+  let cur = { label: VETERAN_TIERS[0][1], mult: VETERAN_TIERS[0][2] };
+  for (const [min, label, mult] of VETERAN_TIERS) if (workedMs >= min) cur = { label, mult };
+  return cur;
+}
+
+export function hoursLabel(ms: number): string {
+  return `${Math.floor(ms / 3_600_000)}h`;
+}
+
 /** Deterministic per-villager output — logs, or copper/tin ore. */
 export function labourItemFor(id: string, job: LabourJob): string {
   if (job === "woodcutting") return "normal_log";
@@ -47,9 +68,11 @@ export function accrueLabourOffline(state: GameState, awayMs: number, capMs: num
     const need = LABOUR_INTERVALS[job];
     const n = Math.floor(ms / need);
     if (n <= 0) continue;
+    l.worked[id] = (l.worked[id] ?? 0) + ms; // P7.6: hours count offline too
     const item = labourItemFor(id, job);
-    l.stock[item] = (l.stock[item] ?? 0) + n;
-    lines.push(`${n} × ${ITEMS[item]?.name ?? item}`);
+    const total = n * veteranTier(l.worked[id]).mult;
+    l.stock[item] = (l.stock[item] ?? 0) + total;
+    lines.push(`${total} × ${ITEMS[item]?.name ?? item}`);
   }
   return lines;
 }
@@ -83,11 +106,13 @@ export class LabourSystem {
     if (!entries.length) return;
     for (const [id, job] of entries) {
       l.acc[id] = (l.acc[id] ?? 0) + dt;
+      l.worked[id] = (l.worked[id] ?? 0) + dt; // P7.6: hours worked accrue
       const need = job === "woodcutting" ? WOOD_MS : MINE_MS;
+      const mult = veteranTier(l.worked[id]).mult;
       while (l.acc[id] >= need) {
         l.acc[id] -= need;
         const item = this.produce(id, job);
-        l.stock[item] = (l.stock[item] ?? 0) + 1;
+        l.stock[item] = (l.stock[item] ?? 0) + mult;
       }
     }
   }
@@ -108,7 +133,10 @@ export class LabourSystem {
 
   snapshot(): LabourSnapshot {
     const l = this.state.town.labour;
-    const workers = this.villagers().map((v) => ({ id: v.id, name: v.name, job: l.assignments[v.id] ?? null }));
+    const workers = this.villagers().map((v) => {
+      const worked = l.worked[v.id] ?? 0;
+      return { id: v.id, name: v.name, job: l.assignments[v.id] ?? null, tier: veteranTier(worked).label, hours: hoursLabel(worked) };
+    });
     const stock = Object.entries(l.stock).map(([itemId, qty]) => ({
       itemId, qty, name: ITEMS[itemId]?.name ?? itemId, icon: itemIcon(itemId),
     }));
