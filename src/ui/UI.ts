@@ -300,7 +300,7 @@ export class UI {
       <div class="inv-row" style="align-items:flex-start">
         <span class="inv-ico">👤</span>
         <div class="inv-name">${w.name}<span class="inv-count">${JOB_LABEL[w.job ?? "idle"]}</span>
-          <div class="inv-desc">⭐ ${w.tier} · ${w.hours} worked</div>
+          <div class="inv-desc">${w.spec ? `${w.spec.icon} ${w.spec.perkName} · ` : ""}⭐ ${w.tier} · ${w.hours} worked</div>
         </div>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-mini" data-lassign="woodcutting" data-vid="${w.id}">🪓</button>

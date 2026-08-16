@@ -14,6 +14,8 @@ export interface LabourWorker {
   /** P7.6: veteran tier label + worked hours (shown in the village panel). */
   tier: string;
   hours: string;
+  /** P7.7: lore specialization (role + perk) or null for non-spec villagers. */
+  spec: { role: string; perkName: string; icon: string } | null;
 }
 
 export interface LabourStockRow {
@@ -51,6 +53,20 @@ export function hoursLabel(ms: number): string {
   return `${Math.floor(ms / 3_600_000)}h`;
 }
 
+/** P7.7: lore specializations — each villager brings a small unique perk. */
+export interface VillagerSpec {
+  role: string;
+  perkName: string;
+  icon: string;
+  item?: string;   // per-cycle extra into the village stock
+  coins?: number;  // per-cycle coin tribute
+}
+export const VILLAGER_SPECS: Record<string, VillagerSpec> = {
+  bram: { role: "Fisher", perkName: "Fresh Catch", icon: "🎣", item: "raw_shrimp" },
+  wren: { role: "Woodcutter", perkName: "Fine Timber", icon: "🪓", item: "oak_log" },
+  tobias: { role: "Elder", perkName: "Elder's Due", icon: "🏛️", coins: 1 },
+};
+
 /** Deterministic per-villager output — logs, or copper/tin ore. */
 export function labourItemFor(id: string, job: LabourJob): string {
   if (job === "woodcutting") return "normal_log";
@@ -73,6 +89,9 @@ export function accrueLabourOffline(state: GameState, awayMs: number, capMs: num
     const total = n * veteranTier(l.worked[id]).mult;
     l.stock[item] = (l.stock[item] ?? 0) + total;
     lines.push(`${total} × ${ITEMS[item]?.name ?? item}`);
+    const spec = VILLAGER_SPECS[id];
+    if (spec?.item) { l.stock[spec.item] = (l.stock[spec.item] ?? 0) + n; lines.push(`${n} × ${ITEMS[spec.item]?.name ?? spec.item}`); }
+    else if (spec?.coins) { l.stock["coins"] = (l.stock["coins"] ?? 0) + n; lines.push(`${n} × Coins`); }
   }
   return lines;
 }
@@ -113,6 +132,9 @@ export class LabourSystem {
         l.acc[id] -= need;
         const item = this.produce(id, job);
         l.stock[item] = (l.stock[item] ?? 0) + mult;
+        const spec = VILLAGER_SPECS[id];
+        if (spec?.item) l.stock[spec.item] = (l.stock[spec.item] ?? 0) + 1;
+        if (spec?.coins) l.stock["coins"] = (l.stock["coins"] ?? 0) + spec.coins;
       }
     }
   }
@@ -135,7 +157,8 @@ export class LabourSystem {
     const l = this.state.town.labour;
     const workers = this.villagers().map((v) => {
       const worked = l.worked[v.id] ?? 0;
-      return { id: v.id, name: v.name, job: l.assignments[v.id] ?? null, tier: veteranTier(worked).label, hours: hoursLabel(worked) };
+      const s = VILLAGER_SPECS[v.id];
+      return { id: v.id, name: v.name, job: l.assignments[v.id] ?? null, tier: veteranTier(worked).label, hours: hoursLabel(worked), spec: s ? { role: s.role, perkName: s.perkName, icon: s.icon } : null };
     });
     const stock = Object.entries(l.stock).map(([itemId, qty]) => ({
       itemId, qty, name: ITEMS[itemId]?.name ?? itemId, icon: itemIcon(itemId),

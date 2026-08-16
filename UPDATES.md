@@ -109,6 +109,14 @@ the game-repo commit, and the live build (cache-bust version at
   Village panel shows "⭐ tier · Xh worked".
 - Commit `9966b36` · cache-bust `v21`.
 
+### 7.7 — Villager specializations
+- Each villager has a lore specialization: **Bram the Fisher** (🎣 Fresh Catch — a
+  shrimp per cycle), **Wren the Woodcutter** (🪓 Fine Timber — an oak log per
+  cycle), **Tobias the Elder** (🏛️ Elder's Due — a coin tribute per cycle).
+  Perks stack with the veteran yield tiers, apply live and offline, and the
+  Village panel shows "🎣 Fresh Catch · ⭐ Reliable · 10h worked".
+- Commit: _this round_ · cache-bust `v22`.
+
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
   (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.
