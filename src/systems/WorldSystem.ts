@@ -43,9 +43,21 @@ export class WorldSystem {
   setCallbacks(cb: WorldCallbacks) { this.cb = cb; }
 
   private buildSky() {
+    // Ship with the procedural sky first (guaranteed, zero-asset), then hot-swap
+    // the generated skybox panorama in when it loads; fall back silently on error.
     this.scene.background = makeSkyTexture();
     this.scene.fog = new THREE.Fog(0xe8d9b0, 42, 88);
     this.fog = this.scene.fog;
+    try {
+      const url = new URL("sky.png", window.location.href).href;
+      new THREE.TextureLoader().load(url, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        this.scene.background = tex;
+      });
+    } catch {
+      /* keep procedural sky */
+    }
   }
 
   /** P3: tint fog from night (deep blue) to day (warm haze). */

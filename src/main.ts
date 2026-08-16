@@ -5,6 +5,8 @@ import { Engine } from "./core/Engine";
 import { Grid, WORLD_SIZE } from "./world/Grid";
 import { createFreshState } from "./state/GameState";
 import { makeHero } from "./generators/Character";
+import { play as sfx } from "./core/Sfx";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { WorldSystem } from "./systems/WorldSystem";
 import { MovementSystem } from "./systems/MovementSystem";
 import { SkillSystem } from "./systems/SkillSystem";
@@ -85,6 +87,22 @@ class Game {
     this.hero = makeHero();
     this.engine.scene.add(this.hero.group);
 
+    // A.3: swap in the low-poly hero GLB when it loads (keeps the procedural
+    // box figure as an instant, zero-asset fallback if the fetch fails).
+    try {
+      const heroURL = new URL("models/hero.glb", window.location.href).href;
+      new GLTFLoader().load(
+        heroURL,
+        (gltf) => {
+          try { this.hero.enableModel(gltf.scene); } catch { /* keep boxes */ }
+        },
+        undefined,
+        () => { /* fetch failed — procedural hero stays */ }
+      );
+    } catch {
+      /* noop */
+    }
+
     // P1 targeting ring (hidden until the player taps something).
     const ring: SelectionRing = makeSelectionRing();
     this.ringGroup = ring.group;
@@ -112,12 +130,13 @@ class Game {
       (id) => {
         const qty = countItem(this.state.player.inventory, id);
         const p = this.shop.sellItem(this.state.player.inventory, id);
-        if (p > 0) { showToast(`Sold for 🪙${p}`, "success", 1400); this.meta.bump("shop_sold", qty); this.meta.bump("shop_sold_value", p); }
+        if (p > 0) { showToast(`Sold for 🪙${p}`, "success", 1400); this.meta.bump("shop_sold", qty); this.meta.bump("shop_sold_value", p); sfx("coin"); }
         return p > 0;
       },
       (id) => {
         const ok = this.shop.buyItem(this.state.player.inventory, id);
         if (ok) this.meta.bump("shop_bought");
+        if (ok) sfx("coin");
         showToast(ok ? "Purchase complete." : "Not enough coins.", ok ? "success" : "error", 1400);
         return ok;
       }
@@ -137,6 +156,7 @@ class Game {
         const c = this.labour.claim(this.state.player.inventory);
         if (c.length) {
           this.meta.bump("labour_collected", c.reduce((a, x) => a + x.qty, 0));
+          sfx("coin");
           showToast(`Collected: ${c.map((x) => `${ITEM_NAMES[x.itemId]?.name ?? x.itemId} ×${x.qty}`).join(", ")}`, "success", 2800);
         }
         return c.length > 0;
@@ -194,6 +214,8 @@ class Game {
       onGather: (e) => {
         this.activeSkill = e.node.def.skill;
         this.ui.flashGather(nameOf(e.itemId), e.amount, e.doubled);
+        const s = e.node.def.skill ?? "";
+        sfx(s.includes("fish") ? "fish" : s.includes("mine") ? "mine" : "chop");
       },
       onActionStart: (node) => {
         this.activeSkill = node.def.skill;
@@ -220,11 +242,12 @@ class Game {
 
     // Combat events → HUD
     this.combat.setCallbacks({
-      onPlayerHit: (m, dmg) => this.ui.floatText(`${dmg}`, "dmg"),
+      onPlayerHit: (m, dmg) => { this.ui.floatText(`${dmg}`, "dmg"); sfx("hit"); },
       onHurtByMonster: (d) => {
         this.ui.setPlayerHp(this.state.player.health.hp, this.state.player.health.maxHp);
         this.heroFlashUntil = Date.now() + 250;
         this.engine.addShake(0.4); // P4b: camera kick on hits
+        sfx("hurt");
       },
       onDeath: () => {
         // P5: dying underground still respawns in town — but exit the dungeon
@@ -276,7 +299,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
         this.engine.scene.add(mesh);
         this.shots.push({ mesh, sx: p.gx, sy: 1.0, sz: p.gy, tx: toX, ty: 0.9, tz: toY, born: performance.now(), dur: 0.26 });
       },
-      onLevelUp: (skill, lvl) => this.ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"),
+      onLevelUp: (skill, lvl) => { this.ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"); sfx("levelup"); },
     });
 
     // Crafting (Cooking / Smithing / Carpentry) events → HUD

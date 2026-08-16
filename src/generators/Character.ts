@@ -18,6 +18,8 @@ export interface HeroModel {
   legR: THREE.Group;
   setAction(action: "idle" | "walk" | "chop" | "mine" | "fish"): void;
   setTool(tool: ToolKind): void;
+  /** Swap in a 3D model (GLTF.scene) in place of the procedural box figure. */
+  enableModel(obj: THREE.Object3D): void;
 }
 
 export function makeHero(): HeroModel {
@@ -58,7 +60,27 @@ export function makeHero(): HeroModel {
   armR.add(toolSlot);
   const held: THREE.Object3D[] = [];
 
-  const model: HeroModel = { group, bobAnchor, armR, legL, legR, setTool: (t) => { void t; }, setAction: () => {} };
+  // The procedural boxes that make up the default figure (hidden when a real
+  // 3D model is swapped in).
+  const visuals: THREE.Object3D[] = [];
+  group.traverse((o) => { if ((o as THREE.Mesh).isMesh) visuals.push(o); });
+
+  const model: HeroModel = { group, bobAnchor, armR, legL, legR, setTool: (t) => { void t; }, setAction: () => {}, enableModel: () => { void 0; } };
+  // Swap in a real GLTF hero: hide the placeholder boxes, then center + scale
+  // the loaded model so its feet sit on the same ground line as the placeholders.
+  model.enableModel = (obj: THREE.Object3D) => {
+    visuals.forEach((m) => { m.visible = false; });
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const s = 0.75 / Math.max(size.y, 0.01);
+    obj.scale.setScalar(s);
+    const b2 = new THREE.Box3().setFromObject(obj);
+    const c = new THREE.Vector3();
+    b2.getCenter(c);
+    obj.position.set(-c.x, -b2.min.y, -c.z);
+    bobAnchor.add(obj);
+  };
   model.setTool = (tool) => {
     held.forEach((h) => h.removeFromParent());
     held.length = 0;

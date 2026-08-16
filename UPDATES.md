@@ -6,6 +6,22 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase 8 — First asset pass (SFX, hero, skybox)
+
+### 8.1 — SFX, real 3D hero, skybox panorama
+- **SFX** (7 clips, ~2.0 cr): chop / mine / fish / hit / hurt / level-up / coin —
+  wired through `src/core/Sfx.ts` (lazy `Audio`, no runtime cost) onto gather
+  (per-skill), landing a hit, taking damage, level-up chime, market sell/buy and
+  labour claim. MP3s in `public/sfx/`.
+- **Hero mesh**: 2.6 MB low-poly GLB in `public/models/hero.glb`, loaded via
+  `GLTFLoader` and swapped over the procedural box figure through
+  `HeroModel.enableModel` (keeps the zero-asset figure as instant fallback).
+- **Skybox**: generated panorama `public/sky.png`, hot-swapped over the procedural
+  sky in `WorldSystem.buildSky` with silent fallback.
+- 52/52 QC checks green; bundle 761 kB / 206 kB gzip (public assets +2.6 MB).
+
+---
+
 ## 2026-08 · Phase 6 — World scale, biomes, onboarding, meta
 
 ### 6.4 — Meta page & achievements
