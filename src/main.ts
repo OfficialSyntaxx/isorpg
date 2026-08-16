@@ -218,6 +218,7 @@ class Game {
         this.ui.flashGather(nameOf(e.itemId), e.amount, e.doubled);
         const s = e.node.def.skill ?? "";
         sfx(s.includes("fish") ? "fish" : s.includes("mine") ? "mine" : "chop");
+           sfx("pickup");
       },
       onActionStart: (node) => {
         this.activeSkill = node.def.skill;
@@ -257,8 +258,9 @@ class Game {
         if (this.dungeon.active) this.leaveDungeon();
         showToast("💀 You died… respawned in town.");
       },
-      onKill: (m, drops, kc) => {
-        // P6: slaying the Cave Brute completes the dungeon onboarding quest.
+onKill: (m, drops, kc) => {
+            if (m.def.id === "giant_rat" || m.def.id === "cave_bat") sfx("monster_squeak");
+          // P6: slaying the Cave Brute completes the dungeon onboarding quest.
 if (m.def.id === "cave_brute" && this.dungeon.active) {
           this.quest.notifyBruteDown(this.state.player.inventory);
           this.mapSys.unlockFastTravel(); // P6: beating the boss opens fast travel
@@ -445,8 +447,9 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
         this.setTarget("walk", gx, gy, "Locked Door", null);
         if (countItem(this.state.player.inventory, "dungeon_key") > 0) {
           removeItem(this.state.player.inventory, "dungeon_key", 1);
-          this.dungeon.unlock();
-          showToast("🔓 The Iron Key turns — the door grinds open (key consumed).", "success", 2400);
+this.dungeon.unlock();
+             sfx("door_unlock");
+             showToast("🔓 The Iron Key turns — the door grinds open (key consumed).", "success", 2400);
           this.quest.notifyDoorOpened(); // P6
         } else {
           showToast("🔒 Locked. Find the Iron Key in a side chamber.", "error", 2200);
@@ -470,8 +473,9 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     if (gx === this.dungeon.chest.x && gy === this.dungeon.chest.y) {
       this.setTarget("walk", gx, gy, "Open Chest", null);
       if (!this.dungeon.openedChest) {
-        this.dungeon.openedChest = true;
-        const loot = this.dungeon.chestLoot();
+this.dungeon.openedChest = true;
+            sfx("chest_open");
+          const loot = this.dungeon.chestLoot();
         for (const d of loot) addItem(this.state.player.inventory, d.itemId, d.qty);
         showToast(`Chest looted: ${loot.map((d) => `${ITEM_NAMES[d.itemId]?.name ?? d.itemId} ×${d.qty}`).join(", ")}`, "success", 2400);
       } else showToast("The chest is empty…", "info", 1100);
@@ -625,8 +629,9 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     }
   }
 
-  private onArrive(x: number, y: number) {
-    const node = this.pendingNode;
+private onArrive(x: number, y: number) {
+    sfx("step");
+   const node = this.pendingNode;
     if (node) { this.beginGather(node); return; }
     if (this.combat.engaged) this.combat.confirmFight();
   }

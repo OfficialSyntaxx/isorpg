@@ -6,6 +6,7 @@ import { itemIcon } from "../data/Items";
 import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
+import { play as sfx } from "../core/Sfx";
 import { WEAPONS } from "../data/Combat";
 import { CombatSystem } from "../systems/CombatSystem";
 import type { CraftingSystem } from "../systems/CraftingSystem";
@@ -102,8 +103,9 @@ export class UI {
     this.panel.addEventListener("click", (e) => { if (e.target === this.panel) this.closePanel(); });
   }
 
-  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest" | "meta" | "shop" | "village") {
-    // Any render error must never silently keep the panel hidden. Render first;
+openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest" | "meta" | "shop" | "village") {
+    sfx("ui_click");
+   // Any render error must never silently keep the panel hidden. Render first;
     // on failure show a visible degraded panel + log, never a dead button.
     try {
       if (id === "inventory") this.renderInventory();
@@ -123,7 +125,7 @@ export class UI {
     }
     this.panel.classList.remove("hidden");
   }
-  closePanel() { this.panel.classList.add("hidden"); }
+  closePanel() { sfx("ui_click"); this.panel.classList.add("hidden"); }
 
   /** P6: wire the world-map data + fast-travel executor (main.ts). */
   attachMap(snapshot: () => MapSnapshot | null, travel: (id: string) => boolean) {

@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import type { DungeonSystem } from "./DungeonSystem";
 import { addItem, type InventoryComponent } from "../components/Inventory";
+import { play as sfx } from "../core/Sfx";
 
 export type QuestStage = "INTRO" | "FIND_KEY" | "OPEN_DOOR" | "DEFEAT_BRUTE" | "DONE";
 
@@ -152,8 +153,9 @@ export class QuestSystem {
   /** Tap the guide: starts the quest, then repeats the relevant hint. */
   talkGuide(): void {
     switch (this.stage) {
-      case "INTRO":
-        this.stage = "FIND_KEY";
+case "INTRO":
+         this.stage = "FIND_KEY";
+         sfx("accept_quest");
         this.syncHint();
         this.toast(`${GUIDE_NAME}: "Those caves breathe treasure — but the way out is barred. A door, an old iron lock…"`, "info", 5200);
         this.toast("Quest: find the Iron Key in a side chamber, then follow the marker.", "info", 4200);
@@ -192,8 +194,9 @@ export class QuestSystem {
   /** Called when the Cave Brute dies while inside the dungeon. Grants the reward once. */
   notifyBruteDown(inv: InventoryComponent): void {
     if (this.stage !== "DEFEAT_BRUTE") return;
-    this.stage = "DONE";
-    this.syncHint();
+this.stage = "DONE";
+       this.syncHint();
+       sfx("quest_complete");
     if (!this.journal.includes("caves")) this.journal.push("caves");
     addItem(inv, "coins", 50 + Math.floor(Math.random() * 51));
     addItem(inv, "iron_ore", 4 + Math.floor(Math.random() * 5));
@@ -210,6 +213,7 @@ export class QuestSystem {
     addItem(inv, "steel_bar", 1);
     addItem(inv, "cooked_trout", 3);
     this.toast("🏆 Quest complete — The Surveyor's Errand! Reward: 250 coins, a steel bar, cooked trout.", "success", 5600);
+    sfx("quest_complete");
   }
 
   /** P6.3: read-only journal rows for the quest panel. */

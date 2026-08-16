@@ -7,6 +7,7 @@ import { WEAPONS, FOODS, type WeaponDef, getWeapon, type MonsterDef } from "../d
 import type { SkillId } from "../data/Skills";
 import { addItem, removeItem, type InventoryComponent } from "../components/Inventory";
 import { armorBonuses } from "../components/Equipment";
+import { play as sfx } from "../core/Sfx";
 
 export interface CombatEvents {
   onPlayerHit?: (monster: MonsterCombat, damage: number) => void;
@@ -372,9 +373,10 @@ export class CombatSystem {
   /** Respawn dead monsters late in the tick. */
   update(dtMs: number, now: number) {
     for (const m of this.monsters.values()) {
-      if (m.dead && now >= m.respawnAt) {
-        m.hp = m.def.hp;
-        m.dead = false;
+if (m.dead && now >= m.respawnAt) {
+          m.hp = m.def.hp;
+          m.dead = false;
+          sfx("monster_spawn");
         m.inCombat = false;
         m.attackAcc = 0;
       }
