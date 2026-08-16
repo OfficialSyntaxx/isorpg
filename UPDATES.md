@@ -138,7 +138,7 @@ the game-repo commit, and the live build (cache-bust version at
   slashers + 3 Cave Brutes and a richer chest (90+ coins, coal, 35% iron
   sword); the teal portal ends the run only on floor 3; blue stairs retreat
   from floors 2 & 3.
-- Commit: _this round_ · cache-bust `v25`.
+- Commit `fe37485` · cache-bust `v25`.
 
 ### 7.8 — Market rebalance (supply & demand)
 - Sell prices now slide down as an item floods the market (40% floor — a
