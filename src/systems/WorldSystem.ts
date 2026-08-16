@@ -46,13 +46,23 @@ export class WorldSystem {
     // Ship with the procedural sky first (guaranteed, zero-asset), then hot-swap
     // the generated skybox panorama in when it loads; fall back silently on error.
     this.scene.background = makeSkyTexture();
-    this.scene.fog = new THREE.Fog(0xe8d9b0, 42, 88);
+    // The camera orbits at radius 55, so the scene sits roughly 30–85 units away.
+    // A 42→88 ramp therefore fogged EVERYTHING, washing the whole map toward the
+    // fog colour. Start the haze beyond the far edge of the play area so it reads
+    // as depth at the horizon instead of a grey veil over the terrain.
+    this.scene.fog = new THREE.Fog(0xe8d9b0, 95, 175);
     this.fog = this.scene.fog;
     try {
       const url = new URL("sky.png", window.location.href).href;
       new THREE.TextureLoader().load(url, (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
-        tex.mapping = THREE.EquirectangularReflectionMapping;
+        // NOT EquirectangularReflectionMapping. three.js renders an equirect
+        // background by sampling along the per-pixel view direction — but an
+        // orthographic camera has the SAME direction for every pixel, so the
+        // whole sky resolved to one flat grey. Default UVMapping renders the
+        // panorama as a full-screen backdrop, which is what an isometric game
+        // with a fixed camera angle actually wants.
+        tex.mapping = THREE.UVMapping;
         this.scene.background = tex;
       });
     } catch {
@@ -105,19 +115,47 @@ export class WorldSystem {
   }
 
   /** One animated plane hugging only the water tiles. */
+  /**
+   * One flat quad per water tile, merged into a single BufferGeometry (still one
+   * draw call).
+   *
+   * This previously built a SINGLE THREE.Shape for the whole map — moveTo on the
+   * first tile, then lineTo around every subsequent tile — which is one
+   * continuous self-intersecting path hopping between scattered tiles. Triangulating
+   * that produced a huge wedge of "water" lying across open ground, which is the
+   * wave-shaped sheet that showed up next to spawn.
+   *
+   * UVs are world-space so the shimmer flows continuously across a lake instead of
+   * restarting per tile.
+   */
   private buildWater(tiles: { x: number; y: number }[], y: number) {
     if (!tiles.length) return;
-    const shape = new THREE.Shape();
+
+    const positions = new Float32Array(tiles.length * 6 * 3); // 2 tris × 3 verts
+    const uvs = new Float32Array(tiles.length * 6 * 2);
+    const UV_SCALE = 1 / 8; // ~one shimmer cycle per 3-4 tiles
+
     tiles.forEach((t, i) => {
-      const x = t.x - 0.5, z = t.y - 0.5;
-      if (i === 0) shape.moveTo(x, z);
-      shape.lineTo(x + 1, z);
-      shape.lineTo(x + 1, z + 1);
-      shape.lineTo(x, z + 1);
-      shape.lineTo(x, z);
+      const x0 = t.x - 0.5, z0 = t.y - 0.5;
+      const x1 = t.x + 0.5, z1 = t.y + 0.5;
+      // Two triangles, counter-clockwise when viewed from above (+Y).
+      const corners = [
+        [x0, z0], [x0, z1], [x1, z1],
+        [x0, z0], [x1, z1], [x1, z0],
+      ];
+      corners.forEach(([cx, cz], k) => {
+        const p = (i * 6 + k) * 3;
+        positions[p] = cx; positions[p + 1] = 0; positions[p + 2] = cz;
+        const q = (i * 6 + k) * 2;
+        uvs[q] = cx * UV_SCALE; uvs[q + 1] = cz * UV_SCALE;
+      });
     });
-    const geo = new THREE.ShapeGeometry(shape);
-    geo.rotateX(-Math.PI / 2);
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+    geo.computeVertexNormals();
+
     this.waterMat = makeWaterMaterial();
     const plane = new THREE.Mesh(geo, this.waterMat);
     plane.position.y = y;

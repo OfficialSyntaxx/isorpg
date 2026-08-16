@@ -12,6 +12,15 @@ import { createHealth } from "../components/Health";
 import { createSkillComponent } from "../components/Skills";
 import { createInventory } from "../components/Inventory";
 
+/**
+ * 10:00 — a new hero opens in clear mid-morning light.
+ *
+ * dayFactor() ramps 06:30 → 12:30, so 08:00 is only 0.25 daylight (ambient 0.36,
+ * sun 0.40) — still visibly gloomy. 10:00 gives 0.58, which reads as daytime
+ * without pinning the clock at noon.
+ */
+export const DAY_START_MINUTE = 10 * 60;
+
 export const SAVE_VERSION = "1.0.0";
 
 export interface TownBuilding {
@@ -44,6 +53,9 @@ export interface GameState {
     grid: Grid;
     nodes: Map<string, ResourceNode>;
   };
+  /** P-A: in-game clock. Persisted so the time of day survives a reload
+   *  instead of resetting to midnight on every launch. */
+  clock: { minute: number; day: number };
   town: {
     buildings: TownBuilding[];
     /** P7.3: villager labour — job assignments + the village stock they fill. */
@@ -77,6 +89,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       meta: { kills: {}, achievements: [], counters: {} },
     },
     world: { grid, nodes: new Map() },
+    clock: { minute: DAY_START_MINUTE, day: 1 },
     town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {}, worked: {} }, market: { supply: {}, demand: {} } },
     collectionLog: new Set(),
   };

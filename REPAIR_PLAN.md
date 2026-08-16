@@ -23,13 +23,18 @@ fail-loud boot errors, portable `npm test`).
 | Villagers/bosses animate wrongly | `spawnModel()` plays `clips[0]` forever — villagers Idle while walking, bosses Walk while standing. Each GLB ships only one clip. | `core/Model.ts` |
 | Opens at midnight | `clockMin = 0` → `dayFactor(0) === 0`, full night on a fresh save. | `main.ts` |
 
-## Phase A — First impression (~1 session)
+## Phase A — First impression ✅ SHIPPED
 1. Rebuild water as per-tile quads merged into one `BufferGeometry` (keep the shader).
 2. Seed `InputController` pan from the hero; follow the hero on movement.
 3. Start the clock at ~08:00 and persist it in the save.
 4. Verify the skybox reaches the background; re-check fog range (42→88) on a 42×42 map.
 
-**Done when:** a fresh save opens in daylight, centred on the hero, with water only on water tiles.
+**Done when:** a fresh save opens in daylight, centred on the hero, with water only on water tiles. ✅
+
+Shipped: per-tile water geometry (+ shader displacing Y not Z), camera follow with
+drag-as-offset, clock starting 10:00 and persisted in the save, fog moved to
+95→175, skybox switched off equirect mapping (incompatible with an ortho camera),
+default zoom 1.75. 68/68 QC + 5/5 smoke.
 
 ## Phase B — Model & animation pipeline (~2 sessions + asset regen)
 1. Route the hero through `spawnModel()` — one loader for all GLBs. *(prerequisite for 2)*

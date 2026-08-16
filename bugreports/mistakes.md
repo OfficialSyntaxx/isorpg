@@ -56,6 +56,32 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   could be hit from anywhere on the map. **Lesson: symmetric mechanics need a
   shared predicate, not two independent ones.**
 
+## Phase A 2026-08-16 (opening frame)
+- **[render] Water built as one self-intersecting polygon** — `buildWater()` used
+  a single `THREE.Shape` across all water tiles (`moveTo` once, `lineTo` per
+  tile), triangulating into a wedge over open ground. **Lesson: `THREE.Shape` is
+  for one closed contour; a tile set needs per-tile geometry (merged) or explicit
+  holes.**
+- **[render] Water shader displaced the wrong axis** — the geometry is rotated
+  into XZ by `geo.rotateX()`, which bakes the rotation into positions, so the
+  shader's `p.z +=` moved the sheet sideways and its `p.y` read was always 0.
+  **Lesson: after a baked `rotateX`, shader-space axes are world axes — don't
+  reason in the pre-rotation frame.**
+- **[camera] Constructor undid the caller's framing** — `boot()` centred the
+  camera on the hero, then `InputController`'s constructor called `applyCamera()`
+  with an absolute pan of (0,0). **Lesson: a component that owns a value should
+  be given the initial value, not silently reset it; "pan" is naturally an offset
+  from a target, not an absolute.**
+- **[render] Equirect skybox is incompatible with an orthographic camera** —
+  three.js samples equirect backgrounds along the per-pixel view direction, which
+  is constant under ortho, so the sky rendered as one flat colour. The asset was
+  fine and loaded 200, which made it look like an art problem.
+  **Lesson: when a correctly-loading asset renders wrong, suspect the projection
+  before the asset.**
+- **[render] Fog covered the entire play area** — a 42→88 ramp with the camera at
+  radius 55 fogged everything. **Lesson: pick fog distances from the actual
+  camera-to-scene range, not from map dimensions.**
+
 ## Open threads (not yet filed as bugs)
 - **[save] Offline storage cap is per-skill, not global** — `computeOffline()`
   caps each skill at `Math.min(actions * yield, storageCap)` independently, so

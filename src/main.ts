@@ -74,8 +74,6 @@ class Game {
   private shop!: ShopSystem;
   private labour!: LabourSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
-  private clockMin = 0;
-  private day = 1;
   private heroFlashUntil = 0;
   private bossRing!: THREE.Group;
   private fx: FxPiece[] = [];
@@ -213,10 +211,13 @@ class Game {
     this.state.player.pos.wx = cx;
     this.state.player.pos.wz = cy;
     this.hero.group.position.set(cx, 0, cy);
-    this.engine.updateCameraTarget({ x: cx, z: cy }, 1);
 
     // Input
-    this.input = new InputController(this.engine, this.grid, { onTileTap: (x, y) => this.onTileTap(x, y) });
+    this.input = new InputController(this.engine, this.grid, {
+      onTileTap: (x, y) => this.onTileTap(x, y),
+      getFollowTarget: () => this.heroWorldPos(),
+    });
+    this.input.recentre();
 
     // Systems callback wiring
     this.movement.setCallbacks({ onArrive: (x, y) => this.onArrive(x, y) });
@@ -380,6 +381,15 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     }
   }
 
+  /** Where the hero is in WORLD space — inside the dungeon its group is
+   *  parented under DUNGEON_ORIGIN, so the offset has to be added back. */
+  private heroWorldPos(): { x: number; z: number } {
+    const p = this.state.player.pos;
+    const ox = this.dungeon?.active ? DUNGEON_ORIGIN.x : 0;
+    const oz = this.dungeon?.active ? DUNGEON_ORIGIN.z : 0;
+    return { x: ox + p.wx, z: oz + p.wz };
+  }
+
   // ————— Tap routing —————
   private onTileTap(gx: number, gy: number) {
     if (this.build.placing) {
@@ -531,7 +541,7 @@ this.dungeon.openedChest = true;
     this.hero.group.removeFromParent();
     this.dungeon.worldGroup.add(this.hero.group);
     this.hero.group.position.set(p.wx, 0, p.wz);
-    this.engine.updateCameraTarget({ x: DUNGEON_ORIGIN.x + p.wx, z: DUNGEON_ORIGIN.z + p.wz }, 1);
+    this.input?.recentre();
     this.target = null;
     showToast("You descend into the Caves…", "info", 2200);
   }
@@ -548,7 +558,7 @@ this.dungeon.openedChest = true;
     this.hero.group.removeFromParent();
     this.engine.scene.add(this.hero.group);
     this.hero.group.position.set(p.wx, 0, p.wz);
-    this.engine.updateCameraTarget({ x: p.wx, z: p.wz }, 1);
+    this.input?.recentre();
     this.target = null;
     showToast("Back above ground.", "info", 1800);
   }
@@ -559,7 +569,7 @@ this.dungeon.openedChest = true;
     p.gx = this.dungeon.spawn.x; p.gy = this.dungeon.spawn.y;
     p.wx = p.gx; p.wz = p.gy;
     this.hero.group.position.set(p.wx, 0, p.wz);
-    this.engine.updateCameraTarget({ x: DUNGEON_ORIGIN.x + p.wx, z: DUNGEON_ORIGIN.z + p.wz }, 1);
+    this.input?.recentre();
     this.target = null;
   }
 
@@ -574,7 +584,7 @@ this.dungeon.openedChest = true;
     const p = this.state.player.pos;
     p.gx = t.x; p.gy = t.y; p.wx = t.x; p.wz = t.y;
     this.hero.group.position.set(p.wx, 0, p.wz);
-    this.engine.updateCameraTarget({ x: p.wx, z: p.wz }, 1);
+    this.input?.recentre();
     this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.target = null; this.combat.stop();
     showToast(`🧭 Fast-travelled to ${this.mapSys.poiName(id)}`, "success", 2200);
     return true;
@@ -656,15 +666,15 @@ private onArrive(x: number, y: number) {
   // ————— Tick / frame —————
   private tick(_tick: number, dtMs: number) {
     // P3: advance the in-game clock and drive day/night lighting.
-    const clk = tickClock(this.clockMin, this.day, 1);
-    this.clockMin = clk.minute;
-    this.day = clk.day;
-    const hour = this.clockMin / 60;
+    const clk = tickClock(this.state.clock.minute, this.state.clock.day, 1);
+    this.state.clock.minute = clk.minute;
+    this.state.clock.day = clk.day;
+    const hour = clk.minute / 60;
     const d = dayFactor(hour);
     this.engine.setDayNight(d);
     this.world.setDayNight(d);
     this.ui.setNight(0.38 * (1 - d));
-    this.ui.setDay(this.day, iconFor(hour));
+    this.ui.setDay(clk.day, iconFor(hour));
 
     // 8.x: advance rigged model animation + pick the ambient music zone.
     updateModelMixers(dtMs / 1000);
@@ -733,6 +743,8 @@ private onArrive(x: number, y: number) {
     this.input.setFollow(this.movement.isMoving ? { x: this.hero.group.position.x, z: this.hero.group.position.z } : null);
     this.input.updateFollow(dt);
     this.input.updateKeyboard(dt);
+    // Keep the camera on the hero every frame (drag pans relative to it).
+    this.input.update();
     guarded("Target", () => this.updateTarget(dt));
     guarded("UI", () => this.ui.refresh(this.activeSkill));
   }

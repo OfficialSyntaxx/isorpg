@@ -15,9 +15,16 @@ export interface InputCallbacks {
   onTileTap: (x: number, y: number) => void;
   /** Pointer activity changes the drag threshold. */
   onCameraChanged?: (p: PanState) => void;
+  /**
+   * World position the camera should keep centred (the hero, including any
+   * dungeon origin offset). Drag/WASD pan is applied as an offset from this, so
+   * the camera follows the player without fighting manual panning.
+   */
+  getFollowTarget?: () => { x: number; z: number };
 }
 
 const ZOOM_MIN = 0.45;
+const DEFAULT_ZOOM = 1.75;
 const ZOOM_MAX = 1.9;
 const TAP_DRAG_MS = 240; // max tap duration (ms)
 const TAP_DRAG_PX = 10;  // max travel before it's a pan
@@ -27,7 +34,10 @@ export class InputController {
   private grid: Grid;
   private cbs: InputCallbacks;
 
-  private pan = { x: 0, z: 0, zoom: 1 };
+  // A frustum of 30 at zoom 1 shows ~30 tiles vertically, which on the 42x42
+  // map renders the hero about ten pixels tall. Open nearer to character scale;
+  // the player can still pinch/wheel out to ZOOM_MIN for the wide view.
+  private pan = { x: 0, z: 0, zoom: DEFAULT_ZOOM };
   // accumulated raw pan (world units) — camera target moves opposite drag
   private panWorld = { x: 0, z: 0 };
 
@@ -63,11 +73,36 @@ export class InputController {
     this.applyCamera();
   }
 
+  /**
+   * Camera target = follow target + the user's accumulated pan offset.
+   *
+   * `panWorld` used to be an absolute world position starting at (0,0), so this
+   * constructor snapped the camera to the map corner — undoing the hero-centring
+   * that boot() had just done one line earlier. Treating it as an offset means
+   * the camera follows the hero and drag still works, from one expression.
+   */
   private applyCamera() {
     // While a finger/mouse is down, the camera tracks input 1:1 (no slide).
     this.engine.snapPan = this.pointerDown || this.pinching;
-    this.engine.updateCameraTarget({ x: this.panWorld.x, z: this.panWorld.z }, this.pan.zoom);
+    const f = this.cbs.getFollowTarget?.() ?? { x: 0, z: 0 };
+    this.engine.updateCameraTarget(
+      { x: f.x + this.panWorld.x, z: f.z + this.panWorld.z },
+      this.pan.zoom
+    );
     this.cbs.onCameraChanged?.({ ...this.pan, panX: this.panWorld.x, panZ: this.panWorld.z });
+  }
+
+  /** Re-centre on the follow target, dropping any manual pan. Used on spawn,
+   *  fast travel and dungeon transitions. */
+  recentre() {
+    this.panWorld.x = 0;
+    this.panWorld.z = 0;
+    this.applyCamera();
+  }
+
+  /** Called every frame so the camera tracks the hero as it walks. */
+  update() {
+    this.applyCamera();
   }
 
   private bind() {

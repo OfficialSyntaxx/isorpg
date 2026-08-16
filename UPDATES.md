@@ -6,6 +6,50 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase A — the opening frame
+
+The first thing a new player sees, made correct. All four causes were reproduced
+in the running game before being fixed.
+
+- **The "wave-shaped" water was one broken polygon.** `buildWater()` created a
+  single `THREE.Shape` for the entire map — `moveTo` on the first water tile,
+  then `lineTo` around every subsequent one — i.e. one continuous
+  self-intersecting path hopping between scattered tiles. `ShapeGeometry`
+  triangulated that into a huge wedge of "water" lying across open ground next to
+  spawn. Rebuilt as one quad per water tile merged into a single
+  `BufferGeometry` (still one draw call), with world-space UVs so the shimmer
+  flows across a lake instead of restarting per tile.
+- **The water shader rippled sideways.** `geo.rotateX()` bakes rotation into the
+  vertex positions, so the surface lies in XZ — but the vertex shader displaced
+  `p.z` and read `p.y` (always 0 there). The swell now moves along Y.
+- **The camera sat on the map corner.** `boot()` aimed it at the hero, then
+  `new InputController(...)` three lines later called `applyCamera()` with its
+  pan still at the origin, snapping the view to world (0,0). `panWorld` is now an
+  *offset* from a follow target, so the camera tracks the hero every frame and
+  drag still pans relative to it. The four transition call sites (spawn, fast
+  travel, dungeon enter/leave) collapse to `input.recentre()`.
+- **The game opened at midnight.** `clockMin` started at 0 — `dayFactor(0)` is 0,
+  the darkest frame of the cycle. The clock now starts at 10:00 (0.58 daylight)
+  **and persists in the save**, so time of day survives a reload instead of
+  resetting every launch.
+- **Fog blanketed the whole map.** The camera orbits at radius 55, putting the
+  scene 30–85 units out, while fog ramped 42→88 — so everything was washed toward
+  the fog colour. Moved to 95→175, where it reads as horizon depth.
+- **The skybox could never have worked.** `sky.png` loaded fine (200) but was
+  tagged `EquirectangularReflectionMapping`. three.js samples an equirect
+  background along the per-pixel view direction — and an **orthographic** camera
+  has the same direction for every pixel, so the entire sky resolved to one flat
+  grey. Switched to `UVMapping`, which renders it as a full-screen backdrop.
+- **Default zoom opened too wide.** Frustum 30 at zoom 1 shows ~30 tiles on a
+  42×42 map, rendering the hero about ten pixels tall — a large part of why the
+  character read as low quality. Opens at 1.75 now; the full pinch/wheel range is
+  unchanged.
+
+- 68/68 QC checks (6 new: water containment, vertex count, clock start + daylight
+  + save round-trip). 5/5 boot smoke.
+
+---
+
 ## 2026-08 · QC sprint — boot crash, offline idle, XP ceiling, drops, reach
 
 Full read-through of `src/` plus runtime probes against the compiled modules and

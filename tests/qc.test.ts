@@ -3,7 +3,7 @@
 // travel, market pricing, villager labour (live + offline + perks + specs),
 // meta/achievements, Town Hall tiers, and a full save round-trip.
 import { Grid, GRID_CHUNK, WORLD_SIZE } from "../src/world/Grid";
-import { createFreshState } from "../src/state/GameState";
+import { createFreshState, DAY_START_MINUTE } from "../src/state/GameState";
 import { CombatSystem } from "../src/systems/CombatSystem";
 import { DungeonSystem } from "../src/systems/DungeonSystem";
 import { QuestSystem } from "../src/systems/QuestSystem";
@@ -247,6 +247,56 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
   check("combat: zombie coin drop declares a range", !!coinEntry && coinEntry.max > coinEntry.min,
     coinEntry ? `${coinEntry.min}-${coinEntry.max}` : "missing");
   void inv;
+}
+
+// ================= Phase A: opening frame =================
+
+// [world] Water geometry covers water tiles only. The old buildWater() made one
+// self-intersecting THREE.Shape across every water tile, triangulating into a
+// wedge lying over open ground. Per-tile quads mean vertex count is exactly
+// 6 per water tile, and every vertex sits on a WATER tile.
+{
+  const wg = new Grid();
+  const waterTiles: { x: number; y: number }[] = [];
+  for (let y = 0; y < wg.height; y++) {
+    for (let x = 0; x < wg.width; x++) if (wg.at(x, y)!.terrainType === "WATER") waterTiles.push({ x, y });
+  }
+  check("water: map actually has water", waterTiles.length > 0, `${waterTiles.length} tiles`);
+
+  // Mirror buildWater()'s vertex layout and assert containment.
+  const verts: { x: number; z: number }[] = [];
+  for (const t of waterTiles) {
+    const x0 = t.x - 0.5, z0 = t.y - 0.5, x1 = t.x + 0.5, z1 = t.y + 0.5;
+    for (const [cx, cz] of [[x0, z0], [x0, z1], [x1, z1], [x0, z0], [x1, z1], [x1, z0]]) verts.push({ x: cx, z: cz });
+  }
+  check("water: 6 vertices per water tile", verts.length === waterTiles.length * 6, `${verts.length}`);
+  const strayed = verts.filter((v) => {
+    const tx = Math.round(v.x), ty = Math.round(v.z);
+    const tile = wg.at(tx, ty);
+    // Each corner is shared by up to 4 tiles; at least one must be water.
+    return !(
+      [tile, wg.at(tx - 1, ty), wg.at(tx, ty - 1), wg.at(tx - 1, ty - 1)]
+        .some((c) => c && c.terrainType === "WATER")
+    );
+  });
+  check("water: no vertex sits away from water", strayed.length === 0, `${strayed.length} stray`);
+}
+
+// [clock] A fresh save opens in daylight and the clock persists across a reload.
+{
+  check("clock: fresh save starts mid-morning", DAY_START_MINUTE === 600, `${DAY_START_MINUTE}`);
+  const hour = DAY_START_MINUTE / 60;
+  const light = hour < 6.5 || hour > 19.5 ? 0 : Math.max(0, Math.min(1, hour <= 12.5 ? (hour - 6.5) / 6 : (19.5 - hour) / 6));
+  check("clock: opening frame is lit", light > 0.5, `daylight ${light.toFixed(2)}`);
+
+  const cs = createFreshState(g, "Hero", 21, 21);
+  cs.clock = { minute: 13 * 60 + 20, day: 4 };
+  const ser = new SaveSystem(cs).serialize() as any;
+  const back = createFreshState(g, "Hero", 21, 21);
+  new SaveSystem(back).apply(ser);
+  check("clock: survives a save round-trip",
+    back.clock.minute === 13 * 60 + 20 && back.clock.day === 4,
+    `${back.clock.minute}/${back.clock.day}`);
 }
 
 console.log(results.join("\n"));

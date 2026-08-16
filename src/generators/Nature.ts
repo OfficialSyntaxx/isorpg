@@ -264,7 +264,10 @@ export function makeWaterMaterial(): THREE.ShaderMaterial {
       void main() {
         vUv = uv;
         vec3 p = position;
-        p.z += sin((p.x + p.y) * 3.0 + uTime * 1.4) * 0.045;
+        // The surface lies in the XZ plane, so the swell has to move along Y.
+        // This displaced p.z (and read p.y, which is always 0 here), so the
+        // whole sheet slid sideways instead of rippling.
+        p.y += sin((p.x + p.z) * 0.9 + uTime * 1.4) * 0.05;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
       }
     `,

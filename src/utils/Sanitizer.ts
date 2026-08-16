@@ -2,6 +2,7 @@
 // Sanitizes an arbitrary parsed payload into a valid SaveState, returning
 // { ok, state, reason }. Never throws on malformed input.
 import { BUILDING_TYPES } from "../data/Buildings";
+import { DAY_START_MINUTE } from "../state/GameState";
 
 export interface Sanitized<T> {
   ok: boolean;
@@ -111,6 +112,11 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
   const labourSafe = { assignments: strMap(labour.assignments), stock: numMap(labour.stock), acc: numMap(labour.acc), worked: numMap(labour.worked) };
   const market = (town.market ?? {}) as Record<string, unknown>;
   const marketSafe = { supply: numMap(market.supply), demand: numMap(market.demand) };
+  const rawClock = (r.clock ?? {}) as Record<string, unknown>;
+  const clockSafe = {
+    minute: Math.min(1439, clampNonNeg(rawClock.minute, DAY_START_MINUTE)),
+    day: Math.max(1, clampNonNeg(rawClock.day, 1)),
+  };
   const rawMap = (r.map ?? {}) as Record<string, unknown>;
   const mapSafe = { discovered: strList(rawMap.discovered), fastTravel: rawMap.fastTravel === true, explored: numList(rawMap.explored) };
 
@@ -123,6 +129,7 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
       town: { buildings, labour: labourSafe, market: marketSafe },
       collectionLog: { unlocked: collectionLog },
       map: mapSafe,
+      clock: clockSafe,
     },
   };
 }
