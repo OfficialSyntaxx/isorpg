@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "test": "rm -rf /tmp/hosting/puppet/qc-emit && tsc -p tests/tsconfig.json && NODE_PATH=/home/isorpg/node_modules node /tmp/hosting/puppet/qc-emit/tests/qc.test.js",
     "preview": "vite preview --port 4173"
   },
   "dependencies": {

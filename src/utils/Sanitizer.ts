@@ -17,6 +17,23 @@ function clampNonNeg(v: unknown, fallback: number): number {
   return isFiniteNumber(v) && v >= 0 ? Math.round(v) : fallback;
 }
 
+function strList(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+}
+function numList(v: unknown): number[] {
+  return Array.isArray(v) ? v.filter(isFiniteNumber) : [];
+}
+function numMap(v: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (v && typeof v === "object") for (const [k, val] of Object.entries(v as Record<string, unknown>)) if (isFiniteNumber(val)) out[k] = val;
+  return out;
+}
+function strMap(v: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (v && typeof v === "object") for (const [k, val] of Object.entries(v as Record<string, unknown>)) if (typeof val === "string") out[k] = val;
+  return out;
+}
+
 /** Validate + coerce save JSON into a safe shape. Fields we don't recognize are dropped. */
 export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reason?: string } {
   if (raw === null || typeof raw !== "object") return { ok: false, state: null, reason: "Not an object" };
@@ -86,14 +103,26 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
   const rawLog = Array.isArray(r.collectionLog) ? r.collectionLog : (r as any).collectionLog?.unlocked ?? [];
   const collectionLog = Array.isArray(rawLog) ? rawLog.filter((x) => typeof x === "string") : [];
 
+  // P6–P8 metadata: journal, meta counters/kills, labour, market, map
+  const journal = strList(p.journal);
+  const meta = (p.meta ?? {}) as Record<string, unknown>;
+  const metaSafe = { kills: numMap(meta.kills), achievements: strList(meta.achievements), counters: numMap(meta.counters) };
+  const labour = (town.labour ?? {}) as Record<string, unknown>;
+  const labourSafe = { assignments: strMap(labour.assignments), stock: numMap(labour.stock), acc: numMap(labour.acc), worked: numMap(labour.worked) };
+  const market = (town.market ?? {}) as Record<string, unknown>;
+  const marketSafe = { supply: numMap(market.supply), demand: numMap(market.demand) };
+  const rawMap = (r.map ?? {}) as Record<string, unknown>;
+  const mapSafe = { discovered: strList(rawMap.discovered), fastTravel: rawMap.fastTravel === true, explored: numList(rawMap.explored) };
+
   return {
     ok: true,
     state: {
       version,
       timestamp,
-      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : "Hero", position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped },
-      town: { buildings },
+      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : "Hero", position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe },
+      town: { buildings, labour: labourSafe, market: marketSafe },
       collectionLog: { unlocked: collectionLog },
+      map: mapSafe,
     },
   };
 }

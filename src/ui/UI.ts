@@ -387,7 +387,7 @@ export class UI {
 
   /** P6.4-polish: a gold banner slides in when an achievement pops. */
   popAchievement(message: string) {
-    const layer = document.getElementById("hud-root") ?? document.body;
+    const layer = document.getElementById("ui-root") ?? document.body;
     const el = document.createElement("div");
     el.textContent = message;
     el.style.position = "fixed";

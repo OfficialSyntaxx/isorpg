@@ -117,6 +117,17 @@ the game-repo commit, and the live build (cache-bust version at
   Village panel shows "🎣 Fresh Catch · ⭐ Reliable · 10h worked".
 - Commit `c8bcb8f` · cache-bust `v22`.
 
+### QC sprint — test gate & audits
+- **`npm test`** now runs a consolidated 46-check regression suite
+  (`tests/qc.test.ts`) covering world/grid, dungeon depth, quests, map,
+  market, labour (live/offline/perks/specs), meta, Town Hall, and full save
+  round-trips. Fixed **sanitizer dropping P6–P8 fields** on import/load
+  (journal, meta, labour, market, map). **`scripts/audit-ui.cjs`** = 46-check
+  static UI/dom audit (ids, panels, branches, attach call sites).
+  **`QC_CHECKLIST.md`** manual gameplay sweep; stale `bugreporturl` credential
+  file & stray `systems/` copy removed; `//bugreports` scaffolded.
+- Commit: _this round_ · cache-bust `v24`.
+
 ### 7.8 — Market rebalance (supply & demand)
 - Sell prices now slide down as an item floods the market (40% floor — a
   veteran village's oak/shrimp output stops printing coins); shop demand and a
