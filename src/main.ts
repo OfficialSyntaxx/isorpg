@@ -286,6 +286,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
         const ox = this.dungeon.active ? DUNGEON_ORIGIN.x : 0;
         const oz = this.dungeon.active ? DUNGEON_ORIGIN.z : 0;
         this.bossRing.position.set(tile.x + ox, 0.05, tile.y + oz);
+        sfx("boss_slam");
         this.bossRing.visible = true;
       },
       // P4c: ranged shots — fire a visible arrow at the struck monster.
@@ -309,6 +310,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
       onStart: (r) => { this.skill.interrupt(); this.activeSkill = r.skill; this.hero.setAction("chop"); },
       onCraft: (e) => {
         this.activeSkill = e.recipe.skill;
+        sfx(e.recipe.skill === "cooking" ? "craft_cook" : e.recipe.skill === "smithing" ? "craft_smelt" : "craft_carpentry");
         if (e.burned) showToast(`Burnt the ${ITEM_NAMES[e.recipe.inputs[0]?.itemId]?.name ?? "batch"}…`, "error", 1200);
         else this.ui.flashGather(nameOf(e.recipe.output.itemId), e.amount, e.preserved);
       },
