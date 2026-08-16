@@ -35,6 +35,15 @@ export class DungeonSystem {
   brute = { x: 0, y: 0 };
   private bruteMonster: MonsterCombat | null = null;
 
+  // P7.2: floor depth — floor 2 re-uses the generator with a harder pool and
+  // a richer chest; the exit ring on floor 1 is a stairway down.
+  currentFloor = 1;
+  /** P7.2: the retreat tile on floor 2 that leads back to floor 1. */
+  upstairs = { x: 2, y: 2 };
+  private exitRingTeal!: THREE.Mesh;
+  private exitRingAmber!: THREE.Mesh;
+  private stairsUpMesh = new THREE.Group();
+
   active = false;
   openedChest = false;
 
@@ -182,7 +191,7 @@ export class DungeonSystem {
     const chest = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.6), new THREE.MeshStandardMaterial({ color: "#d9a441", flatShading: true, metalness: 0.4, roughness: 0.6 }));
     chest.position.set(this.chest.x, 0.35, this.chest.y);
     this.group.add(chest);
-    // Exit portal ring.
+    // Exit portal ring — floor 2 only; on floor 1 the same tile is stairs down.
     const portal = new THREE.Mesh(
       new THREE.RingGeometry(0.4, 0.7, 24),
       new THREE.MeshBasicMaterial({ color: "#4fe0c0", transparent: true, opacity: 0.9, depthWrite: false })
@@ -191,6 +200,26 @@ export class DungeonSystem {
     portal.position.set(this.exit.x, 0.04, this.exit.y);
     portal.renderOrder = 5;
     this.group.add(portal);
+    this.exitRingTeal = portal;
+    // P7.2: floor-1 stairway down (amber) at the exit tile.
+    const stairs = new THREE.Mesh(
+      new THREE.RingGeometry(0.34, 0.6, 4),
+      new THREE.MeshBasicMaterial({ color: "#ffb84a", transparent: true, opacity: 0.95, depthWrite: false })
+    );
+    stairs.rotation.x = -Math.PI / 2;
+    stairs.position.set(this.exit.x, 0.05, this.exit.y);
+    this.group.add(stairs);
+    this.exitRingAmber = stairs;
+    // P7.2: floor-2 stairs up (blue) — the retreat marker.
+    const up = new THREE.Mesh(
+      new THREE.RingGeometry(0.3, 0.5, 4),
+      new THREE.MeshBasicMaterial({ color: "#6fa8ff", transparent: true, opacity: 0.9, depthWrite: false })
+    );
+    up.rotation.x = -Math.PI / 2;
+    up.position.set(this.upstairs.x, 0.05, this.upstairs.y);
+    this.stairsUpMesh.add(up);
+    this.group.add(this.stairsUpMesh);
+    this.stairsUpMesh.visible = false;
     // P5.2: locked iron door blocking the corridor — bars + glowing keyhole.
     const locked = new THREE.Group();
     const ldBar = new THREE.Mesh(new THREE.BoxGeometry(1, 1.6, 0.35), new THREE.MeshStandardMaterial({ color: "#3c4655", flatShading: true, metalness: 0.6, roughness: 0.5 }));
@@ -225,27 +254,63 @@ export class DungeonSystem {
 
   enter(combat: CombatSystem): void {
     this.active = true;
+    this.currentFloor = 1;
+    this.resetStory();
+    this.despawnPool(combat);
+    this.spawnBrute(combat);
+    this.spawnPool(combat, 1);
+    this.syncFloorVisuals();
+    this.group.visible = true;
+  }
+
+  private resetStory(): void {
     this.openedChest = false;
-    // Each descent is a fresh run: re-seal the door, put the key back.
     this.keyTaken = false;
     this.doorOpened = false;
     this.tiles[this.door.y][this.door.x] = WALL;
     if (this.lockedDoorMesh) this.lockedDoorMesh.visible = true;
     if (this.pickKeyMesh) this.pickKeyMesh.visible = true;
-    this.group.visible = true;
-    if (this.monsters.length === 0) this.spawnPool(combat);
-    // P5.3: a fresh Cave Brute guards the exit room on every descent.
-    if (this.bruteMonster) {
-      this.bruteMonster.hp = this.bruteMonster.maxHp;
-      this.bruteMonster.dead = false;
-      this.bruteMonster.inCombat = false;
-      this.bruteMonster.attackAcc = 0;
-      this.bruteMonster.group.visible = true;
-    } else {
-      const b = spawnMonster("cave_brute", MONSTERS.cave_brute, this.brute.x, this.brute.y);
-      this.bruteMonster = b;
-      this.addMonster(b, combat);
-    }
+  }
+
+  /** P7.2: floor markers — teal portal + blue retreat show only on floor 2. */
+  private syncFloorVisuals(): void {
+    const f2 = this.currentFloor === 2;
+    if (this.exitRingTeal) this.exitRingTeal.visible = f2;
+    if (this.exitRingAmber) this.exitRingAmber.visible = !f2;
+    this.stairsUpMesh.visible = f2;
+  }
+
+  private despawnPool(combat: CombatSystem): void {
+    for (const m of this.monsters) combat.removeMonster(m);
+    this.monsters = [];
+    this.bruteMonster = null;
+  }
+
+  private spawnBrute(combat: CombatSystem): void {
+    const b = spawnMonster("cave_brute", MONSTERS.cave_brute, this.brute.x, this.brute.y);
+    this.bruteMonster = b;
+    this.addMonster(b, combat);
+  }
+
+  /** P7.2: descend to floor 2 — harder pool, richer chest, fresh story gates. */
+  descend(combat: CombatSystem): void {
+    if (this.currentFloor === 2) return;
+    this.currentFloor = 2;
+    this.resetStory();
+    this.despawnPool(combat);
+    this.spawnPool(combat, 2);
+    this.syncFloorVisuals();
+  }
+
+  /** P7.2: climb the blue stairs back to floor 1. */
+  ascend(combat: CombatSystem): void {
+    if (this.currentFloor === 1) return;
+    this.currentFloor = 1;
+    this.resetStory();
+    this.despawnPool(combat);
+    this.spawnBrute(combat);
+    this.spawnPool(combat, 1);
+    this.syncFloorVisuals();
   }
 
   /** P5.2: call once the player has the Iron Key — opens the sealed door. */
@@ -265,8 +330,11 @@ export class DungeonSystem {
     this.group.visible = false;
   }
 
-  private spawnPool(combat: CombatSystem): void {
-    // 4 bats + 2 slashers on random floor tiles far from the spawn room.
+  private spawnPool(combat: CombatSystem, floor: 1 | 2): void {
+    // Floor 1: cave bats + slashers. Floor 2: packs of slashers + 2 brutes.
+    const layout: [string, number][] = floor === 1
+      ? [["cave_bat", 4], ["cave_slasher", 2]]
+      : [["cave_slasher", 6], ["cave_brute", 2]];
     const spots: { x: number; y: number }[] = [];
     for (let y = 1; y < H - 1; y++) {
       for (let x = 1; x < W - 1; x++) {
@@ -282,15 +350,14 @@ export class DungeonSystem {
       }
     }
     const idx = (n: number) => spots[Math.floor((n * 7919) % spots.length)];
-    for (let i = 0; i < 4; i++) {
-      const s = idx(i + 1);
-      const m = spawnMonster("cave_bat", MONSTERS.cave_bat, s.x, s.y);
-      this.addMonster(m, combat);
-    }
-    for (let i = 0; i < 2; i++) {
-      const s = idx(i + 11);
-      const m = spawnMonster("cave_slasher", MONSTERS.cave_slasher, s.x, s.y);
-      this.addMonster(m, combat);
+    let n = 1;
+    for (const [type, count] of layout) {
+      for (let i = 0; i < count; i++) {
+        const s = idx(n++);
+        if (!s) continue;
+        const m = spawnMonster(type, MONSTERS[type], s.x, s.y);
+        this.addMonster(m, combat);
+      }
     }
   }
 
@@ -309,13 +376,22 @@ export class DungeonSystem {
   }
 
   chestLoot(): { itemId: string; qty: number }[] {
-    const drops: { itemId: string; qty: number }[] = [
-      { itemId: "coins", qty: 15 + Math.floor(Math.random() * 26) },
-      { itemId: "iron_ore", qty: 2 + Math.floor(Math.random() * 3) },
-      { itemId: "cooked_trout", qty: 1 + Math.floor(Math.random() * 2) },
-    ];
-    if (Math.random() < 0.12) drops.push({ itemId: "iron_sword", qty: 1 });
-    else if (Math.random() < 0.08) drops.push({ itemId: "shortbow", qty: 1 });
+    // P7.2: floor 2 pays better — bigger coin/ore stacks plus coal.
+    const f2 = this.currentFloor === 2;
+    const drops: { itemId: string; qty: number }[] = f2
+      ? [
+          { itemId: "coins", qty: 40 + Math.floor(Math.random() * 51) },
+          { itemId: "iron_ore", qty: 3 + Math.floor(Math.random() * 4) },
+          { itemId: "coal", qty: 2 + Math.floor(Math.random() * 3) },
+          { itemId: "cooked_trout", qty: 2 + Math.floor(Math.random() * 2) },
+        ]
+      : [
+          { itemId: "coins", qty: 15 + Math.floor(Math.random() * 26) },
+          { itemId: "iron_ore", qty: 2 + Math.floor(Math.random() * 3) },
+          { itemId: "cooked_trout", qty: 1 + Math.floor(Math.random() * 2) },
+        ];
+    if (Math.random() < (f2 ? 0.25 : 0.12)) drops.push({ itemId: "iron_sword", qty: 1 });
+    else if (Math.random() < (f2 ? 0.15 : 0.08)) drops.push({ itemId: "shortbow", qty: 1 });
     return drops;
   }
 }

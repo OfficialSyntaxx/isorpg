@@ -426,7 +426,21 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
       } else showToast("The chest is empty…", "info", 1100);
       return;
     }
-    if (gx === this.dungeon.exit.x && gy === this.dungeon.exit.y) { this.leaveDungeon(); return; }
+    // P7.2: floor 2's teal ring leaves the dungeon; floor 1's exit tile is stairs
+    // down, and floor 2 has a blue retreat stairway back to floor 1.
+    if (gx === this.dungeon.exit.x && gy === this.dungeon.exit.y) {
+      if (this.dungeon.currentFloor === 2) { this.leaveDungeon(); return; }
+      this.dungeon.descend(this.combat);
+      this.teleportDungeonSpawn();
+      showToast("You take the stairs down… the air gets colder.", "info", 2000);
+      return;
+    }
+    if (gx === this.dungeon.upstairs.x && gy === this.dungeon.upstairs.y && this.dungeon.currentFloor === 2) {
+      this.dungeon.ascend(this.combat);
+      this.teleportDungeonSpawn();
+      showToast("You climb back to Floor 1.", "info", 1600);
+      return;
+    }
     if (this.dungeon.isWalkable(gx, gy)) {
       this.skill.interrupt(); this.craft.stop(); this.pendingNode = null;
       this.setTarget("walk", gx, gy, "Walk", null);
@@ -471,6 +485,16 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     this.engine.updateCameraTarget({ x: p.wx, z: p.wz }, 1);
     this.target = null;
     showToast("Back above ground.", "info", 1800);
+  }
+
+  /** P7.2: drop the hero at the dungeon spawn after a floor change. */
+  private teleportDungeonSpawn(): void {
+    const p = this.state.player.pos;
+    p.gx = this.dungeon.spawn.x; p.gy = this.dungeon.spawn.y;
+    p.wx = p.gx; p.wz = p.gy;
+    this.hero.group.position.set(p.wx, 0, p.wz);
+    this.engine.updateCameraTarget({ x: DUNGEON_ORIGIN.x + p.wx, z: DUNGEON_ORIGIN.z + p.wz }, 1);
+    this.target = null;
   }
 
   /** P6: teleport to a discovered waypoint (fast travel, unlocked by the quest). */

@@ -60,7 +60,16 @@ the game-repo commit, and the live build (cache-bust version at
   no softlocks. **Buy supplies**: cooked food, bronze/iron weapons and bronze
   armour (9 stock lines, fixed prices).
 - Gives coins a real purpose and completes the gather → sell → gear loop.
-- Commit: _this round_ · cache-bust `v15`.
+- Commit `31949c2` · cache-bust `v15`.
+
+### 7.2 — Dungeon depth (floor 2)
+- The floor-1 exit ring is now a **stairway down** to **Floor 2**, re-using the
+  same generator. Floor 2 swaps in a harder pool (6 cave slashers + a pair of
+  Cave Brutes), re-seals the key/door gates, and its chest pays far better
+  (coal + richer coins/ore, higher gear chance). A blue retreat stairway on
+  Floor 2 lets you climb back; the teal portal on Floor 2 ends the run.
+- Added `CombatSystem.removeMonster` so floor populations swap cleanly.
+- Commit: _this round_ · cache-bust `v16`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool

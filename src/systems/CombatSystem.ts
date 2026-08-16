@@ -72,6 +72,14 @@ export class CombatSystem {
     this.gridNow().setOccupant(m.tile.x, m.tile.y, "MONSTER", m.id);
   }
 
+  /** P7.2: fully remove a monster (dungeon floor swaps). */
+  removeMonster(m: MonsterCombat): void {
+    this.monsters.delete(m.id);
+    if (m.group.parent) m.group.parent.remove(m.group);
+    this.gridNow().clearOccupant(m.tile.x, m.tile.y);
+    if (this.target === m) this.target = null;
+  }
+
   monsterAt(x: number, y: number): MonsterCombat | null {
     const t = this.state.world.grid.at(x, y);
     if (t && t.occupant === "MONSTER" && t.occupantId) return this.monsters.get(t.occupantId) ?? null;
