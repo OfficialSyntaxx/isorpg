@@ -13,7 +13,7 @@ import { LabourSystem, accrueLabourOffline, veteranTier, VILLAGER_SPECS } from "
 import { MetaSystem } from "../src/systems/MetaSystem";
 import { ACHIEVEMENTS } from "../src/data/Achievements";
 import { BuildSystem } from "../src/systems/BuildSystem";
-import { SaveSystem } from "../src/systems/SaveSystem";
+import { SaveSystem, offlineTaxFor } from "../src/systems/SaveSystem";
 import { monsterPoolFor } from "../src/systems/WorldSystem";
 import { MONSTERS, MONSTER_STYLES } from "../src/data/Combat";
 import { spawnMonster } from "../src/world/Monster";
@@ -60,6 +60,15 @@ const f2 = countDefs([...combat.registry.values()]);
 check("dungeon: floor-2 pool (6 slashers, 2 brutes)", f2.cave_slasher === 6 && f2.cave_brute === 2 && !f2.cave_bat, JSON.stringify(f2));
 dungeon.ascend(combat);
 check("dungeon: ascent restores floor-1 pool", ([...combat.registry.values()].filter((m) => m.def.id === "cave_bat").length) === 4);
+dungeon.descend(combat); // 1 → 2
+dungeon.descend(combat); // 2 → 3
+const f3 = countDefs([...combat.registry.values()]);
+check("dungeon: floor-3 pool (8 slashers, 3 brutes)", f3.cave_slasher === 8 && f3.cave_brute === 3 && !f3.cave_bat, JSON.stringify(f3));
+check("dungeon: floor-3 is the deepest", dungeon.currentFloor === 3);
+dungeon.descend(combat);
+check("dungeon: no floor 4", dungeon.currentFloor === 3);
+dungeon.ascend(combat);
+check("dungeon: stairs up from floor 3 → 2", dungeon.currentFloor === 2);
 dungeon.currentFloor = 2;
 check("dungeon: floor-2 chest pays coal", dungeon.chestLoot().some((d) => d.itemId === "coal"));
 
@@ -138,12 +147,18 @@ check("offline: idle village earns nothing", accrueLabourOffline(off2, H, H).len
 const metaS = createFreshState(g, "Hero", 21, 21);
 const pops: string[] = [];
 const meta = new MetaSystem(metaS, (m) => pops.push(m));
-check("meta: 13 achievements catalogued", ACHIEVEMENTS.length === 13, `${ACHIEVEMENTS.length}`);
+check("meta: 16 achievements catalogued", ACHIEVEMENTS.length === 16, `${ACHIEVEMENTS.length}`);
 meta.bump("shop_bought", 1); meta.bump("shop_sold", 20); meta.bump("labour_assigns", 3); meta.bump("labour_collected", 50); meta.bump("floors_descended", 1);
 meta.evaluate();
 const metaGot = new Set(metaS.player.meta.achievements);
 check("meta: counter achievements pop", ["merchant", "hawker", "foreman", "quartermaster", "spelunker"].every((a) => metaGot.has(a)));
 check("meta: one-shot popups", pops.length >= 5 && meta.evaluate && metaS.player.meta.counters.shop_sold === 20);
+meta.bump("shop_sold_value", 2000);
+meta.bump("shop_bought", 9); // 1 earlier + 9 = 10
+metaS.town.market.supply["oak_log"] = 101;
+meta.bump("shop_bought", 1);
+meta.evaluate();
+check("meta: market achievements pop", ["mogul", "flooder", "regular"].every((a) => metaS.player.meta.achievements.includes(a)));
 
 // ================= Town Hall =================
 const hallS = createFreshState(g, "Hero", 21, 21);
@@ -160,6 +175,7 @@ check("hall: max level bricks upgrades", build.canUpgrade("TOWN_HALL") === false
 const tax0 = countItem(hallS.player.inventory, "coins");
 build.tick(10_000); build.tick(10_000);
 check("hall: level taxes 12 coins over two cycles", countItem(hallS.player.inventory, "coins") - tax0 === 12, `${countItem(hallS.player.inventory, "coins") - tax0}`);
+check("tax: offline tax math", offlineTaxFor(3, 3600) === 3600 && offlineTaxFor(1, 600) === 200 && offlineTaxFor(0, 3600) === 0 && offlineTaxFor(2, 5) === 0);
 
 // ================= Save round-trip =================
 const fullS = createFreshState(g, "Hero", 21, 21);

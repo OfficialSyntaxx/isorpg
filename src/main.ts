@@ -112,7 +112,7 @@ class Game {
       (id) => {
         const qty = countItem(this.state.player.inventory, id);
         const p = this.shop.sellItem(this.state.player.inventory, id);
-        if (p > 0) { showToast(`Sold for 🪙${p}`, "success", 1400); this.meta.bump("shop_sold", qty); }
+        if (p > 0) { showToast(`Sold for 🪙${p}`, "success", 1400); this.meta.bump("shop_sold", qty); this.meta.bump("shop_sold_value", p); }
         return p > 0;
       },
       (id) => {
@@ -453,14 +453,14 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     // P7.2: floor 2's teal ring leaves the dungeon; floor 1's exit tile is stairs
     // down, and floor 2 has a blue retreat stairway back to floor 1.
     if (gx === this.dungeon.exit.x && gy === this.dungeon.exit.y) {
-      if (this.dungeon.currentFloor === 2) { this.leaveDungeon(); return; }
+      if (this.dungeon.currentFloor === 3) { this.leaveDungeon(); return; }
       this.dungeon.descend(this.combat);
       this.teleportDungeonSpawn();
       this.meta.bump("floors_descended"); // P6.4-polish
       showToast("You take the stairs down… the air gets colder.", "info", 2000);
       return;
     }
-    if (gx === this.dungeon.upstairs.x && gy === this.dungeon.upstairs.y && this.dungeon.currentFloor === 2) {
+    if (gx === this.dungeon.upstairs.x && gy === this.dungeon.upstairs.y && this.dungeon.currentFloor >= 2) {
       this.dungeon.ascend(this.combat);
       this.teleportDungeonSpawn();
       showToast("You climb back to Floor 1.", "info", 1600);

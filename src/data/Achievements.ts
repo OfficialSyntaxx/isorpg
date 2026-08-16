@@ -30,4 +30,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "foreman", name: "Foreman", desc: "Give three villagers a job.", test: (s) => (s.player.meta.counters["labour_assigns"] ?? 0) >= 3 },
   { id: "quartermaster", name: "Quartermaster", desc: "Collect 50 items from the village stock.", test: (s) => (s.player.meta.counters["labour_collected"] ?? 0) >= 50 },
   { id: "spelunker", name: "Spelunker", desc: "Descend to dungeon floor 2.", test: (s) => (s.player.meta.counters["floors_descended"] ?? 0) >= 1 },
+  // P7.9: the market economy feeds its own milestones.
+  { id: "mogul", name: "Mogul", desc: "Bank 2,000 coins from market sales.", test: (s) => (s.player.meta.counters["shop_sold_value"] ?? 0) >= 2000 },
+  { id: "flooder", name: "Market Flooder", desc: "Dump 100+ of the same item on the market.", test: (s) => Object.values(s.town.market.supply).some((v) => v >= 100) },
+  { id: "regular", name: "Shop Regular", desc: "Buy 10 items from the town market.", test: (s) => (s.player.meta.counters["shop_bought"] ?? 0) >= 10 },
 ];

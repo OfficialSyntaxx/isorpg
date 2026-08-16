@@ -272,12 +272,14 @@ export class DungeonSystem {
     if (this.pickKeyMesh) this.pickKeyMesh.visible = true;
   }
 
-  /** P7.2: floor markers — teal portal + blue retreat show only on floor 2. */
+  /** P7.2/7.9: floor markers — teal portal + blue retreat show on the deepest
+   * floors; amber stairs-down shows on every floor except the last. */
   private syncFloorVisuals(): void {
-    const f2 = this.currentFloor === 2;
-    if (this.exitRingTeal) this.exitRingTeal.visible = f2;
-    if (this.exitRingAmber) this.exitRingAmber.visible = !f2;
-    this.stairsUpMesh.visible = f2;
+    const f3 = this.currentFloor === 3;
+    const f2up = this.currentFloor >= 2;
+    if (this.exitRingTeal) this.exitRingTeal.visible = f3;
+    if (this.exitRingAmber) this.exitRingAmber.visible = !f3;
+    this.stairsUpMesh.visible = f2up;
   }
 
   private despawnPool(combat: CombatSystem): void {
@@ -292,24 +294,24 @@ export class DungeonSystem {
     this.addMonster(b, combat);
   }
 
-  /** P7.2: descend to floor 2 — harder pool, richer chest, fresh story gates. */
+  /** P7.2/7.9: descend to the next floor — harder pool, richer chest, fresh gates. */
   descend(combat: CombatSystem): void {
-    if (this.currentFloor === 2) return;
-    this.currentFloor = 2;
+    if (this.currentFloor >= 3) return;
+    this.currentFloor += 1;
     this.resetStory();
     this.despawnPool(combat);
-    this.spawnPool(combat, 2);
+    this.spawnPool(combat, this.currentFloor as 1 | 2 | 3);
     this.syncFloorVisuals();
   }
 
-  /** P7.2: climb the blue stairs back to floor 1. */
+  /** P7.2/7.9: climb the blue stairs back to floor 1. */
   ascend(combat: CombatSystem): void {
-    if (this.currentFloor === 1) return;
-    this.currentFloor = 1;
+    if (this.currentFloor <= 1) return;
+    this.currentFloor -= 1;
     this.resetStory();
     this.despawnPool(combat);
-    this.spawnBrute(combat);
-    this.spawnPool(combat, 1);
+    if (this.currentFloor === 1) this.spawnBrute(combat);
+    this.spawnPool(combat, this.currentFloor as 1 | 2 | 3);
     this.syncFloorVisuals();
   }
 
@@ -330,11 +332,13 @@ export class DungeonSystem {
     this.group.visible = false;
   }
 
-  private spawnPool(combat: CombatSystem, floor: 1 | 2): void {
-    // Floor 1: cave bats + slashers. Floor 2: packs of slashers + 2 brutes.
+  private spawnPool(combat: CombatSystem, floor: 1 | 2 | 3): void {
+    // Floor 1: cave bats + slashers. Floor 2: slasher packs + 2 brutes.
+  // Floor 3 (P7.9): overwhelming force — 8 slashers + 3 brutes.
     const layout: [string, number][] = floor === 1
       ? [["cave_bat", 4], ["cave_slasher", 2]]
-      : [["cave_slasher", 6], ["cave_brute", 2]];
+      : floor === 2 ? [["cave_slasher", 6], ["cave_brute", 2]]
+      : [["cave_slasher", 8], ["cave_brute", 3]];
     const spots: { x: number; y: number }[] = [];
     for (let y = 1; y < H - 1; y++) {
       for (let x = 1; x < W - 1; x++) {
@@ -376,22 +380,30 @@ export class DungeonSystem {
   }
 
   chestLoot(): { itemId: string; qty: number }[] {
-    // P7.2: floor 2 pays better — bigger coin/ore stacks plus coal.
+    // P7.2/7.9: deeper floors pay better — bigger coin/ore stacks plus coal.
     const f2 = this.currentFloor === 2;
-    const drops: { itemId: string; qty: number }[] = f2
+    const f3 = this.currentFloor === 3;
+    const drops: { itemId: string; qty: number }[] = f3
       ? [
-          { itemId: "coins", qty: 40 + Math.floor(Math.random() * 51) },
-          { itemId: "iron_ore", qty: 3 + Math.floor(Math.random() * 4) },
-          { itemId: "coal", qty: 2 + Math.floor(Math.random() * 3) },
-          { itemId: "cooked_trout", qty: 2 + Math.floor(Math.random() * 2) },
+          { itemId: "coins", qty: 90 + Math.floor(Math.random() * 61) },
+          { itemId: "iron_ore", qty: 5 + Math.floor(Math.random() * 5) },
+          { itemId: "coal", qty: 4 + Math.floor(Math.random() * 4) },
+          { itemId: "cooked_trout", qty: 3 + Math.floor(Math.random() * 3) },
         ]
-      : [
-          { itemId: "coins", qty: 15 + Math.floor(Math.random() * 26) },
-          { itemId: "iron_ore", qty: 2 + Math.floor(Math.random() * 3) },
-          { itemId: "cooked_trout", qty: 1 + Math.floor(Math.random() * 2) },
-        ];
-    if (Math.random() < (f2 ? 0.25 : 0.12)) drops.push({ itemId: "iron_sword", qty: 1 });
-    else if (Math.random() < (f2 ? 0.15 : 0.08)) drops.push({ itemId: "shortbow", qty: 1 });
+      : f2
+        ? [
+            { itemId: "coins", qty: 40 + Math.floor(Math.random() * 51) },
+            { itemId: "iron_ore", qty: 3 + Math.floor(Math.random() * 4) },
+            { itemId: "coal", qty: 2 + Math.floor(Math.random() * 3) },
+            { itemId: "cooked_trout", qty: 2 + Math.floor(Math.random() * 2) },
+          ]
+        : [
+            { itemId: "coins", qty: 15 + Math.floor(Math.random() * 26) },
+            { itemId: "iron_ore", qty: 2 + Math.floor(Math.random() * 3) },
+            { itemId: "cooked_trout", qty: 1 + Math.floor(Math.random() * 2) },
+          ];
+    if (Math.random() < (f3 ? 0.35 : f2 ? 0.25 : 0.12)) drops.push({ itemId: "iron_sword", qty: 1 });
+    else if (Math.random() < (f3 ? 0.2 : f2 ? 0.15 : 0.08)) drops.push({ itemId: "shortbow", qty: 1 });
     return drops;
   }
 }

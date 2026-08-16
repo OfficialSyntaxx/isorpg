@@ -11,6 +11,13 @@ import { addItem } from "../components/Inventory";
 import { TICK_MS } from "../core/Engine";
 import { accrueLabourOffline } from "./LabourSystem";
 
+/** P7.9: offline Town Hall tax — 2 coins per level per ~6s idle cycle (capped by the same cap). */
+export function offlineTaxFor(hallLevel: number, awaySeconds: number): number {
+  if (hallLevel <= 0 || awaySeconds <= 0) return 0;
+  const cycles = Math.floor(awaySeconds / 6);
+  return hallLevel * 2 * Math.max(0, cycles);
+}
+
 const AUTOSAVE_EVERY_TICKS = 20; // ~12s
 const DEFAULT_OFFLINE_CAP_S = 8 * 3600; // 8 hours (Town Hall extends to 12h)
 
@@ -198,6 +205,14 @@ export class SaveSystem {
 
     // P7.4: assigned villagers kept producing into the stock while away.
     for (const ln of accrueLabourOffline(this.state, awayMs, capS * 1000)) lines.push(ln);
+
+    // P7.9: the Town Hall keeps taxing while you're away.
+    const hallLevel = this.state.town.buildings.filter((b) => b.type === "TOWN_HALL").reduce((a, b) => a + (b.level ?? 1), 0);
+    const tax = offlineTaxFor(hallLevel, capS);
+    if (tax > 0) {
+      addItem(p.inventory, "coins", tax);
+      lines.push(`🏛️ Town Hall tax: ${tax} coins`);
+    }
 
     return { capApplied, awaySeconds: awayS, lines, xpEarned };
   }

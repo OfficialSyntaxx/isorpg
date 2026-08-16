@@ -128,6 +128,18 @@ the game-repo commit, and the live build (cache-bust version at
   file & stray `systems/` copy removed; `//bugreports` scaffolded.
 - Commit `024084a` · cache-bust `v24`.
 
+### 7.9 — Zero-credit polish round
+- **Offline Town Hall tax** — the hall keeps taxing while you're away (2 coins
+  × level per ~6s idle cycle, capped by the same 8–20h offline cap; return
+  screen shows "🏛️ Town Hall tax: N coins").
+- **Market achievement trio**: Mogul (2,000 sale value), Market Flooder (100+
+  of one item), Shop Regular (10 purchases) — 16 achievements total.
+- **Dungeon floor 3**: the amber stairs now go 1→2→3; floor 3 packs 8 cave
+  slashers + 3 Cave Brutes and a richer chest (90+ coins, coal, 35% iron
+  sword); the teal portal ends the run only on floor 3; blue stairs retreat
+  from floors 2 & 3.
+- Commit: _this round_ · cache-bust `v25`.
+
 ### 7.8 — Market rebalance (supply & demand)
 - Sell prices now slide down as an item floods the market (40% floor — a
   veteran village's oak/shrimp output stops printing coins); shop demand and a
