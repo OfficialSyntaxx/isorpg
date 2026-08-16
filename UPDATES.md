@@ -92,7 +92,7 @@ the game-repo commit, and the live build (cache-bust version at
   away, mirroring the offline-XP system: same 8-hour cap, deterministic
   per-worker math (logs every 20s, ore every 30s), and the return screen lists
   it ("6 × Logs").
-- Commit: _this round_ · cache-bust `v19`.
+- Commit `b9d06ce` · cache-bust `v19`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
