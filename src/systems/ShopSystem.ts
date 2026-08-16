@@ -4,6 +4,7 @@
 // UI render fed from this system.
 import * as THREE from "three";
 import type { Grid } from "../world/Grid";
+import type { GameState } from "../state/GameState";
 import { ITEMS, itemIcon } from "../data/Items";
 import { countItem, addItem, removeItem, type InventoryComponent } from "../components/Inventory";
 
@@ -44,13 +45,28 @@ const STOCK: { itemId: string; price: number }[] = [
 const ITEM = (id: string) => ITEMS[id];
 const isCoin = (id: string) => id === "coins";
 
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+/** P7.8: sell-price curve — flooding an item with supply drags its price down. */
+export function sellMultFor(supply: number, demand: number): number {
+  return clamp((1 + 0.12 * demand) / (1 + 0.1 * supply), 0.4, 1.5);
+}
+
+/** P7.8: buy-price curve — shop demand + coin hoarding push prices up. */
+export function buyMultFor(supply: number, demand: number, coinCount: number): number {
+  const inflation = 1 + Math.min(0.25, coinCount / 4000);
+  return clamp(((1 + 0.08 * demand) / (1 + 0.05 * supply)) * inflation, 0.6, 1.4);
+}
+
 export class ShopSystem {
   /** Walkable tile the merchant stall sits on (beside the centre). */
   stall = { x: 0, y: 0 };
   private grid: Grid;
+  private state: GameState;
 
-  constructor(scene: THREE.Scene, grid: Grid) {
+  constructor(scene: THREE.Scene, grid: Grid, state: GameState) {
     this.grid = grid;
+    this.state = state;
     this.pickStallTile();
     scene.add(this.buildStall());
   }
@@ -116,9 +132,13 @@ export class ShopSystem {
     if (!it || isCoin(itemId) || it.type === "TOOL") return 0; // keep gear/tools
     const qty = countItem(inv, itemId);
     if (qty <= 0) return 0;
-    const price = it.value * qty;
+    // P7.8: selling floods supply and drags the price down for everyone.
+    const mkt = this.state.town.market;
+    const mult = sellMultFor(mkt.supply[itemId] ?? 0, mkt.demand[itemId] ?? 0);
+    const price = Math.max(1, Math.floor(it.value * qty * mult));
     removeItem(inv, itemId, qty);
     addItem(inv, "coins", price);
+    mkt.supply[itemId] = (mkt.supply[itemId] ?? 0) + qty;
     return price;
   }
 
@@ -126,23 +146,36 @@ export class ShopSystem {
   buyItem(inv: InventoryComponent, itemId: string): boolean {
     const row = STOCK.find((s) => s.itemId === itemId);
     if (!row) return false;
-    if (countItem(inv, "coins") < row.price) return false;
-    removeItem(inv, "coins", row.price);
+    // P7.8: demand + a swelling coin pile raise the sticker price.
+    const mkt = this.state.town.market;
+    const mult = buyMultFor(mkt.supply[itemId] ?? 0, mkt.demand[itemId] ?? 0, countItem(inv, "coins"));
+    const price = Math.max(1, Math.floor(row.price * mult));
+    if (countItem(inv, "coins") < price) return false;
+    removeItem(inv, "coins", price);
     addItem(inv, itemId, 1);
+    mkt.demand[itemId] = (mkt.demand[itemId] ?? 0) + 1;
     return true;
   }
 
   snapshot(inv: InventoryComponent): ShopSnapshot {
+    const mkt = this.state.town.market;
+    const coins = countItem(inv, "coins");
     const sellable: ShopSellRow[] = [];
     for (const s of inv.items) {
       const it = ITEM(s.id);
       if (!it || isCoin(s.id) || it.type === "TOOL" || it.value <= 0) continue;
-      sellable.push({ itemId: s.id, name: it.name, icon: itemIcon(s.id), qty: s.amount, price: it.value });
+      sellable.push({
+        itemId: s.id, name: it.name, icon: itemIcon(s.id), qty: s.amount,
+        price: Math.max(1, Math.floor(it.value * sellMultFor(mkt.supply[s.id] ?? 0, mkt.demand[s.id] ?? 0))),
+      });
     }
     sellable.sort((a, b) => a.name.localeCompare(b.name));
     return {
-      coins: countItem(inv, "coins"),
-      stock: STOCK.map((s) => ({ itemId: s.itemId, name: ITEM(s.itemId)?.name ?? s.itemId, icon: itemIcon(s.itemId), price: s.price })),
+      coins,
+      stock: STOCK.map((s) => ({
+        itemId: s.itemId, name: ITEM(s.itemId)?.name ?? s.itemId, icon: itemIcon(s.itemId),
+        price: Math.max(1, Math.floor(s.price * buyMultFor(mkt.supply[s.itemId] ?? 0, mkt.demand[s.itemId] ?? 0, coins))),
+      })),
       sellable,
     };
   }

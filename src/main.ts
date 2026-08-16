@@ -106,7 +106,7 @@ class Game {
     this.ui.attachQuestJournal(() => this.quest.journalSnapshot()); // P6.3
     this.meta = new MetaSystem(this.state, (m) => this.ui.popAchievement(m));
     this.ui.attachMeta(() => this.meta.snapshot()); // P6.4
-    this.shop = new ShopSystem(this.engine.scene, this.grid); // P7.1
+    this.shop = new ShopSystem(this.engine.scene, this.grid, this.state); // P7.1 / P7.8
     this.ui.attachShop(
       () => this.shop.snapshot(this.state.player.inventory),
       (id) => {

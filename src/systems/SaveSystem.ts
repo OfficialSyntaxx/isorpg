@@ -53,7 +53,16 @@ export class SaveSystem {
         journal: [...p.journal],
         meta: { kills: { ...p.meta.kills }, achievements: [...p.meta.achievements], counters: { ...p.meta.counters } },
       },
-      town: { buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })), labour: { assignments: { ...this.state.town.labour.assignments }, stock: { ...this.state.town.labour.stock }, acc: { ...this.state.town.labour.acc }, worked: { ...this.state.town.labour.worked } } },
+      town: {
+        buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })),
+        labour: {
+          assignments: { ...this.state.town.labour.assignments },
+          stock: { ...this.state.town.labour.stock },
+          acc: { ...this.state.town.labour.acc },
+          worked: { ...this.state.town.labour.worked },
+        },
+        market: { supply: { ...this.state.town.market.supply }, demand: { ...this.state.town.market.demand } },
+      },
       collectionLog: { unlocked: [...this.state.collectionLog] },
       map: {
         discovered: [...this.state.player.map.discovered],
@@ -103,6 +112,12 @@ export class SaveSystem {
       this.state.town.labour.stock = { ...lab.stock };
       this.state.town.labour.acc = { ...lab.acc };
       this.state.town.labour.worked = { ...(lab.worked ?? {}) };
+    }
+    // P7.8: market supply/demand survive reloads.
+    const mkt = (s.town as any)?.market;
+    if (mkt) {
+      this.state.town.market.supply = { ...mkt.supply };
+      this.state.town.market.demand = { ...mkt.demand };
     }
     this.state.collectionLog = new Set((s.collectionLog?.unlocked ?? []).map(String));
     // P6: world-map discovery + fast-travel unlock persist with the save.

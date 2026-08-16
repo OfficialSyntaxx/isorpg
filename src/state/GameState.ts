@@ -54,6 +54,8 @@ export interface GameState {
       /** P7.6: ms each villager has worked (drives veteran yield tiers). */
       worked: Record<string, number>;
     };
+    /** P7.8: market supply/demand — sold/bought volume per item (persisted). */
+    market: { supply: Record<string, number>; demand: Record<string, number> };
   };
   collectionLog: Set<string>;
 }
@@ -75,7 +77,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       meta: { kills: {}, achievements: [], counters: {} },
     },
     world: { grid, nodes: new Map() },
-    town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {}, worked: {} } },
+    town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {}, worked: {} }, market: { supply: {}, demand: {} } },
     collectionLog: new Set(),
   };
 }

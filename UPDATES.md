@@ -117,6 +117,12 @@ the game-repo commit, and the live build (cache-bust version at
   Village panel shows "🎣 Fresh Catch · ⭐ Reliable · 10h worked".
 - Commit `c8bcb8f` · cache-bust `v22`.
 
+### 7.8 — Market rebalance (supply & demand)
+- Sell prices now slide down as an item floods the market (40% floor — a
+  veteran village's oak/shrimp output stops printing coins); shop demand and a
+  swelling coin pile push buy prices up (+25% inflation cap). Counters persist.
+- Commit: _this round_ · cache-bust `v23`.
+
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
   (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.
