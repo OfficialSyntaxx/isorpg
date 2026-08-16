@@ -21,6 +21,7 @@ import { DungeonSystem, DUNGEON_ORIGIN } from "./systems/DungeonSystem";
 import { QuestSystem } from "./systems/QuestSystem";
 import { MapSystem } from "./systems/MapSystem";
 import { MetaSystem } from "./systems/MetaSystem";
+import { ShopSystem } from "./systems/ShopSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -65,6 +66,7 @@ class Game {
   private quest!: QuestSystem;
   private mapSys!: MapSystem;
   private meta!: MetaSystem;
+  private shop!: ShopSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private clockMin = 0;
   private day = 1;
@@ -102,6 +104,20 @@ class Game {
     this.ui.attachQuestJournal(() => this.quest.journalSnapshot()); // P6.3
     this.meta = new MetaSystem(this.state, (m, k, ms) => showToast(m, k, ms));
     this.ui.attachMeta(() => this.meta.snapshot()); // P6.4
+    this.shop = new ShopSystem(this.engine.scene, this.grid); // P7.1
+    this.ui.attachShop(
+      () => this.shop.snapshot(this.state.player.inventory),
+      (id) => {
+        const p = this.shop.sellItem(this.state.player.inventory, id);
+        if (p > 0) showToast(`Sold for 🪙${p}`, "success", 1400);
+        return p > 0;
+      },
+      (id) => {
+        const ok = this.shop.buyItem(this.state.player.inventory, id);
+        showToast(ok ? "Purchase complete." : "Not enough coins.", ok ? "success" : "error", 1400);
+        return ok;
+      }
+    );
     this.mapSys = new MapSystem(
       this.grid.width,
       this.dungeon,
@@ -314,6 +330,8 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     if (gx === this.dungeon.entrance.x && gy === this.dungeon.entrance.y) { this.enterDungeon(); return; }
     // P6: the tutorial guide NPC parked beside the dungeon door.
     if (this.quest.isGuideTile(gx, gy)) { this.quest.talkGuide(); return; }
+    // P7.1: tap the town merchant to open the market.
+    if (this.shop.isStallTile(gx, gy)) { this.ui.openPanel("shop"); return; }
 
     const node = this.world.nodeAt(gx, gy);
     if (node) {

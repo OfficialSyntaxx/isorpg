@@ -15,7 +15,7 @@ the game-repo commit, and the live build (cache-bust version at
   tenacious, pack rat, Eldric's student, pathfinder) with pop-up toasts the
   moment one flips.
 - Kill counts + unlocked achievements persist in the save (`player.meta`).
-- Commit: _this round_ · cache-bust `v14`.
+- Commit `38e49e4` · cache-bust `v14`.
 
 ### 6.3 Quest journal
 - **📖 Quests** panel listing active/complete quests, live objectives, givers and
@@ -50,6 +50,17 @@ the game-repo commit, and the live build (cache-bust version at
 - Eldric the Cartographer guide NPC beside the deep-wilds door; staged quest
   (key → door → Cave Brute) with a floating objective marker and reward.
 - Commit `cb2dcfb` (journal) / earlier `b495eca` · cache-bust `v7`.
+
+## 2026-08 · Phase 7 — Economy
+
+### 7.1 — Town market & shop
+- A merchant stall now stands in the settled area (tap it → **Town Market** panel).
+- **Sell junk** for coins (anything stackable at its data value: logs, bones, ores,
+  food…) — tools, equipment and coins themselves are protected from being sold, so
+  no softlocks. **Buy supplies**: cooked food, bronze/iron weapons and bronze
+  armour (9 stock lines, fixed prices).
+- Gives coins a real purpose and completes the gather → sell → gear loop.
+- Commit: _this round_ · cache-bust `v15`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool

@@ -18,6 +18,7 @@ import type { EquipSlot } from "../data/Items";
 import type { MapSnapshot } from "../systems/MapSystem";
 import type { QuestJournalEntry } from "../systems/QuestSystem";
 import type { MetaSnapshot } from "../systems/MetaSystem";
+import type { ShopSnapshot } from "../systems/ShopSystem";
 
 const SLOT_NAMES: Record<EquipSlot, string> = {
   weapon: "Weapon", offhand: "Offhand", head: "Helm", body: "Body", legs: "Legs",
@@ -56,6 +57,9 @@ export class UI {
   private mapTravel: ((id: string) => boolean) | null = null;
   private journalSource: (() => QuestJournalEntry[]) | null = null;
   private metaSource: (() => MetaSnapshot | null) | null = null;
+  private shopSource: (() => ShopSnapshot | null) | null = null;
+  private shopSell: ((itemId: string) => boolean) | null = null;
+  private shopBuy: ((itemId: string) => boolean) | null = null;
 
   constructor(state: GameState, ev: UIEvents = {}) {
     this.state = state;
@@ -93,7 +97,7 @@ export class UI {
     this.panel.addEventListener("click", (e) => { if (e.target === this.panel) this.closePanel(); });
   }
 
-  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest" | "meta") {
+  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest" | "meta" | "shop") {
     // Any render error must never silently keep the panel hidden. Render first;
     // on failure show a visible degraded panel + log, never a dead button.
     try {
@@ -104,6 +108,7 @@ export class UI {
       else if (id === "map") this.renderMap();
       else if (id === "quest") this.renderJournal();
       else if (id === "meta") this.renderMeta();
+      else if (id === "shop") this.renderShop();
       else this.renderSettings();
     } catch (err) {
       EngineLogger.logError(`panel:${id}`, err);
@@ -233,6 +238,43 @@ export class UI {
       <div class="set-val">🏆 Achievements ${snap.achieved}/${snap.achievements.length}</div>${achRows}
       <div class="set-val">⚔️ Slain ${snap.totalKills} monster${snap.totalKills === 1 ? "" : "s"} · 📦 ${snap.collectionCount} items collected</div>${killRows}
       <div class="set-val">Levels</div>${skillRows}`;
+  }
+
+  /** P7.1: main.ts wires the market snapshot + buy/sell executors. */
+  attachShop(snapshot: () => ShopSnapshot | null, sell: (itemId: string) => boolean, buy: (itemId: string) => boolean) {
+    this.shopSource = snapshot;
+    this.shopSell = sell;
+    this.shopBuy = buy;
+  }
+
+  // ————— Town market —————
+  private renderShop() {
+    this.panelTitle.textContent = "Town Market";
+    const snap = this.shopSource?.();
+    if (!snap) { this.panelBody.innerHTML = `<div class="empty">The market is closed.</div>`; return; }
+    const coinChip = `<div class="set-val">🪙 ${snap.coins.toLocaleString()} coins</div>`;
+    const stockRows = snap.stock.map((s) => `
+      <div class="inv-row"><span class="inv-ico">${s.icon}</span>
+        <div class="inv-name">${s.name}</div>
+        <div class="inv-desc">${s.price} coins</div>
+        <button class="btn btn-mini" data-buy="${s.itemId}">Buy</button></div>`).join("");
+    const sellRows = snap.sellable.length
+      ? snap.sellable.map((s) => `
+        <div class="inv-row"><span class="inv-ico">${s.icon}</span>
+          <div class="inv-name">${s.name}<span class="inv-count">×${s.qty}</span></div>
+          <div class="inv-desc">${s.price} each</div>
+          <button class="btn btn-mini" data-sell="${s.itemId}">Sell</button></div>`).join("")
+      : `<div class="empty">Nothing sellable — gather some junk first.</div>`;
+    this.panelBody.innerHTML = `
+      ${coinChip}
+      <div class="set-val">For sale</div>${stockRows}
+      <div class="set-val">Sell from bag</div>${sellRows}`;
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((btn) => {
+      btn.addEventListener("click", () => { this.shopBuy?.(btn.dataset.buy ?? ""); this.renderShop(); });
+    });
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-sell]").forEach((btn) => {
+      btn.addEventListener("click", () => { this.shopSell?.(btn.dataset.sell ?? ""); this.renderShop(); });
+    });
   }
 
   /** P1: in-world label + action chip, anchored to a screen point (px, py). */
