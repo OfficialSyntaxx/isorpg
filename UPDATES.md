@@ -69,7 +69,7 @@ the game-repo commit, and the live build (cache-bust version at
   (coal + richer coins/ore, higher gear chance). A blue retreat stairway on
   Floor 2 lets you climb back; the teal portal on Floor 2 ends the run.
 - Added `CombatSystem.removeMonster` so floor populations swap cleanly.
-- Commit: _this round_ · cache-bust `v16`.
+- Commit `759079d` · cache-bust `v16`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
