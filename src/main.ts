@@ -279,7 +279,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
         this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 0.6, m.tile.y + oz, "#c0392b"));
         if (m.def.boss) this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 1.0, m.tile.y + oz, "#ffd76a", 18));
       },
-      onAutoEat: (food, healed) => { this.ui.floatText(`+${healed}`, "heal"); sfx("eat"); },
+      onAutoEat: (food, healed) => { this.ui.floatText(`+${healed}`, "heal"); sfx(food === "combat_potion" ? "drink" : "eat"); },
       onPet: (itemId) => this.ui.floatText("🐾 pet!", "pet"),
       // P4b: boss telegraph ring follows the slam target, then clears.
       onBossTelegraph: (tile) => {

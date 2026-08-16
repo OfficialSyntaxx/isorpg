@@ -15,7 +15,7 @@ import { ACHIEVEMENTS } from "../src/data/Achievements";
 import { BuildSystem } from "../src/systems/BuildSystem";
 import { SaveSystem, offlineTaxFor } from "../src/systems/SaveSystem";
 import { monsterPoolFor } from "../src/systems/WorldSystem";
-import { MONSTERS, MONSTER_STYLES } from "../src/data/Combat";
+import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
 import { spawnMonster } from "../src/world/Monster";
 import { countItem, addItem } from "../src/components/Inventory";
 
@@ -197,6 +197,14 @@ check("save: apply restores the full economy state", applied.ok
   && st2.town.market.supply["oak_log"] === 41
   && st2.player.map.explored.length === 3
   && st2.player.journal.includes("caves"));
+
+// ================= Combat Tonic potion =================
+check("potion: Combat Tonic in auto-eat table (heals 30)", FOODS.combat_potion?.heal === 30 && FOODS.combat_potion.tier === 4);
+{
+  const ps = new ShopSystem(scene, g, fullS);
+  const potStock = ps.snapshot(fullS.player.inventory).stock;
+  check("potion: Combat Tonic stocked at the market", potStock.some((r) => r.itemId === "combat_potion"));
+}
 
 console.log(results.join("\n"));
 const fails = results.filter((r) => r.startsWith("FAIL")).length;

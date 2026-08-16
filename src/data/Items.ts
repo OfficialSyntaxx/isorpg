@@ -93,6 +93,7 @@ export const ITEMS: Record<string, Item> = {
   shrimp_food: { id: "shrimp_food", name: "Cooked Shrimp", type: "FOOD", value: 12, desc: "A tasty cooked shrimp. Heals 6.", stack: true },
   cooked_trout: { id: "cooked_trout", name: "Cooked Trout", type: "FOOD", value: 32, desc: "Flaky and filling. Heals 14.", stack: true },
   cooked_rat_meat: { id: "cooked_rat_meat", name: "Cooked Rat Meat", type: "FOOD", value: 9, desc: "Better than it sounds. Heals 4.", stack: true },
+ combat_potion: { id: "combat_potion", name: "Combat Tonic", type: "FOOD", value: 45, desc: "A fiery red tonic. Heals 30, gulped down automatically when you're hurt.", stack: true },
 
   // ——— Weapons (equip slot: weapon) ———
   bronze_dagger: { id: "bronze_dagger", name: "Bronze Dagger", type: "TOOL", value: 12, desc: "Fast but small. 3-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
@@ -140,6 +141,7 @@ export const ITEM_ICONS: Record<string, string> = {
   small_net: "🥅", fly_rod: "🎣",
   coins: "🪙", bones: "🦴",
   raw_rat_meat: "🍖", cooked_shrimp: "🍤", shrimp_food: "🍤", cooked_trout: "🍣", cooked_rat_meat: "🍗",
+ combat_potion: "🧪",
   bronze_dagger: "🗡️", bronze_sword: "⚔️", bronze_2h: "⚔️", iron_sword: "⚔️", shortbow: "🏹",
   bronze_helm: "⛑️", bronze_plate: "🛡️", bronze_legs: "🦵",
   iron_helm: "⛑️", iron_plate: "🛡️", iron_legs: "🦵",

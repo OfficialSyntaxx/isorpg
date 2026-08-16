@@ -6,6 +6,15 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase 8.3 — Combat Tonic + drink SFX
+
+- **Combat Tonic** 🧪: new potion, buyable at the Town Market, auto-drinks on low
+  HP — heals 30 (highest auto-eat tier), a genuine boss-fight lifesaver. The
+  `drink` SFX now fires on it, so all 23 SFX clips are bound to gameplay.
+- 54/54 QC checks (2 new: tonic in auto-eat table + market stock).
+
+---
+
 ## 2026-08 · Phase 8.2 — SFX pass 2 · ambient music · rigged 3D
 
 - **SFX pass 2** (16 clips, ~4.5 cr): pickup, UI click, chest/door, monster

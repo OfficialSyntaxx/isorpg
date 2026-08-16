@@ -33,6 +33,7 @@ export interface ShopSnapshot {
 const STOCK: { itemId: string; price: number }[] = [
   { itemId: "cooked_shrimp", price: 40 },
   { itemId: "cooked_trout", price: 60 },
+ { itemId: "combat_potion", price: 120 },
   { itemId: "bronze_sword", price: 30 },
   { itemId: "bronze_2h", price: 55 },
   { itemId: "shortbow", price: 90 },

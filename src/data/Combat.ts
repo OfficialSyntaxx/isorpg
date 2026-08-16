@@ -244,6 +244,7 @@ export const FOODS: Record<string, FoodDef> = {
   cooked_shrimp: { heal: 6, tier: 2 },
   shrimp_food: { heal: 6, tier: 2 },
   cooked_trout: { heal: 14, tier: 3 },
+ combat_potion: { heal: 30, tier: 4 },
 };
 
 export function getWeapon(itemId: string | null): WeaponDef {
