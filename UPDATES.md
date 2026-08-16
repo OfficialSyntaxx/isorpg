@@ -77,7 +77,7 @@ the game-repo commit, and the live build (cache-bust version at
   them down; production accrues while playing into the **village stock**, and a
   Collect button moves it all into your bag. Assignments/stock/accrual persist
   with the save.
-- Commit: _this round_ · cache-bust `v17`.
+- Commit `33a8be6` · cache-bust `v17`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
