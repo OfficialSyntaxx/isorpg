@@ -5,10 +5,15 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "lib": ["ES2020", "DOM"],
-    "outDir": "/tmp/hosting/puppet/qc-emit",
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "outDir": "../.qc-emit",
     "noEmit": false,
     "strict": false
   },
-  "include": ["qc.test.ts"]
+  "include": [
+    "qc.test.ts"
+  ]
 }

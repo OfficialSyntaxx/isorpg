@@ -60,6 +60,56 @@ const actionAttrs = ["data-act", "data-recipe", "data-build", "data-upgrade", "d
 for (const at of actionAttrs) add(`UI binds [${at}]`, ui.includes(at));
 add("every HUD bullet has a bar-btn", (html.match(/bar-btn/g) || []).length >= 8);
 
+// 7) Boot ordering: no field may be USED before it is ASSIGNED inside boot().
+//
+// This exists because P6.3 shipped `this.ui.attachQuestJournal(...)` ~60 lines
+// before `this.ui = new UI(...)`. Every launch threw, aborting boot() before
+// engine.start(), so the game never rendered — for five phases. Check 5 above
+// still passed the whole time, because presence is not ordering.
+//
+// Only statement-level usage counts (a line that *begins* with `this.x.`).
+// Usage nested inside a callback — `(m) => { this.ui.pop(m); }` — is deferred
+// until after boot finishes and is legitimately allowed to precede assignment.
+{
+  // Bound the scan to boot()'s own body by brace-matching, so later methods
+  // (frame handlers reassigning this.fx / this.shots) aren't misread as boot code.
+  const bootStart = main.indexOf("async boot()");
+  let bootBody = "";
+  if (bootStart >= 0) {
+    const open = main.indexOf("{", bootStart);
+    let depth = 0;
+    for (let i = open; i < main.length; i++) {
+      if (main[i] === "{") depth++;
+      else if (main[i] === "}") { depth--; if (depth === 0) { bootBody = main.slice(open, i); break; } }
+    }
+  }
+  // Fields initialized at declaration (`private fx: X[] = [];`) are never
+  // undefined, so using them before a later reassignment is fine.
+  const preInitialised = new Set(
+    grab(/^\s*(?:private|public|readonly)?\s*([A-Za-z_$][\w$]*)\s*:[^=;\n]+=\s*[^;\n]+;/gm, main.slice(0, bootStart))
+  );
+  const lines = bootBody.split("\n");
+
+  const firstAssign = new Map();
+  const firstUse = new Map();
+  lines.forEach((line, i) => {
+    const assign = line.match(/^\s*this\.([A-Za-z_$][\w$]*)\s*=[^=]/);
+    if (assign && !firstAssign.has(assign[1])) firstAssign.set(assign[1], i);
+    const use = line.match(/^\s*this\.([A-Za-z_$][\w$]*)\s*\./);
+    if (use && !firstUse.has(use[1])) firstUse.set(use[1], i);
+  });
+
+  const offenders = [];
+  for (const [field, useLine] of firstUse) {
+    if (!firstAssign.has(field)) continue; // assigned elsewhere (ctor/declaration)
+    if (preInitialised.has(field)) continue; // has a value from its declaration
+    if (useLine < firstAssign.get(field)) {
+      offenders.push(`this.${field} used at boot+${useLine}, assigned at boot+${firstAssign.get(field)}`);
+    }
+  }
+  add("boot(): no field used before it is assigned", offenders.length === 0, offenders.join("; "));
+}
+
 rows.forEach((r) => console.log(r));
 const fails = rows.filter((r) => r.startsWith("FAIL")).length;
 console.log(`\n${rows.length - fails}/${rows.length} checks passed (${rows.length} total)`);

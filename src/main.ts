@@ -30,7 +30,7 @@ import { LabourSystem } from "./systems/LabourSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
-import { guarded, EngineLogger } from "./utils/Logger";
+import { guarded, EngineLogger, markBooted, showFatalOverlay } from "./utils/Logger";
 import { ITEMS as ITEM_NAMES } from "./data/Items";
 import { getToolTier } from "./data/Items";
 import { addItem, countItem, removeItem } from "./components/Inventory";
@@ -354,6 +354,9 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     window.addEventListener("pagehide", () => this.save.forceSave());
 
     this.engine.start();
+    // The render loop is live: from here a subsystem throw is recoverable, so
+    // guarded() switches from "fatal + rethrow" to "log, toast, carry on".
+    markBooted();
 
     // Offline progression / new game — reported from the single load above.
     if (resumed.summary?.lines.length) {
@@ -794,12 +797,14 @@ const NODE_NAMES: Record<string, string> = {
 const ACTION_FOR: Record<string, string> = { TREE: "Chop", ROCK: "Mine", WATER: "Fish" };
 const TOOL_NAMES: Record<string, string> = { woodcutting: "axe", mining: "pickaxe", fishing: "net or rod" };
 
-// Boot guarded so a failure surfaces as a toast instead of a white screen
+// Boot failures are fatal and loud. A toast is the wrong surface here: the HUD
+// in index.html paints with or without a running engine, so a swallowed boot
+// error looks exactly like a working game with an empty canvas.
 guarded("main", () => {
   new Game()
     .boot()
     .catch((err) => {
-      EngineLogger.logError("boot", err);
-      showToast("Failed to start: " + (err instanceof Error ? err.message : "unknown"), "error");
+      console.error("[BOOT FAILURE] Subsystem: boot", err);
+      showFatalOverlay("boot", err);
     });
 });

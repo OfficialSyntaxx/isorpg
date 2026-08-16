@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "2.5D isometric hybrid RPG & settlement builder — mobile-first, zero-asset procedural Three.js",
+  "description": "2.5D isometric hybrid RPG & settlement builder \u2014 mobile-first, zero-asset procedural Three.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "rm -rf /tmp/hosting/puppet/qc-emit && tsc -p tests/tsconfig.json && NODE_PATH=/home/isorpg/node_modules node /tmp/hosting/puppet/qc-emit/tests/qc.test.js",
-    "preview": "vite preview --port 4173"
+    "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node .qc-emit/tests/qc.test.js",
+    "preview": "vite preview --port 4173",
+    "test:smoke": "npm run build && node scripts/smoke.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

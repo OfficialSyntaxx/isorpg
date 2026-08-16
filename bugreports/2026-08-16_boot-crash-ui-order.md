@@ -72,11 +72,19 @@ systems built later.
 
 ## Follow-ups
 
-- [ ] **Add a boot smoke test to `npm test`** — load the built page headless,
-      assert a non-blank canvas and zero console errors. This class of defect is
-      invisible to unit tests by construction.
-- [ ] **Make `guarded()` fail loudly during boot.** Recovery semantics only make
-      sense once the app is running; a boot-phase throw should be fatal and
-      visible, not a toast.
+- [x] **Static boot-order check** (`scripts/audit-ui.cjs`, check 7) — flags any
+      `this.x` used at statement level in `boot()` before it is assigned.
+      Verified in both directions: passes on current code, fails with
+      `this.ui used at boot+43, assigned at boot+107` when the bug is restored.
+      Now runs as part of `npm test`.
+- [x] **Boot smoke test** (`scripts/smoke.cjs`, `npm run test:smoke`) — serves
+      `dist/`, loads it headless, and asserts no fatal overlay, no page errors,
+      all assets 200, and a rendered frame. Skips cleanly when no browser driver
+      is installed, so it adds no hard dependency. Verified it drops to 3/5 with
+      the bug restored.
+- [x] **`guarded()` now fails loudly during boot** — before `markBooted()` it
+      shows a full-screen `[data-boot-error]` card and rethrows; after the render
+      loop is live it reverts to log-and-continue.
 - [ ] **Reconsider `!` definite-assignment on wired fields.** `ui!: UI` is what
       let the compiler stay silent about a use-before-assign in the same method.
+      The static check covers this case now, but the type-level hole remains.
