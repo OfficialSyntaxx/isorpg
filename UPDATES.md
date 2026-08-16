@@ -71,6 +71,14 @@ the game-repo commit, and the live build (cache-bust version at
 - Added `CombatSystem.removeMonster` so floor populations swap cleanly.
 - Commit `759079d` · cache-bust `v16`.
 
+### 7.3 — Villager labour
+- **🏡 Village** panel: assign villagers (Bram, Wren, Old Tobias) to
+  **woodcutting** (1 log / 20s) or **mining** (copper/tin ore / 30s), or stand
+  them down; production accrues while playing into the **village stock**, and a
+  Collect button moves it all into your bag. Assignments/stock/accrual persist
+  with the save.
+- Commit: _this round_ · cache-bust `v17`.
+
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
   (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.

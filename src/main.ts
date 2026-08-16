@@ -22,6 +22,7 @@ import { QuestSystem } from "./systems/QuestSystem";
 import { MapSystem } from "./systems/MapSystem";
 import { MetaSystem } from "./systems/MetaSystem";
 import { ShopSystem } from "./systems/ShopSystem";
+import { LabourSystem } from "./systems/LabourSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -67,6 +68,7 @@ class Game {
   private mapSys!: MapSystem;
   private meta!: MetaSystem;
   private shop!: ShopSystem;
+  private labour!: LabourSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private clockMin = 0;
   private day = 1;
@@ -116,6 +118,22 @@ class Game {
         const ok = this.shop.buyItem(this.state.player.inventory, id);
         showToast(ok ? "Purchase complete." : "Not enough coins.", ok ? "success" : "error", 1400);
         return ok;
+      }
+    );
+    this.labour = new LabourSystem(this.state, () =>
+      this.npcs.entities.filter((e) => e.def.kind === "villager").map((e) => ({ id: e.def.id, name: e.def.name }))
+    );
+    this.ui.attachVillage(
+      () => this.labour.snapshot(),
+      (id, job) => {
+        this.labour.assign(id, job);
+        showToast(job === "idle" ? "The villager stands down." : "The villager takes the task.", "info", 1300);
+        return true;
+      },
+      () => {
+        const c = this.labour.claim(this.state.player.inventory);
+        if (c.length) showToast(`Collected: ${c.map((x) => `${ITEM_NAMES[x.itemId]?.name ?? x.itemId} ×${x.qty}`).join(", ")}`, "success", 2800);
+        return c.length > 0;
       }
     );
     this.mapSys = new MapSystem(
@@ -607,6 +625,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     guarded("Npc", () => this.npcs.tick());
     guarded("Build", () => this.build.tick(dtMs));
     guarded("Save", () => this.save.tick(dtMs));
+    guarded("Labour", () => this.labour.tick(Date.now())); // P7.3
   }
 
   private frame(dt: number) {

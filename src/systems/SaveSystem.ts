@@ -52,7 +52,7 @@ export class SaveSystem {
         journal: [...p.journal],
         meta: { kills: { ...p.meta.kills }, achievements: [...p.meta.achievements] },
       },
-      town: { buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })) },
+      town: { buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })), labour: { assignments: { ...this.state.town.labour.assignments }, stock: { ...this.state.town.labour.stock }, acc: { ...this.state.town.labour.acc } } },
       collectionLog: { unlocked: [...this.state.collectionLog] },
       map: {
         discovered: [...this.state.player.map.discovered],
@@ -94,6 +94,13 @@ export class SaveSystem {
     this.state.town.buildings = (s.town?.buildings ?? []).map((b: any) => ({
       id: String(b.id), type: b.type, x: b.x, y: b.y, level: b.level,
     }));
+    // P7.3: villager labour survives reloads.
+    const lab = (s.town as any)?.labour;
+    if (lab) {
+      this.state.town.labour.assignments = { ...lab.assignments };
+      this.state.town.labour.stock = { ...lab.stock };
+      this.state.town.labour.acc = { ...lab.acc };
+    }
     this.state.collectionLog = new Set((s.collectionLog?.unlocked ?? []).map(String));
     // P6: world-map discovery + fast-travel unlock persist with the save.
     p.map = {

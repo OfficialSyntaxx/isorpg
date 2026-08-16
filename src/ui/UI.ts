@@ -19,6 +19,7 @@ import type { MapSnapshot } from "../systems/MapSystem";
 import type { QuestJournalEntry } from "../systems/QuestSystem";
 import type { MetaSnapshot } from "../systems/MetaSystem";
 import type { ShopSnapshot } from "../systems/ShopSystem";
+import type { LabourSnapshot, LabourJob } from "../systems/LabourSystem";
 
 const SLOT_NAMES: Record<EquipSlot, string> = {
   weapon: "Weapon", offhand: "Offhand", head: "Helm", body: "Body", legs: "Legs",
@@ -60,6 +61,9 @@ export class UI {
   private shopSource: (() => ShopSnapshot | null) | null = null;
   private shopSell: ((itemId: string) => boolean) | null = null;
   private shopBuy: ((itemId: string) => boolean) | null = null;
+  private labourSource: (() => LabourSnapshot | null) | null = null;
+  private labourAssign: ((id: string, job: LabourJob | "idle") => boolean) | null = null;
+  private labourClaim: (() => boolean) | null = null;
 
   constructor(state: GameState, ev: UIEvents = {}) {
     this.state = state;
@@ -88,6 +92,7 @@ export class UI {
     this.$("#btn-map")?.addEventListener("click", () => this.openPanel("map"));
     this.$("#btn-quest")?.addEventListener("click", () => this.openPanel("quest"));
     this.$("#btn-progress")?.addEventListener("click", () => this.openPanel("meta"));
+    this.$("#btn-village")?.addEventListener("click", () => this.openPanel("village"));
     this.$("#btn-settings").addEventListener("click", () => this.openPanel("settings"));
     this.$("#btn-craft")?.addEventListener("click", () => this.openPanel("craft"));
     this.$("#btn-build")?.addEventListener("click", () => this.openPanel("build"));
@@ -97,7 +102,7 @@ export class UI {
     this.panel.addEventListener("click", (e) => { if (e.target === this.panel) this.closePanel(); });
   }
 
-  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest" | "meta" | "shop") {
+  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest" | "meta" | "shop" | "village") {
     // Any render error must never silently keep the panel hidden. Render first;
     // on failure show a visible degraded panel + log, never a dead button.
     try {
@@ -109,6 +114,7 @@ export class UI {
       else if (id === "quest") this.renderJournal();
       else if (id === "meta") this.renderMeta();
       else if (id === "shop") this.renderShop();
+      else if (id === "village") this.renderVillage();
       else this.renderSettings();
     } catch (err) {
       EngineLogger.logError(`panel:${id}`, err);
@@ -274,6 +280,49 @@ export class UI {
     });
     this.panelBody.querySelectorAll<HTMLButtonElement>("[data-sell]").forEach((btn) => {
       btn.addEventListener("click", () => { this.shopSell?.(btn.dataset.sell ?? ""); this.renderShop(); });
+    });
+  }
+
+  /** P7.3: main.ts wires the labour snapshot + assign/claim executors. */
+  attachVillage(snapshot: () => LabourSnapshot | null, assign: (id: string, job: LabourJob | "idle") => boolean, claim: () => boolean) {
+    this.labourSource = snapshot;
+    this.labourAssign = assign;
+    this.labourClaim = claim;
+  }
+
+  // ————— Village labour —————
+  private renderVillage() {
+    this.panelTitle.textContent = "Village Labour";
+    const snap = this.labourSource?.();
+    if (!snap) { this.panelBody.innerHTML = `<div class="empty">No villagers about yet.</div>`; return; }
+    const JOB_LABEL: Record<string, string> = { woodcutting: "🪓 Woodcutting", mining: "⛏️ Mining", idle: "Idle" };
+    const workerRows = snap.workers.map((w) => `
+      <div class="inv-row" style="align-items:flex-start">
+        <span class="inv-ico">👤</span>
+        <div class="inv-name">${w.name}<span class="inv-count">${JOB_LABEL[w.job ?? "idle"]}</span>
+          <div class="inv-desc">Assigned villagers fill the village stock</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-mini" data-lassign="woodcutting" data-vid="${w.id}">🪓</button>
+          <button class="btn btn-mini" data-lassign="mining" data-vid="${w.id}">⛏️</button>
+          <button class="btn btn-mini" data-lassign="idle" data-vid="${w.id}">✋</button>
+        </div>
+      </div>`).join("");
+    const stockRows = snap.stock.length
+      ? snap.stock.map((s) => `<div class="inv-row"><span class="inv-ico">${s.icon}</span><div class="inv-name">${s.name}<span class="inv-count">×${s.qty}</span></div></div>`).join("")
+      : `<div class="empty">The village has nothing stockpiled yet.</div>`;
+    const claimBtn = snap.stock.length ? `<button class="btn btn-mini" data-lclaim="1">Collect stock</button>` : "";
+    this.panelBody.innerHTML = `
+      <div class="set-val">Villagers</div>${workerRows}
+      <div class="set-val">Village stock</div>${stockRows}${claimBtn}`;
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-lassign]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.labourAssign?.(btn.dataset.vid ?? "", btn.dataset.lassign as LabourJob | "idle");
+        this.renderVillage();
+      });
+    });
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-lclaim]").forEach((btn) => {
+      btn.addEventListener("click", () => { this.labourClaim?.(); this.renderVillage(); });
     });
   }
 

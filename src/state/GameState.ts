@@ -46,6 +46,12 @@ export interface GameState {
   };
   town: {
     buildings: TownBuilding[];
+    /** P7.3: villager labour — job assignments + the village stock they fill. */
+    labour: {
+      assignments: Record<string, "woodcutting" | "mining">;
+      stock: Record<string, number>;
+      acc: Record<string, number>; // ms accrued per villager since last output
+    };
   };
   collectionLog: Set<string>;
 }
@@ -67,7 +73,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       meta: { kills: {}, achievements: [] },
     },
     world: { grid, nodes: new Map() },
-    town: { buildings: [] },
+    town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {} } },
     collectionLog: new Set(),
   };
 }
