@@ -1,5 +1,6 @@
 // Low-poly hero + home settings: fully procedural (GDD §8.2).
 import * as THREE from "three";
+import { ACTOR_HEIGHT } from "../core/Scale";
 import { makeTool } from "./Nature";
 
 const MAT_CAPE = new THREE.MeshStandardMaterial({ color: "#c0392b", flatShading: true, roughness: 0.85 });
@@ -73,7 +74,7 @@ export function makeHero(): HeroModel {
     const box = new THREE.Box3().setFromObject(obj);
     const size = new THREE.Vector3();
     box.getSize(size);
-    const s = 0.75 / Math.max(size.y, 0.01);
+    const s = ACTOR_HEIGHT / Math.max(size.y, 0.01);
     obj.scale.setScalar(s);
     const b2 = new THREE.Box3().setFromObject(obj);
     const c = new THREE.Vector3();

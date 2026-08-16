@@ -1,5 +1,6 @@
 // Monster entity: procedural low-poly creature + live HP reference.
 import * as THREE from "three";
+import { ACTOR_HEIGHT, MONSTER_SCALE } from "../core/Scale";
 import type { MonsterDef } from "../data/Combat";
 import { MONSTER_STYLES } from "../data/Combat";
 import { spawnModel } from "../core/Model";
@@ -77,8 +78,11 @@ export function buildMonsterMesh(id: string, seed: number): THREE.Group {
     club.rotation.z = -0.5;
     g.add(club);
   }
-  if (id === "skeleton") g.scale.setScalar(1.15);
-  if (id === "cave_brute") g.scale.setScalar(1.55); // P5.3: hulking mini-boss
+  // The box figure is built ~0.95 tall; normalise it to ACTOR_HEIGHT so the
+  // procedural fallback matches the rigged GLBs instead of being a half-size
+  // stand-in, then apply any per-monster bulk on top.
+  const PROC_H = 0.95;
+  g.scale.setScalar((ACTOR_HEIGHT / PROC_H) * (MONSTER_SCALE[id] ?? 1));
   void rnd;
 
   g.userData.monsterId = id;

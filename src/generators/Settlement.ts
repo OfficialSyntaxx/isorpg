@@ -1,6 +1,7 @@
 // Procedural low-poly settlement building meshes + placement tile highlights.
 // Zero external assets — Canvas 2D textures + primitive geometry (GDD §1, §5.B).
 import * as THREE from "three";
+import { GROUND_Y, BUILDING_HEIGHT_SCALE, BUILDING_WIDTH_SCALE } from "../core/Scale";
 import type { BuildingType } from "../data/Buildings";
 
 const cache = new Map<string, THREE.Material>();
@@ -54,9 +55,23 @@ const PALETTES: Record<BuildingType, Palette> = {
   GRANARY: { wall: "#c2b280", grain: "#a99968", roof: "#7a5a30", trim: "#7cd992" },
 };
 
-// Terrain tiles are boxes centered at y=0.3 with height 0.6, so the walkable
-// top surface sits at y=0.6 for flat (elevation 0) land — buildings stand on it.
-const GROUND_Y = 0.6;
+
+
+/**
+ * Scale a finished building about the ground plane and hand back a wrapper.
+ *
+ * Parts are authored with GROUND_Y baked into their positions, so a plain scale
+ * would lift the whole structure off the terrain. Scaling y by H about GROUND_Y
+ * is `y*H + GROUND_Y*(1-H)`, which is exactly the offset applied here. The
+ * wrapper exists because callers set `.position` on the returned group.
+ */
+function groundScaled(inner: THREE.Group): THREE.Group {
+  inner.scale.set(BUILDING_WIDTH_SCALE, BUILDING_HEIGHT_SCALE, BUILDING_WIDTH_SCALE);
+  inner.position.y = GROUND_Y * (1 - BUILDING_HEIGHT_SCALE);
+  const outer = new THREE.Group();
+  outer.add(inner);
+  return outer;
+}
 
 /** A small low-poly structure: base + peaked roof, color-coded per building type. */
 export function makeBuilding(type: BuildingType): THREE.Group {
@@ -76,7 +91,7 @@ export function makeBuilding(type: BuildingType): THREE.Group {
     const latch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.04), flatMat(p.trim));
     latch.position.set(0, GROUND_Y + 0.375, 0.26);
     g.add(latch);
-    return g;
+    return groundScaled(g);
   }
 
   // Campfire: stone ring, crossed logs and a lit flame.
@@ -98,7 +113,7 @@ export function makeBuilding(type: BuildingType): THREE.Group {
     );
     flame.position.y = GROUND_Y + 0.24;
     g.add(flame);
-    return g;
+    return groundScaled(g);
   }
 
   const baseH = 0.5;
@@ -130,7 +145,7 @@ export function makeBuilding(type: BuildingType): THREE.Group {
     g.add(door);
   }
 
-  return g;
+  return groundScaled(g);
 }
 
 /** Flat, semi-transparent tile marker used for build placement (green = valid). */

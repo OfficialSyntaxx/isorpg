@@ -11,6 +11,7 @@ import { EngineLogger } from "../utils/Logger";
 import type { CombatSystem } from "./CombatSystem";
 import { MONSTERS } from "../data/Combat";
 import { spawnMonster } from "../world/Monster";
+import { GROUND_Y } from "../core/Scale";
 
 export interface WorldCallbacks {
   onNodeDepleted?: (node: ResourceNode) => void;
@@ -171,46 +172,66 @@ export class WorldSystem {
         tiles.push({ x: gx, y: gy, terrain: t.terrainType, seed: t.seed });
       }
     }
-    this.scene.add(buildClutter(tiles));
+    const clutter = buildClutter(tiles);
+    clutter.position.y = GROUND_Y; // instances are authored at y≈0.1 (ground-relative)
+    this.scene.add(clutter);
   }
 
   /** Deterministically place resources from the grid seed. */
+  /**
+   * Place resources across the WHOLE map.
+   *
+   * This used to walk rows top-down and decrement a shared cap as it went, so the
+   * first rows consumed every slot and the rest of the world was bare — which is
+   * why trees only ever appeared along the top edge and fishing spots capped out
+   * at one. Candidates are now collected first, shuffled deterministically by the
+   * grid seed, then taken up to the cap, so density is even and the minimum
+   * counts are actually met.
+   */
   private spawnResources() {
     const g = this.grid;
-    let treeCount = 0, rockCount = 0, fishCount = 0;
+    const trees: { x: number; y: number; biome: Biome }[] = [];
+    const rocks: { x: number; y: number; biome: Biome }[] = [];
+    const fish: { x: number; y: number }[] = [];
+
     for (let gy = 1; gy < g.height - 1; gy++) {
       for (let gx = 1; gx < g.width - 1; gx++) {
         const t = g.at(gx, gy)!;
+        if (t.terrainType === "WATER") { fish.push({ x: gx, y: gy }); continue; }
         if (!t.walkable || t.occupant !== "NONE") continue;
-        const rnd = seeded(t.seed);
-        const r = rnd();
+        const r = seeded(t.seed)();
         // P6.2: what grows here depends on the biome — snow is barren but
         // mineral-rich, swamps grow willow (a P2 skill gate), woods run dense.
-        const dense = t.biome === "FOREST" ? 0.32 : 0.2;
-        const isTree = t.biome !== "SNOW" && t.terrainType === "GRASS" && r < dense
-          && treeCount < (t.biome === "FOREST" ? 60 : 26);
-        if (isTree) {
-          this.spawnNode("TREE", gx, gy, t.biome === "SWAMP" ? pickSwampTree(gx, gy) : pickTree(gx, gy, g));
-          treeCount++;
-        } else if ((t.terrainType === "DIRT" || t.terrainType === "GRASS")
-          && (t.biome === "SNOW" ? r < 0.5 : r > 0.2 && r < 0.3)
-          && rockCount < (t.biome === "SNOW" ? 60 : 14)) {
-          this.spawnNode("ROCK", gx, gy, t.biome === "SNOW" ? pickColdRock(gx, gy) : pickRock(gx, gy));
-          rockCount++;
+        // No trees in the town core — that's the settlement build area, and a
+        // spawn hemmed in by trunks reads as a thicket rather than a village.
+        const canTree = t.zoneId !== "TOWN_CENTER" && t.biome !== "SNOW";
+        const dense = t.biome === "FOREST" ? 0.3 : 0.16;
+        if (canTree && r < dense) trees.push({ x: gx, y: gy, biome: t.biome });
+        else if ((t.terrainType === "DIRT" || t.terrainType === "GRASS") && r < dense + (t.biome === "SNOW" ? 0.5 : 0.14)) {
+          rocks.push({ x: gx, y: gy, biome: t.biome });
         }
       }
     }
-    for (let gy = 1; gy < g.height - 1; gy++) {
-      for (let gx = 1; gx < g.width - 1; gx++) {
-        const t = g.at(gx, gy)!;
-        if (t.terrainType === "WATER" && fishCount < 6) {
-          const rnd = seeded(t.seed + 500);
-          if (rnd() < 0.4) { this.spawnNode("WATER", gx, gy, pickFish(gx, gy)); fishCount++; }
-        }
-      }
+
+    const TREE_CAP = 85, ROCK_CAP = 55, FISH_CAP = 14;
+    let treeCount = 0, rockCount = 0, fishCount = 0;
+    for (const c of shuffleSeeded(trees, 8311).slice(0, TREE_CAP)) {
+      const t = g.at(c.x, c.y)!;
+      this.spawnNode("TREE", c.x, c.y, c.biome === "SWAMP" ? pickSwampTree(c.x, c.y) : pickTree(c.x, c.y, g));
+      void t; treeCount++;
+    }
+    for (const c of shuffleSeeded(rocks, 5279).slice(0, ROCK_CAP)) {
+      if (g.at(c.x, c.y)!.occupant !== "NONE") continue;
+      this.spawnNode("ROCK", c.x, c.y, c.biome === "SNOW" ? pickColdRock(c.x, c.y) : pickRock(c.x, c.y));
+      rockCount++;
+    }
+    for (const c of shuffleSeeded(fish, 6173).slice(0, FISH_CAP)) {
+      this.spawnNode("WATER", c.x, c.y, pickFish(c.x, c.y));
+      fishCount++;
     }
     EngineLogger.info(`Spawned ${treeCount} trees, ${rockCount} rocks, ${fishCount} fishing spots`);
   }
+
 
   /** Spawn a deterministic monster population in the wilderness ring. */
   private spawnMonsters() {
@@ -272,8 +293,11 @@ export class WorldSystem {
   private spawnNode(type: NodeType, gx: number, gy: number, def: ResourceDef) {
     const id = nodeKey(type, gx, gy);
     const group = this.buildNodeMesh(type, def, gx, gy);
-    group.position.set(gx, 0, gy);
-    if (type === "WATER") group.position.y = 0.4;
+    // Props stand ON the terrain surface. These were planted at y = 0 while the
+    // ground sits at GROUND_Y, burying trees and rocks up to the crown — which is
+    // why a "tree" read as a bush with no visible trunk.
+    group.position.set(gx, GROUND_Y, gy);
+    if (type === "WATER") group.position.y = 0.4; // marker floats on the water plane
     const node: ResourceNode = { id, defId: def.masteryKey, def, type, tile: { x: gx, y: gy }, remaining: def.depletes ? def.maxUses ?? 5 : undefined, group, respawnAt: 0, depleted: false };
     this.grid.setOccupant(gx, gy, "RESOURCE_NODE", id);
     this.nodeGroup.add(group);
@@ -326,6 +350,18 @@ export class WorldSystem {
   update(timeMs: number) {
     if (this.waterMat) this.waterMat.uniforms.uTime.value = timeMs / 1000;
   }
+}
+
+/** Deterministic Fisher–Yates so placement is even across the map yet stable
+ *  across sessions (the world must look identical on every reload). */
+function shuffleSeeded<T>(list: T[], seed: number): T[] {
+  const out = list.slice();
+  const rnd = seeded(seed);
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 function seeded(seed: number): () => number {

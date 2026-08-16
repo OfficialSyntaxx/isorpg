@@ -6,6 +6,39 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase A follow-up — world scale & texture
+
+The "miniature world" read, traced to two causes and fixed together.
+
+- **Actors were shorter than the tile they stood on.** Everything normalised to
+  0.75 world units on a 1-unit grid — an adult smaller than one square, which is
+  exactly what makes a world look like a tabletop diorama. Introduced
+  `src/core/Scale.ts` as the single source of truth: `ACTOR_HEIGHT = 1.25`, with
+  per-monster bulk factors, tree/rock scales and a building height/width split
+  (buildings scale taller than wide so their footprint stays inside a tile).
+- **Every prop was buried 0.6 units.** Trees, rocks and ground clutter were
+  planted at `y = 0` while the terrain surface sits at `y = 0.6`. With trunks
+  only 0.7–1.05 tall, more than half of each tree was underground — which is why
+  they read as shrubs with no trunk. Props now stand on `GROUND_Y`. Buildings
+  scale *about* the ground plane so they neither float nor sink.
+- **Terrain was confetti.** `rollTerrain` rolled DIRT/ROCK per tile from white
+  noise, scattering isolated squares over the grass. Now sampled from smooth
+  low-frequency noise so they form contiguous patches, thresholds chosen to keep
+  the original ~6% rock / ~14% dirt share.
+- **Resources only spawned along the top edge.** `spawnResources` walked rows
+  top-down while decrementing a shared cap, so the first rows consumed every slot
+  — the reason trees clustered at the map's top and fishing spots capped at one.
+  Candidates are now collected first, shuffled deterministically by seed, then
+  taken up to the cap: even density, guaranteed minimums, still identical across
+  reloads.
+- **The town core is now open ground.** Rock, dirt and interior lakes are cleared
+  from the settlement chunk — a lake was silently removing ~17% of the buildable
+  town tiles, right where the player spawns.
+
+- 70/70 QC (2 new: terrain patch cohesion, town-core buildability). 5/5 smoke.
+
+---
+
 ## 2026-08 · Phase A — the opening frame
 
 The first thing a new player sees, made correct. All four causes were reproduced

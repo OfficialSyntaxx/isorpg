@@ -82,6 +82,28 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   radius 55 fogged everything. **Lesson: pick fog distances from the actual
   camera-to-scene range, not from map dimensions.**
 
+## Phase A follow-up 2026-08-16 (world scale)
+- **[render] Every ground prop was buried 0.6 units** — trees, rocks and clutter
+  were placed at `y = 0` while the terrain surface is at `y = 0.6`. Trunks are
+  0.7–1.05 tall, so most of each tree was underground and only the crown showed.
+  The hero was correct (bobAnchor 0.62), which is what made the inconsistency
+  hard to spot — one actor grounded, every prop sunk.
+  **Lesson: "what Y is the ground?" belongs in one exported constant, not
+  re-derived per generator.**
+- **[art] Actors were shorter than one tile** — a 0.75-unit humanoid on a 1-unit
+  grid. Everything else was proportioned to that, so the whole world read as a
+  diorama. **Lesson: pick a real-world reference for the tile (1 tile ≈ 1.5 m)
+  and size actors from it; don't let an arbitrary normalisation height become the
+  implicit scale of the game.**
+- **[world] Scan-order caps starved most of the map** — `spawnResources` walked
+  rows top-down decrementing a shared cap, so row 1 consumed the budget and the
+  remaining 40 rows got nothing. Looked like a density-tuning problem; was an
+  iteration-order problem. **Lesson: when a budget is spent inside a loop,
+  collect candidates first and sample, or the result is ordered by scan position
+  rather than by design.**
+- **[world] Per-tile random for terrain type reads as confetti** — coherent
+  features need low-frequency noise, not an independent roll per tile.
+
 ## Open threads (not yet filed as bugs)
 - **[save] Offline storage cap is per-skill, not global** — `computeOffline()`
   caps each skill at `Math.min(actions * yield, storageCap)` independently, so

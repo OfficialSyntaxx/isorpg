@@ -1,6 +1,7 @@
 // Procedural nature: richer low-poly trees, rocks, instanced ground clutter,
 // hero tool props, animated water and a sky backdrop. Zero external assets (GDD §1).
 import * as THREE from "three";
+import { TREE_SCALE, ROCK_SCALE } from "../core/Scale";
 import type { TerrainType } from "../world/Grid";
 
 const cache = new Map<string, THREE.Material>();
@@ -56,6 +57,8 @@ export function makeTree(variant: number): THREE.Group {
     log.position.set(0.5, 0.06, 0.12);
     g.add(log);
   }
+  // Trees clear head height — a canopy an actor walks under, not a shrub.
+  g.scale.setScalar(TREE_SCALE);
   g.userData.type = "TREE";
   return g;
 }
@@ -81,6 +84,7 @@ export function makeRock(variant: number): THREE.Group {
     moss.scale.set(1, 0.4, 1);
     g.add(moss);
   }
+  g.scale.setScalar(ROCK_SCALE);
   g.userData.type = "ROCK";
   return g;
 }

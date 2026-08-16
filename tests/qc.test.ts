@@ -299,6 +299,48 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
     `${back.clock.minute}/${back.clock.day}`);
 }
 
+// ================= Phase A follow-up: world texture =================
+
+// [world] DIRT/ROCK come from smooth noise, so they form patches. A per-tile
+// coin flip (the old behaviour) scatters lone tiles — "confetti on the grass".
+// Measured as: what share of non-grass tiles have a same-type orthogonal
+// neighbour? Random ~0.2 at these densities; clustered noise is far higher.
+{
+  const tg = new Grid();
+  let nonGrass = 0, withNeighbour = 0;
+  for (let y = 2; y < tg.height - 2; y++) {
+    for (let x = 2; x < tg.width - 2; x++) {
+      const t = tg.at(x, y)!;
+      if (t.terrainType !== "DIRT" && t.terrainType !== "ROCK") continue;
+      nonGrass++;
+      const same = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+        const nb = tg.at(x + dx, y + dy);
+        return nb && nb.terrainType === t.terrainType;
+      });
+      if (same) withNeighbour++;
+    }
+  }
+  const cohesion = nonGrass ? withNeighbour / nonGrass : 0;
+  check("terrain: dirt/rock form patches, not confetti", cohesion > 0.75,
+    `${(cohesion * 100).toFixed(0)}% have a like neighbour (${nonGrass} tiles)`);
+}
+
+// [world] The town core is the settlement build area — every tile in it must be
+// buildable, or the player spawns inside a quarry they cannot build on.
+{
+  const tg = new Grid();
+  let town = 0, blocked = 0;
+  for (let y = 0; y < tg.height; y++) {
+    for (let x = 0; x < tg.width; x++) {
+      const t = tg.at(x, y)!;
+      if (t.zoneId !== "TOWN_CENTER") continue;
+      town++;
+      if (!t.buildable) blocked++;
+    }
+  }
+  check("world: town core is fully buildable", town > 0 && blocked === 0, `${blocked}/${town} blocked`);
+}
+
 console.log(results.join("\n"));
 const fails = results.filter((r) => r.startsWith("FAIL")).length;
 console.log(`${results.length - fails}/${results.length} passed`);

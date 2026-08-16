@@ -105,14 +105,19 @@ export class Grid implements GridLike {
       for (let x = 0; x < w; x++) {
         const rnd = seeded(x, y);
         const terrainType = this.rollTerrain(x, y, rnd);
-        const walkable = terrainType !== "WATER" && terrainType !== "ROCK";
         const zoneId = zoneAt(x, y);
+        // The town core is the settlement build area: keep it entirely open
+        // ground. Rock and dirt made the spawn look like a quarry, and an
+        // interior lake silently removed ~17% of the buildable town tiles.
+        const zoned = zoneId === "TOWN_CENTER" && terrainType !== "ROAD"
+          ? "GRASS" as TerrainType
+          : terrainType;
         row.push({
           x, y,
-          elevation: terrainType === "WATER" ? -0.25 : this.rollElevation(x, y),
-          terrainType,
-          walkable,
-          buildable: walkable,
+          elevation: zoned === "WATER" ? -0.25 : this.rollElevation(x, y),
+          terrainType: zoned,
+          walkable: zoned !== "WATER" && zoned !== "ROCK",
+          buildable: zoned !== "WATER" && zoned !== "ROCK",
           occupant: "NONE",
           occupantId: null,
           zoneId,
@@ -136,8 +141,15 @@ export class Grid implements GridLike {
       const n = Math.sin(x * 0.9) + Math.cos(y * 0.6) + Math.sin((x + y) * 0.45);
       if (n > 2.15) return "WATER";
     }
-    if (r < 0.06) return "ROCK";
-    if (r < 0.13) return "DIRT";
+    // Rock and dirt come from low-frequency noise, not a per-tile coin flip.
+    // The old `r < 0.06 / r < 0.13` roll scattered single tiles at random, which
+    // reads as confetti sprinkled over the grass rather than outcrops and worn
+    // earth. Sampling smooth noise makes them clump into patches that follow the
+    // same contours as the lakes. Thresholds picked to keep the original ~6%
+    // rock / ~14% dirt share of the map.
+    const p = terrainPatchNoise(x, y);
+    if (p > 1.66) return "ROCK";
+    if (p > 0.93) return "DIRT";
     return "GRASS";
   }
 
@@ -197,6 +209,15 @@ export class Grid implements GridLike {
       }
     }
   }
+}
+
+
+/** Smooth, deterministic patch noise — a few offset waves summed so DIRT/ROCK
+ *  form contiguous regions instead of isolated tiles. */
+function terrainPatchNoise(x: number, y: number): number {
+  return Math.sin(x * 0.31) * Math.cos(y * 0.27)
+    + Math.sin((x + y) * 0.17) * 0.8
+    + Math.cos((x - y) * 0.23) * 0.6;
 }
 
 function isCoast(x: number, y: number, w: number, h: number): boolean {

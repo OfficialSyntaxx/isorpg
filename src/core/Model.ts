@@ -3,6 +3,7 @@
 // actors can share it; the clones get their own AnimationMixer. Call
 // `updateMixers(dt)` from the main loop each frame.
 import * as THREE from "three";
+import { ACTOR_HEIGHT } from "./Scale";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 interface Template {
@@ -54,7 +55,7 @@ export function loadModelSizing(scene: THREE.Object3D): void {
   const box = new THREE.Box3().setFromObject(scene);
   const size = new THREE.Vector3();
   box.getSize(size);
-  const s = 0.75 / Math.max(size.y, 0.01);
+  const s = ACTOR_HEIGHT / Math.max(size.y, 0.01);
   scene.scale.setScalar(s);
   const b2 = new THREE.Box3().setFromObject(scene);
   const c = new THREE.Vector3();
