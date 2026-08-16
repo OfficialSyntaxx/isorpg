@@ -100,7 +100,7 @@ the game-repo commit, and the live build (cache-bust version at
   coin tax. Upgrade costs scale with the level (base cost × next level).
 - The return screen announces the raised ceiling ("🏛️ Town Hall: offline cap
   raised to 12h").
-- Commit: _this round_ · cache-bust `v20`.
+- Commit `e852614` · cache-bust `v20`.
 
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
