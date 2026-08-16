@@ -6,6 +6,22 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase 8.2 — SFX pass 2 · ambient music · rigged 3D
+
+- **SFX pass 2** (16 clips, ~4.5 cr): pickup, UI click, chest/door, monster
+  squeak+spawn, step, eat/drink, accept, crafting (smelt/cook/carpentry), quest
+  complete, boss slam, victory. 23 clips total in `public/sfx/`; live hooks wired
+  (gather/hit/hurt/level/coin, auto-eat, achievements).
+- **Ambient music** (3 loops, 2.5 cr each): town / wilderness / dungeon —
+  `core/Music.ts` crossfades by zone (dungeon, or distance from town → wilds).
+- **Rigged 3D** (3 meshes, 38 cr each): reusable villager (Idle) swapped into
+  all NPCs; cave_brute + forest_ogre (walk/combat anims) into the boss spawns —
+  `core/Model.ts` clones each GLB per actor and advances baked AnimationMixers
+  each frame. Procedural figures remain as instant fallback.
+- 52/52 QC green; bundle 777 kB / 211 kB gzip (+25 MB public assets).
+
+---
+
 ## 2026-08 · Phase 8 — First asset pass (SFX, hero, skybox)
 
 ### 8.1 — SFX, real 3D hero, skybox panorama
@@ -165,12 +181,12 @@ the game-repo commit, and the live build (cache-bust version at
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
   (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.
-- P5.2 locked door + Iron Key (consumed on use) · `7ca1878` · `v5`.
+- P5.2 locked door + Iron Key (consumed on use) · `7acauce` · `v5`.
 - P5.3 Cave Brute mini-boss with telegraphed slam · `ac14a46` · `v6`.
 
 ---
 
 > Play it: https://isoperia-rpg.higgsfield.app
 
-*No generation credits were spent for any phase above — the procedural
-zero-asset pipeline stays the art style (per the standing rule).*
+*Phase 8 asset passes draw on the subscription credit pool (SFX, music, and
+rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*

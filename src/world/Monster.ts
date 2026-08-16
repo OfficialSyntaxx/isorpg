@@ -2,6 +2,13 @@
 import * as THREE from "three";
 import type { MonsterDef } from "../data/Combat";
 import { MONSTER_STYLES } from "../data/Combat";
+import { spawnModel } from "../core/Model";
+
+/** Rigged bosses render their generated animated GLB over the box fallback. */
+const RIGGED: Record<string, string> = {
+  cave_brute: "cave_brute",
+  forest_ogre: "forest_ogre",
+};
 
 export interface MonsterCombat {
   id: string;
@@ -82,6 +89,18 @@ export function spawnMonster(type: string, def: MonsterDef, gx: number, gy: numb
   const seed = gx * 31 + gy * 57 + 1000;
   const group = buildMonsterMesh(type, seed);
   group.position.set(gx, 0, gy);
+
+  // Rigged bosses: swap the placeholder boxes for the animated GLB when ready.
+  const rig = RIGGED[type];
+  if (rig) {
+    const big = type === "cave_brute" ? 1.5 : 1.35;
+    spawnModel(rig).then((model) => {
+      if (!model) return;
+      for (const child of [...group.children]) child.visible = false;
+      model.scale.multiplyScalar(big);
+      group.add(model);
+    });
+  }
   // Unique id so multiple monsters of one type can coexist in the registry.
   const id = `${type}_${gx}_${gy}`;
   return {

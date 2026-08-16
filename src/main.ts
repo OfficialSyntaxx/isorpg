@@ -6,6 +6,8 @@ import { Grid, WORLD_SIZE } from "./world/Grid";
 import { createFreshState } from "./state/GameState";
 import { makeHero } from "./generators/Character";
 import { play as sfx } from "./core/Sfx";
+import { setMusicZone } from "./core/Music";
+import { updateModelMixers } from "./core/Model";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { WorldSystem } from "./systems/WorldSystem";
 import { MovementSystem } from "./systems/MovementSystem";
@@ -122,7 +124,7 @@ class Game {
     this.dungeon.buildMeshes();
     this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast, this.state.player.journal);
     this.ui.attachQuestJournal(() => this.quest.journalSnapshot()); // P6.3
-    this.meta = new MetaSystem(this.state, (m) => this.ui.popAchievement(m));
+    this.meta = new MetaSystem(this.state, (m) => { this.ui.popAchievement(m); sfx("victory"); });
     this.ui.attachMeta(() => this.meta.snapshot()); // P6.4
     this.shop = new ShopSystem(this.engine.scene, this.grid, this.state); // P7.1 / P7.8
     this.ui.attachShop(
@@ -275,7 +277,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
         this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 0.6, m.tile.y + oz, "#c0392b"));
         if (m.def.boss) this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 1.0, m.tile.y + oz, "#ffd76a", 18));
       },
-      onAutoEat: (food, healed) => this.ui.floatText(`+${healed}`, "heal"),
+      onAutoEat: (food, healed) => { this.ui.floatText(`+${healed}`, "heal"); sfx("eat"); },
       onPet: (itemId) => this.ui.floatText("🐾 pet!", "pet"),
       // P4b: boss telegraph ring follows the slam target, then clears.
       onBossTelegraph: (tile) => {
@@ -646,6 +648,13 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     this.world.setDayNight(d);
     this.ui.setNight(0.38 * (1 - d));
     this.ui.setDay(this.day, iconFor(hour));
+
+    // 8.x: advance rigged model animation + pick the ambient music zone.
+    updateModelMixers(dtMs / 1000);
+    const p = this.state.player.pos;
+    const cxw = this.grid.width / 2;
+    const cdist = Math.hypot(p.gx - cxw, p.gy - cxw);
+    setMusicZone(this.dungeon.active ? "dungeon" : cdist > 12 ? "wilds" : "town");
 
     guarded("Skill", () => this.skill.tick(dtMs));
     guarded("Crafting", () => this.craft.tick(dtMs));

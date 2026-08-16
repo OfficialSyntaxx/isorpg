@@ -6,6 +6,7 @@ import type { Grid } from "../world/Grid";
 import type { TownBuilding } from "../state/GameState";
 import type { BuildingType } from "../data/Buildings";
 import { makeVillager, makeCritter } from "../generators/Villager";
+import { spawnModel } from "../core/Model";
 import { findPath } from "../ai/AStar";
 
 export interface NpcLines {
@@ -148,6 +149,15 @@ export class NpcSystem {
       const start = this.findStart(def);
       mesh.position.set(start.x, 0, start.y);
       this.scene.add(mesh);
+      // Villagers: swap the procedural figure for the animated rigged GLB.
+      if (def.kind === "villager") {
+        spawnModel("villager").then((m) => {
+          if (!m) return;
+          for (const c of [...mesh.children]) c.visible = false;
+          m.scale.multiplyScalar(1.05);
+          mesh.add(m);
+        });
+      }
       this.entities.push({
         def, tile: start, target: null, stepAcc: 0, idleAcc: 0,
         task: "wander", taskAcc: 0, path: null, pathIdx: 0, buildingType: null, lastInspect: null, talkIdx: 0, mesh,

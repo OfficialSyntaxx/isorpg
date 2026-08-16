@@ -8,7 +8,23 @@ export type SfxName =
   | "hit"
   | "hurt"
   | "levelup"
-  | "coin";
+  | "coin"
+  | "pickup"
+  | "ui_click"
+  | "chest_open"
+  | "door_unlock"
+  | "monster_squeak"
+  | "monster_spawn"
+  | "step"
+  | "eat"
+  | "drink"
+  | "accept_quest"
+  | "craft_smelt"
+  | "craft_cook"
+  | "craft_carpentry"
+  | "quest_complete"
+  | "boss_slam"
+  | "victory";
 
 const cache = new Map<string, HTMLAudioElement>();
 
