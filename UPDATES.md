@@ -87,6 +87,13 @@ the game-repo commit, and the live build (cache-bust version at
   with the save.
 - Commit `33a8be6` · cache-bust `v17`.
 
+### 7.4 — Offline village labour
+- Assigned villagers keep producing into the **village stock** while you're
+  away, mirroring the offline-XP system: same 8-hour cap, deterministic
+  per-worker math (logs every 20s, ore every 30s), and the return screen lists
+  it ("6 × Logs").
+- Commit: _this round_ · cache-bust `v19`.
+
 ## Phase 5 — Dungeons
 - P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
   (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.

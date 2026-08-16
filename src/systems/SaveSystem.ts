@@ -9,6 +9,7 @@ import { SKILL_IDS } from "../data/Skills";
 import { levelFromXp } from "../data/XPTable";
 import { addItem } from "../components/Inventory";
 import { TICK_MS } from "../core/Engine";
+import { accrueLabourOffline } from "./LabourSystem";
 
 const AUTOSAVE_EVERY_TICKS = 20; // ~12s
 const DEFAULT_OFFLINE_CAP_S = 8 * 3600; // 8 hours (Town Hall extends to 12h)
@@ -175,6 +176,9 @@ export class SaveSystem {
       this.state.collectionLog.add(itemId);
       lines.push(`${gained.toLocaleString()} × ${ITEM_NAME[itemId] ?? itemId}`);
     }
+
+    // P7.4: assigned villagers kept producing into the stock while away.
+    for (const ln of accrueLabourOffline(this.state, awayMs, capS * 1000)) lines.push(ln);
 
     return { capApplied, awaySeconds: awayS, lines, xpEarned };
   }

@@ -28,6 +28,32 @@ export interface LabourSnapshot {
 const WOOD_MS = 20_000; // one log per 20s per lumberjack
 const MINE_MS = 30_000; // one ore per 30s per miner
 
+export const LABOUR_INTERVALS: Record<LabourJob, number> = { woodcutting: WOOD_MS, mining: MINE_MS };
+
+/** Deterministic per-villager output — logs, or copper/tin ore. */
+export function labourItemFor(id: string, job: LabourJob): string {
+  if (job === "woodcutting") return "normal_log";
+  let h = 0;
+  for (const c of id) h += c.charCodeAt(0);
+  return h % 100 < 65 ? "copper_ore" : "tin_ore";
+}
+
+/** P7.4: while away, assigned villagers keep producing into the stock (capped). */
+export function accrueLabourOffline(state: GameState, awayMs: number, capMs: number): string[] {
+  const l = state.town.labour;
+  const ms = Math.min(awayMs, capMs);
+  const lines: string[] = [];
+  for (const [id, job] of Object.entries(l.assignments)) {
+    const need = LABOUR_INTERVALS[job];
+    const n = Math.floor(ms / need);
+    if (n <= 0) continue;
+    const item = labourItemFor(id, job);
+    l.stock[item] = (l.stock[item] ?? 0) + n;
+    lines.push(`${n} × ${ITEMS[item]?.name ?? item}`);
+  }
+  return lines;
+}
+
 export class LabourSystem {
   private lastTick = -1;
 
@@ -68,10 +94,7 @@ export class LabourSystem {
 
   /** Deterministic per-villager output — logs, or copper/tin ore. */
   private produce(id: string, job: LabourJob): string {
-    if (job === "woodcutting") return "normal_log";
-    let h = 0;
-    for (const c of id) h += c.charCodeAt(0);
-    return h % 100 < 65 ? "copper_ore" : "tin_ore";
+    return labourItemFor(id, job);
   }
 
   /** Move the whole village stock into the player's bag. */
