@@ -17,6 +17,7 @@ import { equipItem, unequipItem, EQUIP_SLOTS } from "../components/Equipment";
 import type { EquipSlot } from "../data/Items";
 import type { MapSnapshot } from "../systems/MapSystem";
 import type { QuestJournalEntry } from "../systems/QuestSystem";
+import type { MetaSnapshot } from "../systems/MetaSystem";
 
 const SLOT_NAMES: Record<EquipSlot, string> = {
   weapon: "Weapon", offhand: "Offhand", head: "Helm", body: "Body", legs: "Legs",
@@ -54,6 +55,7 @@ export class UI {
   private mapSnapshot: (() => MapSnapshot | null) | null = null;
   private mapTravel: ((id: string) => boolean) | null = null;
   private journalSource: (() => QuestJournalEntry[]) | null = null;
+  private metaSource: (() => MetaSnapshot | null) | null = null;
 
   constructor(state: GameState, ev: UIEvents = {}) {
     this.state = state;
@@ -81,6 +83,7 @@ export class UI {
     this.$("#btn-inventory").addEventListener("click", () => this.openPanel("inventory"));
     this.$("#btn-map")?.addEventListener("click", () => this.openPanel("map"));
     this.$("#btn-quest")?.addEventListener("click", () => this.openPanel("quest"));
+    this.$("#btn-progress")?.addEventListener("click", () => this.openPanel("meta"));
     this.$("#btn-settings").addEventListener("click", () => this.openPanel("settings"));
     this.$("#btn-craft")?.addEventListener("click", () => this.openPanel("craft"));
     this.$("#btn-build")?.addEventListener("click", () => this.openPanel("build"));
@@ -90,7 +93,7 @@ export class UI {
     this.panel.addEventListener("click", (e) => { if (e.target === this.panel) this.closePanel(); });
   }
 
-  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest") {
+  openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | "quest" | "meta") {
     // Any render error must never silently keep the panel hidden. Render first;
     // on failure show a visible degraded panel + log, never a dead button.
     try {
@@ -100,6 +103,7 @@ export class UI {
       else if (id === "build") this.renderBuild();
       else if (id === "map") this.renderMap();
       else if (id === "quest") this.renderJournal();
+      else if (id === "meta") this.renderMeta();
       else this.renderSettings();
     } catch (err) {
       EngineLogger.logError(`panel:${id}`, err);
@@ -199,6 +203,36 @@ export class UI {
         </div>
       </div>`).join("");
     this.panelBody.innerHTML = rows;
+  }
+
+  /** P6.4: main.ts feeds the progress/meta snapshot. */
+  attachMeta(snapshot: () => MetaSnapshot | null) {
+    this.metaSource = snapshot;
+  }
+
+  // ————— Progress / Meta —————
+  private renderMeta() {
+    this.panelTitle.textContent = "Progress";
+    const snap = this.metaSource?.();
+    if (!snap) { this.panelBody.innerHTML = `<div class="empty">Nothing to report yet.</div>`; return; }
+    const achRows = snap.achievements.map((a) => `
+      <div class="inv-row" style="align-items:flex-start">
+        <span class="inv-ico">${a.unlocked ? "🏆" : "🔒"}</span>
+        <div class="inv-name">${a.name} <span class="inv-count">${a.unlocked ? "Unlocked" : "Locked"}</span>
+          <div class="inv-desc">${a.desc}</div>
+        </div>
+      </div>`).join("");
+    const killRows = snap.kills.length
+      ? snap.kills.map((k) => `<div class="inv-row"><span class="inv-ico">⚔️</span><div class="inv-name">${k.name}<span class="inv-count">×${k.count}</span></div></div>`).join("")
+      : `<div class="empty">No kills yet — the wilderness awaits.</div>`;
+    const skillRows = snap.skills.map((sk) => `
+      <div class="inv-row"><span class="inv-ico">✦</span>
+        <div class="inv-name">${sk.name}<span class="inv-count">Lv ${sk.level} · ${sk.xp.toLocaleString()} XP</span></div>
+      </div>`).join("");
+    this.panelBody.innerHTML = `
+      <div class="set-val">🏆 Achievements ${snap.achieved}/${snap.achievements.length}</div>${achRows}
+      <div class="set-val">⚔️ Slain ${snap.totalKills} monster${snap.totalKills === 1 ? "" : "s"} · 📦 ${snap.collectionCount} items collected</div>${killRows}
+      <div class="set-val">Levels</div>${skillRows}`;
   }
 
   /** P1: in-world label + action chip, anchored to a screen point (px, py). */

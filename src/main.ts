@@ -20,6 +20,7 @@ import { NpcSystem } from "./systems/NpcSystem";
 import { DungeonSystem, DUNGEON_ORIGIN } from "./systems/DungeonSystem";
 import { QuestSystem } from "./systems/QuestSystem";
 import { MapSystem } from "./systems/MapSystem";
+import { MetaSystem } from "./systems/MetaSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -63,6 +64,7 @@ class Game {
   private dungeon!: DungeonSystem;
   private quest!: QuestSystem;
   private mapSys!: MapSystem;
+  private meta!: MetaSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private clockMin = 0;
   private day = 1;
@@ -98,6 +100,8 @@ class Game {
     this.dungeon.buildMeshes();
     this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast, this.state.player.journal);
     this.ui.attachQuestJournal(() => this.quest.journalSnapshot()); // P6.3
+    this.meta = new MetaSystem(this.state, (m, k, ms) => showToast(m, k, ms));
+    this.ui.attachMeta(() => this.meta.snapshot()); // P6.4
     this.mapSys = new MapSystem(
       this.grid.width,
       this.dungeon,
@@ -578,6 +582,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
         this.grid.unlockAround(gx, gy);
       }
     });
+    guarded("Meta", () => this.meta.evaluate()); // P6.4: achievement pops
     // P4: hero flashes red briefly when a monster lands a hit.
     flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");
     // P4b: advance kill-burst shards.

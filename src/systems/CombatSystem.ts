@@ -343,7 +343,9 @@ export class CombatSystem {
       }
     }
 
-    const kc = Object.values(CombatSystem.kcCounts).reduce((a, b) => a + b, 0) + 1;
+    const kc = (this.state.player.meta.kills[m.def.id] ?? 0) + 1;
+    // P6.4: tallies persist with the save so the Meta page survives reloads.
+    this.state.player.meta.kills[m.def.id] = kc;
     CombatSystem.kcCounts[m.id] = kc;
     drops.forEach((d) => this.state.collectionLog.add(d));
 

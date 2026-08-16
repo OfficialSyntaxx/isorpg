@@ -1,0 +1,65 @@
+# Isoperia — Update Log
+
+Running changelog of shipped increments. Each entry names the phase, what changed,
+the game-repo commit, and the live build (cache-bust version at
+`isoperia-rpg.higgsfield.app`).
+
+---
+
+## 2026-08 · Phase 6 — World scale, biomes, onboarding, meta
+
+### 6.4 — Meta page & achievements
+- New **🏆 Progress** HUD panel: persisted kill tallies per monster, collection
+  counter, per-skill level + XP, and an achievements list (🏆 unlocked / 🔒 locked).
+- 8 achievements (first blood, rat hunter, heart of the forest, boss breaker,
+  tenacious, pack rat, Eldric's student, pathfinder) with pop-up toasts the
+  moment one flips.
+- Kill counts + unlocked achievements persist in the save (`player.meta`).
+- Commit: _this round_ · cache-bust `v14`.
+
+### 6.3 Quest journal
+- **📖 Quests** panel listing active/complete quests, live objectives, givers and
+  rewards. Second quest: **The Surveyor's Errand** (slay the Forest Ogre → 250
+  coins, steel bar, cooked trout). Completions persist (`player.journal`).
+- Commit `cb2dcfb` · cache-bust `v13`.
+
+### 6.3-b Biome-gated monsters
+- New natives: **Frost Imp** (snow) and **Bog Husk** (swamp); per-biome threat
+  pools (wolves + undead in the woods), tame inner band, wild fallback.
+- Commit `0da8003` · cache-bust `v12`.
+
+### 6.2 Biomes
+- Four region flavors on the tile grid (meadow / forest / snow / swamp) with
+  per-biome terrain palettes and gated resources: swamp willow (woodcutting 30),
+  treeless mineral-rich snowfields, dense woods, fishing anywhere.
+- Commit `18db753` · cache-bust `v11`.
+
+### 6.1 World scale
+- 42×42 configurable world (`WORLD_SIZE`), four zone bands incl. the Deep Wilds,
+  progressive chunk unlocking on exploration (fixed a latent bug that blocked all
+  wilderness spawns), threat-scaled pools, deep-wilds dungeon entrance, map
+  coverage meter + walk-range layer.
+- Commit `5a7e7bf` · cache-bust `v10`.
+
+### 6.x Map & fast travel
+- **🗺️ Map** panel (player dot, waypoints incl. boss lair, coverage), proximity
+  POI discovery, fast travel unlocked by beating the Cave Brute.
+- Commits `64ffa01 / 1a37fa1` · cache-bust `v8-v9`.
+
+### 6.x Onboarding quest
+- Eldric the Cartographer guide NPC beside the deep-wilds door; staged quest
+  (key → door → Cave Brute) with a floating objective marker and reward.
+- Commit `cb2dcfb` (journal) / earlier `b495eca` · cache-bust `v7`.
+
+## Phase 5 — Dungeons
+- P5.1 entrance + procedural single-floor (rooms/corridors), own monster pool
+  (cave bat / cave slasher), chest, exit portal · `0547f6f` · `v4`.
+- P5.2 locked door + Iron Key (consumed on use) · `7ca1878` · `v5`.
+- P5.3 Cave Brute mini-boss with telegraphed slam · `ac14a46` · `v6`.
+
+---
+
+> Play it: https://isoperia-rpg.higgsfield.app
+
+*No generation credits were spent for any phase above — the procedural
+zero-asset pipeline stays the art style (per the standing rule).*
