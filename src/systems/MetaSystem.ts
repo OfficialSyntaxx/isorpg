@@ -33,6 +33,12 @@ export class MetaSystem {
     }
   }
 
+  /** P6.4-polish: persist a counter event (sales, purchases, labour…). */
+  bump(counter: string, n = 1): void {
+    const c = this.state.player.meta.counters;
+    c[counter] = (c[counter] ?? 0) + n;
+  }
+
   /** Read-only view for the Meta panel. */
   snapshot(): MetaSnapshot {
     const p = this.state.player;

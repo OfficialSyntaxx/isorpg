@@ -38,7 +38,7 @@ export interface GameState {
     /** P6.3: quest-log — ids of quests the player has completed (persisted). */
     journal: string[];
     /** P6.4: meta-progress — kill tallies + unlocked achievements (persisted). */
-    meta: { kills: Record<string, number>; achievements: string[] };
+    meta: { kills: Record<string, number>; achievements: string[]; counters: Record<string, number> };
   };
   world: {
     grid: Grid;
@@ -70,7 +70,7 @@ export function createFreshState(grid: Grid, name: string = "Hero", startX = 10,
       equipped: {},
       map: { discovered: [], fastTravel: false, explored: [] },
       journal: [],
-      meta: { kills: {}, achievements: [] },
+      meta: { kills: {}, achievements: [], counters: {} },
     },
     world: { grid, nodes: new Map() },
     town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {} } },

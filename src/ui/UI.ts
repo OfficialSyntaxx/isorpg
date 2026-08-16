@@ -385,6 +385,32 @@ export class UI {
     setTimeout(() => el.remove(), 900);
   }
 
+  /** P6.4-polish: a gold banner slides in when an achievement pops. */
+  popAchievement(message: string) {
+    const layer = document.getElementById("hud-root") ?? document.body;
+    const el = document.createElement("div");
+    el.textContent = message;
+    el.style.position = "fixed";
+    el.style.top = "16%";
+    el.style.left = "50%";
+    el.style.transform = "translate(-50%, -10px)";
+    el.style.background = "linear-gradient(90deg,#7a5a1f,#c9a13a,#7a5a1f)";
+    el.style.color = "#ffffff";
+    el.style.padding = "10px 18px";
+    el.style.borderRadius = "12px";
+    el.style.fontWeight = "bold";
+    el.style.boxShadow = "0 4px 16px rgba(0,0,0,0.55)";
+    el.style.zIndex = "120";
+    el.style.opacity = "0";
+    el.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+    el.style.maxWidth = "86vw";
+    el.style.textAlign = "center";
+    layer.appendChild(el);
+    requestAnimationFrame(() => { el.style.opacity = "1"; el.style.transform = "translate(-50%, 0)"; });
+    setTimeout(() => { el.style.opacity = "0"; el.style.transform = "translate(-50%, 14px)"; }, 3000);
+    setTimeout(() => el.remove(), 3450);
+  }
+
   /** Update the topbar: player level + the active-skill XP bar. */
   refresh(activeSkill: SkillId | null) {
     // Overall "total level": best skill as a stand-in for milestone 1

@@ -104,18 +104,20 @@ class Game {
     this.dungeon.buildMeshes();
     this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast, this.state.player.journal);
     this.ui.attachQuestJournal(() => this.quest.journalSnapshot()); // P6.3
-    this.meta = new MetaSystem(this.state, (m, k, ms) => showToast(m, k, ms));
+    this.meta = new MetaSystem(this.state, (m) => this.ui.popAchievement(m));
     this.ui.attachMeta(() => this.meta.snapshot()); // P6.4
     this.shop = new ShopSystem(this.engine.scene, this.grid); // P7.1
     this.ui.attachShop(
       () => this.shop.snapshot(this.state.player.inventory),
       (id) => {
+        const qty = countItem(this.state.player.inventory, id);
         const p = this.shop.sellItem(this.state.player.inventory, id);
-        if (p > 0) showToast(`Sold for 🪙${p}`, "success", 1400);
+        if (p > 0) { showToast(`Sold for 🪙${p}`, "success", 1400); this.meta.bump("shop_sold", qty); }
         return p > 0;
       },
       (id) => {
         const ok = this.shop.buyItem(this.state.player.inventory, id);
+        if (ok) this.meta.bump("shop_bought");
         showToast(ok ? "Purchase complete." : "Not enough coins.", ok ? "success" : "error", 1400);
         return ok;
       }
@@ -127,12 +129,16 @@ class Game {
       () => this.labour.snapshot(),
       (id, job) => {
         this.labour.assign(id, job);
+        if (job !== "idle") this.meta.bump("labour_assigns");
         showToast(job === "idle" ? "The villager stands down." : "The villager takes the task.", "info", 1300);
         return true;
       },
       () => {
         const c = this.labour.claim(this.state.player.inventory);
-        if (c.length) showToast(`Collected: ${c.map((x) => `${ITEM_NAMES[x.itemId]?.name ?? x.itemId} ×${x.qty}`).join(", ")}`, "success", 2800);
+        if (c.length) {
+          this.meta.bump("labour_collected", c.reduce((a, x) => a + x.qty, 0));
+          showToast(`Collected: ${c.map((x) => `${ITEM_NAMES[x.itemId]?.name ?? x.itemId} ×${x.qty}`).join(", ")}`, "success", 2800);
+        }
         return c.length > 0;
       }
     );
@@ -450,6 +456,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
       if (this.dungeon.currentFloor === 2) { this.leaveDungeon(); return; }
       this.dungeon.descend(this.combat);
       this.teleportDungeonSpawn();
+      this.meta.bump("floors_descended"); // P6.4-polish
       showToast("You take the stairs down… the air gets colder.", "info", 2000);
       return;
     }

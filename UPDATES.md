@@ -17,6 +17,14 @@ the game-repo commit, and the live build (cache-bust version at
 - Kill counts + unlocked achievements persist in the save (`player.meta`).
 - Commit `38e49e4` · cache-bust `v14`.
 
+### 6.4-polish — Achievement pops & Phase-7 achievements
+- **Gold banner pop** (animated) replaces plain toasts when an achievement
+  unlocks.
+- 5 new achievements fed by persisted counters: First Purchase, Junk Trader
+  (20 sold), Foreman (3 villagers hired), Quartermaster (50 stock collected),
+  Spelunker (floor 2).
+- Commit: _this round_ · cache-bust `v18`.
+
 ### 6.3 Quest journal
 - **📖 Quests** panel listing active/complete quests, live objectives, givers and
   rewards. Second quest: **The Surveyor's Errand** (slay the Forest Ogre → 250

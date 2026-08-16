@@ -50,7 +50,7 @@ export class SaveSystem {
         inventory: p.inventory.items.map((i) => ({ id: i.id, amount: i.amount })),
         equipped: { ...p.equipped },
         journal: [...p.journal],
-        meta: { kills: { ...p.meta.kills }, achievements: [...p.meta.achievements] },
+        meta: { kills: { ...p.meta.kills }, achievements: [...p.meta.achievements], counters: { ...p.meta.counters } },
       },
       town: { buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })), labour: { assignments: { ...this.state.town.labour.assignments }, stock: { ...this.state.town.labour.stock }, acc: { ...this.state.town.labour.acc } } },
       collectionLog: { unlocked: [...this.state.collectionLog] },
@@ -90,6 +90,7 @@ export class SaveSystem {
     p.meta = {
       kills: { ...(sm?.kills ?? {}) },
       achievements: (sm?.achievements ?? []).map(String),
+      counters: { ...(sm?.counters ?? {}) },
     };
     this.state.town.buildings = (s.town?.buildings ?? []).map((b: any) => ({
       id: String(b.id), type: b.type, x: b.x, y: b.y, level: b.level,

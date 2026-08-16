@@ -24,4 +24,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "collector_10", name: "Pack Rat", desc: "Collect 10 different items.", test: (s) => s.collectionLog.size >= 10 },
   { id: "quest_done", name: "Eldric's Student", desc: "Complete any quest.", test: (s) => s.player.journal.length >= 1 },
   { id: "explorer_25", name: "Pathfinder", desc: "Explore a quarter of the world.", test: (s) => s.player.map.explored.length / (WORLD_SIZE * WORLD_SIZE) >= 0.25 },
+  // P6.4-polish: Phase-7 systems now feed their own achievements.
+  { id: "merchant", name: "First Purchase", desc: "Buy something from the town market.", test: (s) => (s.player.meta.counters["shop_bought"] ?? 0) >= 1 },
+  { id: "hawker", name: "Junk Trader", desc: "Sell 20 items to the town market.", test: (s) => (s.player.meta.counters["shop_sold"] ?? 0) >= 20 },
+  { id: "foreman", name: "Foreman", desc: "Give three villagers a job.", test: (s) => (s.player.meta.counters["labour_assigns"] ?? 0) >= 3 },
+  { id: "quartermaster", name: "Quartermaster", desc: "Collect 50 items from the village stock.", test: (s) => (s.player.meta.counters["labour_collected"] ?? 0) >= 50 },
+  { id: "spelunker", name: "Spelunker", desc: "Descend to dungeon floor 2.", test: (s) => (s.player.meta.counters["floors_descended"] ?? 0) >= 1 },
 ];
