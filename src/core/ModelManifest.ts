@@ -2,7 +2,7 @@
 // Lists the GLBs present in public/models at build time, so the loader never
 // requests a model that isn't shipped.
 
-export const AVAILABLE_MODELS: ReadonlySet<string> = new Set(["cave_brute","forest_ogre","hero","villager"]);
+export const AVAILABLE_MODELS: ReadonlySet<string> = new Set(["cave_brute","forest_ogre","hero_rigged","villager"]);
 
 export function hasModel(name: string): boolean {
   // An empty manifest means the generator hasn't run; don't block loading then.
@@ -10,7 +10,7 @@ export function hasModel(name: string): boolean {
 }
 
 /** Shared animation clips present in public/models/clips (see ClipLibrary). */
-export const AVAILABLE_CLIPS: ReadonlySet<string> = new Set(["actor_run","actor_walk","hero_idle","hero_walk"]);
+export const AVAILABLE_CLIPS: ReadonlySet<string> = new Set(["actor_run","actor_walk","hero_idle"]);
 
 export function hasClip(name: string): boolean {
   return AVAILABLE_CLIPS.size === 0 || AVAILABLE_CLIPS.has(name);

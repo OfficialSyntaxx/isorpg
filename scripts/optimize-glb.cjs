@@ -13,8 +13,15 @@
 // test — no native image toolchain to install, and it reads every format the
 // browser will read at runtime, which is the only compatibility that matters.
 //
+// --brighten lifts a texture that renders too dark. The scene is lit for the
+// procedural palette, and a character authored against a neutral studio
+// background can sink to a black silhouette at the ~40 px an actor occupies.
+// Lifting the texture keeps the fix in the asset, so nothing at runtime has to
+// special-case one model.
+//
 // Usage:
-//   node scripts/optimize-glb.cjs <in.glb> <out.glb> [--size 512] [--quality 0.85] [--keep-anims]
+//   node scripts/optimize-glb.cjs <in.glb> <out.glb> [--size 512] [--quality 0.85]
+//                                 [--brighten 1.6] [--saturate 1.15] [--keep-anims]
 const fs = require("fs");
 const path = require("path");
 
@@ -56,7 +63,7 @@ function writeGlb(json, bin, dest) {
   fs.writeFileSync(dest, Buffer.concat([head, body]));
 }
 
-async function recompress(images, maxSize, quality) {
+async function recompress(images, maxSize, quality, brighten, saturate) {
   let playwright;
   try { playwright = require("playwright"); } catch { return null; }
   const exe = process.env.CHROME_PATH || findChrome();
@@ -68,7 +75,7 @@ async function recompress(images, maxSize, quality) {
     const page = await browser.newPage();
     const out = [];
     for (const img of images) {
-      const b64 = await page.evaluate(async ({ data, mime, maxSize, quality }) => {
+      const b64 = await page.evaluate(async ({ data, mime, maxSize, quality, brighten, saturate }) => {
         const blob = await (await fetch(`data:${mime};base64,${data}`)).blob();
         const bmp = await createImageBitmap(blob);
         const s = Math.min(1, maxSize / Math.max(bmp.width, bmp.height));
@@ -80,9 +87,10 @@ async function recompress(images, maxSize, quality) {
         // a defined colour instead of whatever the encoder leaves behind.
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, c.width, c.height);
+        if (brighten !== 1 || saturate !== 1) ctx.filter = `brightness(${brighten}) saturate(${saturate})`;
         ctx.drawImage(bmp, 0, 0, c.width, c.height);
         return c.toDataURL("image/jpeg", quality).split(",")[1];
-      }, { data: img.toString("base64"), mime: "image/png", maxSize, quality });
+      }, { data: img.toString("base64"), mime: "image/png", maxSize, quality, brighten, saturate });
       out.push(Buffer.from(b64, "base64"));
     }
     return out;
@@ -94,13 +102,16 @@ async function recompress(images, maxSize, quality) {
 async function main() {
   const [input, output] = process.argv.slice(2);
   if (!input || !output) {
-    console.error("usage: optimize-glb.cjs <in.glb> <out.glb> [--size 512] [--quality 0.85] [--keep-anims]");
+    console.error("usage: optimize-glb.cjs <in.glb> <out.glb> [--size 512] [--quality 0.85]" +
+      " [--brighten 1.6] [--saturate 1.15] [--keep-anims]");
     process.exit(2);
   }
   const flag = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i >= 0 ? process.argv[i + 1] : d; };
   const maxSize = Number(flag("size", 512));
   const quality = Number(flag("quality", 0.85));
   const keepAnims = process.argv.includes("--keep-anims");
+  const brighten = Number(flag("brighten", 1));
+  const saturate = Number(flag("saturate", 1));
 
   const { json, bin, size } = parseGlb(input);
   const views = json.bufferViews;
@@ -110,7 +121,7 @@ async function main() {
     const v = views[i.bufferView];
     return bin.slice(v.byteOffset || 0, (v.byteOffset || 0) + v.byteLength);
   });
-  const packed = images.length ? await recompress(source, maxSize, quality) : [];
+  const packed = images.length ? await recompress(source, maxSize, quality, brighten, saturate) : [];
   if (images.length && !packed) {
     console.error("optimize-glb: playwright/chromium unavailable — cannot recompress textures.");
     process.exit(1);
@@ -154,7 +165,8 @@ async function main() {
   console.log(
     `${path.basename(input)} ${(size / 1048576).toFixed(2)} MB → ` +
     `${path.basename(output)} ${(after / 1024).toFixed(0)} kB ` +
-    `(${(100 - (after / size) * 100).toFixed(0)}% smaller)`
+    `(${(100 - (after / size) * 100).toFixed(0)}% smaller)` +
+    (brighten !== 1 || saturate !== 1 ? `  brightness x${brighten}, saturation x${saturate}` : "")
   );
 }
 

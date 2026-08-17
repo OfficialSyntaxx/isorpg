@@ -58,7 +58,7 @@ export function buildClip(data: ClipFile): THREE.AnimationClip {
 }
 
 /**
- * Load a shared clip by name (e.g. "hero_walk"). Resolves to null if the clip
+ * Load a shared clip by name (e.g. "actor_walk"). Resolves to null if the clip
  * is missing or malformed, so callers keep whatever animation they already had
  * rather than losing the actor entirely.
  */

@@ -17,7 +17,7 @@ How rigged, animated GLBs get from Higgsfield/Meshy into the game.
   proportions.
   → Use `retargetable()` (rotation-only) to share a motion across rigs.
     Mark those states in `ACTOR_CLIPS[...].borrowed`.
-- `hero.glb` as originally generated has **zero animation clips** — it can only
+- A GLB generated without animation has **zero clips** — it can only
   ever be a static mesh until rigged.
 
 ## Generating a clip
@@ -111,14 +111,19 @@ Shipped clips:
 
 | Clip | Length | Size | Used by |
 |---|---|---|---|
-| `hero_idle` | 4.0s | 15 kB | ogre & brute idle |
-| `hero_walk` | 4.2s | 15 kB | — (superseded by `actor_walk`) |
-| `actor_walk` | 1.0s | 5.6 kB | villagers |
+| `hero_idle` | 4.0s | 15 kB | every actor's idle |
+| `actor_walk` | 1.0s | 5.6 kB | every actor's walk |
 | `actor_run` | 0.6s | 3.7 kB | banked for a chase/sprint state |
 
 `actor_walk` / `actor_run` came from a Meshy wizard rig, which uses the identical
 24-bone skeleton — which is the whole point of the format: a clip bought for one
 character animates every other one.
+
+`verify-rig` also measures each clip's **loop seam** — the angle between its first
+and last frame, which the mixer wraps straight across. A retired `hero_walk` was a
+4.2s "casual walk" *take* rather than a cycle and seamed at 5.5 degrees on
+`LeftLeg`, a visible hitch every loop; `actor_walk` is a true cycle at 0.9. The
+check fails above 3 degrees.
 
 ## Shrinking a GLB
 
@@ -135,22 +140,33 @@ For a mesh that is *also* too dense, run the geometry passes first — the
 319k-triangle wizard needed `gltf-transform simplify --ratio 0.025` and
 `quantize` before this script, which took it from 20.8 MB to 704 kB.
 
-## Outstanding: the rigged hero mesh
+## The hero mesh
 
-`public/models/hero.glb` is the original **static** mesh — no skeleton — so the
-hero cannot animate. Its `hero_idle` / `hero_walk` clips are already shipped and
-verified; only the skinned mesh is missing.
+`public/models/hero_rigged.glb` (739 kB) is a Meshy "Young Mystic Apprentice"
+rig — the player character is a wizard. It arrived at **20.8 MB / 318,929
+triangles**, roughly 40x the heaviest model in the game, and took three passes:
 
-The rigged mesh is built and waiting (24 joints, same skeleton as every other
-actor; animation stripped and texture recompressed to 512px JPEG, 790 kB → 329 kB,
-the same treatment the other models got). To land it:
+```
+gltf-transform simplify in.glb a.glb --ratio 0.025 --error 0.05   # 319k -> 13.2k tris
+gltf-transform resize    a.glb b.glb --width 512 --height 512
+gltf-transform quantize  b.glb c.glb --quantize-position 14 --quantize-normal 10
+node scripts/optimize-glb.cjs c.glb public/models/hero_rigged.glb \
+     --size 512 --brighten 1.75 --saturate 1.2
+```
 
-1. Download <https://d2ol7oe51mr4n9.cloudfront.net/user_36MHNrl15jk9zlazEaTWSMthntm/0b19d695-d837-4941-8cea-04704fdb74fe.zip> (226 kB)
-2. Unzip and put `hero_rigged.glb` in `public/models/`
-3. Run `npm test`
+The simplifier floors around 13.2k triangles — the mesh is many separate shells,
+and pushing past that visibly damages the silhouette. That is still ~1.7x the
+ogre, which is the price of it being the character the camera is always centred
+on.
 
-Nothing else changes: `ACTOR_CLIPS.hero` already prefers `hero_rigged` and falls
-back to `hero`, and the manifest generator picks the file up automatically.
+`--brighten` exists because of this model. Authored against a neutral studio
+background, its near-black robe read as a flat silhouette against the game's
+bright grass at the ~40 px an actor occupies. Lifting the texture keeps the fix
+in the asset rather than special-casing one model at runtime.
+
+The original static `hero.glb` has been removed: it had no skeleton, so it could
+never animate, and it was only ever a fallback for the rigged mesh that has now
+landed.
 
 ## Notes
 

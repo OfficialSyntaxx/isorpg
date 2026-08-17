@@ -58,16 +58,13 @@ interface ActorDef {
  */
 export const ACTOR_CLIPS: Record<string, ActorDef> = {
   hero: {
-    // hero_rigged is the skinned mesh; hero.glb is the static original, which
-    // has no skeleton and so cannot animate at all.
-    base: ["hero_rigged", "hero"],
+    base: "hero_rigged",
     states: {},
-    shared: { idle: "hero_idle", walk: "hero_walk" },
+    shared: { idle: "hero_idle", walk: "actor_walk" },
   },
   villager: {
     base: "villager",
     states: { idle: "villager" },
-    // actor_walk is a 1.0s cycle that loops cleanly; hero_walk is a 4.2s take.
     shared: { walk: "actor_walk" },
   },
   forest_ogre: {
@@ -191,7 +188,6 @@ export async function spawnActor(name: string): Promise<AnimatedActor | null> {
     // Shared clips last, so they win over a baked clip for the same state.
     // A clip whose bones aren't on this rig is skipped rather than bound: the
     // mixer would silently drive nothing and the state would claim to exist.
-    // hero.glb, for instance, has no skeleton at all until its rigged mesh lands.
     const shared = def?.shared ?? {};
     const sharedStates = Object.keys(shared) as ActorState[];
     if (sharedStates.length) {

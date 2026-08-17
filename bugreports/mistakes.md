@@ -151,10 +151,26 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   **Lesson: before treating a vendor's output format as the unit of delivery,
   ask what fraction of it is actually new information.**
 
+## Hero rig 2026-08-17
+- **[qc] "Has a clip" was the wrong assertion** — `verify-rig` required every
+  rigged GLB to carry a baked animation, which was right when clips lived inside
+  meshes and wrong the moment clips became shared data. The new hero mesh
+  correctly ships with zero animations and failed the check.
+  **Lesson: a test encodes an assumption about the architecture. When the
+  architecture changes, the test does not politely become irrelevant — it starts
+  reporting the new correct thing as broken.**
+- **[art] "Looks fine" at working zoom is not "looks fine" at play zoom** — the
+  wizard read clearly in a close-up and as a featureless black blob at the ~40 px
+  an actor actually occupies. Judging an asset at the size the player sees it is
+  the only judgement that counts.
+- **[qc] A loop that is not a loop** — `hero_walk` was a 4.2s *take*, not a cycle;
+  its first and last frames differ by 5.5° at the knee, so the mixer's wrap put a
+  hitch in every stride. Nothing flagged it, because "has a walk clip" was true.
+  Fixed by measuring the seam in `verify-rig` and failing above 3°.
+  **Lesson: presence checks pass on assets that are present and wrong. Where a
+  quality property can be computed, compute it.**
+
 ## Open threads (not yet filed as bugs)
-- **[assets] `hero.glb` has no skeleton** — it is the original static mesh, so
-  the hero cannot animate. Its idle and walk clips are already shipped and
-  verified; the rigged mesh is the one asset still outstanding.
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.
 - Market panel shows live prices but no trend arrows yet (cosmetic).

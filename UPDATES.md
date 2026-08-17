@@ -6,6 +6,44 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · The player is a wizard — rigged hero mesh + shared clips
+
+- **The hero animates.** `hero.glb` had never had a skeleton, so the player
+  character has been a static mesh for the whole project. A Meshy "Young Mystic
+  Apprentice" rig turned out to use the *identical* 24-bone skeleton as every
+  other actor, so it dropped straight in as `hero_rigged.glb` and drives off the
+  shared clip library with no new code.
+- **20.8 MB → 739 kB.** The rig arrived at 318,929 triangles, ~40× the heaviest
+  model in the game. `gltf-transform simplify` floors it at 13.2k (the mesh is
+  many separate shells; past that the silhouette breaks), then `quantize` and a
+  512px JPEG. Still ~1.7× the ogre, which is the price of being the character the
+  camera is centred on.
+- **Two new motions, free.** Its Walking and Running animations extracted to
+  `actor_walk` (1.0s, 5.6 kB) and `actor_run` (0.6s, 3.7 kB) — usable by *every*
+  actor, which is the whole point of the clip format.
+- **`hero_walk` retired, on evidence.** New `verify-rig` check: a clip's **loop
+  seam**, the angle between its first and last frame, which the mixer wraps
+  straight across. `hero_walk` was a 4.2s "casual walk" take rather than a cycle
+  and seamed at 5.5° on `LeftLeg` — a visible hitch every loop. `actor_walk` is a
+  true cycle at 0.9°. Everything now walks on `actor_walk`. The check fails above
+  3°.
+- **`scripts/extract-clip.cjs`** pulls an animation out of any rigged GLB,
+  resampling the rotation curves at a uniform rate rather than copying keyframes,
+  so any source keyframe layout works. **`scripts/optimize-glb.cjs`** recompresses
+  embedded textures to JPEG and drops baked animations, decoding in the headless
+  Chromium the smoke test already needs. Both pipelines previously existed only as
+  prose or in a scratch directory.
+- **`--brighten` on the optimizer.** The wizard was authored against a neutral
+  studio background and read as a flat black silhouette against the game's bright
+  grass at the ~40 px an actor occupies. Lifting the texture (×1.75 brightness,
+  ×1.2 saturation) keeps the fix in the asset instead of special-casing one model
+  at runtime.
+- The static `hero.glb` was removed — no skeleton, and only ever a fallback for
+  the mesh that has now landed. Model payload is 2.1 MB total.
+- 25/25 rig · 79/79 QC · 47/47 UI audit · 5/5 smoke.
+
+---
+
 ## 2026-08 · Phase C — storage invariant, shared animation clips, the wiki
 
 - **The storage cap is now an invariant, and it means bulk resources.** `addItem`

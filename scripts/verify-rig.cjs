@@ -81,10 +81,16 @@ for (const f of files) {
 }
 console.log("");
 
-// Every model that is meant to animate must actually carry a clip.
+// Every rigged model must have SOME animation available. A baked clip counts, and
+// so does the shared clip library — a mesh generated purely to be driven by
+// shared clips carries no animation of its own, and that is the preferred shape.
+const sharedClipCount = fs.existsSync(path.join(DIR, "clips"))
+  ? fs.readdirSync(path.join(DIR, "clips")).filter((f) => f.endsWith(".clip.json")).length
+  : 0;
 for (const [name, m] of Object.entries(info)) {
-  if (name === "hero") continue; // the un-rigged original is a known static mesh
-  add(`${name}: has at least one animation clip`, m.anims.length > 0, m.anims.join(", ") || "none");
+  if (!m.joints.length) continue; // a static prop is not expected to animate
+  const via = m.anims.length ? m.anims.join(", ") : sharedClipCount ? `${sharedClipCount} shared clips` : "none";
+  add(`${name}: has an animation source`, m.anims.length > 0 || sharedClipCount > 0, via);
 }
 
 // Per-character skeleton compatibility: files sharing a prefix must share bones.
@@ -177,6 +183,21 @@ for (const [base, members] of Object.entries(groups)) {
       worst = Math.max(worst, Math.abs(Math.sqrt(sum) - 1));
     }
     add(`clip ${name}: quaternions are unit length`, worst < 0.01, `max err ${worst.toFixed(4)}`);
+
+    // Loop seam: a cycle clip's last frame is meant to meet its first, and the
+    // mixer wraps straight from one to the other. A large gap is a visible pop
+    // every cycle — which is how a 4.2s "casual walk" take was caught reading as
+    // a limp (5.5 degrees on LeftLeg) next to a true 1s cycle's 0.9.
+    let seam = 0, seamBone = "";
+    for (let i = 0; i < c.bones.length; i++) {
+      const first = i * c.frames * 4;
+      const last = first + (c.frames - 1) * 4;
+      let dot = 0;
+      for (let k = 0; k < 4; k++) dot += (q[first + k] / 32767) * (q[last + k] / 32767);
+      const deg = (2 * Math.acos(Math.min(1, Math.abs(dot))) * 180) / Math.PI;
+      if (deg > seam) { seam = deg; seamBone = c.bones[i]; }
+    }
+    add(`clip ${name}: loops without a pop`, seam < 3, `${seam.toFixed(1)}deg on ${seamBone}`);
 
     for (const [actor, bones] of riggedBones) {
       const missing = c.bones.filter((b) => !bones.has(b));
