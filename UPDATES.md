@@ -6,6 +6,31 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase B — animation states wired, generated model manifest
+
+- **The state machine now has callers.** `spawnActor().play(state)` is driven from
+  real game state: the hero from the frame loop (walk/idle) plus `gather` on
+  skill/craft start; villagers from `NpcSystem.update()` (walk while travelling,
+  idle when stopped); monsters from `CombatSystem.update()` (walk when their tile
+  changed, else idle) with `attack` fired on the swing. Until now nothing called
+  `play()` — the machine existed but every actor still sat on one clip.
+- **The hero goes through the shared loader.** `main.ts` had a bespoke
+  `GLTFLoader` call passing only `gltf.scene`, discarding `gltf.animations`, which
+  is why the hero could only ever be static. It now uses `spawnActor` like every
+  other actor, keeping the procedural figure as fallback.
+- **`ModelManifest.ts` is generated from `public/models` at build time**
+  (`prebuild`/`predev`). `ACTOR_CLIPS` can name clips that don't exist yet — the
+  loader skips anything not shipped instead of 404ing on every boot, and a file
+  lights up the moment it's dropped in. `base` also accepts a candidate list, so
+  the hero names its rigged clips first and the static original as fallback.
+  Caught by the boot smoke test, which failed on the 404s.
+- **Desktop HUD guard.** `onMouseDown` lacked the guard its touch counterpart has,
+  so pressing a HUD button also started a camera pan.
+
+- 70/70 QC + 3/3 rig + 5/5 smoke.
+
+---
+
 ## 2026-08 · Phase B prep — model pipeline, 93% smaller assets
 
 - **Textures recompressed: 21.5 MB → 1.53 MB (-93%).** Every character GLB was

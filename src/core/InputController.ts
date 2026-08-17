@@ -220,6 +220,10 @@ export class InputController {
 
   // ————— Mouse —————
   private onMouseDown = (e: MouseEvent) => {
+    // Same HUD guard the touch path uses: a press on a panel/button must not
+    // start a camera pan, or dragging off a button drags the world with it.
+    const target = e.target as HTMLElement;
+    if (target?.closest?.(".hud-slot, .bar, .panel, .modal, button, a, input, .combat-tray, [data-hud]")) return;
     this.pointerDown = true;
     this.moved = false;
     this.startX = this.lastX = e.clientX;

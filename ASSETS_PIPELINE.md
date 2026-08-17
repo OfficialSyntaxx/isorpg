@@ -45,15 +45,42 @@ Useful clip ids (`animation_actions` tool searches all 678):
 
 Always preflight with `get_cost: true` first.
 
+## Shrink it first
+
+Rigged output is texture-heavy — the source models were 93-96% texture (one
+2048x2048 PNG each). Always run:
+
+```
+node scripts/optimize-glb.cjs <file.glb> --in-place
+```
+
+512px JPEG at q0.85 took the shipped model set from 21.5 MB to 1.53 MB (-93%)
+with no visible change at gameplay zoom. This is also what gets a rigged clip
+under the 25 MB upload ceiling.
+
 ## Installing the result
 
-1. Download each result GLB.
+1. Download each result GLB and optimise it (above).
 2. Drop it in `public/models/` named `<character>_<state>.glb`
    (e.g. `hero_idle.glb`, `hero_walk.glb`).
-3. Register it in `ACTOR_CLIPS` in `src/core/Model.ts`.
-4. Run `npm test` — `scripts/verify-rig.cjs` reports the inventory and fails if a
-   character's files don't share one skeleton, or if a clip binds to bones the
-   base rig doesn't have.
+3. Register it in `ACTOR_CLIPS` in `src/core/Model.ts`. A character's `base` may
+   be a list — name the rigged file first and the un-rigged original as fallback,
+   so the manifest is valid before and after the asset lands.
+4. Run `npm test`. It regenerates `src/core/ModelManifest.ts` from what's actually
+   in `public/models`, so the loader never requests a file that isn't shipped, and
+   `scripts/verify-rig.cjs` fails if a character's files don't share one skeleton
+   or a clip binds to bones the base rig lacks.
+
+## Animation states
+
+`spawnActor(name)` returns an `AnimatedActor` with `play(state)`. States are
+`idle | walk | attack | gather | hurt | die`; a missing state falls back to the
+nearest available one, so partial clip coverage degrades gracefully. Driven from:
+
+- hero — `main.ts` frame loop (walk/idle) plus gather on skill/craft start
+- villagers — `NpcSystem.update()` (walk while travelling, idle when stopped)
+- monsters — `CombatSystem.update()` (walk when the tile changed, else idle) and
+  `attack` on the swing
 
 ## Notes
 

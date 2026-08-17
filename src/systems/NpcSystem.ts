@@ -6,7 +6,7 @@ import type { Grid } from "../world/Grid";
 import type { TownBuilding } from "../state/GameState";
 import type { BuildingType } from "../data/Buildings";
 import { makeVillager, makeCritter } from "../generators/Villager";
-import { spawnModel } from "../core/Model";
+import { spawnActor, type AnimatedActor } from "../core/Model";
 import { findPath } from "../ai/AStar";
 
 export interface NpcLines {
@@ -111,6 +111,8 @@ export interface NpcEntity {
   lastInspect: { type: string; until: number } | null;
   talkIdx: number;
   mesh: THREE.Group;
+  /** Rigged GLB + its clip state machine, once loaded (null = procedural figure). */
+  actor?: AnimatedActor | null;
 }
 
 export interface NpcSystemOptions {
@@ -150,18 +152,21 @@ export class NpcSystem {
       mesh.position.set(start.x, 0, start.y);
       this.scene.add(mesh);
       // Villagers: swap the procedural figure for the animated rigged GLB.
-      if (def.kind === "villager") {
-        spawnModel("villager").then((m) => {
-          if (!m) return;
-          for (const c of [...mesh.children]) c.visible = false;
-          m.scale.multiplyScalar(1.05);
-          mesh.add(m);
-        });
-      }
-      this.entities.push({
+      const entity: NpcEntity = {
         def, tile: start, target: null, stepAcc: 0, idleAcc: 0,
         task: "wander", taskAcc: 0, path: null, pathIdx: 0, buildingType: null, lastInspect: null, talkIdx: 0, mesh,
-      });
+        actor: null,
+      };
+      if (def.kind === "villager") {
+        spawnActor("villager").then((a) => {
+          if (!a) return;
+          for (const c of [...mesh.children]) c.visible = false;
+          a.root.scale.multiplyScalar(1.05);
+          mesh.add(a.root);
+          entity.actor = a;
+        });
+      }
+      this.entities.push(entity);
     }
   }
 
@@ -266,6 +271,10 @@ export class NpcSystem {
     const t = performance.now() / 1000;
     for (const e of this.entities) {
       const moving = e.task === "to_fire" || e.task === "to_building";
+      // Drive the rigged clip from the same flag the procedural bob uses, so a
+      // villager walks while travelling and idles while stopped. Falls back to
+      // whatever clip exists until a walk clip is generated for this actor.
+      e.actor?.play(moving ? "walk" : "idle");
       if (e.def.kind === "critter") {
         const hop = moving ? Math.abs(Math.sin(t * 6 + e.tile.x)) * 0.12 : Math.abs(Math.sin(t * 2.2 + e.tile.x)) * 0.05;
         e.mesh.position.y = hop;

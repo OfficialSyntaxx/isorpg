@@ -7,7 +7,7 @@ import { createFreshState } from "./state/GameState";
 import { makeHero } from "./generators/Character";
 import { play as sfx } from "./core/Sfx";
 import { setMusicZone } from "./core/Music";
-import { updateModelMixers } from "./core/Model";
+import { updateModelMixers, spawnActor, type AnimatedActor, type ActorState } from "./core/Model";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { WorldSystem } from "./systems/WorldSystem";
 import { MovementSystem } from "./systems/MovementSystem";
@@ -56,6 +56,8 @@ class Game {
   input!: InputController;
   ui!: UI;
   hero!: ReturnType<typeof makeHero>;
+  /** Rigged hero + its clip state machine, once the GLB loads. */
+  private heroActor: AnimatedActor | null = null;
 
   private pendingNode: ResourceNode | null = null;
   private activeSkill: SkillId | null = null;
@@ -87,21 +89,20 @@ class Game {
     this.hero = makeHero();
     this.engine.scene.add(this.hero.group);
 
-    // A.3: swap in the low-poly hero GLB when it loads (keeps the procedural
-    // box figure as an instant, zero-asset fallback if the fetch fails).
-    try {
-      const heroURL = new URL("models/hero.glb", window.location.href).href;
-      new GLTFLoader().load(
-        heroURL,
-        (gltf) => {
-          try { this.hero.enableModel(gltf.scene); } catch { /* keep boxes */ }
-        },
-        undefined,
-        () => { /* fetch failed — procedural hero stays */ }
-      );
-    } catch {
-      /* noop */
-    }
+    // The hero goes through the same loader as every other actor, so it gets an
+    // AnimationMixer and a clip state machine. The bespoke GLTFLoader call here
+    // passed only `gltf.scene` and dropped `gltf.animations` entirely, which is
+    // why the hero could only ever be a static mesh. The procedural box figure
+    // stays as an instant, zero-asset fallback if the fetch fails.
+    spawnActor("hero")
+      .then((a) => {
+        if (!a) return;
+        try {
+          this.hero.enableModel(a.root);
+          this.heroActor = a;
+        } catch { /* keep boxes */ }
+      })
+      .catch(() => { /* procedural hero stays */ });
 
     // P1 targeting ring (hidden until the player taps something).
     const ring: SelectionRing = makeSelectionRing();
@@ -232,6 +233,7 @@ class Game {
       onActionStart: (node) => {
         this.activeSkill = node.def.skill;
         this.hero.setAction(animFor(node.type));
+        this.heroActor?.play("gather");
       },
       onActionEnd: (node, reason) => {
         if (reason === "level_shortfall") {
@@ -318,7 +320,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
 
     // Crafting (Cooking / Smithing / Carpentry) events → HUD
     this.craft.setCallbacks({
-      onStart: (r) => { this.skill.interrupt(); this.activeSkill = r.skill; this.hero.setAction("chop"); },
+      onStart: (r) => { this.skill.interrupt(); this.activeSkill = r.skill; this.hero.setAction("chop"); this.heroActor?.play("gather"); },
       onCraft: (e) => {
         this.activeSkill = e.recipe.skill;
         sfx(e.recipe.skill === "cooking" ? "craft_cook" : e.recipe.skill === "smithing" ? "craft_smelt" : "craft_carpentry");
@@ -742,6 +744,14 @@ private onArrive(x: number, y: number) {
     // Camera drifts with the hero while he walks; a manual drag takes over.
     this.input.setFollow(this.movement.isMoving ? { x: this.hero.group.position.x, z: this.hero.group.position.z } : null);
     this.input.updateFollow(dt);
+    // Hero animation state, derived each frame from what it is actually doing.
+    // Gather/attack are pushed by their own callbacks and win until the next
+    // change; this covers the walk/idle baseline.
+    if (this.heroActor) {
+      const busy = this.skill.hasActive || this.craft.hasActive;
+      const state: ActorState = this.movement.isMoving ? "walk" : busy ? "gather" : "idle";
+      this.heroActor.play(state);
+    }
     this.input.updateKeyboard(dt);
     // Keep the camera on the hero every frame (drag pans relative to it).
     this.input.update();

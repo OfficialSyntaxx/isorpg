@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { ACTOR_HEIGHT, MONSTER_SCALE } from "../core/Scale";
 import type { MonsterDef } from "../data/Combat";
 import { MONSTER_STYLES } from "../data/Combat";
-import { spawnModel } from "../core/Model";
+import { spawnActor, type AnimatedActor } from "../core/Model";
 
 /** Rigged bosses render their generated animated GLB over the box fallback. */
 const RIGGED: Record<string, string> = {
@@ -26,6 +26,10 @@ export interface MonsterCombat {
   attackAcc: number;   // ticks since its last strike
   flashUntil: number;  // timestamp of red hit-flash
   enraged: boolean;    // P4b: boss below 50% HP — faster, hits harder
+  /** Rigged GLB + clip state machine, once loaded (null = procedural boxes). */
+  actor?: AnimatedActor | null;
+  /** Tile it occupied last tick — used to tell walking from standing. */
+  lastTile?: { x: number; y: number };
 }
 
 const fistGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
@@ -94,19 +98,27 @@ export function spawnMonster(type: string, def: MonsterDef, gx: number, gy: numb
   const group = buildMonsterMesh(type, seed);
   group.position.set(gx, 0, gy);
 
+  // Unique id so multiple monsters of one type can coexist in the registry.
+  const id = `${type}_${gx}_${gy}`;
+  const out = buildMonster(id, def, gx, gy, seed, group);
+
   // Rigged bosses: swap the placeholder boxes for the animated GLB when ready.
+  // Built after `out` exists so the async handler can attach the actor to it.
   const rig = RIGGED[type];
   if (rig) {
     const big = type === "cave_brute" ? 1.5 : 1.35;
-    spawnModel(rig).then((model) => {
-      if (!model) return;
+    spawnActor(rig).then((a) => {
+      if (!a) return;
       for (const child of [...group.children]) child.visible = false;
-      model.scale.multiplyScalar(big);
-      group.add(model);
+      a.root.scale.multiplyScalar(big);
+      group.add(a.root);
+      out.actor = a;
     });
   }
-  // Unique id so multiple monsters of one type can coexist in the registry.
-  const id = `${type}_${gx}_${gy}`;
+  return out;
+}
+
+function buildMonster(id: string, def: MonsterDef, gx: number, gy: number, seed: number, group: THREE.Group): MonsterCombat {
   return {
     id, def, tile: { x: gx, y: gy }, home: { x: gx, y: gy }, seed,
     hp: def.hp, maxHp: def.hp, group,

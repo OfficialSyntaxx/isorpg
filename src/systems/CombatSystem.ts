@@ -148,6 +148,7 @@ export class CombatSystem {
     const atkTick = target.def.boss && target.enraged ? 2 : target.def.attackTick;
     if (this.monsterCanHit(target) && target.attackAcc >= atkTick) {
       target.attackAcc = 0;
+      target.actor?.play("attack");
       this.tryMonsterAttack(target);
     }
 
@@ -388,6 +389,16 @@ export class CombatSystem {
 
   /** Respawn dead monsters late in the tick. */
   update(dtMs: number, now: number) {
+    // Animation state per monster: walking if it moved since the last update,
+    // otherwise idle. Attack is triggered on the swing itself (see tick()), and
+    // wins until the next state change because play() ignores repeats.
+    for (const m of this.monsters.values()) {
+      if (!m.dead && m.actor) {
+        const moved = !m.lastTile || m.lastTile.x !== m.tile.x || m.lastTile.y !== m.tile.y;
+        m.actor.play(moved ? "walk" : "idle");
+      }
+      m.lastTile = { x: m.tile.x, y: m.tile.y };
+    }
     for (const m of this.monsters.values()) {
 if (m.dead && now >= m.respawnAt) {
           m.hp = m.def.hp;

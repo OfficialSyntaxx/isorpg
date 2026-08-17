@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { ACTOR_HEIGHT } from "./Scale";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { hasModel } from "./ModelManifest";
 
 interface Template {
   scene: THREE.Group;
@@ -24,8 +25,14 @@ interface Template {
 export type ActorState = "idle" | "walk" | "attack" | "gather" | "hurt" | "die";
 
 interface ActorDef {
-  /** GLB providing the mesh + skeleton. Should itself be a rigged file. */
-  base: string;
+  /**
+   * GLB(s) providing the mesh + skeleton, tried in order — first that loads wins.
+   * A list lets a character name its rigged file first and the un-rigged original
+   * as a fallback, so the manifest is correct both before and after the rigged
+   * asset lands. Listing a file that does not exist yet would otherwise 404 on
+   * every boot.
+   */
+  base: string | string[];
   /** state → GLB whose first clip drives that state. */
   states: Partial<Record<ActorState, string>>;
   /**
@@ -44,7 +51,8 @@ interface ActorDef {
  */
 export const ACTOR_CLIPS: Record<string, ActorDef> = {
   hero: {
-    base: "hero_idle",
+    // hero_idle/hero_walk are the rigged clips; hero.glb is the static original.
+    base: ["hero_idle", "hero"],
     states: { idle: "hero_idle", walk: "hero_walk" },
   },
   villager: {
@@ -129,8 +137,16 @@ export function retargetable(clip: THREE.AnimationClip): THREE.AnimationClip {
 export async function spawnActor(name: string): Promise<AnimatedActor | null> {
   const def = ACTOR_CLIPS[name];
   try {
-    const baseName = def?.base ?? name;
-    const base = await template(baseName);
+    // Try each candidate base until one loads, skipping any GLB that isn't
+    // actually shipped (see ModelManifest) so we never fire a 404.
+    const declared = def ? (Array.isArray(def.base) ? def.base : [def.base]) : [name];
+    const candidates = declared.filter(hasModel);
+    let baseName = "";
+    let base: Template | null = null;
+    for (const c of candidates) {
+      try { base = await template(c); baseName = c; break; } catch { /* try the next */ }
+    }
+    if (!base) return null;
     // SkeletonUtils.clone rebinds SkinnedMesh → cloned Skeleton. Object3D.clone
     // does not, so every clone would animate the template's bones instead.
     const root = cloneSkinned(base.scene) as THREE.Object3D;
@@ -148,7 +164,7 @@ export async function spawnActor(name: string): Promise<AnimatedActor | null> {
       // so several states sharing one file cost a single fetch.
       await Promise.all(wanted.map(async (state) => {
         const file = states[state];
-        if (!file) return;
+        if (!file || !hasModel(file)) return;
         try {
           const t = file === baseName ? base : await template(file);
           const raw = t.clips[0];
