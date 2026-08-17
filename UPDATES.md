@@ -6,6 +6,33 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase B prep — model pipeline, 93% smaller assets
+
+- **Textures recompressed: 21.5 MB → 1.53 MB (-93%).** Every character GLB was
+  93-96% texture — one 2048x2048 PNG per model, for actors ~40 px tall on screen.
+  `scripts/optimize-glb.cjs` decodes in headless Chromium (the bundled ffmpeg is
+  built `--disable-everything` and cannot decode PNG), resizes to 512px, encodes
+  JPEG q0.85 and repacks the GLB. Every material is `alphaMode OPAQUE`, so JPEG
+  loses nothing, and it stays core glTF 2.0 (no `EXT_texture_webp` needed).
+  Also gets a rigged clip comfortably under the 25 MB upload ceiling.
+- **Skinned clones fixed.** `spawnModel` used `Object3D.clone()`, which does not
+  rebind a SkinnedMesh to its cloned skeleton — every villager clone was driving
+  the shared template's bones. Now `SkeletonUtils.clone()`.
+- **…which unmasked a latent sizing bug.** `Box3.setFromObject()` on a SkinnedMesh
+  measures the *posed* skeleton, and a fresh clone has stale bone matrices: cold,
+  it reports ~0.02 units instead of 1.7, so `ACTOR_HEIGHT / size.y` scaled actors
+  ~75x and one texture swallowed the screen. Fixed with
+  `updateMatrixWorld(true)` before measuring plus a floor that refuses an
+  implausible measurement. The old broken clone had hidden this.
+- **Animation state machine** (`spawnActor`) replaces `clips[0]`-forever:
+  named states with crossfade and graceful fallback, ready for the hero clips.
+- **`scripts/verify-rig.cjs`** (in `npm test`) reports the model inventory and
+  checks that a character's per-clip GLBs share one skeleton.
+
+- 70/70 QC + 3/3 rig + 5/5 smoke.
+
+---
+
 ## 2026-08 · Phase A follow-up — world scale & texture
 
 The "miniature world" read, traced to two causes and fixed together.

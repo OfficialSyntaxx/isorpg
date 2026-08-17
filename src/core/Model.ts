@@ -201,13 +201,24 @@ export async function spawnModel(name: string): Promise<THREE.Object3D | null> {
   return a ? a.root : null;
 }
 
-/** Scale a rig to ACTOR_HEIGHT and seat its feet on the group origin. */
+/**
+ * Scale a rig to ACTOR_HEIGHT and seat its feet on the group origin.
+ *
+ * updateMatrixWorld(true) is REQUIRED before measuring. Box3.setFromObject() on a
+ * SkinnedMesh derives its bounds from the posed skeleton, and a freshly cloned
+ * rig still has stale bone matrices — measured cold it collapses to ~0.02 units,
+ * so ACTOR_HEIGHT / that scales the actor by ~75x and it swallows the screen.
+ * The old Object3D.clone() never hit this only because its skeleton was left
+ * unbound, so three.js fell back to the plain-geometry path.
+ */
 export function sizeToActor(scene: THREE.Object3D): void {
-  const box = new THREE.Box3().setFromObject(scene);
+  scene.updateMatrixWorld(true);
   const size = new THREE.Vector3();
-  box.getSize(size);
-  const s = ACTOR_HEIGHT / Math.max(size.y, 0.01);
-  scene.scale.setScalar(s);
+  new THREE.Box3().setFromObject(scene).getSize(size);
+  if (!Number.isFinite(size.y) || size.y <= 0.05) return; // refuse a bad measurement
+  scene.scale.setScalar(ACTOR_HEIGHT / size.y);
+
+  scene.updateMatrixWorld(true);
   const b2 = new THREE.Box3().setFromObject(scene);
   const c = new THREE.Vector3();
   b2.getCenter(c);

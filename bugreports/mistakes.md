@@ -104,6 +104,29 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
 - **[world] Per-tile random for terrain type reads as confetti** — coherent
   features need low-frequency noise, not an independent roll per tile.
 
+## Phase B prep 2026-08-16 (rigged models)
+- **[render] Skinned bounds measured before updateMatrixWorld → 75x actors** —
+  switching clones to `SkeletonUtils.clone()` (correct: `Object3D.clone()` never
+  rebinds a SkinnedMesh to its cloned skeleton) made `sizeToActor` blow every NPC
+  up to ~75x, filling the screen with one texture. Cause: `Box3.setFromObject()`
+  on a SkinnedMesh derives bounds from the *posed* skeleton, and a fresh clone
+  still has stale bone matrices — measured cold it returns ~0.02 units instead of
+  1.7, so `ACTOR_HEIGHT / size.y` explodes. `Object3D.clone()` had masked it,
+  because an unbound skeleton falls back to the plain-geometry path.
+  Fix: `scene.updateMatrixWorld(true)` before measuring, plus a sanity floor that
+  refuses an implausible measurement rather than scaling by it.
+  **Lesson: fixing one bug can unmask another that the first was hiding. The
+  clone fix was right; it just exposed a latent measurement bug.**
+  **Second lesson: I "fixed" this twice by reasoning about it and was wrong both
+  times — a geometry-only bounding box reads ~0.02 for a skinned mesh because the
+  bind-pose geometry is tiny and the size lives in the bone transforms. Logging
+  the actual numbers settled it in one run. Instrument before theorising.**
+- **[assets] Character GLBs were 93-96% texture** — a single 2048x2048 PNG was
+  ~5.7 MB of each 6.1 MB model, for actors that render ~40 px tall. Recompressing
+  to 512px JPEG (every material is alphaMode OPAQUE, so no alpha to lose) took
+  the model set from 21.5 MB to 1.53 MB with no visible change.
+  **Lesson: check where the bytes actually are before optimising geometry.**
+
 ## Open threads (not yet filed as bugs)
 - **[save] Offline storage cap is per-skill, not global** — `computeOffline()`
   caps each skill at `Math.min(actions * yield, storageCap)` independently, so
