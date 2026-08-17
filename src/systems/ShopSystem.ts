@@ -5,7 +5,7 @@
 import * as THREE from "three";
 import type { Grid } from "../world/Grid";
 import type { GameState } from "../state/GameState";
-import { ITEMS, itemIcon } from "../data/Items";
+import { ITEMS, itemIconHtml } from "../data/Items";
 import { countItem, addItem, removeItem, type InventoryComponent } from "../components/Inventory";
 
 export interface ShopStockRow {
@@ -170,7 +170,7 @@ export class ShopSystem {
       const it = ITEM(s.id);
       if (!it || isCoin(s.id) || it.type === "TOOL" || it.value <= 0) continue;
       sellable.push({
-        itemId: s.id, name: it.name, icon: itemIcon(s.id), qty: s.amount,
+        itemId: s.id, name: it.name, icon: itemIconHtml(s.id), qty: s.amount,
         price: Math.max(1, Math.floor(it.value * sellMultFor(mkt.supply[s.id] ?? 0, mkt.demand[s.id] ?? 0))),
       });
     }
@@ -178,7 +178,7 @@ export class ShopSystem {
     return {
       coins,
       stock: STOCK.map((s) => ({
-        itemId: s.itemId, name: ITEM(s.itemId)?.name ?? s.itemId, icon: itemIcon(s.itemId),
+        itemId: s.itemId, name: ITEM(s.itemId)?.name ?? s.itemId, icon: itemIconHtml(s.itemId),
         price: Math.max(1, Math.floor(s.price * buyMultFor(mkt.supply[s.itemId] ?? 0, mkt.demand[s.itemId] ?? 0, coins))),
       })),
       sellable,

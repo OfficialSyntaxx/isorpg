@@ -6,6 +6,58 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Post-H.1 polish — hero scale, camera, and real transparent icons
+
+Two follow-up complaints on the just-shipped H.1 icons and the existing hero
+render, addressed before starting H.2 (sky regen):
+
+**Hero looked microscopic.** `ACTOR_HEIGHT` (`src/core/Scale.ts`) went from
+1.25 to 1.7 tiles — the hero was maybe half a tree tall on screen, closer to
+"prop" than "protagonist"; 1.7 puts an actor at roughly tree-trunk height.
+Paired with a tighter default camera zoom (`src/core/InputController.ts`:
+`DEFAULT_ZOOM` 1.75→2.15, `ZOOM_MAX` 1.9→2.5, `ZOOM_MIN` unchanged at 0.45 so
+the wide view is still reachable). Both are pure visual-scale constants —
+confirmed via grep that `ACTOR_HEIGHT` is used only for mesh scaling
+(`Character.ts`, `Monster.ts`, `Model.ts`), never in collision or tile
+occupancy math, so this couldn't touch gameplay. Verified with pixel-matched
+before/after crops (not full-scene screenshots, which looked deceptively
+similar at first glance) — hero height increased ~50–67% on screen.
+
+**Item icons had a visible tan card background.** `scripts/slice-atlas.cjs`
+gained a background-cutout pass and all 62 icons were re-sliced from the
+original 4 sheets with it. Getting the cutout right took several wrong
+turns, documented in the script's own comments and in
+`bugreports/mistakes.md` — briefly: a naive flood-fill leaked straight
+through anti-aliased edges and ate whole icons; classifying every pixel
+against a single "the border is one background colour" reference broke on
+icons whose border legitimately has two populations (card tan + a drop
+shadow) or where the item's own art bled to the crop edge; one whole sheet
+draws a thin dark card-outline stroke right at the crop boundary, which
+poisoned every border sample until reference sampling moved inward past it;
+and the safety net that was supposed to catch "the whole card matched and
+the icon vanished" was catching small legitimate icons (a handful of seeds,
+a tiny pet) as if they were failures, because both cases leave under 8% of
+the cell opaque. Final state: bin-filtered border-colour references (keeps
+multi-modal legitimate backgrounds, drops rare bleed outliers), the card's
+own margin/outline forced into the cut unconditionally, classification-
+gated flood-fill from there, and a 0.5%-opaque sanity floor. All 62 icons
+re-verified — 0 flagged as suspicious cuts, spot-checked visually across all
+4 sheets (previously-worst cases: `cartographers_tome`, `coins`,
+`pet_zombie`, `wayfarers_lantern`, plus the sparse `cabbage_seed` /
+`redberry_seed` and the misc/keys/pets sheet's thicker outline that needed a
+larger inset).
+
+Also extended `itemIconHtml()` (real icon image, falls back to emoji) to the
+two call sites that were still using the emoji-only `itemIcon()`:
+`ShopSystem.ts` (buy/sell listings) and `LabourSystem.ts` (village stock
+claim panel) — both panels were shipping H.1's real icons already via other
+paths, these two just hadn't been switched over. The Combat panel's weapon
+stat row also now shows the equipped weapon's icon next to its name.
+
+Gates: 321/321 QC, 5/5 smoke, visual baseline re-accepted (31.36% intended
+drift from the scale/zoom change, reviewed and confirmed as the change
+working correctly before `--update`), `npm run audit` clean.
+
 ## 2026-08 · Phase H.1 complete — the transfer blocker resolved itself
 
 The blocker below was environment-specific, not fundamental: the user attached

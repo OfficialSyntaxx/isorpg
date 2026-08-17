@@ -3,6 +3,68 @@
 Convention: append every defect here with a one-line category tag, plus a
 details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
 
+## Post-H.1 icon cutout 2026-08-17
+- **[tooling] Five separate wrong turns writing a background-removal
+  heuristic (`scripts/slice-atlas.cjs`) before it actually worked on all 62
+  real icons**, each one only caught by testing against real generated art
+  instead of trusting a synthetic test or a plausible-looking diff:
+  1. Chain flood-fill (grow through neighbours close in colour) leaked
+     straight through anti-aliased edges — a gradient blending tan into a
+     saturated object colour is a chain of small steps even though the
+     endpoints are far apart, so it ate whole icons. Caught by a purpose-
+     built synthetic test (tan card, red circle), not a real icon.
+  2. Fixed non-chained classification against a handful of border samples
+     fixed the leak but missed coverage on a real vignette-shaded card.
+  3. Widening to dense per-3px border sampling improved coverage but made
+     one icon (`cartographers_tome`) far worse — its own art happened to
+     bleed into the crop's corners, and denser sampling meant more of those
+     bad samples got treated as "background".
+  4. Rejecting samples far from the per-channel median of all border
+     samples fixed the tome, but broke any icon whose border legitimately
+     has two different background populations (e.g. `coins`' drop shadow
+     covers two whole edges while the other two stay plain tan) — the
+     median collapsed to whichever population happened to be larger,
+     rejecting the other as an "outlier" and leaving it uncut.
+  5. Dropping rejection entirely (classify against every raw border sample)
+     fixed the two-population case but reopened the opposite failure: any
+     item with SOME surface colour near the card tone (grey tools, pale
+     food) got fully erased, because enough of its own pixels now matched
+     some border reference.
+  **What actually worked**: bin raw border samples by quantized colour and
+  keep only bins that are a real population (≥3% of samples) — keeps
+  legitimate multi-modal backgrounds, drops rare bleed contamination without
+  needing a hand-tuned single reference. Separately, two more bugs stacked
+  on top of the algorithm question, both invisible without directly
+  inspecting the failing icons' raw pixels: (a) one whole sheet draws every
+  card with a thin dark outline stroke right at the crop edge, poisoning
+  every border sample until sampling moved a few pixels inward past it —
+  and even after that, the flood-fill *seed* still started exactly on that
+  outline and could never step past it into the real background, since
+  growth was gated on matching a reference the outline pixels don't match;
+  fixed by forcing the whole outline-covered margin into the cut
+  unconditionally rather than gating the seed on classification too. (b) the
+  safety net added to catch "the whole card matched and the icon vanished"
+  (bail out if <8% of the cell stayed opaque) was itself a false positive
+  generator: a handful of scattered seeds or a small pet on a big card is a
+  legitimate icon that rightly leaves under 8% opaque. Had to drop the floor
+  to 0.5% — the actual signal was "basically the entire cell", not "most of
+  the cell".
+  **Lesson: `Read`-ing a rendered PNG through the tool doesn't reveal alpha**
+  — a transparent background renders as flat white in the tool's preview,
+  visually indistinguishable from an opaque white card at a glance. Several
+  iterations here were nearly declared "looks fine" from a Read alone before
+  switching to an actual pixel/alpha inspection script (canvas
+  `getImageData`, not eyeballing the thumbnail) — that's the only way any of
+  the real regressions (still-tan corners, an unmoved transparentPct number
+  across "fixed" runs) were caught at all.
+  **Second lesson: sample a lot of border pixels directly (raw RGB dumps,
+  not just a computed pass/fail) before changing thresholds** — every fix
+  after the first was informed by directly reading actual corner/edge pixel
+  values from the failing cell, not by guessing at a new constant. Tuning a
+  distance threshold blind, without first confirming what the border colours
+  in the failing case actually *are*, wasted at least two of the five
+  iterations above.
+
 ## Phase H.1 2026-08-17
 - **[tooling] No reliable path to move generated images from the Higgsfield
   sandbox into the repo.** Direct download of the generated sheets hit a 403

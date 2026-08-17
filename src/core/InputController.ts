@@ -24,8 +24,8 @@ export interface InputCallbacks {
 }
 
 const ZOOM_MIN = 0.45;
-const DEFAULT_ZOOM = 1.75;
-const ZOOM_MAX = 1.9;
+const DEFAULT_ZOOM = 2.15;
+const ZOOM_MAX = 2.5;
 const TAP_DRAG_MS = 240; // max tap duration (ms)
 const TAP_DRAG_PX = 10;  // max travel before it's a pan
 
@@ -35,8 +35,10 @@ export class InputController {
   private cbs: InputCallbacks;
 
   // A frustum of 30 at zoom 1 shows ~30 tiles vertically, which on the 42x42
-  // map renders the hero about ten pixels tall. Open nearer to character scale;
-  // the player can still pinch/wheel out to ZOOM_MIN for the wide view.
+  // map renders the hero about ten pixels tall. Open nearer to character scale
+  // — even paired with the bigger ACTOR_HEIGHT (Scale.ts), the hero read as
+  // "microscopic" at the old 1.75 default, so this opens tighter still. The
+  // player can always pinch/wheel out to ZOOM_MIN for the wide view.
   private pan = { x: 0, z: 0, zoom: DEFAULT_ZOOM };
   // accumulated raw pan (world units) — camera target moves opposite drag
   private panWorld = { x: 0, z: 0 };

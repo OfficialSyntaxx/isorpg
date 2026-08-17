@@ -3,7 +3,7 @@
 // Persistent via GameState.town.labour (assignments, stock, accrual).
 import type { GameState } from "../state/GameState";
 import { addItem, type InventoryComponent } from "../components/Inventory";
-import { ITEMS, itemIcon } from "../data/Items";
+import { ITEMS, itemIconHtml } from "../data/Items";
 
 export type LabourJob = "woodcutting" | "mining";
 
@@ -133,7 +133,7 @@ export class LabourSystem {
       return { id: v.id, name: v.name, job: l.assignments[v.id] ?? null, tier: veteranTier(worked).label, hours: hoursLabel(worked), spec: s ? { role: s.role, perkName: s.perkName, icon: s.icon } : null };
     });
     const stock = Object.entries(l.stock).map(([itemId, qty]) => ({
-      itemId, qty, name: ITEMS[itemId]?.name ?? itemId, icon: itemIcon(itemId),
+      itemId, qty, name: ITEMS[itemId]?.name ?? itemId, icon: itemIconHtml(itemId),
     }));
     return { workers, stock };
   }

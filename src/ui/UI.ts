@@ -870,7 +870,7 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       <div class="set-row"><span>Strength</span><b>${str}</b></div>
       <div class="set-row"><span>Defense</span><b>${def}</b></div>
       <div class="set-row"><span>Hitpoints</span><b>${hpx}</b></div>
-      <div class="set-row"><span>Weapon</span><b>${weapon ? weapon.name : "Fists"}</b></div>
+      <div class="set-row"><span>Weapon</span><b>${weapon.itemId ? `<span class="inv-ico" style="margin-right:6px">${itemIconHtml(weapon.itemId)}</span>` : ""}${weapon.name}</b></div>
       <div class="set-row"><span>Kills</span><b>${Object.values(CombatSystem.kcCounts).reduce((a, b) => a + b, 0)}</b></div>
       <div class="combat-title">Fight Stance</div>
       <div class="tab-row">${styleBtns}</div>

@@ -18,11 +18,14 @@
 export const GROUND_Y = 0.6;
 
 /**
- * Standing height of a humanoid actor, in tiles. At 1.25 a hero is slightly
- * taller than the tile is wide, which is what reads as "a person on a path"
- * rather than a figurine on a board.
+ * Standing height of a humanoid actor, in tiles. 1.25 (a hero "slightly
+ * taller than the tile is wide") still read as a figurine next to a tree at
+ * TREE_SCALE 1.95 — the hero was maybe half a tree tall on screen, which is
+ * closer to "prop" than "protagonist". 1.7 puts an actor at roughly
+ * tree-trunk height: still clearly smaller than the canopy, but the biggest
+ * thing standing on the ground.
  */
-export const ACTOR_HEIGHT = 1.25;
+export const ACTOR_HEIGHT = 1.7;
 
 /** Bosses and large monsters multiply ACTOR_HEIGHT by their own factor. */
 export const MONSTER_SCALE: Record<string, number> = {
