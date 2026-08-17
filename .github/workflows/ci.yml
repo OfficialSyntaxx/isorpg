@@ -1,0 +1,75 @@
+name: CI
+
+# Build, test and boot the game on every push and PR.
+#
+# The smoke test needs a real browser: it loads the built bundle, watches for
+# page errors and failed asset requests, and screenshots the canvas to confirm
+# something was actually drawn. Two of this project's worst regressions — a boot
+# crash from a use-before-assign, and a skinned-clone bug that scaled every actor
+# 75x — were invisible to unit tests and obvious the moment a browser ran the
+# page. So Chromium is installed rather than letting smoke.cjs skip itself.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# A new push supersedes an in-flight run on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Chromium only — the smoke test and the visual-regression harness are the
+      # only browser consumers, and neither is cross-browser.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # tsc --noEmit + vite build. Also regenerates the model manifest, so a
+      # manifest committed out of step with public/models fails here.
+      - name: Build
+        run: npm run build
+
+      # UI audit + rig/clip verification + QC suite + wiki regeneration.
+      - name: Test
+        run: npm test
+
+      # The generated files must match what is committed, or the wiki and the
+      # manifest silently drift from the data they claim to describe.
+      - name: Check generated files are up to date
+        run: |
+          if ! git diff --quiet; then
+            echo "::error::Generated files are stale. Run 'npm test' and commit the result."
+            git diff --stat
+            git diff
+            exit 1
+          fi
+
+      - name: Smoke (boots the built game in Chromium)
+        run: node scripts/smoke.cjs
+
+      - name: Visual regression (opening frame)
+        run: node scripts/visual-regress.cjs
+
+      # The rendered frame and any diff, so a failure is diagnosable without
+      # reproducing it locally.
+      - name: Upload frame artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frames
+          path: .visual/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -6,6 +6,45 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase D — CI, and a visual gate on the opening frame
+
+- **CI exists.** `.github/workflows/ci.yml` runs on every push and PR: build,
+  UI audit, QC suite, rig/clip verification, wiki regeneration, boot smoke, and
+  visual regression. It installs Chromium rather than letting the browser tests
+  skip themselves — two of this project's worst regressions (a boot crash from a
+  use-before-assign, and a skinned-clone bug that scaled every actor 75×) were
+  invisible to unit tests and obvious the instant a browser loaded the page.
+  It also fails if a generated file is stale, so the wiki and the model manifest
+  cannot drift from the data they describe.
+- **The opening frame is now a gate.** Both Phase A defects were purely visual and
+  both shipped. `scripts/visual-regress.cjs` compares the first frame against
+  `tests/baseline/opening-frame.png`, writing a magenta diff on failure.
+- **Determinism comes from the app, not from luck.** `?canonicalFrame=<seconds>`
+  boots the whole game, waits for the rigged meshes to land, clears toasts, pins
+  animation time and draws exactly one frame — without ever starting the loop, so
+  no tick has moved an actor. Measured **0.00% drift across repeated runs**; a
+  camera that stops following the hero moves **73%** of pixels, a 20% tree-scale
+  change **7.3%**. It is also now the right way to take a clean screenshot.
+  - `Engine.renderCanonicalFrame(t)` settles the camera, zeroes shake (it uses
+    `Math.random()`) and runs frame handlers with dt 0.
+  - `setModelMixerTime(t)` pins mixers absolutely — they integrate deltas, so
+    their pose otherwise depends on how many frames happened to run.
+  - `whenActorsSettled()` resolves when no actor load is outstanding. Actor loads
+    are deliberately un-awaited so a slow GLB never holds up boot, which left
+    "is the world loaded?" unanswerable until now.
+  - `clearToasts()` — a 2.6 s fade is not part of a reproducible frame.
+- **The definite-assignment hole is gated, not removed.** The `!` assertions
+  remain. `audit-ui.cjs` check 7 fails the build on exactly the bug that bit us,
+  verified by re-injecting it: a premature use of `ui`, `dungeon`, `labour` or
+  `mapSys` each reports `this.X used at boot+3, assigned at boot+N`. Removing the
+  assertions means threading 196 `this.X` references through locals inside a
+  302-line `boot()` in the file that runs the whole game — a large diff whose only
+  payoff is moving detection from the audit to the compiler. Deferred deliberately;
+  reasoning recorded in REPAIR_PLAN.md.
+- 98/98 QC · 25/25 rig · 47/47 UI audit · 5/5 smoke · visual baseline clean.
+
+---
+
 ## 2026-08 · Phase C complete — mastery, weapons, and a name for the hero
 
 - **Mastery actually does something now.** It reused the *skill* XP curve, which

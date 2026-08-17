@@ -64,10 +64,30 @@ existing players keep the actions they actually performed. `selectWeapon()` in
 `data/Combat.ts` is the single answer to "what is the hero swinging?", enforcing
 `requiredAttack`; combat and the stats panel both call it. 98/98 QC.
 
-## Phase D — Release confidence (~1 session, run alongside)
-1. CI: build + test + smoke on every push, with a browser driver so smoke doesn't skip.
-2. Visual regression on the opening frame (would have caught both Phase A defects).
-3. Close the definite-assignment hole — `ui!: UI` is why the compiler stayed silent.
+## Phase D — Release confidence
+1. CI: build + test + smoke on every push, with a browser driver so smoke doesn't skip. ✅
+2. Visual regression on the opening frame (would have caught both Phase A defects). ✅
+3. Close the definite-assignment hole — `ui!: UI` is why the compiler stayed silent. ⚠️ gated, not removed
+
+Shipped: `.github/workflows/ci.yml` runs build + audit + QC + rig + wiki + smoke +
+visual regression on every push and PR, installing Chromium so nothing skips, and
+failing if a generated file (wiki, model manifest) is stale. `scripts/visual-regress.cjs`
+compares the opening frame to `tests/baseline/opening-frame.png`; determinism comes
+from `?canonicalFrame=0`, which boots the game, waits for rigged meshes, clears
+toasts, pins animation time and draws one frame without ever starting the loop.
+Measured: 0.00% drift across repeated runs; 73% on a camera that stops following the
+hero (Phase A defect #2), 7.3% on a 20% tree-scale change.
+
+**On item 3.** The `!` assertions are still there. Removing them means threading 196
+`this.X` references through locals inside a 302-line `boot()`, in the one file that
+runs the whole game — a large diff whose payoff is compile-time detection of a bug
+class that `audit-ui.cjs` check 7 already fails the build on. That check is verified
+against the original defect and is general: injecting a premature use of `ui`,
+`dungeon`, `labour` or `mapSys` each produces
+`FAIL boot(): no field used before it is assigned [this.X used at boot+3, assigned at boot+N]`.
+So the bug cannot ship, but the compiler still is not the thing stopping it. Worth
+doing when `boot()` is next restructured for another reason; not worth the risk on
+its own.
 
 ## Phase E — Unbuilt content
 Collection log viewer (S) · building upgrades beyond Town Hall (S) · auto-eat threshold

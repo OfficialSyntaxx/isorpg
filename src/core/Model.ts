@@ -79,6 +79,29 @@ export const ACTOR_CLIPS: Record<string, ActorDef> = {
   },
 };
 
+/**
+ * In-flight spawnActor() calls.
+ *
+ * Actors load asynchronously and callers deliberately don't await them — a slow
+ * GLB must never hold up boot, and every caller has a procedural fallback. That
+ * makes "is the world finished loading?" unanswerable, which a reproducible
+ * screenshot needs to know. See whenActorsSettled().
+ */
+const inFlight = new Set<Promise<unknown>>();
+
+/**
+ * Resolve once no actor load is outstanding.
+ *
+ * Loads chain — spawning an NPC can spawn its actor, which fetches a clip — so
+ * this drains repeatedly rather than awaiting one batch. Bounded, because a
+ * pathological chain must not hang the caller forever.
+ */
+export async function whenActorsSettled(maxRounds = 12): Promise<void> {
+  for (let i = 0; i < maxRounds && inFlight.size; i++) {
+    await Promise.allSettled([...inFlight]);
+  }
+}
+
 const loader = new GLTFLoader();
 const cache = new Map<string, Promise<Template>>();
 const mixers = new Set<THREE.AnimationMixer>();
@@ -144,7 +167,16 @@ export function retargetable(clip: THREE.AnimationClip): THREE.AnimationClip {
  * Spawn an animated clone of a rigged actor. Returns null on any load failure so
  * callers keep their procedural fallback figure.
  */
-export async function spawnActor(name: string): Promise<AnimatedActor | null> {
+export function spawnActor(name: string): Promise<AnimatedActor | null> {
+  const p = spawnActorInner(name);
+  inFlight.add(p);
+  // finally() rather than then(): a rejected load must still stop being "in
+  // flight", or whenActorsSettled() would spin its full round budget.
+  void p.finally(() => inFlight.delete(p));
+  return p;
+}
+
+async function spawnActorInner(name: string): Promise<AnimatedActor | null> {
   const def = ACTOR_CLIPS[name];
   try {
     // Try each candidate base until one loads, skipping any GLB that isn't
@@ -279,4 +311,15 @@ export const loadModelSizing = sizeToActor;
 /** Advance every active animation mixer. */
 export function updateModelMixers(dt: number): void {
   for (const m of mixers) m.update(dt);
+}
+
+/**
+ * Pin every mixer to an absolute time.
+ *
+ * Mixers integrate deltas, so their pose depends on how many frames have run —
+ * which makes a screenshot unreproducible. setTime() is absolute, so the same
+ * value always yields the same pose. Used by Engine.renderCanonicalFrame().
+ */
+export function setModelMixerTime(seconds: number): void {
+  for (const m of mixers) m.setTime(seconds);
 }

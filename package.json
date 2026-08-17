@@ -9,11 +9,13 @@
     "build": "tsc --noEmit && vite build",
     "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node scripts/verify-rig.cjs && node .qc-emit/tests/qc.test.js && node scripts/gen-wiki.cjs",
     "preview": "vite preview --port 4173",
-    "test:smoke": "npm run build && node scripts/smoke.cjs",
+    "test:smoke": "npm run build && node scripts/smoke.cjs && node scripts/visual-regress.cjs",
     "models:manifest": "node scripts/gen-model-manifest.cjs",
     "prebuild": "node scripts/gen-model-manifest.cjs",
     "predev": "node scripts/gen-model-manifest.cjs",
-    "wiki": "node scripts/gen-wiki.cjs"
+    "wiki": "node scripts/gen-wiki.cjs",
+    "visual": "node scripts/visual-regress.cjs",
+    "visual:update": "node scripts/visual-regress.cjs --update"
   },
   "dependencies": {
     "three": "^0.170.0"

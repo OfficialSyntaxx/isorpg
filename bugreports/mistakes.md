@@ -170,6 +170,25 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   **Lesson: presence checks pass on assets that are present and wrong. Where a
   quality property can be computed, compute it.**
 
+## Phase D 2026-08-17 (release confidence)
+- **[qc] A visual test without determinism is worse than none** — the first version
+  of the opening-frame check drifted because animation reads wall-clock time, the
+  camera eases over ~0.14 s, and a 2.6 s welcome toast may or may not still be on
+  screen. The fix was to give the *app* a canonical-frame mode rather than to widen
+  the tolerance until it passed. **Lesson: when a test is flaky, make the system
+  reproducible; loosening the threshold just buys silence.**
+- **[qc] I placed the canonical-frame render mid-boot and it captured a frame no
+  player ever sees** — the starter stash and the welcome toast are granted after it.
+  Caught by looking at the actual baseline image rather than trusting the 0.00%
+  match. **Lesson: a self-consistent test can be consistently wrong; look at what
+  it actually captured.**
+- **[qc] I claimed the visual check would have caught both Phase A defects, then
+  measured it** — it catches the camera one decisively (73% of pixels) but barely
+  moves on smeared water, because the blue reads from the terrain tile underneath
+  and the water overlay is subtle. The water bug is properly covered by the two
+  geometry checks in the QC suite. **Lesson: verify which failures a new gate
+  actually catches before writing down what it covers.**
+
 ## Open threads (not yet filed as bugs)
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.

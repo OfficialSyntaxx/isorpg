@@ -7,7 +7,7 @@ import { DEFAULT_HERO_NAME, createFreshState } from "./state/GameState";
 import { makeHero } from "./generators/Character";
 import { play as sfx } from "./core/Sfx";
 import { setMusicZone } from "./core/Music";
-import { updateModelMixers, spawnActor, type AnimatedActor, type ActorState } from "./core/Model";
+import { updateModelMixers, setModelMixerTime, whenActorsSettled, spawnActor, type AnimatedActor, type ActorState } from "./core/Model";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { WorldSystem } from "./systems/WorldSystem";
 import { MovementSystem } from "./systems/MovementSystem";
@@ -28,7 +28,7 @@ import { MetaSystem } from "./systems/MetaSystem";
 import { ShopSystem } from "./systems/ShopSystem";
 import { LabourSystem } from "./systems/LabourSystem";
 import { UI } from "./ui/UI";
-import { initToasts, showToast } from "./ui/Toast";
+import { initToasts, showToast, clearToasts } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
 import { guarded, EngineLogger, markBooted, showFatalOverlay } from "./utils/Logger";
 import { ITEMS as ITEM_NAMES } from "./data/Items";
@@ -381,6 +381,33 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
       if (getToolTier(inv, "mining") === 0) addItem(inv, "bronze_pickaxe", 1);
       if (getToolTier(inv, "fishing") === 0) addItem(inv, "small_net", 1);
     }
+
+    await this.maybeDrawCanonicalFrame();
+  }
+
+  /**
+   * `?canonicalFrame=<seconds>`: draw exactly one reproducible frame.
+   *
+   * Runs at the very end of boot, after every toast and starter grant, so the
+   * image is the frame a player actually opens on. The loop is stopped and no
+   * tick ever runs, which is what makes it byte-reproducible for a given world
+   * seed — the visual-regression baseline depends on that, and so does any clean
+   * screenshot. Without the param this does nothing.
+   */
+  private async maybeDrawCanonicalFrame(): Promise<void> {
+    const raw = new URLSearchParams(window.location.search).get("canonicalFrame");
+    if (raw === null) return;
+    const t = Number(raw) || 0;
+    this.engine.stop();
+    // Rigged meshes load async and callers deliberately don't await them, so
+    // without this the frame sometimes catches the procedural fallback figures.
+    await whenActorsSettled();
+    // Toasts fade on a wall-clock timer; whether one is still up depends on how
+    // fast the machine booted, which is exactly the flakiness to avoid.
+    clearToasts();
+    setModelMixerTime(t);
+    this.engine.renderCanonicalFrame(t);
+    document.body.setAttribute("data-canonical-frame", String(t));
   }
 
   /** Where the hero is in WORLD space — inside the dungeon its group is

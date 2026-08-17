@@ -184,6 +184,29 @@ export class Engine {
     this.running = false;
     cancelAnimationFrame(this.raf);
   }
+
+  /**
+   * Render exactly one frame with animation time pinned and the camera settled.
+   *
+   * The normal loop is unusable as a reference image: animation reads wall-clock
+   * time, the camera eases toward its target over ~0.14 s, and tick-driven actors
+   * have moved by an unpredictable amount before any screenshot lands. This
+   * renders the same pixels every time for the same world seed, which is what the
+   * visual-regression harness compares against — and what to use for any
+   * reproducible screenshot.
+   *
+   * Call it instead of start(), not alongside it.
+   */
+  renderCanonicalFrame(atSeconds = 0): void {
+    this.smoothTarget.copy(this.cameraTarget);
+    this.camera.zoom = this.cameraZoom;
+    this.shakeAmp = 0; // shake jitters with Math.random()
+    // dt = 0 so nothing integrates; elapsed is the pinned time animations read.
+    for (const h of this.frameHandlers) h(0, atSeconds);
+    this.camera.updateProjectionMatrix();
+    this.positionCamera();
+    this.renderer.render(this.scene, this.camera);
+  }
 }
 
 export const isomConstants = { PITCH, YAW, FRUSTUM };
