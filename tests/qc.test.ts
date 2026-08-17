@@ -17,7 +17,7 @@ import { SaveSystem, offlineTaxFor } from "../src/systems/SaveSystem";
 import { monsterPoolFor } from "../src/systems/WorldSystem";
 import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
 import { spawnMonster } from "../src/world/Monster";
-import { countItem, addItem } from "../src/components/Inventory";
+import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } from "../src/components/Inventory";
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 
 const results: string[] = [];
@@ -339,6 +339,27 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
     }
   }
   check("world: town core is fully buildable", town > 0 && blocked === 0, `${blocked}/${town} blocked`);
+}
+
+// [inventory] The storage cap is an invariant, not a convention: addItem itself
+// refuses to overfill, and it applies to BULK resources only — coins, keys,
+// quest tokens and pets must never be blocked by a bag full of logs.
+{
+  const inv = createInventory();
+  const put = addItem(inv, "normal_log", inv.storageCap + 250);
+  check("inv: addItem clamps to the cap", put === 500 && countItem(inv, "normal_log") === 500, `${put}`);
+  check("inv: a clamped bag reads as full", isFull(inv));
+  check("inv: a full bag takes no more bulk", addItem(inv, "oak_log", 10) === 0);
+  check("inv: currency ignores the bulk cap", addItem(inv, "coins", 1000) === 1000 && countItem(inv, "coins") === 1000, `${countItem(inv, "coins")}`);
+  check("inv: quest items ignore the bulk cap", addItem(inv, "dungeon_key", 1) === 1);
+  check("inv: gear ignores the bulk cap", addItem(inv, "bronze_sword", 1) === 1);
+  check("inv: exempt items do not count toward stored", storedAmount(inv) === 500, `${storedAmount(inv)}`);
+  check("inv: unknown ids are treated as bulk", isBulk("some_future_ore") === true);
+  check("inv: a partial add reports what fit", (() => {
+    const i2 = createInventory();
+    addItem(i2, "coal", 495);
+    return addItem(i2, "coal", 20) === 5;
+  })());
 }
 
 console.log(results.join("\n"));

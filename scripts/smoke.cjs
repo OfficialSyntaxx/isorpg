@@ -31,6 +31,30 @@ function loadDriver() {
   return null;
 }
 
+/**
+ * Locate a Chromium binary when the driver's own download is absent.
+ *
+ * Sandboxes and CI images commonly ship a pre-installed browser under
+ * PLAYWRIGHT_BROWSERS_PATH instead of node_modules, in which case
+ * `chromium.launch()` fails with "run npx playwright install" even though a
+ * perfectly good binary is sitting on disk. CHROME_PATH still wins.
+ */
+function findChrome() {
+  const roots = [process.env.PLAYWRIGHT_BROWSERS_PATH, "/opt/pw-browsers"].filter(Boolean);
+  for (const root of roots) {
+    let entries;
+    try { entries = fs.readdirSync(root); } catch { continue; }
+    const dirs = entries.filter((d) => d.startsWith("chromium")).sort().reverse();
+    for (const d of dirs) {
+      for (const rel of ["chrome-linux/chrome", "chrome-linux/headless_shell", "chrome"]) {
+        const p = path.join(root, d, rel);
+        if (fs.existsSync(p)) return p;
+      }
+    }
+  }
+  return null;
+}
+
 function serve() {
   return http.createServer((req, res) => {
     const rel = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "") || "index.html";
@@ -66,7 +90,8 @@ function serve() {
   let browser;
   try {
     const launchOpts = { args: ["--no-sandbox", "--headless=new"] };
-    if (process.env.CHROME_PATH) launchOpts.executablePath = process.env.CHROME_PATH;
+    const exe = process.env.CHROME_PATH || findChrome();
+    if (exe) launchOpts.executablePath = exe;
     browser = driver.name === "puppeteer"
       ? await driver.mod.launch(launchOpts)
       : await driver.mod.chromium.launch(launchOpts);

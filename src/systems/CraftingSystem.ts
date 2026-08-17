@@ -3,7 +3,7 @@
 // GDD §5.A. Building-gated recipes (Smithing/Carpentry) check hasBuilding().
 import type { GameState } from "../state/GameState";
 import type { CraftRecipe } from "../data/Recipes";
-import { addItem, removeItem, countItem } from "../components/Inventory";
+import { addItem, isBulk, removeItem, countItem, storedAmount } from "../components/Inventory";
 import { addMasteryXp, masteryLevel } from "../components/Skills";
 import { levelFromXp } from "../data/XPTable";
 import { TICK_MS } from "../core/Engine";
@@ -121,8 +121,8 @@ export class CraftingSystem {
     let xpGained: number;
     let amount = 0;
     if (!burned) {
-      const total = inv.items.reduce((a, i) => a + i.amount, 0) + recipe.output.qty;
-      if (total > inv.storageCap) { this.stop("inventory_full"); return; }
+      const out = recipe.output.itemId;
+      if (isBulk(out) && storedAmount(inv) + recipe.output.qty > inv.storageCap) { this.stop("inventory_full"); return; }
       addItem(inv, recipe.output.itemId, recipe.output.qty);
       amount = recipe.output.qty;
       xpGained = recipe.xp;

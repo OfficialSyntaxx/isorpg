@@ -3,7 +3,7 @@
 import type { GameState } from "../state/GameState";
 import type { ResourceNode } from "../world/ResourceNode";
 import type { SkillId } from "../data/Skills";
-import { addItem, type InventoryComponent } from "../components/Inventory";
+import { addItem, isBulk, storedAmount, type InventoryComponent } from "../components/Inventory";
 import { addMasteryXp, masteryLevel } from "../components/Skills";
 import { levelFromXp } from "../data/XPTable";
 import { TICK_MS } from "../core/Engine";
@@ -120,8 +120,7 @@ export class SkillSystem {
     if (doubled) amount *= 2;
 
     const inv = this.state.player.inventory;
-    const total = inv.items.reduce((a, i) => a + i.amount, 0) + amount;
-    if (total > inv.storageCap) {
+    if (isBulk(itemId) && storedAmount(inv) + amount > inv.storageCap) {
       this.stopGathering(node, "inventory_full");
       return;
     }

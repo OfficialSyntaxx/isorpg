@@ -86,7 +86,7 @@ export const ITEMS: Record<string, Item> = {
   fly_rod: { id: "fly_rod", name: "Fly Rod", type: "TOOL", value: 40, desc: "Lets you reach deeper, faster fish.", stack: false, tool: { skill: "fishing", tier: 2, speedPct: 15 } },
 
   // ——— Combat drops / gear ———
-  coins: { id: "coins", name: "Coins", type: "MISC", value: 1, desc: "Shiny cur fers the merchants accept.", stack: true },
+  coins: { id: "coins", name: "Coins", type: "MISC", value: 1, desc: "Shiny currency the merchants accept.", stack: true },
   bones: { id: "bones", name: "Bones", type: "MISC", value: 2, desc: "Possibly worth burying.", stack: true },
   raw_rat_meat: { id: "raw_rat_meat", name: "Raw Rat Meat", type: "FOOD", xp: { cooking: 12 }, value: 4, desc: "Edible once cooked. Heals a little raw.", stack: true },
   cooked_shrimp: { id: "cooked_shrimp", name: "Cooked Shrimp", type: "FOOD", value: 12, desc: "A tasty cooked shrimp. Heals 6.", stack: true },

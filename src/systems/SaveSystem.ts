@@ -200,9 +200,15 @@ export class SaveSystem {
       if (actions <= 0) continue;
       const itemId = best.drops[0]?.itemId;
       if (!itemId) continue;
-      const gained = Math.min(actions * best.yield, p.inventory.storageCap);
-      addItem(p.inventory, itemId, gained);
-      const xp = (ITEMS_XP[itemId]?.xp?.[best.skill] ?? 5) * actions;
+      // The cap is shared across every skill, so ask for the full haul and let
+      // addItem tell us what actually fit — earlier this clamped each skill to
+      // the whole cap independently, so three gatherers banked 3× the cap.
+      const wanted = actions * best.yield;
+      const gained = addItem(p.inventory, itemId, wanted);
+      if (gained <= 0) continue;
+      // Only the actions whose drops fit are credited with XP.
+      const done = Math.ceil(actions * (gained / wanted));
+      const xp = (ITEMS_XP[itemId]?.xp?.[best.skill] ?? 5) * done;
       p.skills[best.skill].xp += xp;
       xpEarned += xp;
       this.state.collectionLog.add(itemId);

@@ -4,7 +4,7 @@ import * as THREE from "three";
 import type { Grid } from "../world/Grid";
 import type { GameState, TownBuilding } from "../state/GameState";
 import { BUILDINGS, type BuildingType } from "../data/Buildings";
-import { addItem, removeItem, countItem } from "../components/Inventory";
+import { addItem, isFull, removeItem, countItem } from "../components/Inventory";
 import { levelFromXp } from "../data/XPTable";
 import { makeBuilding, makeTileHighlight } from "../generators/Settlement";
 import { TICK_MS } from "../core/Engine";
@@ -200,8 +200,7 @@ export class BuildSystem {
     this.passiveAcc = 0;
 
     const inv = this.state.player.inventory;
-    const cap = inv.storageCap;
-    const room = () => cap - inv.items.reduce((a, i) => a + i.amount, 0) > 0;
+    const room = () => !isFull(inv);
 
     for (let i = 0; i < this.count("SAWMILL"); i++) {
       if (!room()) break;
