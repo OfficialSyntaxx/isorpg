@@ -10,7 +10,7 @@ export function hasModel(name: string): boolean {
 }
 
 /** Shared animation clips present in public/models/clips (see ClipLibrary). */
-export const AVAILABLE_CLIPS: ReadonlySet<string> = new Set(["hero_idle","hero_walk"]);
+export const AVAILABLE_CLIPS: ReadonlySet<string> = new Set(["actor_run","actor_walk","hero_idle","hero_walk"]);
 
 export function hasClip(name: string): boolean {
   return AVAILABLE_CLIPS.size === 0 || AVAILABLE_CLIPS.has(name);

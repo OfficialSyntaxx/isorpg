@@ -67,7 +67,8 @@ export const ACTOR_CLIPS: Record<string, ActorDef> = {
   villager: {
     base: "villager",
     states: { idle: "villager" },
-    shared: { walk: "hero_walk" },
+    // actor_walk is a 1.0s cycle that loops cleanly; hero_walk is a 4.2s take.
+    shared: { walk: "actor_walk" },
   },
   forest_ogre: {
     base: "forest_ogre",

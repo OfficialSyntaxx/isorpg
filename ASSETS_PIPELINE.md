@@ -95,11 +95,45 @@ that is what makes one clip drive every rig, since translation tracks carry the
 donor's limb proportions (see `retargetable()` in `Model.ts`). ~15 kB per clip,
 reusable across actors.
 
-To add one: rig the animation, then extract with the pipeline recorded in
-`ClipLibrary.ts` (decimate to ~15 fps, drop bones that never rotate, quantize to
-`Int16`). Declare it in `ACTOR_CLIPS[...].shared`; `verify-rig` then checks the
-table size, that every quaternion is unit length, and that the clip's bones exist
-on every rigged skeleton we ship.
+To add one:
+
+```
+node scripts/extract-clip.cjs <rigged.glb> --list
+node scripts/extract-clip.cjs <rigged.glb> --anim Walking --out actor_walk
+```
+
+It resamples the rotation curves at a uniform rate, drops bones that never turn,
+and quantizes to `Int16`. Declare the result in `ACTOR_CLIPS[...].shared`;
+`verify-rig` then checks the table size, that every quaternion is unit length,
+and that the clip's bones exist on every rigged skeleton we ship.
+
+Shipped clips:
+
+| Clip | Length | Size | Used by |
+|---|---|---|---|
+| `hero_idle` | 4.0s | 15 kB | ogre & brute idle |
+| `hero_walk` | 4.2s | 15 kB | — (superseded by `actor_walk`) |
+| `actor_walk` | 1.0s | 5.6 kB | villagers |
+| `actor_run` | 0.6s | 3.7 kB | banked for a chase/sprint state |
+
+`actor_walk` / `actor_run` came from a Meshy wizard rig, which uses the identical
+24-bone skeleton — which is the whole point of the format: a clip bought for one
+character animates every other one.
+
+## Shrinking a GLB
+
+```
+node scripts/optimize-glb.cjs <in.glb> <out.glb> [--size 512] [--quality 0.85]
+```
+
+Recompresses every embedded texture to JPEG (all materials here are alphaMode
+OPAQUE) and drops baked animations, since clips ship separately. Decoding runs in
+the headless Chromium already present for the smoke test, so there is no native
+image toolchain to install.
+
+For a mesh that is *also* too dense, run the geometry passes first — the
+319k-triangle wizard needed `gltf-transform simplify --ratio 0.025` and
+`quantize` before this script, which took it from 20.8 MB to 704 kB.
 
 ## Outstanding: the rigged hero mesh
 
