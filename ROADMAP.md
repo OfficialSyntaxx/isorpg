@@ -1,10 +1,11 @@
 # Isoperia — Roadmap (Phases F onward)
 
-> Phases A–E and the boot refactor are shipped; `REPAIR_PLAN.md` holds that record.
-> This is the forward plan. **Nothing here is started** — it is for approval and
-> editing first.
+> Phases A–E, the boot refactor, and **Phase F (Combat depth) are shipped**;
+> `REPAIR_PLAN.md`/`UPDATES.md` hold that record. Approved execution order:
+> F → H.1–H.2 → G → H.5 → I. Currently up next: **H.1–H.2** (item icon atlas +
+> sky regen — the only credit-spending steps until Phase G).
 >
-> Gates as of the last audit: 197/197 QC · 57/57 UI audit · 25/25 rig · 5/5 smoke ·
+> Gates as of the last audit: 246/246 QC · 57/57 UI audit · 25/25 rig · 5/5 smoke ·
 > visual baseline 0.00% drift · `npm run audit` 0 bugs.
 
 ## How to read this
@@ -42,30 +43,24 @@ Two consequences worth deciding up front:
 
 ---
 
-## Phase F — Combat depth (no credits)
+## Phase F — Combat depth (no credits) ✅ SHIPPED
 
-The combat loop is thin: one weapon, one attack, auto-eat, done. Everything here is
-mechanics, so it costs nothing but time and is the highest value-per-credit work
-available.
+The combat loop was thin: one weapon, one attack, auto-eat, done. All five items
+below are live; see `UPDATES.md` for the full writeup of each.
 
-1. **Attack styles** — pick Accurate / Aggressive / Defensive per fight; each trains
-   a different skill and shifts accuracy vs max hit. Turns three combat skills that
-   currently rise together into a choice. `M` · risk LOW.
-2. **Prayer-or-equivalent resource** — a limited pool spent on short buffs (accuracy,
-   damage reduction, extra XP), restored at the Campfire. Gives food a rival for bag
-   space. `M` · risk MED (needs balancing against auto-eat).
-3. **Special attacks per weapon** — the 2H already has slow/heavy identity; give each
-   weapon one charge-based special so weapon choice survives past max-hit comparison.
-   `M` · risk LOW.
-4. **Monster affixes** — an occasional *Hardened* / *Swift* / *Rich* prefix that
-   scales stats and loot. Cheap variety across all 12 monsters without new content.
-   `S` · risk LOW.
-5. **Death with stakes** — currently death is soft. Lose a fraction of unbanked
-   drops, respawn in town. Makes the Storehouse and banking runs matter. `S` · risk
-   MED (needs to be forgiving enough not to feel punishing on mobile).
+1. **Attack styles** ✅ — Accurate / Aggressive / Defensive, picked per fight in the
+   Combat panel; each shifts accuracy vs max hit/defense and trains a different skill.
+2. **Resolve** ✅ — a 0–100 pool spent on Precision/Power/Warden, refilled resting by
+   a Campfire. Gives food a rival for bag space.
+3. **Weapon specials** ✅ — a charge-based special per weapon (Puncture, Riposte,
+   Cleave, Piercing Shot, Execute, Onslaught), queued from the Combat panel.
+4. **Monster affixes** ✅ — Hardened/Swift/Rich, 12% chance on any non-boss spawn.
+5. **Death with stakes** ✅ — losing a fight now costs 15% of carried bulk resources
+   (floored per stack); coins, gear, tools and quest items are always safe.
 
 **Done when** two players at the same combat level can be built differently and it
-shows in a fight.
+shows in a fight. — Yes: style + buff + special + gear now all stack, and a death
+mid-haul costs something real.
 
 ## Phase G — A second dungeon and a boss ladder (no credits)
 

@@ -374,11 +374,18 @@ class Game {
         engine.addShake(0.4); // P4b: camera kick on hits
         sfx("hurt");
       },
-      onDeath: () => {
+      onDeath: (lost) => {
         // P5: dying underground still respawns in town — but exit the dungeon
         // first so the town-centre teleport lands on the surface.
         if (dungeon.active) this.leaveDungeon();
-        showToast("💀 You died… respawned in town.");
+        // F.5: death has stakes — a slice of unbanked (bulk) items is gone.
+        // Equipment, tools, quest items and coins are never at risk.
+        if (lost.length) {
+          const summary = lost.map((l) => `${l.amount} × ${ITEM_NAMES[l.id]?.name ?? l.id}`).join(", ");
+          showToast(`💀 You died and lost: ${summary}`, "error", 3200);
+        } else {
+          showToast("💀 You died… respawned in town.");
+        }
       },
 onKill: (m, drops, kc) => {
             if (m.def.id === "giant_rat" || m.def.id === "cave_bat") sfx("monster_squeak");

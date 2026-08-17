@@ -78,3 +78,29 @@ export function removeItem(inv: InventoryComponent, id: string, amount: number):
 export function storedAmount(inv: InventoryComponent): number {
   return inv.items.reduce((a, i) => a + (isBulk(i.id) ? i.amount : 0), 0);
 }
+
+/** F.5: the fraction of each carried bulk stack lost on death. */
+export const DEATH_LOSS_PCT = 0.15;
+
+/**
+ * Death has stakes: lose a slice of what's unbanked. "Unbanked" reuses the
+ * bulk/non-bulk split the storage cap already draws — coins, equipment,
+ * tools and quest items (all `MISC`/`equip`/`tool`) are exactly what a
+ * Storehouse run doesn't need to protect, so they're never at risk. Only
+ * the raw materials still sitting in the bag are.
+ *
+ * Floored per stack, so it stays forgiving: a stack under ~7 loses nothing
+ * (floor(6 × 0.15) = 0), and losses only bite once a haul is worth banking.
+ */
+export function applyDeathPenalty(inv: InventoryComponent): ItemStack[] {
+  const lost: ItemStack[] = [];
+  for (const item of inv.items) {
+    if (!isBulk(item.id)) continue;
+    const amount = Math.floor(item.amount * DEATH_LOSS_PCT);
+    if (amount <= 0) continue;
+    item.amount -= amount;
+    lost.push({ id: item.id, amount });
+  }
+  inv.items = inv.items.filter((i) => i.amount > 0);
+  return lost;
+}

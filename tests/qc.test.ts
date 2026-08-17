@@ -19,7 +19,7 @@ import { monsterPoolFor } from "../src/systems/WorldSystem";
 import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
 import { ITEMS } from "../src/data/Items";
 import { spawnMonster, animateMonster } from "../src/world/Monster";
-import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } from "../src/components/Inventory";
+import { countItem, addItem, createInventory, storedAmount, isFull, isBulk, applyDeathPenalty } from "../src/components/Inventory";
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from "../src/components/Skills";
 import { buildClip } from "../src/core/ClipLibrary";
@@ -379,6 +379,53 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
     addItem(i2, "coal", 495);
     return addItem(i2, "coal", 20) === 5;
   })());
+}
+
+// [combat] F.5 death has stakes: lose a slice of unbanked (bulk) items, but
+// equipment, tools, quest items and coins — the exact set the storage cap
+// already exempts — are never at risk. Reuses that split rather than
+// inventing a second one.
+{
+  const di = createInventory();
+  addItem(di, "normal_log", 40); // bulk: floor(40*0.15) = 6 lost
+  addItem(di, "coins", 500); // MISC: exempt
+  addItem(di, "dungeon_key", 1); // MISC: exempt
+  addItem(di, "bronze_sword", 1); // gear: exempt
+  addItem(di, "oak_log", 3); // bulk, but too small to lose anything (floor(3*0.15)=0)
+  const lost = applyDeathPenalty(di);
+  check("death: only bulk stacks are touched", lost.every((l) => isBulk(l.id)), JSON.stringify(lost));
+  check("death: the loss is floored, not rounded", lost.find((l) => l.id === "normal_log")?.amount === 6,
+    JSON.stringify(lost));
+  check("death: a stack too small to lose anything is untouched",
+    !lost.some((l) => l.id === "oak_log") && countItem(di, "oak_log") === 3);
+  check("death: coins survive completely", countItem(di, "coins") === 500);
+  check("death: quest items survive completely", countItem(di, "dungeon_key") === 1);
+  check("death: equipped-capable gear survives completely", countItem(di, "bronze_sword") === 1);
+  check("death: the stack actually shrank in the bag", countItem(di, "normal_log") === 34, String(countItem(di, "normal_log")));
+
+  const emptyLoss = applyDeathPenalty(createInventory());
+  check("death: an empty bag loses nothing and doesn't error", emptyLoss.length === 0);
+
+  // Wired end-to-end: dying in combat runs the penalty and reports it via onDeath.
+  const dState = createFreshState(g, "Hero", 21, 21);
+  addItem(dState.player.inventory, "normal_log", 40);
+  dState.player.health.hp = 1;
+  const dCombat = new CombatSystem(dState);
+  let reportedLoss: { id: string; amount: number }[] | null = null;
+  dCombat.setCallbacks({ onDeath: (l) => { reportedLoss = l; } });
+  const dMonster = spawnMonster("giant_rat", MONSTERS.giant_rat, 22, 21);
+  dCombat.addMonster(dMonster);
+  dCombat.engage(dMonster);
+  dCombat.confirmFight();
+  const oldRandom5 = Math.random;
+  Math.random = () => 0; // monster's attack always lands — 1 damage is enough at 1 HP
+  for (let i = 0; i < 10 && dState.player.health.hp > 0; i++) dCombat.tick(600, Date.now());
+  Math.random = oldRandom5;
+  check("death: dying in combat reports the loss through onDeath",
+    reportedLoss !== null && (reportedLoss as any).some((l: any) => l.id === "normal_log"),
+    JSON.stringify(reportedLoss));
+  check("death: the hero is healed and back at town centre",
+    dState.player.health.hp === dState.player.health.maxHp);
 }
 
 // [mastery] Mastery used to reuse the skill XP curve, which is built to span a

@@ -5,7 +5,7 @@ import type { MonsterCombat } from "../world/Monster";
 import { levelFromXp } from "../data/XPTable";
 import { FOODS, type WeaponDef, selectWeapon, type MonsterDef, ATTACK_STYLES, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, RESOLVE_REGEN_RANGE, WEAPON_SPECIALS, SPECIAL_MAX, SPECIAL_REGEN_PER_TICK, type SpecialDef } from "../data/Combat";
 import type { SkillId } from "../data/Skills";
-import { addItem, removeItem, type InventoryComponent } from "../components/Inventory";
+import { addItem, removeItem, applyDeathPenalty, type InventoryComponent, type ItemStack } from "../components/Inventory";
 import { armorBonuses } from "../components/Equipment";
 import { play as sfx } from "../core/Sfx";
 
@@ -15,7 +15,8 @@ export interface CombatEvents {
   onKill?: (monster: MonsterCombat, drops: string[], kc: number) => void;
   onPet?: (itemId: string) => void;
   onAutoEat?: (itemId: string, healed: number) => void;
-  onDeath?: () => void;
+  /** F.5: what died with the player — the bulk items death took, if any. */
+  onDeath?: (lost: ItemStack[]) => void;
   onLevelUp?: (skill: SkillId, level: number) => void;
   /** P4b: boss telegraph ring — tile when winding up, null when it lands/fizzles. */
   onBossTelegraph?: (tile: { x: number; y: number } | null) => void;
@@ -373,9 +374,10 @@ export class CombatSystem {
     if (health.hp <= 0) this.diePlayer();
   }
 
-  /** Player death: toast, respawn at town centre healed, clear the fight. */
+  /** Player death: F.5 stakes, respawn at town centre healed, clear the fight. */
   private diePlayer() {
-    this.cb.onDeath?.();
+    const lost = applyDeathPenalty(this.state.player.inventory);
+    this.cb.onDeath?.(lost);
     const c = Math.floor(this.state.world.grid.width / 2);
     this.state.player.pos.gx = c; this.state.player.pos.gy = c;
     this.state.player.pos.wx = c; this.state.player.pos.wz = c;

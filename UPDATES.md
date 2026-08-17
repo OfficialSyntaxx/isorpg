@@ -6,6 +6,43 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase F.5 — Death has stakes (Phase F complete)
+
+Death was purely soft: full heal, walk back to town centre, nothing else.
+Now dying costs 15% of every carried *bulk* item stack, floored per stack —
+a stack under ~7 loses nothing, so a light bag never gets wiped, and losses
+only start to bite once a haul is actually worth banking.
+
+"Unbanked" reuses a split the storage cap already draws rather than
+inventing a second one: coins, equipment, tools and quest items are all
+`MISC`/`equip`/`tool`, already exempt from the bulk storage cap for the same
+reason (a full bag of logs should never block a coin drop or a quest key).
+`isBulk()` already answered "is this the kind of thing a Storehouse run is
+for?" — death just asks the same question. So the whole feature is one new
+function, `applyDeathPenalty()`, called from `diePlayer()`, with no new
+save fields, no sanitizer work, no UI beyond an existing toast now listing
+what was lost.
+
+Kept deliberately forgiving per the roadmap's own risk note (mobile players
+shouldn't feel punished): equipped gear is always safe, quest progress is
+always safe, coins are always safe, and the floor means casual play barely
+notices — it's a hoarded stack of logs mid-gathering-run that has something
+to lose.
+
+10 new QC checks: only bulk stacks are touched, the loss is floored not
+rounded, a small stack survives untouched, coins/quest-items/gear all
+survive completely, an empty bag doesn't error, and a full CombatSystem
+death (pinned RNG, a hero baited down to 1 HP) reports the loss through
+`onDeath` and confirms the respawn-healed state.
+
+**Phase F — Combat depth is now complete**: attack styles (F.1), Resolve
+(F.2), weapon specials (F.3), monster affixes (F.4), death with stakes
+(F.5). Two players at the same combat level can now be built differently
+and it shows in a fight — which was the phase's stated done-condition.
+
+Gates: 246/246 QC, 5/5 smoke, visual baseline 0.00% drift, npm run audit
+0 bugs.
+
 ## 2026-08 · Phase F.4 — Monster affixes
 
 Cheap variety across all ten non-boss monsters, as the roadmap put it — no new
