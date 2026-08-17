@@ -85,7 +85,21 @@ export interface GameState {
     market: { supply: Record<string, number>; demand: Record<string, number> };
   };
   collectionLog: Set<string>;
+  /** Player-tunable preferences. Persisted so a choice survives a reload. */
+  settings: {
+    /**
+     * Auto-eat trigger, as a percentage of max HP (0 = never).
+     *
+     * Was a hardcoded 40%: too eager for a player stretching food across a long
+     * trip, too late for one fighting something that can two-shot them.
+     */
+    autoEatPct: number;
+  };
 }
+
+/** Selectable auto-eat thresholds, in percent of max HP. 0 disables it. */
+export const AUTO_EAT_STEPS = [0, 20, 30, 40, 50, 60, 75] as const;
+export const DEFAULT_AUTO_EAT_PCT = 40;
 
 /** Build a fresh state with a given grid (world wiring added by the world system). */
 export function createFreshState(grid: Grid, name: string = DEFAULT_HERO_NAME, startX = 10, startY = 10): GameState {
@@ -107,5 +121,6 @@ export function createFreshState(grid: Grid, name: string = DEFAULT_HERO_NAME, s
     clock: { minute: DAY_START_MINUTE, day: 1 },
     town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {}, worked: {} }, market: { supply: {}, demand: {} } },
     collectionLog: new Set(),
+    settings: { autoEatPct: DEFAULT_AUTO_EAT_PCT },
   };
 }

@@ -23,7 +23,7 @@ export interface CombatEvents {
   onPlayerShot?: (toX: number, toY: number) => void;
 }
 
-const EAT_THRESHOLD = 0.4; // auto-eat below 40% HP
+
 const RANGED_RANGE = 5; // tiles: bows / ranged monsters engage from here
 
 export class CombatSystem {
@@ -150,7 +150,10 @@ export class CombatSystem {
       this.tryMonsterAttack(target);
     }
 
-    if (health.hp > 0 && health.hp / health.maxHp < EAT_THRESHOLD) {
+    // Player-tunable: 0 disables auto-eat entirely, for anyone who would rather
+    // ration their food by hand than have it gulped down at a fixed 40%.
+    const eatPct = this.state.settings.autoEatPct;
+    if (eatPct > 0 && health.hp > 0 && health.hp / health.maxHp < eatPct / 100) {
       this.autoEat();
     }
   }

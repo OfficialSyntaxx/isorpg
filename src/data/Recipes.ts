@@ -53,6 +53,20 @@ export const RECIPES: CraftRecipe[] = [
     inputs: [{ itemId: "steel_bar", qty: 3 }], output: { itemId: "steel_axe", qty: 1 }, requiresBuilding: "SMELTER" },
   { id: "smith_steel_pick", skill: "smithing", name: "Forge Steel Pickaxe", levelReq: 35, ticks: 6, xp: 110,
     inputs: [{ itemId: "steel_bar", qty: 3 }], output: { itemId: "steel_pickaxe", qty: 1 }, requiresBuilding: "SMELTER" },
+  // Weapons. Smithing previously stopped at tools and armour, so the only way to
+  // hold a sword was a monster drop or the market — the bar chain dead-ended and
+  // steel bars had no consumer beyond an axe and a pickaxe.
+  { id: "smith_bronze_dagger", skill: "smithing", name: "Forge Bronze Dagger", levelReq: 2, ticks: 3, xp: 25,
+    inputs: [{ itemId: "bronze_bar", qty: 1 }], output: { itemId: "bronze_dagger", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_bronze_sword", skill: "smithing", name: "Forge Bronze Sword", levelReq: 6, ticks: 4, xp: 45,
+    inputs: [{ itemId: "bronze_bar", qty: 2 }], output: { itemId: "bronze_sword", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_bronze_2h", skill: "smithing", name: "Forge Bronze 2H Sword", levelReq: 10, ticks: 5, xp: 70,
+    inputs: [{ itemId: "bronze_bar", qty: 3 }], output: { itemId: "bronze_2h", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_iron_sword", skill: "smithing", name: "Forge Iron Sword", levelReq: 26, ticks: 5, xp: 95,
+    inputs: [{ itemId: "iron_bar", qty: 2 }], output: { itemId: "iron_sword", qty: 1 }, requiresBuilding: "SMELTER" },
+  { id: "smith_steel_sword", skill: "smithing", name: "Forge Steel Sword", levelReq: 40, ticks: 6, xp: 150,
+    inputs: [{ itemId: "steel_bar", qty: 3 }], output: { itemId: "steel_sword", qty: 1 }, requiresBuilding: "SMELTER" },
+
   { id: "smith_bronze_helm", skill: "smithing", name: "Forge Bronze Helm", levelReq: 3, ticks: 3, xp: 30,
     inputs: [{ itemId: "bronze_bar", qty: 2 }], output: { itemId: "bronze_helm", qty: 1 }, requiresBuilding: "SMELTER" },
   { id: "smith_bronze_plate", skill: "smithing", name: "Forge Bronze Platebody", levelReq: 5, ticks: 4, xp: 45,
@@ -73,6 +87,8 @@ export const RECIPES: CraftRecipe[] = [
     inputs: [{ itemId: "oak_log", qty: 1 }], output: { itemId: "plank", qty: 2 }, requiresBuilding: "SAWMILL" },
   { id: "plank_willow", skill: "carpentry", name: "Saw Plank (Willow)", levelReq: 30, ticks: 4, xp: 80,
     inputs: [{ itemId: "willow_log", qty: 1 }], output: { itemId: "plank", qty: 3 }, requiresBuilding: "SAWMILL" },
+  { id: "craft_shortbow", skill: "carpentry", name: "Carve Shortbow", levelReq: 12, ticks: 4, xp: 60,
+    inputs: [{ itemId: "plank", qty: 2 }], output: { itemId: "shortbow", qty: 1 }, requiresBuilding: "SAWMILL" },
   { id: "craft_fly_rod", skill: "carpentry", name: "Carve Fly Rod", levelReq: 10, ticks: 4, xp: 55,
     inputs: [{ itemId: "plank", qty: 2 }, { itemId: "bronze_bar", qty: 1 }], output: { itemId: "fly_rod", qty: 1 }, requiresBuilding: "SAWMILL" },
 ];

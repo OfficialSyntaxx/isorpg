@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import type { Grid } from "../world/Grid";
 import type { GameState, TownBuilding } from "../state/GameState";
-import { BUILDINGS, type BuildingType } from "../data/Buildings";
+import { BUILDINGS, type BuildingType, MAX_BUILD_LEVEL } from "../data/Buildings";
 import { addItem, isFull, removeItem, countItem } from "../components/Inventory";
 import { levelFromXp } from "../data/XPTable";
 import { makeBuilding, makeTileHighlight } from "../generators/Settlement";
@@ -20,7 +20,6 @@ export interface BuildCallbacks {
 }
 
 const PASSIVE_INTERVAL_MS = 10 * TICK_MS; // ~6s per passive conversion cycle
-const MAX_BUILD_LEVEL = 3; // P7.5: upgrades go up to level 3
 
 export class BuildSystem {
   private scene: THREE.Scene;
@@ -60,6 +59,21 @@ export class BuildSystem {
   count(type: BuildingType): number {
     return this.state.town.buildings.filter((b) => b.type === type).length;
   }
+
+  /**
+   * Total levels across every instance of a type — the figure passive effects
+   * scale on.
+   *
+   * Effects used to read `count()`, so a level-3 Sawmill produced exactly what a
+   * level-1 one did: upgrading cost 2x then 3x the materials and bought a 12%
+   * larger mesh and nothing else. Only the Town Hall ever read its level. One
+   * level-3 Sawmill now works like three level-1 ones, which is what "each level
+   * doubles its base cost" was always implying.
+   */
+  levels(type: BuildingType): number {
+    return this.state.town.buildings.reduce((n, b) => (b.type === type ? n + b.level : n), 0);
+  }
+
   hasBuilding(type: BuildingType): boolean { return this.count(type) > 0; }
 
   canAfford(type: BuildingType): boolean {
@@ -148,7 +162,7 @@ export class BuildSystem {
   }
 
   // ————— Passive effects —————
-  get storageBonus(): number { return this.count("STOREHOUSE") * 250; }
+  get storageBonus(): number { return this.levels("STOREHOUSE") * 250; }
   /** P7.5: offline cap scales with the Town Hall's level (8 + 4h per level). */
   get offlineCapHours(): number { return 8 + this.hallLevel() * 4; }
 
@@ -183,13 +197,16 @@ export class BuildSystem {
     b.level += 1;
     const mesh = this.meshes.get(b.id);
     if (mesh) mesh.scale.setScalar(1 + (b.level - 1) * 0.12);
+    // Storage is derived, so it has to be recomputed here — upgrading a
+    // Storehouse otherwise did nothing until the next page load.
+    this.applyStorage();
     return true;
   }
 
   private applyStorage() {
     this.state.player.inventory.storageCap = 500
-      + this.count("STOREHOUSE") * 250
-      + this.count("STORAGE_BIN") * 50;
+      + this.levels("STOREHOUSE") * 250
+      + this.levels("STORAGE_BIN") * 50;
     this.cb.onStorageChanged?.();
   }
 
@@ -202,12 +219,12 @@ export class BuildSystem {
     const inv = this.state.player.inventory;
     const room = () => !isFull(inv);
 
-    for (let i = 0; i < this.count("SAWMILL"); i++) {
+    for (let i = 0; i < this.levels("SAWMILL"); i++) {
       if (!room()) break;
       const logId = ["willow_log", "oak_log", "normal_log"].find((id) => countItem(inv, id) > 0);
       if (logId) { removeItem(inv, logId, 1); addItem(inv, "plank", 1); }
     }
-    for (let i = 0; i < this.count("SMELTER"); i++) {
+    for (let i = 0; i < this.levels("SMELTER"); i++) {
       if (!room()) break;
       if (countItem(inv, "iron_ore") > 0 && countItem(inv, "coal") > 0) {
         removeItem(inv, "iron_ore", 1); removeItem(inv, "coal", 1); addItem(inv, "iron_bar", 1);
@@ -215,7 +232,7 @@ export class BuildSystem {
         removeItem(inv, "copper_ore", 1); removeItem(inv, "tin_ore", 1); addItem(inv, "bronze_bar", 1);
       }
     }
-    const granaries = this.count("GRANARY");
+    const granaries = this.levels("GRANARY");
     if (granaries > 0 && room()) addItem(inv, "raw_shrimp", granaries);
 
     const tax = this.hallLevel();

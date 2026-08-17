@@ -90,9 +90,42 @@ doing when `boot()` is next restructured for another reason; not worth the risk 
 its own.
 
 ## Phase E — Unbuilt content
-Collection log viewer (S) · building upgrades beyond Town Hall (S) · auto-eat threshold
-UI (S) · smithing weapons to consume bars (M) · equipment slots (M) · farming & seeds (M)
-· clue scrolls (L).
+
+**Done this session.**
+- **Collection log viewer** ✅ — the log was already recorded and persisted; the Menu
+  printed a bare count, so there was no way to see *what* was in it or what was
+  missing. Now a tab in Progress: every item grouped by type, per-group counts, and
+  undiscovered entries as dimmed `? ???` cells — the gap is the information.
+- **Building upgrades beyond Town Hall** ✅ — this was a live defect, not missing
+  content. Upgrading cost 2× then 3× the materials and changed nothing but a 12%
+  larger mesh, because every passive effect read `count()` (how many buildings) and
+  only the Town Hall ever read its level. New `levels()` sums levels across
+  instances, so one level-3 Sawmill works like three level-1 ones. Upgrading also
+  now recomputes the storage cap, which was previously invisible until a reload.
+- **Auto-eat threshold UI** ✅ — was a hardcoded 40%. Now a Menu setting
+  (Off/20/30/40/50/60/75%), persisted, with off-grid stored values snapped to a
+  selectable step so a hand-edited save cannot leave it unrepresentable.
+- **Smithing weapons to consume bars** ✅ — smithing dead-ended at tools and armour:
+  not one weapon had a recipe, so the only way to hold a sword was a monster drop or
+  the market, and steel bars fed nothing but an axe and a pickaxe. Added forge
+  recipes for the bronze dagger/sword/2H and the iron sword, a carpentry recipe for
+  the shortbow, and a new **Steel Sword** (13 max hit, Attack 20) to give steel a
+  weapon tier. A QC check now fails if any weapon lacks a recipe or any bar lacks a
+  consumer.
+- **Equipment slots** ✅ *already shipped* — the plan item was stale. `equipItem` /
+  `unequipItem` / `armorBonuses` and the Bag's equip/unequip rows were all in place;
+  `selectWeapon` reads the weapon slot. Verified, not rebuilt.
+
+**Fixed along the way** (both surfaced by looking at the panel rather than the tests):
+- `.inv-name` had no `flex`, so any row whose only child was the name got shoved to
+  the right edge by `space-between` — the Levels and achievement lists read as
+  `StrengthLv 1 · 0 XP`, right-aligned and unspaced.
+- `.panel-body` had `max-height: calc(62vh - 70px)` while the desktop side panel sets
+  `max-height: none` and stands ~850 px tall, so lists were clipped at 488 px with
+  360 px of dead panel below. Now `flex: 1; min-height: 0`.
+
+**Remaining.** Farming & seeds (M) · clue scrolls (L). The `SEED` item type and a
+`GEM` type exist with no members, so farming has a slot waiting for it.
 
 ---
 

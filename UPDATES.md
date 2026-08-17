@@ -6,6 +6,45 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase E — collection log, real building upgrades, craftable weapons
+
+- **Smithing no longer dead-ends.** Not one weapon had a recipe: you could forge a
+  helm, a platebody and a pickaxe, but the only way to hold a sword was a monster
+  drop or the market — and steel bars fed nothing but an axe and a pickaxe. Added
+  forge recipes for the bronze dagger/sword/2H and the iron sword, a carpentry
+  recipe for the shortbow, and a new **Steel Sword** (13 max hit, Attack 20) so
+  steel has a weapon tier. A QC check now fails if any weapon lacks a recipe or any
+  bar lacks a consumer, so the chain cannot quietly dead-end again.
+- **Building upgrades were doing nothing.** Upgrading cost 2× then 3× the materials
+  and bought a 12% larger mesh — every passive effect read `count()` (how many
+  buildings) and only the Town Hall ever read its *level*. New `levels()` sums
+  levels across instances, so a level-3 Sawmill saws three logs a cycle and a
+  level-3 Storehouse gives +750 cap. Upgrading now also recomputes the storage cap,
+  which was previously invisible until a page reload.
+- **Collection log viewer.** The log was already recorded and persisted; the Menu
+  printed a bare count, so there was no way to see *what* was in it or what was
+  still missing — which is the entire point of a collection log. It is now a tab in
+  Progress: every item grouped by type with per-group counts, undiscovered entries
+  as dimmed `? ???` cells.
+- **Auto-eat is tunable.** Was a hardcoded 40% — too eager for a player stretching
+  food across a long trip, too late against something that can two-shot them.
+  Menu setting (Off / 20 / 30 / 40 / 50 / 60 / 75%), persisted, with off-grid stored
+  values snapped to a selectable step so a hand-edited save cannot leave it
+  unrepresentable.
+- **Equipment slots turned out to be already shipped** — the plan item was stale.
+  `equipItem` / `unequipItem` / `armorBonuses` and the Bag's equip/unequip rows were
+  all in place. Verified rather than rebuilt.
+- **Two UI defects found by looking at the panel**, not by the tests:
+  `.inv-name` had no `flex`, so a row whose only child was the name got pushed to the
+  right edge by `space-between` — the Levels and achievement lists read as
+  `StrengthLv 1 · 0 XP`. And `.panel-body` capped itself at `calc(62vh - 70px)` while
+  the desktop side panel is ~850 px tall, clipping lists at 488 px with 360 px of
+  dead panel underneath.
+- 23 new QC checks (**121/121**) · 25/25 rig · 47/47 UI audit · 5/5 smoke · visual
+  baseline clean.
+
+---
+
 ## 2026-08 · Phase D — CI, and a visual gate on the opening frame
 
 - **CI exists.** `.github/workflows/ci.yml` runs on every push and PR: build,

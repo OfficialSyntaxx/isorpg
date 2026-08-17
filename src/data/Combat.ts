@@ -50,6 +50,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   sword2h: { id: "sword2h", name: "Bronze 2H Sword", kind: "melee", ticks: 6, itemId: "bronze_2h", maxHit: 10, accuracy: 16, requiredAttack: 5 },
   shortbow: { id: "shortbow", name: "Shortbow", kind: "ranged", ticks: 3, itemId: "shortbow", maxHit: 5, accuracy: 14, requiredAttack: 1 },
   iron_sword: { id: "iron_sword", name: "Iron Sword", kind: "melee", ticks: 4, itemId: "iron_sword", maxHit: 9, accuracy: 20, requiredAttack: 10 },
+  steel_sword: { id: "steel_sword", name: "Steel Sword", kind: "melee", ticks: 4, itemId: "steel_sword", maxHit: 13, accuracy: 28, requiredAttack: 20 },
 };
 
 export const MONSTERS: Record<string, MonsterDef> = {

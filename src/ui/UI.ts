@@ -1,5 +1,6 @@
 // HUD + DOM panels. No framework (GDD §1, §8).
 import type { GameState } from "../state/GameState";
+import { AUTO_EAT_STEPS } from "../state/GameState";
 import { levelProgress, levelFromXp } from "../data/XPTable";
 import { ITEMS } from "../data/Items";
 import { itemIcon } from "../data/Items";
@@ -15,7 +16,7 @@ import { recipesFor, type CraftRecipe } from "../data/Recipes";
 import { BUILDINGS, BUILDING_TYPES, type BuildingType } from "../data/Buildings";
 import { countItem } from "../components/Inventory";
 import { equipItem, unequipItem, EQUIP_SLOTS } from "../components/Equipment";
-import type { EquipSlot } from "../data/Items";
+import type { EquipSlot, Item, ItemType } from "../data/Items";
 import type { MapSnapshot } from "../systems/MapSystem";
 import type { QuestJournalEntry } from "../systems/QuestSystem";
 import type { MetaSnapshot } from "../systems/MetaSystem";
@@ -25,6 +26,22 @@ import type { LabourSnapshot, LabourJob } from "../systems/LabourSystem";
 const SLOT_NAMES: Record<EquipSlot, string> = {
   weapon: "Weapon", offhand: "Offhand", head: "Helm", body: "Body", legs: "Legs",
 };
+
+type MetaTab = "awards" | "log" | "levels";
+
+/** Readable group headings for the collection log. */
+const TYPE_NAMES: Record<ItemType, string> = {
+  LOG: "Logs", ORE: "Ores", BAR: "Bars", FOOD: "Food", FISH: "Fish",
+  SEED: "Seeds", GEM: "Gems", TOOL: "Tools & Gear", MATERIAL: "Materials",
+  MISC: "Curiosities",
+};
+
+/** Item names come from data, but the log renders them into markup. */
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string
+  ));
+}
 
 export interface UIEvents {
   onExport?: () => void;
@@ -228,6 +245,7 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
     this.panelTitle.textContent = "Progress";
     const snap = this.metaSource?.();
     if (!snap) { this.panelBody.innerHTML = `<div class="empty">Nothing to report yet.</div>`; return; }
+    const tab = this.metaTab;
     const achRows = snap.achievements.map((a) => `
       <div class="inv-row" style="align-items:flex-start">
         <span class="inv-ico">${a.unlocked ? "🏆" : "🔒"}</span>
@@ -242,10 +260,72 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       <div class="inv-row"><span class="inv-ico">✦</span>
         <div class="inv-name">${sk.name}<span class="inv-count">Lv ${sk.level} · ${sk.xp.toLocaleString()} XP</span></div>
       </div>`).join("");
-    this.panelBody.innerHTML = `
-      <div class="set-val">🏆 Achievements ${snap.achieved}/${snap.achievements.length}</div>${achRows}
-      <div class="set-val">⚔️ Slain ${snap.totalKills} monster${snap.totalKills === 1 ? "" : "s"} · 📦 ${snap.collectionCount} items collected</div>${killRows}
-      <div class="set-val">Levels</div>${skillRows}`;
+    // Tabs, not one long scroll: four sections of this size is a lot of thumb
+    // travel on a phone, and the tab pattern is already used by Craft and Build.
+    const tabs = ([
+      ["awards", `🏆 ${snap.achieved}/${snap.achievements.length}`],
+      ["log", `📦 Log`],
+      ["levels", `✦ Levels`],
+    ] as const).map(([id, label]) =>
+      `<button class="tab-btn${id === tab ? " active" : ""}" data-meta-tab="${id}">${label}</button>`).join("");
+
+    const body =
+      tab === "awards"
+        ? `${achRows}<div class="set-val">⚔️ Slain ${snap.totalKills} monster${snap.totalKills === 1 ? "" : "s"}</div>${killRows}`
+        : tab === "log"
+          ? this.collectionLogHtml()
+          : skillRows;
+
+    this.panelBody.innerHTML = `<div class="tab-row">${tabs}</div>${body}`;
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-meta-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.metaTab = btn.dataset.metaTab as MetaTab;
+        this.renderMeta();
+      });
+    });
+  }
+
+  /**
+   * Collection log: every item in the game, grouped by type, with unseen entries
+   * shown as locked silhouettes.
+   *
+   * The log was already recorded and persisted — the Menu just printed a bare
+   * count, so there was no way to see *what* was in it or what was still missing,
+   * which is the entire point of a collection log.
+   */
+  private metaTab: MetaTab = "awards";
+
+  private collectionLogHtml(): string {
+    const log = this.state.collectionLog;
+    const byType = new Map<ItemType, Item[]>();
+    for (const item of Object.values(ITEMS)) {
+      // shrimp_food duplicates cooked_shrimp; listing both reads as a bug.
+      if (item.id === "shrimp_food") continue;
+      const list = byType.get(item.type) ?? [];
+      list.push(item);
+      byType.set(item.type, list);
+    }
+    const all = [...byType.values()].reduce((n, l) => n + l.length, 0);
+    const found = [...byType.values()].reduce((n, l) => n + l.filter((i) => log.has(i.id)).length, 0);
+
+    const sections = [...byType.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([type, items]) => {
+        const mine = items.filter((i) => log.has(i.id)).length;
+        const cells = items
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((i) => {
+            const has = log.has(i.id);
+            return `<div class="log-cell${has ? "" : " log-locked"}" title="${has ? escapeHtml(i.name) : "Undiscovered"}">
+              <span class="log-ico">${has ? itemIcon(i.id) : "❔"}</span>
+              <span class="log-name">${has ? escapeHtml(i.name) : "???"}</span>
+            </div>`;
+          }).join("");
+        return `<div class="log-group"><div class="log-head">${TYPE_NAMES[type] ?? type} <span class="inv-count">${mine}/${items.length}</span></div>
+          <div class="log-grid">${cells}</div></div>`;
+      }).join("");
+
+    return `<div class="set-val">📦 Collection Log ${found}/${all}</div>${sections}`;
   }
 
   /** P7.1: main.ts wires the market snapshot + buy/sell executors. */
@@ -586,13 +666,25 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
     this.panelTitle.textContent = "Menu";
     const totalXp = Object.values(this.state.player.skills).reduce((a, s) => a + s.xp, 0);
     const saved = Math.round(totalXp).toLocaleString();
+    const eat = this.state.settings.autoEatPct;
+    const eatOpts = AUTO_EAT_STEPS.map((p) =>
+      `<option value="${p}"${p === eat ? " selected" : ""}>${p === 0 ? "Off" : p + "% HP"}</option>`).join("");
     this.panelBody.innerHTML = `
       <div class="set-val">Total XP: <b>${saved}</b></div>
-      <div class="set-val">Collection Log: <b>${this.state.collectionLog.size}</b></div>
+      <div class="set-val">Collection Log: <b>${this.state.collectionLog.size}</b> — see Progress</div>
+      <div class="set-row"><label for="set-autoeat">Auto-eat below</label>
+        <select id="set-autoeat" class="btn btn-mini">${eatOpts}</select></div>
+      <div class="inv-desc">Eats your highest-tier food when HP drops under this. Off means never.</div>
       <div class="set-row"><button class="btn" data-act="export">Export Save (.json)</button></div>
       <div class="set-row"><button class="btn" data-act="import">Import Save</button></div>
       <div class="set-row"><button class="btn btn-danger" data-act="delete">New Save &amp; Reset</button></div>
     `;
+    this.panelBody.querySelector<HTMLSelectElement>("#set-autoeat")!.addEventListener("change", (e) => {
+      this.state.settings.autoEatPct = Number((e.target as HTMLSelectElement).value);
+      showToast(this.state.settings.autoEatPct === 0
+        ? "Auto-eat off — mind your health bar"
+        : `Auto-eat set to ${this.state.settings.autoEatPct}% HP`, "info", 1600);
+    });
     this.panelBody.querySelector("[data-act='export']")!.addEventListener("click", () => this.ev.onExport?.());
     this.panelBody.querySelector("[data-act='import']")!.addEventListener("click", () => this.fileInput.click());
     this.panelBody.querySelector("[data-act='delete']")!.addEventListener("click", () => {

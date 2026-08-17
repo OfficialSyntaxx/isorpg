@@ -183,6 +183,9 @@ p.float-tex.heal { color: var(--good); }
   position: fixed;
   left: 0; right: 0; bottom: 0;
   max-height: 62vh;
+  /* A flex column so the body fills whatever height the panel has. */
+  display: flex;
+  flex-direction: column;
   background: var(--panel);
   border-radius: 20px 20px 0 0;
   border-top: 1px solid rgba(255,255,255,0.08);
@@ -192,18 +195,41 @@ p.float-tex.heal { color: var(--good); }
   transition: transform .2s ease;
 }
 .panel.hidden { transform: translateY(110%); }
-.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.panel-head { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .panel-head h2 { margin: 0; font-size: 18px; }
 .panel-close { border: 0; background: rgba(255,255,255,0.06); color: var(--ink); width: 30px; height: 30px; border-radius: 9px; font-size: 14px; cursor: pointer; }
-.panel-body { overflow-y: auto; max-height: calc(62vh - 70px); -webkit-overflow-scrolling: touch; }
+/* flex:1 + min-height:0, not a vh fraction. The desktop side panel sets
+   max-height:none and is ~850px tall, so a hardcoded calc(62vh - 70px) clipped
+   the list at 488px and left the rest of the panel as dead space. */
+.panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
 .inv-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--panel-2); border-radius: 12px; margin-bottom: 8px; }
-.inv-name { font-weight: 600; font-size: 15px; }
+/* The row's main column. It needs flex:1, or a row whose only child is .inv-name
+   gets shoved to the right edge by space-between — which is why the Levels and
+   achievement lists read as "StrengthLv 1 · 0 XP", right-aligned and unspaced. */
+.inv-name { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 10px; font-weight: 600; font-size: 15px; }
 .inv-count { color: var(--gold); font-weight: 800; }
+/* As a sibling of .inv-name, a description is a right-hand column. Nested inside
+   it, it is a second line — so it takes the full width and reads left. */
 .inv-desc { color: var(--muted); font-size: 12px; text-align: right; max-width: 55%; }
+.inv-name > .inv-desc { flex: 0 0 100%; max-width: none; text-align: left; margin-top: 2px; }
 .inv-row .btn-mini { flex-shrink: 0; }
 .inv-ico { font-size: 19px; margin-right: 8px; flex-shrink: 0; }
 .empty { color: var(--muted); text-align: center; padding: 24px 8px; }
+
+/* ——— Collection log ———
+   A grid rather than rows: the point is scanning a lot of entries for gaps, and
+   locked cells have nothing to say that needs a full-width row. */
+.log-group { margin-bottom: 12px; }
+.log-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 700; color: var(--muted); padding: 0 2px 6px; }
+.log-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+.log-cell { background: var(--panel-2); border-radius: 10px; padding: 8px 4px 6px; text-align: center; overflow: hidden; }
+.log-ico { display: block; font-size: 20px; line-height: 1.2; }
+.log-name { display: block; font-size: 10px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Undiscovered: dimmed, not hidden — an empty slot is the information. */
+.log-cell.log-locked { background: rgba(255,255,255,0.03); }
+.log-cell.log-locked .log-ico { opacity: 0.35; }
+.log-cell.log-locked .log-name { color: var(--muted); opacity: 0.6; }
 
 /* ——— Craft / Build lists ——— */
 .tab-row { display: flex; gap: 6px; margin-bottom: 12px; }

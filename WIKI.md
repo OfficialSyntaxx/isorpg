@@ -114,6 +114,7 @@ Strength level (`+1 per 4 levels`) and your armour's strength bonus.
 | ⚔️ **Bronze 2H Sword** | melee | 6t (3.6s) | 10 | 16 | 5 |
 | 🏹 **Shortbow** | ranged | 3t (1.8s) | 5 | 14 | 1 |
 | ⚔️ **Iron Sword** | melee | 4t (2.4s) | 9 | 20 | 10 |
+| ⚔️ **Steel Sword** | melee | 4t (2.4s) | 13 | 28 | 20 |
 
 Ranged weapons reach **5 tiles**; melee must be adjacent. The same rule applies to
 monsters, so a bow lets you open on an enemy before it closes.
@@ -126,6 +127,7 @@ monsters, so a bow lets you open on an enemy before it closes.
 | ⚔️ **Bronze Sword** | weapon | 0 | 0 | 0 | 0 | — |
 | ⚔️ **Bronze 2H Sword** | weapon | 0 | 0 | 0 | 0 | — |
 | ⚔️ **Iron Sword** | weapon | 0 | 0 | 0 | 0 | — |
+| ⚔️ **Steel Sword** | weapon | 0 | 0 | 0 | 0 | — |
 | 🏹 **Shortbow** | weapon | 0 | 0 | 0 | 0 | — |
 | ⛑️ **Bronze Helm** | head | 0 | 0 | 0 | 0 | — |
 | 🛡️ **Bronze Platebody** | body | 0 | 0 | 0 | 0 | — |
@@ -362,6 +364,11 @@ Aggro range 6 tiles · respawns after 30s
 | ⛏️ Iron Pickaxe | 20 | 3× 🔩 Iron Bar | 70 | 3.0s | Smelter |
 | 🪓 Steel Axe | 35 | 3× ⛓️ Steel Bar | 110 | 3.6s | Smelter |
 | ⛏️ Steel Pickaxe | 35 | 3× ⛓️ Steel Bar | 110 | 3.6s | Smelter |
+| 🗡️ Bronze Dagger | 2 | 1× 🟤 Bronze Bar | 25 | 1.8s | Smelter |
+| ⚔️ Bronze Sword | 6 | 2× 🟤 Bronze Bar | 45 | 2.4s | Smelter |
+| ⚔️ Bronze 2H Sword | 10 | 3× 🟤 Bronze Bar | 70 | 3.0s | Smelter |
+| ⚔️ Iron Sword | 26 | 2× 🔩 Iron Bar | 95 | 3.0s | Smelter |
+| ⚔️ Steel Sword | 40 | 3× ⛓️ Steel Bar | 150 | 3.6s | Smelter |
 | ⛑️ Bronze Helm | 3 | 2× 🟤 Bronze Bar | 30 | 1.8s | Smelter |
 | 🛡️ Bronze Platebody | 5 | 3× 🟤 Bronze Bar | 45 | 2.4s | Smelter |
 | 🦵 Bronze Platelegs | 4 | 2× 🟤 Bronze Bar | 35 | 1.8s | Smelter |
@@ -376,6 +383,7 @@ Aggro range 6 tiles · respawns after 30s
 | 🪵 Plank | 1 | 1× 🪵 Logs | 20 | 1.2s | Sawmill |
 | 2× 🪵 Plank | 15 | 1× 🌳 Oak Logs | 45 | 1.8s | Sawmill |
 | 3× 🪵 Plank | 30 | 1× 🌿 Willow Logs | 80 | 2.4s | Sawmill |
+| 🏹 Shortbow | 12 | 2× 🪵 Plank | 60 | 2.4s | Sawmill |
 | 🎣 Fly Rod | 10 | 2× 🪵 Plank + 1× 🟤 Bronze Bar | 55 | 2.4s | Sawmill |
 
 ### Mastery
@@ -400,13 +408,13 @@ recipe's requirement and as mastery grows. A built Campfire makes cooking 25% fa
 
 | Building | Con. level | Cost | Effect |
 |---|---:|---|---|
-| 📦 **Storage Bin** | 0 | 5× 🪵 Logs | +50 inventory storage cap |
+| 📦 **Storage Bin** | 0 | 5× 🪵 Logs | +50 inventory storage cap per level |
 | 🔥 **Campfire** | 0 | 6× 🪵 Logs | Cooking 25% faster · villagers gather here |
 | 🏛️ **Town Hall** | 1 | 200× 🪙 Coins + 10× 🪵 Plank | +4h max offline idle capacity, +2 coins/tick passive tax |
-| 🏚️ **Storehouse** | 1 | 150× 🪙 Coins + 20× 🪵 Plank | +250 inventory storage cap |
-| 🪵 **Sawmill** | 5 | 120× 🪙 Coins + 15× 🪵 Logs | Passively converts 1 log → 1 plank per cycle |
-| 🔥 **Smelter** | 10 | 150× 🪙 Coins + 10× 🟠 Copper Ore + 10× ⚪ Tin Ore | Unlocks Smithing recipes; passively converts ore → bars per cycle |
-| 🌾 **Granary** | 8 | 100× 🪙 Coins + 8× 🪵 Plank | Passively produces raw shrimp per cycle |
+| 🏚️ **Storehouse** | 1 | 150× 🪙 Coins + 20× 🪵 Plank | +250 inventory storage cap per level |
+| 🪵 **Sawmill** | 5 | 120× 🪙 Coins + 15× 🪵 Logs | Passively converts 1 log → 1 plank per cycle, per level |
+| 🔥 **Smelter** | 10 | 150× 🪙 Coins + 10× 🟠 Copper Ore + 10× ⚪ Tin Ore | Unlocks Smithing recipes; passively converts ore → bars per cycle, per level |
+| 🌾 **Granary** | 8 | 100× 🪙 Coins + 8× 🪵 Plank | Passively produces 1 raw shrimp per cycle, per level |
 
 Buildings may only be placed on unlocked, buildable tiles in the town or settlement
 ring. Placing one grants Construction XP.
@@ -588,6 +596,7 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 | 🥅 **Small Fishing Net** | 1 | — | Catches shrimp in open water. |
 | 🪓 **Steel Axe** | 90 | — | Bites deep — swift and true. |
 | ⛏️ **Steel Pickaxe** | 90 | — | The miner's best friend. |
+| ⚔️ **Steel Sword** | 140 | — | Forged from steel — the finest blade a settlement smith can make. |
 
 ## Achievements
 

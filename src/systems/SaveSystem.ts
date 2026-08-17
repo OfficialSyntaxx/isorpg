@@ -71,6 +71,7 @@ export class SaveSystem {
         market: { supply: { ...this.state.town.market.supply }, demand: { ...this.state.town.market.demand } },
       },
       collectionLog: { unlocked: [...this.state.collectionLog] },
+      settings: { autoEatPct: this.state.settings.autoEatPct },
       clock: { minute: this.state.clock.minute, day: this.state.clock.day },
       map: {
         discovered: [...this.state.player.map.discovered],
@@ -132,6 +133,7 @@ export class SaveSystem {
       this.state.town.market.demand = { ...mkt.demand };
     }
     this.state.collectionLog = new Set((s.collectionLog?.unlocked ?? []).map(String));
+    if (s.settings) this.state.settings.autoEatPct = s.settings.autoEatPct;
     this.state.clock = { minute: s.clock.minute, day: s.clock.day };
     // P6: world-map discovery + fast-travel unlock persist with the save.
     p.map = {

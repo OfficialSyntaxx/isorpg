@@ -2,7 +2,7 @@
 // Sanitizes an arbitrary parsed payload into a valid SaveState, returning
 // { ok, state, reason }. Never throws on malformed input.
 import { BUILDING_TYPES } from "../data/Buildings";
-import { DAY_START_MINUTE, DEFAULT_HERO_NAME, SAVE_VERSION } from "../state/GameState";
+import { AUTO_EAT_STEPS, DAY_START_MINUTE, DEFAULT_AUTO_EAT_PCT, DEFAULT_HERO_NAME, SAVE_VERSION } from "../state/GameState";
 
 export interface Sanitized<T> {
   ok: boolean;
@@ -44,6 +44,19 @@ function olderThan(a: string, b: string): boolean {
     if (d !== 0) return d < 0;
   }
   return false;
+}
+
+/**
+ * Snap a stored auto-eat threshold to a selectable step.
+ *
+ * Anything outside the offered set — a hand-edited save, a value from a future
+ * build, a NaN — becomes the default rather than a threshold the UI cannot
+ * represent and the player cannot change back.
+ */
+function nearestAutoEatStep(v: unknown): number {
+  if (typeof v !== "number" || !Number.isFinite(v)) return DEFAULT_AUTO_EAT_PCT;
+  return AUTO_EAT_STEPS.reduce((best, step) =>
+    Math.abs(step - v) < Math.abs(best - v) ? step : best, DEFAULT_AUTO_EAT_PCT as number);
 }
 
 export function needsMasteryRescale(version: string): boolean {
@@ -151,6 +164,7 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
       player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe },
       town: { buildings, labour: labourSafe, market: marketSafe },
       collectionLog: { unlocked: collectionLog },
+      settings: { autoEatPct: nearestAutoEatStep((r as any).settings?.autoEatPct) },
       map: mapSafe,
       clock: clockSafe,
     },

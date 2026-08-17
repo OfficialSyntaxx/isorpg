@@ -100,6 +100,7 @@ export const ITEMS: Record<string, Item> = {
   bronze_sword: { id: "bronze_sword", name: "Bronze Sword", type: "TOOL", value: 20, desc: "A solid starter sword. 4-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
   bronze_2h: { id: "bronze_2h", name: "Bronze 2H Sword", type: "TOOL", value: 30, desc: "Slow but heavy. 6-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
   iron_sword: { id: "iron_sword", name: "Iron Sword", type: "TOOL", value: 60, desc: "A sharp iron blade.", stack: false, equip: { slot: "weapon", tier: 2 } },
+  steel_sword: { id: "steel_sword", name: "Steel Sword", type: "TOOL", value: 140, desc: "Forged from steel — the finest blade a settlement smith can make.", stack: false, equip: { slot: "weapon", tier: 3 } },
   shortbow: { id: "shortbow", name: "Shortbow", type: "TOOL", value: 25, desc: "A quick bow. 3-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
 
   // ——— Armor (equip slots: head / body / legs) ———
@@ -142,7 +143,7 @@ export const ITEM_ICONS: Record<string, string> = {
   coins: "🪙", bones: "🦴",
   raw_rat_meat: "🍖", cooked_shrimp: "🍤", shrimp_food: "🍤", cooked_trout: "🍣", cooked_rat_meat: "🍗",
  combat_potion: "🧪",
-  bronze_dagger: "🗡️", bronze_sword: "⚔️", bronze_2h: "⚔️", iron_sword: "⚔️", shortbow: "🏹",
+  bronze_dagger: "🗡️", bronze_sword: "⚔️", bronze_2h: "⚔️", iron_sword: "⚔️", steel_sword: "⚔️", shortbow: "🏹",
   bronze_helm: "⛑️", bronze_plate: "🛡️", bronze_legs: "🦵",
   iron_helm: "⛑️", iron_plate: "🛡️", iron_legs: "🦵",
   goblin_key: "🗝️", dungeon_key: "🗝️", rat_bone: "🦴", loop_half_key: "🗝️", zombie_flesh: "🧟",

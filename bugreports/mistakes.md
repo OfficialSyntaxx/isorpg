@@ -189,6 +189,30 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   geometry checks in the QC suite. **Lesson: verify which failures a new gate
   actually catches before writing down what it covers.**
 
+## Phase E 2026-08-17 (content)
+- **[design] A number that scales the cost but not the effect** — buildings upgraded
+  to level 3, each level costing level × baseCost, and every passive effect read
+  `count()` instead of the level. Only the Town Hall ever looked at its own level, so
+  every other upgrade sold the player a 12% larger mesh for triple materials. Nothing
+  failed; the feature simply had no effect. **Lesson: when a stat is introduced,
+  grep every consumer of the thing it is meant to scale. A half-wired multiplier
+  reads as content, not as a bug.**
+- **[design] Content that exists as items but not as recipes** — five weapons, an
+  entire bar tier, and no way to make any of them. The item table, the combat table
+  and the shop all agreed weapons existed; only the recipe table disagreed, and
+  nothing cross-checked the two. Fixed, and now gated: a QC check fails if a weapon
+  has no recipe or a bar has no consumer. **Lesson: cross-table invariants need a
+  test, because each table looks complete on its own.**
+- **[qc] Two UI defects sat in the panel I was editing and no test could see them** —
+  a missing `flex` that right-aligned every single-column row, and a `62vh` body cap
+  inside an 850px desktop panel that clipped lists with 360px of dead space below.
+  Both obvious in a screenshot, invisible to 121 passing checks. **Lesson: after
+  touching a panel, look at it. The audit checks structure, not layout.**
+- **[process] The plan itself had gone stale** — "equipment slots (M)" was listed as
+  unbuilt and was fully implemented. Reading the code before starting saved building
+  a second one. **Lesson: audit against the code, not against the plan; a roadmap
+  written two sessions ago is a hypothesis.**
+
 ## Open threads (not yet filed as bugs)
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.

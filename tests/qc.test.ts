@@ -16,6 +16,7 @@ import { BuildSystem } from "../src/systems/BuildSystem";
 import { SaveSystem, offlineTaxFor } from "../src/systems/SaveSystem";
 import { monsterPoolFor } from "../src/systems/WorldSystem";
 import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
+import { ITEMS } from "../src/data/Items";
 import { spawnMonster } from "../src/world/Monster";
 import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } from "../src/components/Inventory";
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
@@ -23,7 +24,9 @@ import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from ".
 import { selectWeapon, WEAPONS } from "../src/data/Combat";
 import { RESOURCES } from "../src/data/Skills";
 import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
-import { DEFAULT_HERO_NAME } from "../src/state/GameState";
+import { DEFAULT_HERO_NAME, AUTO_EAT_STEPS, DEFAULT_AUTO_EAT_PCT } from "../src/state/GameState";
+import { MAX_BUILD_LEVEL } from "../src/data/Buildings";
+import { RECIPES } from "../src/data/Recipes";
 
 const results: string[] = [];
 const check = (n: string, ok: boolean, x = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${n}${x ? "  [" + x + "]" : ""}`);
@@ -431,6 +434,96 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
 
 // [hero] The player character is a named wizard, not "Hero".
 check("hero: has a name, not a placeholder", DEFAULT_HERO_NAME.length > 1 && !/^(hero|player)$/i.test(DEFAULT_HERO_NAME), DEFAULT_HERO_NAME);
+
+// [build] Upgrading used to cost 2x then 3x the materials and change nothing but
+// the mesh scale: every passive effect read count(), so only the Town Hall ever
+// looked at its level. levels() sums levels across instances, so one level-3
+// Sawmill works like three level-1 ones.
+{
+  const st = createFreshState(g, DEFAULT_HERO_NAME, 21, 21);
+  const bs = new BuildSystem(scene, g, st);
+  addItem(st.player.inventory, "coins", 100000);
+  addItem(st.player.inventory, "plank", 400);
+
+  st.town.buildings.push({ id: "sh1", type: "STOREHOUSE", x: 20, y: 20, level: 1 });
+  check("build: storage counts one level", bs.storageBonus === 250, `${bs.storageBonus}`);
+  check("build: levels() and count() differ once upgraded",
+    bs.count("STOREHOUSE") === 1 && bs.levels("STOREHOUSE") === 1);
+
+  // The cap is derived, so it only tracks reality once something recomputes it —
+  // upgrading now does, where before a Storehouse upgrade was invisible until the
+  // next page load.
+  const up = bs.upgradeType("STOREHOUSE");
+  check("build: an upgrade recomputes the cap immediately",
+    up && st.player.inventory.storageCap === 500 + bs.storageBonus,
+    `cap ${st.player.inventory.storageCap}, bonus ${bs.storageBonus}`);
+  check("build: level 2 doubles the bonus", bs.storageBonus === 500 && bs.levels("STOREHOUSE") === 2);
+
+  check("build: reaches the cap", bs.upgradeType("STOREHOUSE") === true && bs.levels("STOREHOUSE") === MAX_BUILD_LEVEL);
+  check("build: level 3 triples the bonus", bs.storageBonus === 750, `${bs.storageBonus}`);
+  check("build: upgrades stop at the cap", bs.upgradeType("STOREHOUSE") === false && MAX_BUILD_LEVEL === 3);
+
+  // Passive production reads levels too, so a level-3 Sawmill saws three logs.
+  st.town.buildings.push({ id: "sm1", type: "SAWMILL", x: 22, y: 22, level: 3 });
+  addItem(st.player.inventory, "normal_log", 10);
+  const logsBefore = countItem(st.player.inventory, "normal_log");
+  bs.tick(60_000);
+  const sawn = logsBefore - countItem(st.player.inventory, "normal_log");
+  check("build: a level-3 Sawmill saws 3 logs a cycle", sawn === 3, `${sawn}`);
+}
+
+// [smithing] Smithing dead-ended at tools and armour: not one weapon had a
+// recipe, so the only way to hold a sword was a drop or the market, and steel
+// bars fed nothing but an axe and a pickaxe.
+{
+  const outputs = new Set(RECIPES.map((r: any) => r.output.itemId));
+  const weaponItems = Object.values(WEAPONS).map((w: any) => w.itemId).filter(Boolean) as string[];
+  const missing = weaponItems.filter((id) => !outputs.has(id));
+  check("smithing: every weapon is craftable", missing.length === 0, missing.join(",") || "all");
+
+  // Every recipe must consume something and produce a real item.
+  const badOut = RECIPES.filter((r: any) => !ITEMS[r.output.itemId]);
+  check("recipes: outputs are real items", badOut.length === 0, badOut.map((r: any) => r.id).join(","));
+  const badIn = RECIPES.filter((r: any) => !r.inputs.length || r.inputs.some((i: any) => !ITEMS[i.itemId]));
+  check("recipes: inputs are real items", badIn.length === 0, badIn.map((r: any) => r.id).join(","));
+  const dupIds = RECIPES.length - new Set(RECIPES.map((r: any) => r.id)).size;
+  check("recipes: ids are unique", dupIds === 0, `${dupIds} duplicate(s)`);
+
+  // Every bar must feed something, or a tier of smelting is a dead end.
+  for (const bar of ["bronze_bar", "iron_bar", "steel_bar"]) {
+    const users = RECIPES.filter((r: any) => r.inputs.some((i: any) => i.itemId === bar));
+    check(`smithing: ${bar} has consumers`, users.length > 0, `${users.length} recipes`);
+  }
+  // A weapon requiring Attack N should not be forgeable far below that.
+  const tooEarly = Object.values(WEAPONS).filter((w: any) => {
+    if (!w.itemId) return false;
+    const r: any = RECIPES.find((x: any) => x.output.itemId === w.itemId);
+    return r && r.levelReq + 20 < w.requiredAttack;
+  });
+  check("smithing: forge levels track weapon requirements", tooEarly.length === 0,
+    tooEarly.map((w: any) => w.id).join(","));
+}
+
+// [settings] Auto-eat was a hardcoded 40%. It is now player-tunable and persisted,
+// and a stored value outside the offered steps must not become unrepresentable.
+{
+  check("autoeat: the default is offered", AUTO_EAT_STEPS.includes(DEFAULT_AUTO_EAT_PCT as any));
+  check("autoeat: off is offered", AUTO_EAT_STEPS.includes(0 as any));
+  check("autoeat: fresh saves take the default",
+    createFreshState(new Grid()).settings.autoEatPct === DEFAULT_AUTO_EAT_PCT);
+
+  const mk = (v: unknown) => (sanitizeSave({
+    version: "1.1.0", timestamp: Date.now(),
+    player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: {}, inventory: [] },
+    settings: { autoEatPct: v },
+  }) as any).state.settings.autoEatPct;
+  check("autoeat: a stored step round-trips", mk(60) === 60, `${mk(60)}`);
+  check("autoeat: an off-grid value snaps to a step", AUTO_EAT_STEPS.includes(mk(37) as any), `${mk(37)}`);
+  check("autoeat: junk falls back to the default", mk("nonsense") === DEFAULT_AUTO_EAT_PCT && mk(NaN) === DEFAULT_AUTO_EAT_PCT);
+  check("autoeat: a missing block falls back to the default",
+    (sanitizeSave({ version: "1.1.0", timestamp: Date.now(), player: { name: "X", position: { x: 1, y: 1 }, stats: { hp: 1, maxHp: 1 }, skills: {}, inventory: [] } }) as any)
+      .state.settings.autoEatPct === DEFAULT_AUTO_EAT_PCT);
+}
 
 console.log(results.join("\n"));
 const fails = results.filter((r) => r.startsWith("FAIL")).length;
