@@ -6,6 +6,28 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase F.1 — Attack styles
+
+The combat loop trained attack, strength and hitpoints on every single swing,
+regardless of what the player was carrying or doing — there was no way to
+specialise a build. Added a per-fight stance, picked in the Combat panel:
+
+- **Accurate** — +3 to the attack roll, trains Attack.
+- **Aggressive** — +3 to the max-hit roll, trains Strength.
+- **Defensive** — +3 to the defense roll (only relevant while being hit), trains
+  Defense.
+
+Hitpoints still trickles in regardless of style, same as before styles existed.
+`selectWeapon` and the drop/xp tables were untouched — this only changes which
+of the three combat skills the swing feeds, and by how much it shifts the roll.
+Persisted in `settings.attackStyle` (defaults to Accurate on a fresh save, an
+unrecognised value on import falls back to it rather than crashing). 4 new QC
+checks (`ATTACK_STYLES` shape, sanitizer fallback, and a determinism check with
+`Math.random` pinned to 0 that aggressive trains strength and not attack).
+Updated `scripts/audit.cjs`'s save round-trip fixture to a distinctive
+`attackStyle` value, since the fixture is what caught this: the audit's own
+save-roundtrip check flagged the new field the first time it ran.
+
 ## 2026-08 · Full audit & QC pass
 
 Ran a fresh sweep over the whole project — data integrity, save round-trip, dead

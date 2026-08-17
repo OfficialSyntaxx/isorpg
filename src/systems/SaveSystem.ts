@@ -73,7 +73,7 @@ export class SaveSystem {
         farm: { plots: this.state.town.farm.plots.map((p) => (p ? { seedId: p.seedId, plantedAt: p.plantedAt } : null)) },
       },
       collectionLog: { unlocked: [...this.state.collectionLog] },
-      settings: { autoEatPct: this.state.settings.autoEatPct },
+      settings: { autoEatPct: this.state.settings.autoEatPct, attackStyle: this.state.settings.attackStyle },
       clock: { minute: this.state.clock.minute, day: this.state.clock.day },
       map: {
         discovered: [...this.state.player.map.discovered],
@@ -141,7 +141,10 @@ export class SaveSystem {
       this.state.town.market.demand = { ...mkt.demand };
     }
     this.state.collectionLog = new Set((s.collectionLog?.unlocked ?? []).map(String));
-    if (s.settings) this.state.settings.autoEatPct = s.settings.autoEatPct;
+    if (s.settings) {
+      this.state.settings.autoEatPct = s.settings.autoEatPct;
+      this.state.settings.attackStyle = s.settings.attackStyle;
+    }
     this.state.clock = { minute: s.clock.minute, day: s.clock.day };
     // P6: world-map discovery + fast-travel unlock persist with the save.
     p.map = {

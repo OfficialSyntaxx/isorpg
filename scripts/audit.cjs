@@ -285,7 +285,7 @@ function auditSave() {
   a.town.market = { supply: { oak_log: 55 }, demand: { coins: 6 } };
   a.town.farm = { plots: [{ seedId: "cabbage_seed", plantedAt: 1700000000000 }, null] };
   a.collectionLog = new Set(["normal_log", "coins", "potato"]);
-  a.settings = { autoEatPct: 75 };
+  a.settings = { autoEatPct: 75, attackStyle: "defensive" };
 
   const payload = new SaveSystem(a).serialize();
   const b = createFreshState(new Grid(), "x", 1, 1);
@@ -315,7 +315,7 @@ function auditSave() {
   cmp("town.farm", a.town.farm, b.town.farm);
   cmp("collectionLog", [...a.collectionLog].sort(), [...b.collectionLog].sort());
   cmp("settings", a.settings, b.settings);
-  stats.saveFields = 18;
+  stats.saveFields = 18; // settings carries 2 sub-fields (autoEatPct, attackStyle) but counts as one group
   fs.rmSync(emit, { recursive: true, force: true });
 }
 

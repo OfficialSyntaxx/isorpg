@@ -8,7 +8,7 @@ import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
 import { play as sfx } from "../core/Sfx";
-import { selectWeapon } from "../data/Combat";
+import { selectWeapon, ATTACK_STYLES, type AttackStyle } from "../data/Combat";
 import { CombatSystem } from "../systems/CombatSystem";
 import type { CraftingSystem } from "../systems/CraftingSystem";
 import type { BuildSystem } from "../systems/BuildSystem";
@@ -854,6 +854,10 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
     const def = levelFromXp(p.skills.defense.xp);
     const hpx = levelFromXp(p.skills.hitpoints.xp);
     const weapon = this.equippedWeapon();
+    const style = this.state.settings.attackStyle;
+    const styleBtns = Object.values(ATTACK_STYLES).map((s) =>
+      `<button class="tab-btn${s.id === style ? " active" : ""}" data-style="${s.id}" title="${s.description}">${s.name}</button>`
+    ).join("");
     this.panelBody.innerHTML = `
       <div class="combat-title">Battle Stats</div>
       <div class="set-row"><span>Attack</span><b>${atk}</b></div>
@@ -862,7 +866,16 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       <div class="set-row"><span>Hitpoints</span><b>${hpx}</b></div>
       <div class="set-row"><span>Weapon</span><b>${weapon ? weapon.name : "Fists"}</b></div>
       <div class="set-row"><span>Kills</span><b>${Object.values(CombatSystem.kcCounts).reduce((a, b) => a + b, 0)}</b></div>
+      <div class="combat-title">Fight Stance</div>
+      <div class="tab-row">${styleBtns}</div>
+      <div class="inv-desc">${ATTACK_STYLES[style].description}</div>
     `;
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-style]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.state.settings.attackStyle = btn.dataset.style as AttackStyle;
+        this.renderCombat();
+      });
+    });
   }
 
   private equippedWeapon() {

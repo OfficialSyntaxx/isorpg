@@ -23,7 +23,7 @@ import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } fro
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from "../src/components/Skills";
 import { buildClip } from "../src/core/ClipLibrary";
-import { selectWeapon, WEAPONS } from "../src/data/Combat";
+import { selectWeapon, WEAPONS, ATTACK_STYLES, DEFAULT_ATTACK_STYLE } from "../src/data/Combat";
 import { RESOURCES } from "../src/data/Skills";
 import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
 import { DEFAULT_HERO_NAME, AUTO_EAT_STEPS, DEFAULT_AUTO_EAT_PCT } from "../src/state/GameState";
@@ -441,6 +441,37 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
     selectWeapon(dropped, "iron_sword", 99).id === "fists");
   check("weapon: every weapon declares a requirement",
     Object.values(WEAPONS).every((w: any) => Number.isFinite(w.requiredAttack)));
+}
+
+// [combat] F.1 attack styles: exactly one of attack/strength/defense trains
+// per hit (previously all three trained on every swing, so there was no way
+// to specialise), and the chosen style shifts accuracy/max-hit/defense.
+{
+  check("styles: exactly one bonus is nonzero per style", Object.values(ATTACK_STYLES).every((s: any) =>
+    [s.accuracyBonus, s.maxHitBonus, s.defenseBonus].filter((v) => v !== 0).length === 1));
+  const garbageStyle = sanitizeSave({ version: "1.1.0", timestamp: Date.now(), player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: {}, inventory: [] }, settings: { attackStyle: "berserk!!" } }) as { ok: boolean; state: any };
+  check("styles: sanitizer falls back to the default on garbage",
+    garbageStyle.ok && garbageStyle.state.settings.attackStyle === DEFAULT_ATTACK_STYLE, garbageStyle.state?.settings?.attackStyle);
+
+  const styState = createFreshState(g, "Hero", 21, 21);
+  const styCombat = new CombatSystem(styState);
+  const styMonster = spawnMonster("giant_rat", MONSTERS.giant_rat, 22, 21);
+  styCombat.addMonster(styMonster);
+  styCombat.engage(styMonster);
+  styCombat.confirmFight();
+
+  const before = { attack: styState.player.skills.attack.xp, strength: styState.player.skills.strength.xp, hitpoints: styState.player.skills.hitpoints.xp };
+  const oldRandom = Math.random;
+  Math.random = () => 0; // guarantee every roll hits, deterministically
+  styState.settings.attackStyle = "aggressive";
+  styCombat.tick(600, Date.now());
+  Math.random = oldRandom;
+
+  const after = { attack: styState.player.skills.attack.xp, strength: styState.player.skills.strength.xp, hitpoints: styState.player.skills.hitpoints.xp };
+  check("styles: aggressive trains strength, not attack",
+    after.strength > before.strength && after.attack === before.attack,
+    JSON.stringify({ before, after }));
+  check("styles: hitpoints still trickles in regardless of style", after.hitpoints > before.hitpoints);
 }
 
 // [hero] The player character is a named wizard, not "Hero".

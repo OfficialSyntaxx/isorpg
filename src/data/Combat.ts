@@ -1,6 +1,43 @@
 // Combat data: weapons, monsters, weighted drop tables (GDD §5.C/D).
 import type { InventoryComponent } from "../components/Inventory";
 
+/**
+ * F.1: pick a stance per fight. Each shifts the attack-roll/max-hit split and
+ * trains a different skill — previously every hit trained attack, strength
+ * *and* hitpoints at once, so there was no way to specialise.
+ */
+export type AttackStyle = "accurate" | "aggressive" | "defensive";
+
+export interface AttackStyleDef {
+  id: AttackStyle;
+  name: string;
+  description: string;
+  /** Bonus added to the player's attack roll (hit chance). */
+  accuracyBonus: number;
+  /** Bonus added to the player's max-hit calculation. */
+  maxHitBonus: number;
+  /** Bonus added to the player's effective defense roll. */
+  defenseBonus: number;
+  /** The skill trained by this style, on top of the constant hitpoints trickle. */
+  trains: "attack" | "strength" | "defense";
+}
+
+export const ATTACK_STYLES: Record<AttackStyle, AttackStyleDef> = {
+  accurate: {
+    id: "accurate", name: "Accurate", description: "+3 accuracy · trains Attack",
+    accuracyBonus: 3, maxHitBonus: 0, defenseBonus: 0, trains: "attack",
+  },
+  aggressive: {
+    id: "aggressive", name: "Aggressive", description: "+3 max hit · trains Strength",
+    accuracyBonus: 0, maxHitBonus: 3, defenseBonus: 0, trains: "strength",
+  },
+  defensive: {
+    id: "defensive", name: "Defensive", description: "+3 defense · trains Defense",
+    accuracyBonus: 0, maxHitBonus: 0, defenseBonus: 3, trains: "defense",
+  },
+};
+export const DEFAULT_ATTACK_STYLE: AttackStyle = "accurate";
+
 export interface WeaponDef {
   id: string;
   name: string;

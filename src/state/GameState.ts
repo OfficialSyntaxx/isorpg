@@ -9,6 +9,8 @@ import type { ActiveClue } from "../data/Clues";
 import type { ResourceNode } from "../world/ResourceNode";
 import type { BuildingType } from "../data/Buildings";
 import type { EquipSlot } from "../data/Items";
+import type { AttackStyle } from "../data/Combat";
+import { DEFAULT_ATTACK_STYLE } from "../data/Combat";
 import { createPosition } from "../components/Position";
 import { createHealth } from "../components/Health";
 import { createSkillComponent } from "../components/Skills";
@@ -106,6 +108,8 @@ export interface GameState {
      * trip, too late for one fighting something that can two-shot them.
      */
     autoEatPct: number;
+    /** F.1: the fight stance — shifts accuracy/max-hit/defense and which skill trains. */
+    attackStyle: AttackStyle;
   };
 }
 
@@ -139,6 +143,6 @@ export function createFreshState(grid: Grid, name: string = DEFAULT_HERO_NAME, s
       farm: { plots: [] },
     },
     collectionLog: new Set(),
-    settings: { autoEatPct: DEFAULT_AUTO_EAT_PCT },
+    settings: { autoEatPct: DEFAULT_AUTO_EAT_PCT, attackStyle: DEFAULT_ATTACK_STYLE },
   };
 }

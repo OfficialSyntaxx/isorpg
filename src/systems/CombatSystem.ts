@@ -3,7 +3,7 @@
 import type { GameState } from "../state/GameState";
 import type { MonsterCombat } from "../world/Monster";
 import { levelFromXp } from "../data/XPTable";
-import { FOODS, type WeaponDef, selectWeapon, type MonsterDef } from "../data/Combat";
+import { FOODS, type WeaponDef, selectWeapon, type MonsterDef, ATTACK_STYLES } from "../data/Combat";
 import type { SkillId } from "../data/Skills";
 import { addItem, removeItem, type InventoryComponent } from "../components/Inventory";
 import { armorBonuses } from "../components/Equipment";
@@ -256,19 +256,21 @@ export class CombatSystem {
   }
 
   private tryPlayerAttack(target: MonsterCombat, weapon: WeaponDef, now: number) {
+    const style = ATTACK_STYLES[this.state.settings.attackStyle];
     const b = armorBonuses(this.state);
     const attackLevel = levelFromXp(this.state.player.skills.attack.xp);
-    const roll = weapon.accuracy + attackLevel + b.attack;
+    const roll = weapon.accuracy + attackLevel + b.attack + style.accuracyBonus;
     if (Math.random() > hitChance(roll, target.def.defenseRoll)) return; // splash
 
     const strLevel = levelFromXp(this.state.player.skills.strength.xp);
-    const maxHit = weapon.maxHit + Math.floor(strLevel / 4) + b.strength;
+    const maxHit = weapon.maxHit + Math.floor(strLevel / 4) + b.strength + style.maxHitBonus;
     const damage = 1 + Math.floor(Math.random() * Math.max(1, maxHit));
 
     target.hp = Math.max(0, target.hp - damage);
     target.flashUntil = now + 220;
-    this.gain("attack", target.def.xp.attack);
-    this.gain("strength", target.def.xp.strength);
+    // F.1: the chosen stance trains exactly one of attack/strength/defense —
+    // hitpoints trickles in regardless, same as before styles existed.
+    this.gain(style.trains, target.def.xp[style.trains]);
     this.gain("hitpoints", target.def.xp.hitpoints);
     this.cb.onPlayerHit?.(target, damage);
     if (weapon.kind === "ranged") this.cb.onPlayerShot?.(target.tile.x, target.tile.y); // P4c arrow
@@ -278,7 +280,8 @@ export class CombatSystem {
 
   private tryMonsterAttack(target: MonsterCombat) {
     const health = this.state.player.health;
-    const defLevel = levelFromXp(this.state.player.skills.defense.xp) + armorBonuses(this.state).defense;
+    const style = ATTACK_STYLES[this.state.settings.attackStyle];
+    const defLevel = levelFromXp(this.state.player.skills.defense.xp) + armorBonuses(this.state).defense + style.defenseBonus;
     if (Math.random() > hitChance(target.def.attackRoll, 2 + defLevel)) return; // dodge
 
     const dmgMax = target.def.maxHit + (target.enraged ? 2 : 0); // P4b: enraged hits harder
