@@ -82,6 +82,42 @@ nearest available one, so partial clip coverage degrades gracefully. Driven from
 - monsters — `CombatSystem.update()` (walk when the tile changed, else idle) and
   `attack` on the swing
 
+## Shared animation clips (preferred over per-animation GLBs)
+
+The rigging service bakes each animation into a complete GLB — mesh, skeleton and
+textures — roughly 770 kB for one walk cycle on a mesh we already ship. Every
+character it rigs uses the same 24-bone skeleton (`skel b6addeab77c8`), so the
+motion is the only new information in that file.
+
+Clips therefore ship as `public/models/clips/<name>.clip.json`: a header plus a
+base64 `Int16` quaternion table sampled at a uniform rate. **Rotation only** —
+that is what makes one clip drive every rig, since translation tracks carry the
+donor's limb proportions (see `retargetable()` in `Model.ts`). ~15 kB per clip,
+reusable across actors.
+
+To add one: rig the animation, then extract with the pipeline recorded in
+`ClipLibrary.ts` (decimate to ~15 fps, drop bones that never rotate, quantize to
+`Int16`). Declare it in `ACTOR_CLIPS[...].shared`; `verify-rig` then checks the
+table size, that every quaternion is unit length, and that the clip's bones exist
+on every rigged skeleton we ship.
+
+## Outstanding: the rigged hero mesh
+
+`public/models/hero.glb` is the original **static** mesh — no skeleton — so the
+hero cannot animate. Its `hero_idle` / `hero_walk` clips are already shipped and
+verified; only the skinned mesh is missing.
+
+The rigged mesh is built and waiting (24 joints, same skeleton as every other
+actor; animation stripped and texture recompressed to 512px JPEG, 790 kB → 329 kB,
+the same treatment the other models got). To land it:
+
+1. Download <https://d2ol7oe51mr4n9.cloudfront.net/user_36MHNrl15jk9zlazEaTWSMthntm/0b19d695-d837-4941-8cea-04704fdb74fe.zip> (226 kB)
+2. Unzip and put `hero_rigged.glb` in `public/models/`
+3. Run `npm test`
+
+Nothing else changes: `ACTOR_CLIPS.hero` already prefers `hero_rigged` and falls
+back to `hero`, and the manifest generator picks the file up automatically.
+
 ## Notes
 
 - Clones use `SkeletonUtils.clone()`, not `Object3D.clone()` — the latter does
