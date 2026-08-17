@@ -23,7 +23,7 @@ import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } fro
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from "../src/components/Skills";
 import { buildClip } from "../src/core/ClipLibrary";
-import { selectWeapon, WEAPONS, ATTACK_STYLES, DEFAULT_ATTACK_STYLE, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, type BuffId } from "../src/data/Combat";
+import { selectWeapon, WEAPONS, ATTACK_STYLES, DEFAULT_ATTACK_STYLE, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, WEAPON_SPECIALS, SPECIAL_MAX, SPECIAL_REGEN_PER_TICK, type BuffId } from "../src/data/Combat";
 import { RESOURCES } from "../src/data/Skills";
 import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
 import { DEFAULT_HERO_NAME, AUTO_EAT_STEPS, DEFAULT_AUTO_EAT_PCT } from "../src/state/GameState";
@@ -542,6 +542,60 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
   Math.random = oldRandom2;
   check("resolve: an active buff's bonus reaches the damage roll",
     dmgBuffed === dmgPlain + BUFFS.power.maxHitBonus, `${dmgPlain} -> ${dmgBuffed}`);
+}
+
+// [combat] F.3 weapon specials: a charge-based bar spent on a per-weapon
+// effect, so weapon choice survives past a max-hit comparison.
+{
+  check("special: every special costs a fraction of a full bar", Object.values(WEAPON_SPECIALS).every((s: any) =>
+    s.cost > 0 && s.cost <= SPECIAL_MAX && s.damageMult > 1));
+  check("special: fists — the always-available fallback — has none", !WEAPON_SPECIALS.fists);
+
+  const garbage = sanitizeSave({ version: "1.1.0", timestamp: Date.now(), player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: {}, inventory: [], specialEnergy: -50 }, settings: {} }) as { ok: boolean; state: any };
+  check("special: a negative value clamps into range, not below it",
+    garbage.ok && garbage.state.player.specialEnergy === 0, garbage.state?.player?.specialEnergy);
+  const missing = sanitizeSave({ version: "1.1.0", timestamp: Date.now(), player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: {}, inventory: [] }, settings: {} }) as { ok: boolean; state: any };
+  check("special: a missing value starts full",
+    missing.ok && missing.state.player.specialEnergy === SPECIAL_MAX, missing.state?.player?.specialEnergy);
+
+  const spState = createFreshState(g, "Hero", 21, 21);
+  const spCombat = new CombatSystem(spState);
+  check("special: fists cannot queue a special", spCombat.queueSpecial() === false);
+
+  addItem(spState.player.inventory, "bronze_dagger", 1);
+  spState.player.equipped.weapon = "bronze_dagger";
+  const spec = spCombat.equippedSpecial();
+  check("special: a carried weapon with a special reports it", spec?.name === "Puncture", spec?.name);
+
+  spState.player.specialEnergy = 10; // below Puncture's cost (25)
+  check("special: too little bar refuses the queue", spCombat.queueSpecial() === false);
+  check("special: a refused queue leaves nothing pending", spCombat.specialQueued === false);
+
+  spState.player.specialEnergy = SPECIAL_MAX;
+  check("special: enough bar queues it", spCombat.queueSpecial() === true);
+  check("special: queued reads true until it fires", spCombat.specialQueued === true);
+
+  const spMonster = spawnMonster("giant_rat", MONSTERS.giant_rat, 22, 21);
+  spCombat.addMonster(spMonster);
+  spCombat.engage(spMonster);
+  spCombat.confirmFight();
+  const oldRandom3 = Math.random;
+  Math.random = () => 0.999; // would miss a normal roll — Puncture must land anyway
+  spCombat.tick(600, Date.now());
+  Math.random = oldRandom3;
+  check("special: a guaranteed-hit special lands where a normal swing would miss",
+    spMonster.hp < MONSTERS.giant_rat.hp, `hp ${spMonster.hp}`);
+  check("special: the bar is spent on use",
+    spState.player.specialEnergy === SPECIAL_MAX - WEAPON_SPECIALS.dagger.cost, String(spState.player.specialEnergy));
+  check("special: consumed whether it landed or not — queued clears", spCombat.specialQueued === false);
+
+  // Regen needs no Campfire, unlike Resolve.
+  const regenState = createFreshState(g, "Hero", 21, 21);
+  const regenCombat = new CombatSystem(regenState);
+  regenState.player.specialEnergy = 10;
+  regenCombat.tick(600, Date.now());
+  check("special: regains over time with no Campfire required",
+    regenState.player.specialEnergy === 10 + SPECIAL_REGEN_PER_TICK, String(regenState.player.specialEnergy));
 }
 
 // [hero] The player character is a named wizard, not "Hero".

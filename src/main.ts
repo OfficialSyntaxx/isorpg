@@ -306,7 +306,7 @@ class Game {
     this.craft = craft;
     const save = new SaveSystem(state);
     save.setOfflineCapProvider(() => build.offlineCapHours);
-    ui.attachSystems(craft, build);
+    ui.attachSystems(craft, build, combat);
 
     // Load exactly once. A second load() re-applied the payload over the live
     // state, discarding the first load's offline gains and recomputing the same
@@ -430,6 +430,8 @@ if (m.def.id === "cave_brute" && dungeon.active) {
       // F.2: a buff burned through its resolve mid-fight — tell the player why
       // their bonus just vanished rather than leaving it to the stat panel.
       onBuffExhausted: () => showToast("🕯️ Resolve spent — buff faded.", "info", 1800),
+      // F.3: a queued special landed on this swing.
+      onSpecialUsed: (name) => { ui.floatText(`⚡ ${name}!`, "gain"); sfx("levelup"); },
     });
 
     // Crafting (Cooking / Smithing / Carpentry) events → HUD

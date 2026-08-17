@@ -76,6 +76,54 @@ export const RESOLVE_REGEN_PER_TICK = 3;
 /** Tiles from a Campfire's centre that still count as "resting" there. */
 export const RESOLVE_REGEN_RANGE = 2;
 
+/**
+ * F.3: a charge-based special per weapon, so weapon choice survives past a
+ * max-hit comparison — the 2H already had slow/heavy identity from its ticks;
+ * everything else swung the same way with a different number on it.
+ */
+export interface SpecialDef {
+  name: string;
+  description: string;
+  /** % of a full special bar this costs (bar is 0..100). */
+  cost: number;
+  /** Multiplies the normal max-hit roll. */
+  damageMult: number;
+  /** Bypasses the accuracy roll — the hit always lands. */
+  guaranteedHit: boolean;
+  /** Extra multiplier applied on top when the target is below 25% HP. */
+  executeMult?: number;
+}
+
+export const WEAPON_SPECIALS: Record<string, SpecialDef> = {
+  dagger: {
+    name: "Puncture", description: "Always hits · 1.2× damage · 25% bar",
+    cost: 25, damageMult: 1.2, guaranteedHit: true,
+  },
+  sword: {
+    name: "Riposte", description: "1.3× damage · 40% bar",
+    cost: 40, damageMult: 1.3, guaranteedHit: false,
+  },
+  sword2h: {
+    name: "Cleave", description: "1.8× damage · 100% bar",
+    cost: 100, damageMult: 1.8, guaranteedHit: false,
+  },
+  shortbow: {
+    name: "Piercing Shot", description: "Always hits · 1.4× damage · 50% bar",
+    cost: 50, damageMult: 1.4, guaranteedHit: true,
+  },
+  iron_sword: {
+    name: "Execute", description: "1.2× damage (2.2× under 25% HP) · 60% bar",
+    cost: 60, damageMult: 1.2, guaranteedHit: false, executeMult: 2.2,
+  },
+  steel_sword: {
+    name: "Onslaught", description: "1.9× damage · 80% bar",
+    cost: 80, damageMult: 1.9, guaranteedHit: false,
+  },
+};
+export const SPECIAL_MAX = 100;
+/** Regains over time regardless of location — unlike Resolve, this needs no Campfire. */
+export const SPECIAL_REGEN_PER_TICK = 1;
+
 export interface WeaponDef {
   id: string;
   name: string;

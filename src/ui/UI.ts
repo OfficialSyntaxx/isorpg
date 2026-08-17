@@ -8,7 +8,7 @@ import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
 import { play as sfx } from "../core/Sfx";
-import { selectWeapon, ATTACK_STYLES, BUFFS, RESOLVE_MAX, type AttackStyle, type BuffId } from "../data/Combat";
+import { selectWeapon, ATTACK_STYLES, BUFFS, RESOLVE_MAX, SPECIAL_MAX, type AttackStyle, type BuffId } from "../data/Combat";
 import { CombatSystem } from "../systems/CombatSystem";
 import type { CraftingSystem } from "../systems/CraftingSystem";
 import type { BuildSystem } from "../systems/BuildSystem";
@@ -58,6 +58,7 @@ export class UI {
   private ev: UIEvents = {};
   private craft: CraftingSystem | null = null;
   private build: BuildSystem | null = null;
+  private combat: CombatSystem | null = null;
   private craftTab: SkillId = "cooking";
   private placeBanner = document.getElementById("place-banner")!;
   private placeBannerText = document.getElementById("place-banner-text")!;
@@ -100,10 +101,11 @@ export class UI {
     this.$("#place-cancel").addEventListener("click", () => this.build?.cancelPlacing());
   }
 
-  /** Wire in the artisan crafting + settlement build systems (main.ts, after construction). */
-  attachSystems(craft: CraftingSystem, build: BuildSystem) {
+  /** Wire in the artisan crafting + settlement build + combat systems (main.ts, after construction). */
+  attachSystems(craft: CraftingSystem, build: BuildSystem, combat: CombatSystem) {
     this.craft = craft;
     this.build = build;
+    this.combat = combat;
   }
 
   private $(sel: string): HTMLElement { return document.querySelector(sel) as HTMLElement; }
@@ -877,12 +879,19 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       <div class="grow-bar"><span style="width:${(p.resolve / RESOLVE_MAX) * 100}%"></span></div>
       <div class="tab-row">${buffBtns}</div>
       <div class="inv-desc">${p.activeBuff ? BUFFS[p.activeBuff].description + " — draining resolve." : "Pick a buff to spend resolve on it. Rest by a Campfire to refill."}</div>
+      ${this.specialHtml()}
     `;
     this.panelBody.querySelectorAll<HTMLButtonElement>("[data-style]").forEach((btn) => {
       btn.addEventListener("click", () => {
         this.state.settings.attackStyle = btn.dataset.style as AttackStyle;
         this.renderCombat();
       });
+    });
+    this.panelBody.querySelector<HTMLButtonElement>("[data-special]")?.addEventListener("click", () => {
+      const ok = this.combat?.queueSpecial();
+      showToast(ok ? "⚔️ Special queued — lands on your next swing." : "Not enough bar for that special.",
+        ok ? "success" : "error", 1600);
+      this.renderCombat();
     });
     this.panelBody.querySelectorAll<HTMLButtonElement>("[data-buff]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -897,6 +906,24 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
     // Same selector combat uses, so the panel cannot name a different weapon.
     const p = this.state.player;
     return selectWeapon(p.inventory, p.equipped.weapon, levelFromXp(p.skills.attack.xp));
+  }
+
+  /** F.3: the special-attack bar + button, or a note that the weapon has none. */
+  private specialHtml(): string {
+    const p = this.state.player;
+    const spec = this.combat?.equippedSpecial() ?? null;
+    if (!spec) return `<div class="combat-title">Special Attack</div><div class="inv-desc">This weapon has no special.</div>`;
+    const pct = (p.specialEnergy / SPECIAL_MAX) * 100;
+    const affordable = p.specialEnergy >= spec.cost;
+    const queued = this.combat?.specialQueued;
+    return `
+      <div class="combat-title">Special Attack — ${Math.floor(p.specialEnergy)}/${SPECIAL_MAX}</div>
+      <div class="grow-bar"><span style="width:${pct}%"></span></div>
+      <div class="set-row">
+        <span>${spec.name}${queued ? " (queued)" : ""}</span>
+        <button class="btn btn-mini" data-special ${affordable && !queued ? "" : "disabled"}>Use</button>
+      </div>
+      <div class="inv-desc">${spec.description}</div>`;
   }
 
   private onFilePick = (e: Event) => {

@@ -10,7 +10,7 @@ import { levelFromXp } from "../data/XPTable";
 import { addItem } from "../components/Inventory";
 import { TICK_MS } from "../core/Engine";
 import { accrueLabourOffline } from "./LabourSystem";
-import { RESOLVE_MAX } from "../data/Combat";
+import { RESOLVE_MAX, SPECIAL_MAX } from "../data/Combat";
 
 /** P7.9: offline Town Hall tax — 2 coins per level per ~6s idle cycle (capped by the same cap). */
 export function offlineTaxFor(hallLevel: number, awaySeconds: number): number {
@@ -63,6 +63,7 @@ export class SaveSystem {
         clue: p.clue ? { tier: p.clue.tier, seed: p.clue.seed, step: p.clue.step, sites: p.clue.sites.map((s2) => ({ x: s2.x, y: s2.y })) } : null,
         resolve: p.resolve,
         activeBuff: p.activeBuff,
+        specialEnergy: p.specialEnergy,
       },
       town: {
         buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })),
@@ -123,6 +124,7 @@ export class SaveSystem {
     p.clue = (s.player as any)?.clue ?? null;
     p.resolve = (s.player as any)?.resolve ?? RESOLVE_MAX;
     p.activeBuff = (s.player as any)?.activeBuff ?? null;
+    p.specialEnergy = (s.player as any)?.specialEnergy ?? SPECIAL_MAX;
     this.state.town.buildings = (s.town?.buildings ?? []).map((b: any) => ({
       id: String(b.id), type: b.type, x: b.x, y: b.y, level: b.level,
     }));

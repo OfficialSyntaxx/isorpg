@@ -4,7 +4,7 @@
 import { BUILDING_TYPES } from "../data/Buildings";
 import { WORLD_SIZE } from "../world/Grid";
 import { AUTO_EAT_STEPS, DAY_START_MINUTE, DEFAULT_AUTO_EAT_PCT, DEFAULT_HERO_NAME, SAVE_VERSION } from "../state/GameState";
-import { ATTACK_STYLES, BUFFS, DEFAULT_ATTACK_STYLE, RESOLVE_MAX, type AttackStyle, type BuffId } from "../data/Combat";
+import { ATTACK_STYLES, BUFFS, DEFAULT_ATTACK_STYLE, RESOLVE_MAX, SPECIAL_MAX, type AttackStyle, type BuffId } from "../data/Combat";
 
 export interface Sanitized<T> {
   ok: boolean;
@@ -72,6 +72,11 @@ function clampResolve(v: unknown): number {
 }
 function coerceBuff(v: unknown): BuffId | null {
   return typeof v === "string" && v in BUFFS ? (v as BuffId) : null;
+}
+
+/** F.3: same clamp shape as resolve — a fresh save or garbage starts full. */
+function clampSpecialEnergy(v: unknown): number {
+  return isFiniteNumber(v) ? Math.max(0, Math.min(SPECIAL_MAX, Math.round(v))) : SPECIAL_MAX;
 }
 
 export function needsMasteryRescale(version: string): boolean {
@@ -205,7 +210,7 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     state: {
       version: SAVE_VERSION,
       timestamp,
-      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe, clue, resolve: clampResolve(p.resolve), activeBuff: coerceBuff(p.activeBuff) },
+      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe, clue, resolve: clampResolve(p.resolve), activeBuff: coerceBuff(p.activeBuff), specialEnergy: clampSpecialEnergy(p.specialEnergy) },
       town: { buildings, labour: labourSafe, market: marketSafe, farm: { plots: farmPlots } },
       collectionLog: { unlocked: collectionLog },
       settings: {

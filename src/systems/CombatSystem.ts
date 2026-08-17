@@ -3,7 +3,7 @@
 import type { GameState } from "../state/GameState";
 import type { MonsterCombat } from "../world/Monster";
 import { levelFromXp } from "../data/XPTable";
-import { FOODS, type WeaponDef, selectWeapon, type MonsterDef, ATTACK_STYLES, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, RESOLVE_REGEN_RANGE } from "../data/Combat";
+import { FOODS, type WeaponDef, selectWeapon, type MonsterDef, ATTACK_STYLES, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, RESOLVE_REGEN_RANGE, WEAPON_SPECIALS, SPECIAL_MAX, SPECIAL_REGEN_PER_TICK, type SpecialDef } from "../data/Combat";
 import type { SkillId } from "../data/Skills";
 import { addItem, removeItem, type InventoryComponent } from "../components/Inventory";
 import { armorBonuses } from "../components/Equipment";
@@ -23,6 +23,8 @@ export interface CombatEvents {
   onPlayerShot?: (toX: number, toY: number) => void;
   /** F.2: a buff ran out of resolve and switched itself off. */
   onBuffExhausted?: () => void;
+  /** F.3: a queued special connected — name it for the FX/toast. */
+  onSpecialUsed?: (name: string) => void;
 }
 
 
@@ -35,6 +37,8 @@ export class CombatSystem {
   private target: MonsterCombat | null = null;
   private playerAtkAcc = 0;
   private bossSlam: { x: number; y: number; at: number; dmg: number } | null = null;
+  /** F.3: true once the player has queued their next swing as a special. */
+  private pendingSpecial = false;
   /** P5: active grid override (dungeon while in the dungeon). */
   private activeGrid: { isWalkable(x: number, y: number): boolean; at(x: number, y: number): { occupant: string; walkable: boolean; zoneId: string } | null; setOccupant(x: number, y: number, t: string, id: string | null): void; clearOccupant(x: number, y: number): void } | null = null;
 
@@ -62,6 +66,22 @@ export class CombatSystem {
   equippedWeapon(): WeaponDef {
     const p = this.state.player;
     return selectWeapon(p.inventory, p.equipped.weapon, levelFromXp(p.skills.attack.xp));
+  }
+
+  get specialQueued(): boolean { return this.pendingSpecial; }
+
+  /** F.3: the equipped weapon's special, or null if it has none (e.g. fists). */
+  equippedSpecial(): SpecialDef | null {
+    return WEAPON_SPECIALS[this.equippedWeapon().id] ?? null;
+  }
+
+  /** Queue the next swing as a special. Refused (and left unqueued) if the
+   *  weapon has no special or the bar can't cover its cost. */
+  queueSpecial(): boolean {
+    const spec = this.equippedSpecial();
+    if (!spec || this.state.player.specialEnergy < spec.cost) return false;
+    this.pendingSpecial = true;
+    return true;
   }
 
   maxHp(): number {
@@ -111,6 +131,7 @@ export class CombatSystem {
     health.maxHp = this.maxHp();
     if (health.hp > health.maxHp) health.hp = health.maxHp;
     this.updateResolve();
+    this.updateSpecialEnergy();
     this.aiChase();
     // P4b: bosses enrage below half HP.
     for (const mm of this.monsters.values()) {
@@ -281,6 +302,12 @@ export class CombatSystem {
       b.type === "CAMPFIRE" && Math.max(Math.abs(b.x - pos.gx), Math.abs(b.y - pos.gy)) <= RESOLVE_REGEN_RANGE);
   }
 
+  /** F.3: the special bar regains over time regardless of location. */
+  private updateSpecialEnergy() {
+    const p = this.state.player;
+    if (p.specialEnergy < SPECIAL_MAX) p.specialEnergy = Math.min(SPECIAL_MAX, p.specialEnergy + SPECIAL_REGEN_PER_TICK);
+  }
+
   /** F.2: the active buff's contribution to the player's rolls — 0s if none. */
   private buffBonus() {
     const id = this.state.player.activeBuff;
@@ -291,12 +318,30 @@ export class CombatSystem {
     const style = ATTACK_STYLES[this.state.settings.attackStyle];
     const buff = this.buffBonus();
     const b = armorBonuses(this.state);
+
+    // F.3: a queued special is consumed on this swing whether or not it still
+    // applies — the bar was already spent the moment the player clicked it.
+    let special: SpecialDef | null = null;
+    if (this.pendingSpecial) {
+      const spec = WEAPON_SPECIALS[weapon.id];
+      if (spec && this.state.player.specialEnergy >= spec.cost) {
+        this.state.player.specialEnergy -= spec.cost;
+        special = spec;
+        this.cb.onSpecialUsed?.(spec.name);
+      }
+      this.pendingSpecial = false;
+    }
+
     const attackLevel = levelFromXp(this.state.player.skills.attack.xp);
     const roll = weapon.accuracy + attackLevel + b.attack + style.accuracyBonus + buff.accuracyBonus;
-    if (Math.random() > hitChance(roll, target.def.defenseRoll)) return; // splash
+    if (!special?.guaranteedHit && Math.random() > hitChance(roll, target.def.defenseRoll)) return; // splash
 
     const strLevel = levelFromXp(this.state.player.skills.strength.xp);
-    const maxHit = weapon.maxHit + Math.floor(strLevel / 4) + b.strength + style.maxHitBonus + buff.maxHitBonus;
+    let maxHit = weapon.maxHit + Math.floor(strLevel / 4) + b.strength + style.maxHitBonus + buff.maxHitBonus;
+    if (special) {
+      const executing = special.executeMult && target.hp / target.maxHp < 0.25;
+      maxHit = Math.round(maxHit * (executing ? special.executeMult! : special.damageMult));
+    }
     const damage = 1 + Math.floor(Math.random() * Math.max(1, maxHit));
 
     target.hp = Math.max(0, target.hp - damage);

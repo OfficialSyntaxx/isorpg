@@ -6,6 +6,41 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase F.3 — Weapon specials
+
+Every weapon differed from every other one by exactly two numbers — max hit
+and accuracy — so past a point the "best" weapon was just whichever won that
+comparison. Gave each weapon (but fists) a charge-based special, spent from a
+0–100 bar that fills 1/tick regardless of location — no Campfire needed,
+unlike Resolve, since a special is a combat cooldown, not a rest mechanic:
+
+- Dagger — **Puncture**: always hits, 1.2× damage, 25% bar
+- Sword — **Riposte**: 1.3× damage, 40% bar
+- 2H Sword — **Cleave**: 1.8× damage, 100% bar (its whole bar, for a haymaker)
+- Shortbow — **Piercing Shot**: always hits, 1.4× damage, 50% bar
+- Iron Sword — **Execute**: 1.2× damage normally, 2.2× against a target under
+  25% HP — the only special that changes behaviour with the fight, not just
+  the numbers
+- Steel Sword — **Onslaught**: 1.9× damage, 80% bar
+
+Queued from the Combat panel (a button next to the bar) and consumed on the
+very next swing — landing or missing, since the bar is spent the moment it's
+queued, matching how a real cooldown reads rather than a free reroll on a
+miss. A "guaranteed hit" special skips the accuracy roll entirely, so
+Puncture and Piercing Shot are usable at a level where the base weapon would
+often just splash.
+
+13 new QC checks: bar-cost/damage-mult sanity, fists correctly has no
+special, sanitizer clamping (a negative value clamps to 0, a *missing* value
+starts full — different defaults for different failure modes, and both are
+tested), refusal below cost, a guaranteed-hit special connecting against a
+pinned RNG roll that would miss a normal swing, the bar being spent exactly
+once whether or not the hit landed, and always-on regen with no Campfire in
+the fixture. Extended `audit.cjs`'s round-trip fixture a third time.
+
+Gates: 226/226 QC, 5/5 smoke, visual baseline 0.00% drift, npm run audit
+0 bugs.
+
 ## 2026-08 · Phase F.2 — Resolve, a buff pool
 
 Food was the only lever in a fight — no way to spend a resource on a short,
