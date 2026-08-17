@@ -15,7 +15,9 @@
     "predev": "node scripts/gen-model-manifest.cjs",
     "wiki": "node scripts/gen-wiki.cjs",
     "visual": "node scripts/visual-regress.cjs",
-    "visual:update": "node scripts/visual-regress.cjs --update"
+    "visual:update": "node scripts/visual-regress.cjs --update",
+    "audit": "node scripts/audit.cjs",
+    "audit:quick": "node scripts/audit.cjs --quick"
   },
   "dependencies": {
     "three": "^0.170.0"

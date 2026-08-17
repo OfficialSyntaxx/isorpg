@@ -1,4 +1,21 @@
-# Isoperia — Remaining Asset Audit & Credit Plan
+# Isoperia — Asset & Credit Plan
+
+> **Superseded in part.** The phase plan now lives in `ROADMAP.md` (Phase H). This
+> file is kept for the *observed pricing*, which is the hard-won part — every number
+> below was measured on a real job, not read off a price list.
+>
+> **Balance: 178.45 credits** (Plus plan), re-checked at the 2026-08-17 audit.
+>
+> **What changed since this was written:** `scripts/optimize-glb.cjs` now shrinks a
+> generated mesh by ~96% (measured: 20.8 MB → 739 kB on the wizard, 790 kB → 329 kB
+> on the hero). That makes Tripo's cheap-but-enormous output usable, which moves the
+> practical cost of a character from ~38 credits to roughly ~15. It is the single
+> biggest change to the economics of this plan.
+>
+> **Also:** the audit wired `animateMonster`, so the ten procedural monsters now bob,
+> flash when hit and settle when killed. Modelling them is an upgrade rather than a
+> rescue, so it sits behind mechanics work rather than in front of it.
+
 
 Audit date: 2026-08-16 · after Phase 8.1 (SFX basic · hero 3D mesh · skybox).
 Balance at audit: **~20 credits** hard pool + **$319.95** subscription pool.

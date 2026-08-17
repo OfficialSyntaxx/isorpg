@@ -1,217 +1,140 @@
-# Isoperia — Prioritized Roadmap (6 phases)
+# Isoperia — Roadmap (Phases F onward)
 
-> Companion to `README.md` / the GDD. Grounded in the current codebase state (M1–M3
-> mechanics live: combat, gather/build/craft, inventory, skills, save/load, procedural
-> world). Ordered to maximize "this feels like a living world" value per unit of work,
-> front-load the risk, and respect the rule: **mechanics before assets/sound**.
+> Phases A–E and the boot refactor are shipped; `REPAIR_PLAN.md` holds that record.
+> This is the forward plan. **Nothing here is started** — it is for approval and
+> editing first.
+>
+> Gates as of the last audit: 197/197 QC · 57/57 UI audit · 25/25 rig · 5/5 smoke ·
+> visual baseline 0.00% drift · `npm run audit` 0 bugs.
 
-## Legend
-- **Priority** — 1..3 (1 = do first, highest value-per-effort).
-- **Effort** — dev sessions (@ ~1 focused session ≈ a few hours; single dev).
-- **Risk** — `LOW` / `MED` / `HIGH` and what could bite.
-- **Depends** — `↑ phase.N` (in this phase) and `→ phase.X` (needs another phase),
-  then `R` (releases the work to others).
-- **DAG** — the work items form a dependency graph; the "execution order" below is one
-  valid topological order (critical path).
+## How to read this
 
-## Global execution order (critical path first)
+- **Effort** — focused sessions, roughly. `S` ≈ under one, `M` ≈ one, `L` ≈ two-plus.
+- **Credits** — Higgsfield spend. **Balance: 178.45** (Plus plan).
+- **Risk** — what could actually bite, not a vibe.
+- Every phase ends with the same gates green and `npm run audit` clean.
+
+## The constraint that shapes everything
+
+Observed costs, measured rather than guessed (earlier sessions + this one):
+
+| Thing | Cost | Note |
+|---|---:|---|
+| Image (sky, icon atlas, concept art) | **~1.25 cr** | effectively free at this scale |
+| SFX clip | **~0.25–0.5 cr** | ditto |
+| `tripo_3d` text→3D mesh | **~9 cr** | but ~41 MB raw |
+| `image_to_3d` (Meshy, textured) | **~30 cr** | lean, ~2.6 MB raw |
+| `3d_rigging` | **+5 cr** | +8 with an animation clip |
+
+So: **images cost nothing, characters cost real money.** 178 credits is about
+**4 Meshy characters** — or, now that `scripts/optimize-glb.cjs` reliably shrinks a
+mesh by ~96% (20.8 MB → 739 kB on the wizard), roughly **11 Tripo characters**.
+That optimizer is what makes the cheap-but-huge path viable, and it is the single
+biggest lever on this plan.
+
+Two consequences worth deciding up front:
+1. **Do not generate 62 item icons individually.** One image containing a grid of
+   items, sliced by script, gives every icon for ~1–2 credits and — more importantly
+   — in one consistent style. Per-item generation would cost more and look worse.
+2. **The ten procedural monsters no longer look broken.** The audit wired
+   `animateMonster`, so they bob, flash when hit and settle when killed. Modelling
+   them is now an upgrade, not a rescue, which means it can wait behind mechanics.
+
+---
+
+## Phase F — Combat depth (no credits)
+
+The combat loop is thin: one weapon, one attack, auto-eat, done. Everything here is
+mechanics, so it costs nothing but time and is the highest value-per-credit work
+available.
+
+1. **Attack styles** — pick Accurate / Aggressive / Defensive per fight; each trains
+   a different skill and shifts accuracy vs max hit. Turns three combat skills that
+   currently rise together into a choice. `M` · risk LOW.
+2. **Prayer-or-equivalent resource** — a limited pool spent on short buffs (accuracy,
+   damage reduction, extra XP), restored at the Campfire. Gives food a rival for bag
+   space. `M` · risk MED (needs balancing against auto-eat).
+3. **Special attacks per weapon** — the 2H already has slow/heavy identity; give each
+   weapon one charge-based special so weapon choice survives past max-hit comparison.
+   `M` · risk LOW.
+4. **Monster affixes** — an occasional *Hardened* / *Swift* / *Rich* prefix that
+   scales stats and loot. Cheap variety across all 12 monsters without new content.
+   `S` · risk LOW.
+5. **Death with stakes** — currently death is soft. Lose a fraction of unbanked
+   drops, respawn in town. Makes the Storehouse and banking runs matter. `S` · risk
+   MED (needs to be forgiving enough not to feel punishing on mobile).
+
+**Done when** two players at the same combat level can be built differently and it
+shows in a fight.
+
+## Phase G — A second dungeon and a boss ladder (no credits)
+
+The Caves are the only dungeon and the Cave Brute the only real boss. This is the
+biggest content hole.
+
+1. **Second dungeon — the Sunken Vault** in the swamp biome, 3 floors, its own
+   monster pool, a mechanic the Caves do not have (rising water forcing movement, or
+   light/darkness). `L` · risk MED.
+2. **Boss ladder** — Forest Ogre → Cave Brute → Vault boss, each with a telegraphed
+   mechanic and a unique drop. The telegraph work already exists for the slam. `M`.
+3. **Dungeon modifiers** — an optional per-run mutator (more monsters, less loot,
+   etc.) for replay value without new geometry. `S`.
+4. **Slayer-style tasks** — Eldric assigns "kill N of X" for coins and a token
+   currency. Gives the 12 monsters a reason to be sought out individually. `M`.
+
+**Done when** there are two distinct dungeons and a reason to run either twice.
+
+## Phase H — The asset pass (credit-bound: ~40–60 cr)
+
+Ordered by visible-impact-per-credit. Every step is verified against the visual
+baseline before and after.
+
+1. **Item icon atlas** — one generated grid image → 62 sliced PNGs, replacing emoji.
+   Needs a new `scripts/slice-atlas.cjs` (the Chromium image pipeline already
+   exists). **~2 cr** · `M` · risk LOW, and reversible: emoji stay as the fallback.
+2. **Sky** — regenerate as a proper panorama and ship as JPEG. Replaces a 1.2 MB PNG
+   with ~120 kB and stops it looking like a placeholder. **~1.25 cr** · `S`.
+3. **UI/brand pass** — a real logo, panel iconography, a title screen. **~5 cr** ·
+   `M`.
+4. **SFX gap-fill** — farming, digging, clue completion, tonic brewing, the new
+   specials. **~5 cr** · `S`.
+5. **Characters, priced by screen time.** Before committing, **measure one Tripo
+   generation end-to-end** (generate → optimize → verify) and record the real numbers
+   — I have been wrong guessing at this before. Then, in order:
+   - Eldric the quest giver (constant screen time, currently a procedural figure)
+   - The three commonest monsters: giant rat, goblin, skeleton
+   - The Vault boss from Phase G
+   **~15 cr each rigged** if Tripo works out, ~38 cr each via Meshy. `L`.
+
+**Done when** nothing on screen reads as a placeholder at play zoom.
+
+## Phase I — Economy and endgame (no credits)
+
+1. **Equipment tiers past bronze/iron/steel** — the ladder stops early; add a tier
+   gated behind boss drops rather than smithing. `M`.
+2. **Villager progression** — villagers gain their own levels and unlock a second
+   job slot. The veteran tiers already exist to build on. `M`.
+3. **Player-set market orders** — sell at a price and have it fill over time, so the
+   market is somewhere you plan around rather than a vending machine. `M`.
+4. **Prestige / ascension** — a reset that carries a permanent bonus, for players who
+   hit the ceiling. `L` · risk HIGH (easy to make the game feel pointless before it).
+
+## Standing work (not a phase)
+
+- `npm run audit` before every phase boundary. Shipped this session: data integrity,
+  save round-trip, dead code and assets, producer/consumer wiring, an 8-panel × 2-viewport
+  layout sweep, and a 35s stability run. `--quick` skips the browser passes.
+- Two known items deliberately left: `ItemType.GEM` has no members, and `sky.png` is
+  the 1.2 MB PNG Phase H.2 replaces.
+
+## Suggested order and why
+
 ```
-En  (enabling enabler, do first)
-P1.1→P1.2→P1.3→P1.4            (game-feel, quick win)
-P2.1→P2.2→P2.3→P2.4            (tool gating feeds everything downstream)
-P3.1→P3.2→P3.3  and  P4.1→P4.2  (can run in parallel once P2 done)
-P5.1→P5.2→P5.3                  (needs P4 early)
-P6.1→P6.2→P6.3→P6.4              (last: onboarding references the rest)
+F (combat depth)  →  H.1–H.2 (icons + sky, ~3 cr)  →  G (second dungeon)  →  H.5 (characters)  →  I
 ```
 
----
-
-## Enabling groundwork (before any phase)
-
-**E.1 Test harness + a11y fail-visible** *(Low effort, L risk)*
-- Promote the headless harness used this week into `tests/` (chop/path/save roundtrip +
-  the UI panel audit), wired to `npm test`.
-- **Why:** the late `settings` bug was a silent render crash; the harness already
-  caught it. Keep it green or the loop stalls.
-- **Depends:** none. **Releases:** every later phase.
-
-**E.2 Data-driven content manifests** *(Med effort, L risk)*
-- Move tools/monsters/recipes/buildings/xp into a schema'd manifest (already partly
-  data-driven: `data/*.ts` is close). Add a `getTool(name)` lookpoint and a
-  content-migration bump so saved games survive adding fields.
-- **Releases:** P2 (tools), P4 (monsters), P5 (bones), P6 (biomes) all become data, not code.
-
-**E.3 · Consistent error surfacing** *(Lowest, L)*
-- Standardize on the `justMe` pattern (openPanel guard) for all render/tick paths.
-
----
-
-## Phase 1 — Interaction veil  (Priority 1 · Med-low effort · `L`)
-Goal: make the world answer "I see that thing, I can do that" — the biggest single jump
-in feeling like a real place. Pure three/UI, no new sim — small and fast to ship alone.
-
-| # | Work item | Depends | Risk |
-|---|-----------|----------|------|
-| 1.1 | Tap target highlight: HUD "targeting reticle" + in-world outline (on tapped node/monster/tile) | — | L |
-| 1.2 | In-world name labels above the tapped block (nodes/monsters) — 3D bob text | 1.1 | L |
-| 1.3 | Action chip over the target ("Chop Oak", "Gather copper", "Attack goblin", "Walk") + tap-another-to-cancel | 1.1 | L |
-| 1.4 | Obstacle/walk-to feedback (toast "Can't reach there" when blocked) | 1.1 | L |
-
-**Effort:** ~3–4 days total. **Depends:** E1,E3 only. **Releases:** makes P2 (tool req labels),
-P4 (monster targeting), P6 (quest hints) obviously better.
-
----
-
-## Phase 2 — Tools & gear: a real progression loop  (priority 1 · MED · effort MED)
-Goal: give the XP curve something to spend LEVEL on (OSRS-era "use better tool to do
-bigger things"). Directly unlocks P5 reward gating and P6 biome gating.
-
-2.1 **Tool tiers** (axe/pick/rod: bronze→steel→mithril): itemTier field on tools, `+speed/positive`
-   check in `SkillSystem`; worn in an arm slot. *(L)* dep: E2
-2.2 **Equip system** — Slots: Head/Torso/Legs/Weapon/Offhand; `INVENTORY` gets an `equipped`
-   map; UI: long-press item → Equip; stat buffs (Str/Def etc.) actually land on combat stats.
-   *(M — save/mig returnable; dep: P2.1, E1 saves test)*
-2.3 **Gathering speed & tool gating in UI** — tooltip shows "needs Steel axe"; XP curve
-   smoothing for the lvl-1..15 band so newcomers feel progress (tune `XPTable`/delays).
-   (L) dep: P1.3
-2.4 **Storage**: a buildable storage bin (uses existing BuildSystem) raising `storageCap`
-   beyond 500 so late-gather isn't "pouch full" constant. (L) dep: P2.2
-2.5 **Market/Do-trade** — optional, defer to P6.
-
-**Effort:** ~5–7 days. **Risk:** `MED` (balance/uproot + save-compat). Mitigate: save
-migration covered by E2/E1; keep tier diffs modest; test with fresh + existing save.
-**Releases:** P3 (NPCs can hand you tier goals), P5 (dungeon loot tiers), P6 (biome gating).
-
----
-
-## Phase 3 — Living world  (priority 2 · effort MED+ · effort mod)
-Goal: the settlement is a place (day/night, villagers, ambient life). Standalone but
-benefits from P1 labels for NPC talk.
-
-3.1 **Clock & day/night**: `GameState.time` (dayCount + clock), ambient dir-light tint,
-   UI sun/moon icon. (L) none
-3.2 **Village NPCs**: roster [Mayor, Fisher, Woodcutter...]. `NPCState`: schedule (stand/
-   walk/chat), usage of existing A* to move tile by tile, small talk lines, a "Talk"
-   interaction added to P1 action system. (M — scope; keep to 3–5 NPCs, schedule wheel).
-3.3 **Ambient wildlife** (birds/rabbits w/ simple wander) & extra sky variation. (L)
-3.4 **Soon** integration: villages use your built settlement (fire → cooking speed).
-   (M — links BuildSystem + Crafting). Nice-to-have; can be P6.
-
-**Effort:** ~8–10 days. **Risk:** `MED` (NPC sim scope + perf on mobile). **Mitigation:**
-limit NPC count, re-use A*, keep agents shared on a fixed tick (already 600ms world).
-**Depends:** → P1.3 label (cheap), not required — can be optional. **Releases:** nothing
-hard, but gameplay-feel compounding.
-
----
-
-## Phase 4 — Combat depth  *priority 2 · effort MED · risk med/high*
-Goal: fighting reads as a real fight — aggro, movement, ranged, bosses.
-
-4.1 **Aggro & chase**: monster detection radius → A* chase to range, leash via distance;
-   idle wander. (M; careful with balance + safety) dep E2
-4.2 **Ranged & magic combat**: ranged weapon type, projectile system (simple SpriteMesh/
-   instanced bolts), range check, kite/strafe. (M) dep 4.1 + P2.2 weapons
-4.3 **Boss archetype**: multi-phase HP, reachable telegraphs (allocate ground shape that
-   hurts), enrage>35%. (H) dep 4.2
-4.4 **Feedback**: hit stop, camera kick, floating dmg already in place — add stagger
-   delay, kill burst, brief screen flash at crit.
-
-**Effort:** ~7–9 days. **Risk:** `MED→HIGH` (balance + chase could frustrate on mobile).
-**Mitigation:** aggro only when within radius & always-mitigated with a retreat; safe
-zones. **Depends:** P2.2 (weapons), E2. → R P5 bosses.
-
----
-
-## Phase 5 — Dungeons (instanced floors)  *priority 2 · epic · risk high*
-Goal: deliver the GDD "dungeons" milestone with genuine "go deeper, get richer".
-
-5.1 **Dungeon archetype**: a 2–4 chamber floor from the Grid (door/switch architecture),
-   entrance from a door object on the map; separate RoomState + reset. (M) dep E2
-5.2 **Locked-door + key, miniboss door, treasure chest, respawn-on-death**. (M) dep 5.1, P4.1
-5.3 **Rewards & gating**: loot table (tiered by P2 tools), unlock token, boss variant
-   tiers. (L) dep 5.2, P2
-5.4 (stretch) **Stairs down / difficulty floors**.
-
-Effort: ~8–12 days. Risk: `HIGH` (procedural layout + goals loop bugs, save). Mitigation:
-rebuild on A*/tileset (exists), strict RNG, reset on session end, no un-save.
-Depends: hard on P4 (boss AI, aggro) + P2 (loot) + P1 (visualize locked doors).
-→ R6 content feed.
-
----
-
-## Phase 6 — World scale & onboarding  * priority 2-3 · effort · risk med*
-6.1 **Larger/configurable world** (32×32 & beyond) with chunk tests; walk-range panel.
-   (M; revisit path cost/perf) dep E1
-6.2 **New biomes** (forest, snow, swamp) gated by P2 tool/skill + P4 threat; new tilesets
-   mercator-style. (M)
-6.3 **Quests & tutorial intro** (an "Okay starter quest chain" + Journal). Given P1–P5
-   affordances, teach 1: move (already), 2: collect tool + chop (P2), 3: aggro (P4),
-   4: first dungeon (P5). (M) depends content in P2/P4/P5.
-6.4 **Collection log / mastery polish** into a real Meta page + achievement pop.
-
-Effort modelling: ~10–14 days. Risk `MED` (large scope, scaling perf). 
-Depends: P2, P4, P5. Final phase — the seasoning on the rest.
-
----
-
-## Dependency / risk summary (quick table)
-
-| Phase | Name | Priority | Effort(days) | Risk | Needs before | Unlocks |
-|---|---|---|---|---|---|---|
-| 1 | Interaction veil / feel | 1 | 3-4 | Low | E3 | P2 label; P6 hints |
-| 2 | Tool & gear progression | 1 | 5-7 | Med | P1, E2 | P3 goals, P5 loot, P6 biomes |
-| 3 | Living world (NPCs,day) | 2 | 8-10 | Med | P1 | flavor compounding |
-| 4 | Combat depth | 2 | 7-9 | Med-High | P2 | P5 bosses, P6 threat |
-| 5 | Dungeons | 2 | 8-12 | High | P4, P2 | P6 quests |
-| 6 | World scale + onboarding | 3 | 10-14 | Med | P2,P4,P5 | store-front, meta |
-
-## Ordering policy
-1. Do **E1/E2** first (cheap insurance + data).
-2. Ship **P1 start-to-finish** (tight, visible, low risk freedom).
-3. **P2** (progression) next: it releases the most downstream value.
-4. **P3 + P4** are both post-P2: run as any room — P4 before P5, P3 while w/mon max.
-5. **P5** then **P6** finally (content-sensit proper onboarding).
-
-> Every phase above keeps zero-asset procedural look per GDD — sound/3D assets remain a
-> trailing "final pass" only after outright.
-
----
-
-## Remaining phases (after P1–P3 shipped)
-
-| Phase | Name | Depends on | Risk | Notes |
-|---|---|---|---|---|
-| 3.5 | Settlement polish (campfire cooking station UI, day counter persistence in saves) | P3 | Low | polish backlog |
-| **P4** | **Combat depth** — aggro/chase AI, ranged/magic weapons, boss archetypes, hit feedback | P2 gear, P1 labels | Med–High | gates P5 |
-| **P5** | **Dungeons** — procedural floors, keys, miniboss, chests | P4, P2 | High | |
-| **P6** | **World scale + onboarding** — bigger world, biomes, quest/tutorial chain, meta | P2, P4, P5 | Med | |
-| Cross-cut | Audio (ambient/music/SFX) · final art pass · full UI purpose audit | all | — | per credits below |
-
-## Graphics direction & asset plan (PRICED — approval required per credit)
-
-**Important:** *every* image/video/audio/3D generation in this chat bills your credits —
-there is **no credit-free generation tier here**. "Free" work = the procedural,
-zero-asset code path we already use (all current visuals are code-generated). So the
-plan below is a menu; nothing is generated until you approve line items.
-
-**Recommended direction:** keep the zero-asset procedural look as the base art style
-(it's distinctive, coherent, mobile-friendly), and spend credits only where code
-cannot reach. Priority order:
-
-| # | Asset | Tool | Est. credits | Why it matters |
-|---|---|---|---|---|
-| A1 | Player avatar / hero mesh (3D) | image→3D mesh | ~2–4 per mesh | biggest single visual upgrade |
-| A2 | NPC/villager + critter meshes (3D) | image→3D | ~2–4 each | replaces boxes |
-| A3 | Skybox / day-night gradient textures | image gen | ~1–2 each | atmosphere |
-| A4 | Water / terrain detail textures | image gen | ~1 each | ground feel |
-| A5 | Music (title + day/night ambient) | audio gen | ~1–2 per track | mood |
-| A6 | SFX pack (chop/mine/fish/hit/levelup) | audio gen | ~1–2 per sfx | feedback |
-| A7 | Cover/OG/branding refresh | image gen | ~1–3 | marketing (already have one) |
-
-Rough total if we did everything: **~25–45 credits** (estimate; actual pricing varies
-by model/length and I'll confirm exact cost before submitting). Suggested first
-splurge: **A1 hero mesh + A3 skybox** (~5–8 credits) — the two things players see
-every second.
-
-> Rule: per your standing instruction, nothing above gets generated without you
-> approving the specific line items and budget first.
+Mechanics first because they cost nothing and they are what makes the game worth
+looking at. Then the two cheap asset wins, because icons and sky are what make it
+*look* finished for three credits. The dungeon next, since it is the biggest content
+hole. Characters last, because they are the only genuinely expensive thing and the
+Phase G boss should be in that batch rather than generated twice.

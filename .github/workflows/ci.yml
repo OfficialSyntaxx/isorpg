@@ -63,6 +63,12 @@ jobs:
       - name: Visual regression (opening frame)
         run: node scripts/visual-regress.cjs
 
+      # Deep audit: cross-table data integrity, save round-trip, dead code and
+      # assets, producer/consumer wiring. Quick mode — its browser passes overlap
+      # with the smoke and visual steps above, and it fails only on BUG findings.
+      - name: Audit
+        run: npm run audit:quick
+
       # The rendered frame and any diff, so a failure is diagnosable without
       # reproducing it locally.
       - name: Upload frame artifacts

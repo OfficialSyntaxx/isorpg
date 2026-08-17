@@ -7,3 +7,5 @@ dist/
 .wiki-emit/
 .visual/
 .audit-emit*/
+.audit-data/
+.audit-save/
