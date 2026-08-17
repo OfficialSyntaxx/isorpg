@@ -4,6 +4,7 @@ import type { HealthComponent } from "../components/Health";
 import type { SkillComponent } from "../components/Skills";
 import type { InventoryComponent } from "../components/Inventory";
 import type { Grid } from "../world/Grid";
+import type { FarmPlot } from "../data/Farming";
 import type { ResourceNode } from "../world/ResourceNode";
 import type { BuildingType } from "../data/Buildings";
 import type { EquipSlot } from "../data/Items";
@@ -83,6 +84,14 @@ export interface GameState {
     };
     /** P7.8: market supply/demand — sold/bought volume per item (persisted). */
     market: { supply: Record<string, number>; demand: Record<string, number> };
+    /**
+     * Farming beds, addressed by index. null = empty.
+     *
+     * A bed stores only the seed and the epoch ms it was sown, so growth is a
+     * function of Date.now() — no accumulated progress to persist, and no offline
+     * catch-up pass that could pay out twice.
+     */
+    farm: { plots: (FarmPlot | null)[] };
   };
   collectionLog: Set<string>;
   /** Player-tunable preferences. Persisted so a choice survives a reload. */
@@ -119,7 +128,12 @@ export function createFreshState(grid: Grid, name: string = DEFAULT_HERO_NAME, s
     },
     world: { grid, nodes: new Map() },
     clock: { minute: DAY_START_MINUTE, day: 1 },
-    town: { buildings: [], labour: { assignments: {}, stock: {}, acc: {}, worked: {} }, market: { supply: {}, demand: {} } },
+    town: {
+      buildings: [],
+      labour: { assignments: {}, stock: {}, acc: {}, worked: {} },
+      market: { supply: {}, demand: {} },
+      farm: { plots: [] },
+    },
     collectionLog: new Set(),
     settings: { autoEatPct: DEFAULT_AUTO_EAT_PCT },
   };

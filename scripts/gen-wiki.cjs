@@ -49,6 +49,7 @@ const { ACHIEVEMENTS } = D("Achievements.js");
 const { XP_TABLE } = D("XPTable.js");
 const { VILLAGERS, CRITTERS, VILLAGER_SPECS, VETERAN_TIERS } = D("Npcs.js");
 const { QUESTS, rewardText } = D("Quests.js");
+const { SEEDS, SEED_IDS } = D("Farming.js");
 const { masteryXpForLevel, MASTERY_MAX } = require(path.join(EMIT, "components", "Skills.js"));
 
 const L = [];
@@ -75,7 +76,7 @@ w("");
 [
   "Getting started", "Skills", "Experience table", "Gathering", "Weapons",
   "Armour & equipment", "Monsters & drops", "Crafting recipes", "Buildings",
-  "Food & healing", "Villagers & labour", "Quests", "Items index",
+  "Food & healing", "Farming", "Villagers & labour", "Quests", "Items index",
   "Achievements", "Guides",
 ].forEach((s) => w(`- [${s}](#${s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")})`));
 w("");
@@ -289,6 +290,32 @@ w("|---|---:|---:|");
 for (const [id, f] of Object.entries(FOODS).sort((a, b) => a[1].tier - b[1].tier || a[1].heal - b[1].heal)) {
   w(`| ${icon(id)} ${nameOf(id)} | ${f.heal} | ${f.tier} |`);
 }
+w("");
+
+// ————— Farming —————
+w("## Farming");
+w("");
+w("Farming is the one skill that advances on **real time** rather than on actions.");
+w("Sow a bed and it ripens whether the game is open or not — a crop planted before you");
+w("close the tab is ready when you come back, with no offline calculation involved.");
+w("");
+w("Beds come from the **Farm Plot** building (Construction 3): one bed per Farm Plot");
+w("*level*, so upgrading a plot adds beds. Seeds are stocked by the town merchant.");
+w("");
+w("| Seed | Farming | Ripens in | Yield | XP |");
+w("|---|---:|---:|---|---:|");
+for (const id of SEED_IDS) {
+  const sd = SEEDS[id];
+  const mins = Math.round(sd.growMs / 60000);
+  const q = sd.produce.min === sd.produce.max ? `${sd.produce.min}` : `${sd.produce.min}–${sd.produce.max}`;
+  w(`| ${icon(id)} **${sd.name}** | ${sd.levelReq} | ${mins} min | ${q} × ${icon(sd.produce.itemId)} ${nameOf(sd.produce.itemId)} | ${sd.xp} |`);
+}
+w("");
+w("Farming mastery raises the yield **floor** rather than adding a bonus roll: at");
+w("mastery 1 a harvest spans the crop's whole range, at 99 it always gives the maximum.");
+w("");
+w("Every crop feeds something — potatoes and cabbages go to Cooking, and redberries");
+w("brew the **Combat Tonic**, which was previously only buyable.");
 w("");
 
 // ————— Villagers —————

@@ -29,6 +29,15 @@ export const RECIPES: CraftRecipe[] = [
   { id: "cook_trout", skill: "cooking", name: "Cook Trout", levelReq: 20, ticks: 3, xp: 70,
     inputs: [{ itemId: "raw_trout", qty: 1 }], output: { itemId: "cooked_trout", qty: 1 }, burnable: true },
 
+  { id: "cook_potato", skill: "cooking", name: "Bake Potato", levelReq: 8, ticks: 2, xp: 45,
+    inputs: [{ itemId: "potato", qty: 1 }], output: { itemId: "baked_potato", qty: 1 }, burnable: true },
+  { id: "cook_stew", skill: "cooking", name: "Simmer Cabbage Stew", levelReq: 25, ticks: 4, xp: 110,
+    inputs: [{ itemId: "cabbage", qty: 2 }, { itemId: "potato", qty: 1 }], output: { itemId: "cabbage_stew", qty: 1 }, burnable: true },
+  // The Combat Tonic was shop-only at 120 coins. Redberries give farming a purpose
+  // past food, and the tonic a source that is not the merchant.
+  { id: "brew_tonic", skill: "cooking", name: "Brew Combat Tonic", levelReq: 35, ticks: 5, xp: 190,
+    inputs: [{ itemId: "redberry", qty: 4 }], output: { itemId: "combat_potion", qty: 1 }, requiresBuilding: "CAMPFIRE" },
+
   // ——— Smithing (requires a Smelter built in the settlement) ———
   { id: "smelt_bronze", skill: "smithing", name: "Smelt Bronze Bar", levelReq: 1, ticks: 3, xp: 30,
     inputs: [{ itemId: "copper_ore", qty: 1 }, { itemId: "tin_ore", qty: 1 }], output: { itemId: "bronze_bar", qty: 1 },

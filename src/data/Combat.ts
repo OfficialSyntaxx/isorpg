@@ -246,7 +246,9 @@ export const FOODS: Record<string, FoodDef> = {
   cooked_rat_meat: { heal: 4, tier: 1 },
   cooked_shrimp: { heal: 6, tier: 2 },
   shrimp_food: { heal: 6, tier: 2 },
+  baked_potato: { heal: 9, tier: 2 },
   cooked_trout: { heal: 14, tier: 3 },
+  cabbage_stew: { heal: 20, tier: 3 },
  combat_potion: { heal: 30, tier: 4 },
 };
 

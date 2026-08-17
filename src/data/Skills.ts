@@ -2,7 +2,7 @@
 
 export type SkillId =
   | "woodcutting" | "mining" | "fishing"
-  | "cooking" | "smithing" | "carpentry" | "construction"
+  | "cooking" | "smithing" | "carpentry" | "construction" | "farming"
   | "attack" | "strength" | "defense" | "hitpoints";
 
 export interface SkillDef {
@@ -20,6 +20,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   mining: { id: "mining", name: "Mining", short: "MIN", icon: "⛏️", kind: "gathering", nodeKind: "ROCK" },
   fishing: { id: "fishing", name: "Fishing", short: "FISH", icon: "🎣", kind: "gathering", nodeKind: "WATER" },
   cooking: { id: "cooking", name: "Cooking", short: "COOK", icon: "🍳", kind: "artisan" },
+  farming: { id: "farming", name: "Farming", short: "FARM", icon: "🌱", kind: "artisan" },
   smithing: { id: "smithing", name: "Smelting", short: "SMITH", icon: "🔨", kind: "artisan" },
   carpentry: { id: "carpentry", name: "Carpentry", short: "CARP", icon: "🪚", kind: "artisan" },
   construction: { id: "construction", name: "Construction", short: "CON", icon: "🏗️", kind: "artisan" },
@@ -30,7 +31,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
 };
 
 export const SKILL_IDS: SkillId[] = [
-  "attack", "strength", "defense", "hitpoints", "cooking", "smithing", "carpentry", "construction", "woodcutting", "mining", "fishing",
+  "attack", "strength", "defense", "hitpoints", "cooking", "smithing", "carpentry", "construction", "farming", "woodcutting", "mining", "fishing",
 ];
 /** Skills craftable via the Craft panel (artisan, excludes construction which uses the Build panel). */
 export const CRAFT_SKILLS: SkillId[] = ["cooking", "smithing", "carpentry"];

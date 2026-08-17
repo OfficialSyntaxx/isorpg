@@ -137,6 +137,17 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     .filter((b) => (BUILDING_TYPES as string[]).includes(b.type) && b.x < 200 && b.y < 200);
 
   // collection log
+  // Farming beds: a bed is {seedId, plantedAt} or null. A future plantedAt would
+  // leave a crop permanently unripe, so it is clamped to now.
+  const rawPlots = Array.isArray((r.town as any)?.farm?.plots) ? (r.town as any).farm.plots : [];
+  const now = Date.now();
+  const farmPlots = rawPlots.slice(0, 32).map((p: unknown) => {
+    const pp = (p ?? null) as Record<string, unknown> | null;
+    if (!pp || typeof pp.seedId !== "string") return null;
+    const at = isFiniteNumber(pp.plantedAt) ? Math.min(pp.plantedAt, now) : now;
+    return { seedId: pp.seedId, plantedAt: at };
+  });
+
   const rawLog = Array.isArray(r.collectionLog) ? r.collectionLog : (r as any).collectionLog?.unlocked ?? [];
   const collectionLog = Array.isArray(rawLog) ? rawLog.filter((x) => typeof x === "string") : [];
 
@@ -162,7 +173,7 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
       version: SAVE_VERSION,
       timestamp,
       player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe },
-      town: { buildings, labour: labourSafe, market: marketSafe },
+      town: { buildings, labour: labourSafe, market: marketSafe, farm: { plots: farmPlots } },
       collectionLog: { unlocked: collectionLog },
       settings: { autoEatPct: nearestAutoEatStep((r as any).settings?.autoEatPct) },
       map: mapSafe,

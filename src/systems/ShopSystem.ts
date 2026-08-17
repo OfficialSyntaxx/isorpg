@@ -31,6 +31,10 @@ export interface ShopSnapshot {
 
 /** What the merchant stocks, with fixed prices (value ×3 for stock goods). */
 const STOCK: { itemId: string; price: number }[] = [
+  // Seeds are the entry point to Farming — without a source it is unreachable.
+  { itemId: "potato_seed", price: 10 },
+  { itemId: "cabbage_seed", price: 36 },
+  { itemId: "redberry_seed", price: 120 },
   { itemId: "cooked_shrimp", price: 40 },
   { itemId: "cooked_trout", price: 60 },
  { itemId: "combat_potion", price: 120 },

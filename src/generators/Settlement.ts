@@ -53,6 +53,7 @@ const PALETTES: Record<BuildingType, Palette> = {
   SAWMILL: { wall: "#8a6a4a", grain: "#71543a", roof: "#6b4423", trim: "#c98f4a" },
   SMELTER: { wall: "#6b6b6b", grain: "#575757", roof: "#3a2a2a", trim: "#ff9c4a" },
   GRANARY: { wall: "#c2b280", grain: "#a99968", roof: "#7a5a30", trim: "#7cd992" },
+  FARM_PLOT: { wall: "#6b4a2f", grain: "#573a24", roof: "#4f7a3a", trim: "#8fd06a" },
 };
 
 
@@ -91,6 +92,28 @@ export function makeBuilding(type: BuildingType): THREE.Group {
     const latch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.04), flatMat(p.trim));
     latch.position.set(0, GROUND_Y + 0.375, 0.26);
     g.add(latch);
+    return groundScaled(g);
+  }
+
+  // Farm Plot: tilled soil in low furrows with a few sprouts. No roof — this is
+  // ground, not a structure, so it stays flat enough to read as a field beside
+  // the buildings rather than competing with them.
+  if (type === "FARM_PLOT") {
+    const soil = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.06, 0.82), wallMat(p.wall, p.grain));
+    soil.position.y = GROUND_Y + 0.03;
+    soil.receiveShadow = true;
+    g.add(soil);
+    for (let r = 0; r < 3; r++) {
+      const furrow = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.05, 0.14), flatMat(p.grain));
+      furrow.position.set(0, GROUND_Y + 0.075, -0.24 + r * 0.24);
+      g.add(furrow);
+      for (let i = 0; i < 3; i++) {
+        const sprout = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.14, 4), flatMat(r === 1 ? p.trim : p.roof));
+        sprout.position.set(-0.24 + i * 0.24, GROUND_Y + 0.16, -0.24 + r * 0.24);
+        sprout.castShadow = true;
+        g.add(sprout);
+      }
+    }
     return groundScaled(g);
   }
 

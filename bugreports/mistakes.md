@@ -213,6 +213,27 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   a second one. **Lesson: audit against the code, not against the plan; a roadmap
   written two sessions ago is a hypothesis.**
 
+## Phase E, part 2 2026-08-17 (farming)
+- **[css] Source order beat me, and reading the file did not find it** — every row's
+  mini button is `class="btn btn-mini"`, and `.btn { width: 100% }` sits ~145 lines
+  *after* `.btn-mini` in the stylesheet, so it won. Combined with
+  `.inv-row .btn-mini { flex-shrink: 0 }` the button took the whole row and the label
+  collapsed to zero width. I looked at the CSS three times and blamed my own
+  `.inv-name` flex change. What actually found it was dumping child bounding boxes in
+  the page: `[24, 0, 332]` — the button was 332px wide. **Lesson: for a layout bug,
+  measure the boxes before theorising about the rules. The numbers name the culprit
+  in one shot; reading cascade order does not.**
+- **[qc] The bug was months old and 145 checks never saw it** — it affected Bag,
+  Village, Map and Shop, every one of which the UI audit "passes", because the audit
+  checks that elements and handlers exist, not that they are visible. Screenshotting
+  one new panel exposed four broken ones. **Lesson: a new feature is a good excuse to
+  look at the old ones next to it.**
+- **[design] Timestamps beat accumulators for anything that grows while away** — the
+  offline gathering system needed a catch-up pass, a cap, and a bug fix for paying
+  three times over. Farming stores `plantedAt` and asks `Date.now()`, so there is
+  nothing to catch up and nothing to double-count. **Lesson: when state is a pure
+  function of elapsed time, store the start time, not the progress.**
+
 ## Open threads (not yet filed as bugs)
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.

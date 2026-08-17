@@ -69,6 +69,7 @@ export class SaveSystem {
           worked: { ...this.state.town.labour.worked },
         },
         market: { supply: { ...this.state.town.market.supply }, demand: { ...this.state.town.market.demand } },
+        farm: { plots: this.state.town.farm.plots.map((p) => (p ? { seedId: p.seedId, plantedAt: p.plantedAt } : null)) },
       },
       collectionLog: { unlocked: [...this.state.collectionLog] },
       settings: { autoEatPct: this.state.settings.autoEatPct },
@@ -126,6 +127,11 @@ export class SaveSystem {
       this.state.town.labour.acc = { ...lab.acc };
       this.state.town.labour.worked = { ...(lab.worked ?? {}) };
     }
+    // Farming beds. plantedAt is absolute, so crops keep ripening while away with
+    // no offline pass — restoring the timestamps IS restoring the growth.
+    const farm = (s.town as any)?.farm;
+    this.state.town.farm.plots = (farm?.plots ?? []).map((p: any) =>
+      p && typeof p.seedId === "string" ? { seedId: p.seedId, plantedAt: Number(p.plantedAt) || Date.now() } : null);
     // P7.8: market supply/demand survive reloads.
     const mkt = (s.town as any)?.market;
     if (mkt) {

@@ -1,5 +1,5 @@
 // Settlement structures: placement cost, requirements, passive yields (GDD §5.B).
-export type BuildingType = "STORAGE_BIN" | "CAMPFIRE" | "TOWN_HALL" | "STOREHOUSE" | "SAWMILL" | "SMELTER" | "GRANARY";
+export type BuildingType = "STORAGE_BIN" | "CAMPFIRE" | "TOWN_HALL" | "STOREHOUSE" | "SAWMILL" | "SMELTER" | "GRANARY" | "FARM_PLOT";
 
 export interface BuildingCost {
   itemId: string;
@@ -96,9 +96,20 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     baseCost: [{ itemId: "coins", qty: 100 }, { itemId: "plank", qty: 8 }],
     buildXp: 160,
   },
+  FARM_PLOT: {
+    type: "FARM_PLOT",
+    name: "Farm Plot",
+    icon: "🌱",
+    desc: "Tilled beds for sowing seeds. Crops ripen on real time, so a plot sown before you leave is ready when you return.",
+    effect: "+1 planting bed per level (see Village → Farm)",
+    levelReq: 3,
+    maxCount: 3,
+    baseCost: [{ itemId: "plank", qty: 6 }, { itemId: "normal_log", qty: 8 }],
+    buildXp: 120,
+  },
 };
 
 /** Upgrades run 1..3; each level costs level x baseCost and counts as another instance. */
 export const MAX_BUILD_LEVEL = 3;
 
-export const BUILDING_TYPES: BuildingType[] = ["STORAGE_BIN", "CAMPFIRE", "TOWN_HALL", "STOREHOUSE", "SAWMILL", "SMELTER", "GRANARY"];
+export const BUILDING_TYPES: BuildingType[] = ["STORAGE_BIN", "CAMPFIRE", "TOWN_HALL", "STOREHOUSE", "SAWMILL", "SMELTER", "GRANARY", "FARM_PLOT"];

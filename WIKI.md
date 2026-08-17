@@ -18,6 +18,7 @@ _Last generated: 2026-08-17_
 - [Crafting recipes](#crafting-recipes)
 - [Buildings](#buildings)
 - [Food & healing](#food-healing)
+- [Farming](#farming)
 - [Villagers & labour](#villagers-labour)
 - [Quests](#quests)
 - [Items index](#items-index)
@@ -61,6 +62,7 @@ All skills use the same experience curve and cap at level 99.
 | 🔨 **Smelting** | Artisan | Smelt ore into bars, then forge tools, weapons and armour. Needs a Smelter. |
 | 🪚 **Carpentry** | Artisan | Saw logs into planks and carve tools. Needs a Sawmill. |
 | 🏗️ **Construction** | Artisan | Gates which settlement buildings you can place, and their upgrades. |
+| 🌱 **Farming** | Artisan |  |
 | 🪓 **Woodcutting** | Gathering | Chop trees for logs. Better axes and higher levels unlock harder wood. |
 | ⛏️ **Mining** | Gathering | Mine rocks for ore and coal. Pickaxe tier gates the higher ores. |
 | 🎣 **Fishing** | Gathering | Catch raw fish at fishing spots. Needs a net or rod. |
@@ -350,6 +352,9 @@ Aggro range 6 tiles · respawns after 30s
 | 🍤 Cooked Shrimp | 1 | 1× 🦐 Raw Shrimp | 30 | 1.2s | — · can burn |
 | 🍗 Cooked Rat Meat | 5 | 1× 🍖 Raw Rat Meat | 40 | 1.2s | — · can burn |
 | 🍣 Cooked Trout | 20 | 1× 🐟 Raw Trout | 70 | 1.8s | — · can burn |
+| 🥔 Baked Potato | 8 | 1× 🥔 Potato | 45 | 1.2s | — · can burn |
+| 🍲 Cabbage Stew | 25 | 2× 🥬 Cabbage + 1× 🥔 Potato | 110 | 2.4s | — · can burn |
+| 🧪 Combat Tonic | 35 | 4× 🍒 Redberry | 190 | 3.0s | Campfire |
 
 ### 🔨 Smelting
 
@@ -415,6 +420,7 @@ recipe's requirement and as mastery grows. A built Campfire makes cooking 25% fa
 | 🪵 **Sawmill** | 5 | 120× 🪙 Coins + 15× 🪵 Logs | Passively converts 1 log → 1 plank per cycle, per level |
 | 🔥 **Smelter** | 10 | 150× 🪙 Coins + 10× 🟠 Copper Ore + 10× ⚪ Tin Ore | Unlocks Smithing recipes; passively converts ore → bars per cycle, per level |
 | 🌾 **Granary** | 8 | 100× 🪙 Coins + 8× 🪵 Plank | Passively produces 1 raw shrimp per cycle, per level |
+| 🌱 **Farm Plot** | 3 | 6× 🪵 Plank + 8× 🪵 Logs | +1 planting bed per level (see Village → Farm) |
 
 Buildings may only be placed on unlocked, buildable tiles in the town or settlement
 ring. Placing one grants Construction XP.
@@ -430,8 +436,31 @@ carry. Tier decides priority, not the heal value.
 | 🍗 Cooked Rat Meat | 4 | 1 |
 | 🍤 Cooked Shrimp | 6 | 2 |
 | 🍤 Cooked Shrimp | 6 | 2 |
+| 🥔 Baked Potato | 9 | 2 |
 | 🍣 Cooked Trout | 14 | 3 |
+| 🍲 Cabbage Stew | 20 | 3 |
 | 🧪 Combat Tonic | 30 | 4 |
+
+## Farming
+
+Farming is the one skill that advances on **real time** rather than on actions.
+Sow a bed and it ripens whether the game is open or not — a crop planted before you
+close the tab is ready when you come back, with no offline calculation involved.
+
+Beds come from the **Farm Plot** building (Construction 3): one bed per Farm Plot
+*level*, so upgrading a plot adds beds. Seeds are stocked by the town merchant.
+
+| Seed | Farming | Ripens in | Yield | XP |
+|---|---:|---:|---|---:|
+| 🌰 **Potato Seed** | 1 | 5 min | 2–4 × 🥔 Potato | 35 |
+| 🌱 **Cabbage Seed** | 12 | 12 min | 2–3 × 🥬 Cabbage | 90 |
+| 🫘 **Redberry Seed** | 30 | 30 min | 3–6 × 🍒 Redberry | 220 |
+
+Farming mastery raises the yield **floor** rather than adding a bonus roll: at
+mastery 1 a harvest spans the crop's whole range, at 99 it always gives the maximum.
+
+Every crop feeds something — potatoes and cabbages go to Cooking, and redberries
+brew the **Combat Tonic**, which was previously only buyable.
 
 ## Villagers & labour
 
@@ -527,12 +556,17 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 
 | Item | Value | Requirements | Notes |
 |---|---:|---|---|
+| 🥔 **Baked Potato** | 18 | — | Hot from the fire. Heals 9. |
+| 🥬 **Cabbage** | 14 | — | Hearty leaves. Better in a stew than raw. |
+| 🍲 **Cabbage Stew** | 44 | — | Thick and restoring. Heals 20. |
 | 🧪 **Combat Tonic** | 45 | — | A fiery red tonic. Heals 30, gulped down automatically when you're hurt. |
 | 🍗 **Cooked Rat Meat** | 9 | — | Better than it sounds. Heals 4. |
 | 🍤 **Cooked Shrimp** | 12 | — | A tasty cooked shrimp. Heals 6. |
 | 🍤 **Cooked Shrimp** | 12 | — | A tasty cooked shrimp. Heals 6. |
 | 🍣 **Cooked Trout** | 32 | — | Flaky and filling. Heals 14. |
+| 🥔 **Potato** | 6 | — | Earthy and filling once baked. |
 | 🍖 **Raw Rat Meat** | 4 | — | Edible once cooked. Heals a little raw. |
+| 🍒 **Redberry** | 22 | — | Tart and faintly medicinal — the base of a Combat Tonic. |
 
 ### Log
 
@@ -572,6 +606,14 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 | 🟠 **Copper Ore** | 5 | — | Soft, orange-gold ore. |
 | ⚙️ **Iron Ore** | 17 | Mining 15 | Dense grey ore, ready to smelt. |
 | ⚪ **Tin Ore** | 5 | — | Bright silver ore. |
+
+### Seed
+
+| Item | Value | Requirements | Notes |
+|---|---:|---|---|
+| 🌱 **Cabbage Seed** | 12 | Farming 12 | A slower crop with a better yield. About 12 minutes. |
+| 🌰 **Potato Seed** | 3 | Farming 1 | Plant it in a Farm Plot bed. Ready in about 5 minutes. |
+| 🫘 **Redberry Seed** | 40 | Farming 30 | Half an hour in the ground, and the berries brew a Combat Tonic. |
 
 ### Tool
 

@@ -27,6 +27,7 @@ import { MapSystem } from "./systems/MapSystem";
 import { MetaSystem } from "./systems/MetaSystem";
 import { ShopSystem } from "./systems/ShopSystem";
 import { LabourSystem } from "./systems/LabourSystem";
+import { FarmSystem } from "./systems/FarmSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast, clearToasts } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -75,6 +76,7 @@ class Game {
   private meta!: MetaSystem;
   private shop!: ShopSystem;
   private labour!: LabourSystem;
+  private farm!: FarmSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private heroFlashUntil = 0;
   private bossRing!: THREE.Group;
@@ -174,6 +176,43 @@ class Game {
         return c.length > 0;
       }
     );
+    // Farming. Beds come from Farm Plot levels, so BuildSystem stays the single
+    // authority on what the settlement has — but it is constructed below, hence
+    // the lazy provider rather than a value.
+    this.farm = new FarmSystem(this.state, () => this.build?.levels("FARM_PLOT") ?? 0);
+    this.ui.attachFarm(
+      () => this.farm.snapshot(),
+      (seedId) => {
+        const r = this.farm.plant(seedId);
+        if (r.ok) { sfx("ui_click"); showToast(`Sown in bed ${r.bed + 1}.`, "success", 1400); return; }
+        showToast({
+          no_bed: "Every bed is already sown.",
+          no_seed: "You have none of that seed.",
+          level: "Your Farming level is too low for that seed.",
+          unknown_seed: "That is not a seed.",
+        }[r.reason], "error", 1800);
+      },
+      (bed) => {
+        const r = this.farm.harvest(bed);
+        if (r.ok) {
+          sfx("pickup");
+          showToast(`+${r.amount} ${ITEM_NAMES[r.itemId]?.name ?? r.itemId} · +${r.xp} Farming XP`, "success", 1900);
+          return;
+        }
+        showToast({
+          empty: "Nothing planted there.",
+          unripe: "Still growing — give it time.",
+          inventory_full: "No room for the harvest.",
+        }[r.reason], "error", 1800);
+      },
+      () => {
+        const got = this.farm.harvestAll();
+        if (!got.length) { showToast("Nothing is ripe yet.", "info", 1400); return; }
+        sfx("pickup");
+        showToast(`Harvested: ${got.map((x) => `${ITEM_NAMES[x.itemId]?.name ?? x.itemId} ×${x.amount}`).join(", ")}`, "success", 2800);
+      }
+    );
+
     this.mapSys = new MapSystem(
       this.grid.width,
       this.dungeon,

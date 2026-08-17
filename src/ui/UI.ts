@@ -20,6 +20,7 @@ import type { EquipSlot, Item, ItemType } from "../data/Items";
 import type { MapSnapshot } from "../systems/MapSystem";
 import type { QuestJournalEntry } from "../systems/QuestSystem";
 import type { MetaSnapshot } from "../systems/MetaSystem";
+import type { FarmSnapshot } from "../systems/FarmSystem";
 import type { ShopSnapshot } from "../systems/ShopSystem";
 import type { LabourSnapshot, LabourJob } from "../systems/LabourSystem";
 
@@ -28,6 +29,7 @@ const SLOT_NAMES: Record<EquipSlot, string> = {
 };
 
 type MetaTab = "awards" | "log" | "levels";
+type VillageTab = "labour" | "farm";
 
 /** Readable group headings for the collection log. */
 const TYPE_NAMES: Record<ItemType, string> = {
@@ -294,6 +296,63 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
    * which is the entire point of a collection log.
    */
   private metaTab: MetaTab = "awards";
+  private villageTab: VillageTab = "labour";
+  private farmSource?: () => FarmSnapshot | null;
+  private farmPlant?: (seedId: string) => void;
+  private farmHarvest?: (bed: number) => void;
+  private farmHarvestAll?: () => void;
+
+  /** The farm tab: beds with a growth bar, plus the seeds you can sow. */
+  private farmHtml(): string {
+    const snap = this.farmSource?.();
+    if (!snap) return `<div class="empty">Farming is not available.</div>`;
+    if (snap.bedCount === 0) {
+      return `<div class="empty">No beds yet — build a <b>Farm Plot</b> (Construction 3) from the Build panel.<br>Each Farm Plot level adds one bed.</div>`;
+    }
+
+    const bedRows = snap.beds.map((b) => {
+      if (!b.seedId) {
+        return `<div class="inv-row"><span class="inv-ico">🟫</span><div class="inv-name">Empty bed<span class="inv-count">—</span></div></div>`;
+      }
+      const pct = Math.round(b.growth * 100);
+      const btn = b.ripe ? `<button class="btn btn-mini" data-harvest="${b.index}">Harvest</button>` : "";
+      return `<div class="inv-row" style="align-items:flex-start">
+        <span class="inv-ico">${b.icon}</span>
+        <div class="inv-name">${escapeHtml(b.name)}<span class="inv-count">${b.label}</span>
+          <div class="grow-bar"><span style="width:${pct}%"></span></div>
+        </div>${btn}</div>`;
+    }).join("");
+
+    const seedRows = snap.seeds.length
+      ? snap.seeds.map((sd) => {
+          const can = sd.unlocked && sd.qty > 0;
+          const why = !sd.unlocked ? `needs Farming ${sd.levelReq}` : sd.qty === 0 ? "none carried" : `×${sd.qty}`;
+          return `<div class="inv-row"><span class="inv-ico">${itemIcon(sd.id)}</span>
+            <div class="inv-name">${escapeHtml(sd.name)}<span class="inv-count">${why}</span></div>
+            <button class="btn btn-mini" data-sow="${sd.id}"${can ? "" : " disabled"}>Sow</button></div>`;
+        }).join("")
+      : `<div class="empty">No seeds. The town merchant sells them.</div>`;
+
+    const ripe = snap.beds.filter((b) => b.ripe).length;
+    const all = ripe > 1 ? `<button class="btn btn-mini" data-harvest-all="1">Harvest all (${ripe})</button>` : "";
+
+    return `<div class="set-val">🌱 Farming Lv ${snap.level} · ${snap.beds.filter((b) => b.seedId).length}/${snap.bedCount} beds sown</div>
+      ${bedRows}${all}
+      <div class="set-val">Seeds</div>${seedRows}`;
+  }
+
+  private wireFarm(): void {
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-sow]").forEach((btn) => {
+      btn.addEventListener("click", () => { this.farmPlant?.(btn.dataset.sow!); this.renderVillage(); });
+    });
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-harvest]").forEach((btn) => {
+      btn.addEventListener("click", () => { this.farmHarvest?.(Number(btn.dataset.harvest)); this.renderVillage(); });
+    });
+    this.panelBody.querySelector<HTMLButtonElement>("[data-harvest-all]")?.addEventListener("click", () => {
+      this.farmHarvestAll?.(); this.renderVillage();
+    });
+  }
+
 
   private collectionLogHtml(): string {
     const log = this.state.collectionLog;
@@ -366,6 +425,19 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
   }
 
   /** P7.3: main.ts wires the labour snapshot + assign/claim executors. */
+  /** Farming: the snapshot plus sow/harvest executors (main.ts wires them). */
+  attachFarm(
+    snapshot: () => FarmSnapshot | null,
+    plant: (seedId: string) => void,
+    harvest: (bed: number) => void,
+    harvestAll: () => void
+  ) {
+    this.farmSource = snapshot;
+    this.farmPlant = plant;
+    this.farmHarvest = harvest;
+    this.farmHarvestAll = harvestAll;
+  }
+
   attachVillage(snapshot: () => LabourSnapshot | null, assign: (id: string, job: LabourJob | "idle") => boolean, claim: () => boolean) {
     this.labourSource = snapshot;
     this.labourAssign = assign;
@@ -374,9 +446,34 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
 
   // ————— Village labour —————
   private renderVillage() {
-    this.panelTitle.textContent = "Village Labour";
+    this.panelTitle.textContent = "Village";
+    // The Village panel is the settlement screen, so the farm belongs here rather
+    // than behind a tenth button on a bottom bar that already has nine.
+    const ripe = this.farmSource?.()?.beds.filter((b) => b.ripe).length ?? 0;
+    const tabs = ([
+      ["labour", "👤 Labour"],
+      ["farm", ripe > 0 ? `🌾 Farm (${ripe})` : "🌱 Farm"],
+    ] as const).map(([id, label]) =>
+      `<button class="tab-btn${id === this.villageTab ? " active" : ""}" data-village-tab="${id}">${label}</button>`).join("");
+    const tabRow = `<div class="tab-row">${tabs}</div>`;
+    const wireTabs = () => {
+      this.panelBody.querySelectorAll<HTMLButtonElement>("[data-village-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          this.villageTab = btn.dataset.villageTab as VillageTab;
+          this.renderVillage();
+        });
+      });
+    };
+
+    if (this.villageTab === "farm") {
+      this.panelBody.innerHTML = tabRow + this.farmHtml();
+      wireTabs();
+      this.wireFarm();
+      return;
+    }
+
     const snap = this.labourSource?.();
-    if (!snap) { this.panelBody.innerHTML = `<div class="empty">No villagers about yet.</div>`; return; }
+    if (!snap) { this.panelBody.innerHTML = tabRow + `<div class="empty">No villagers about yet.</div>`; wireTabs(); return; }
     const JOB_LABEL: Record<string, string> = { woodcutting: "🪓 Woodcutting", mining: "⛏️ Mining", idle: "Idle" };
     const workerRows = snap.workers.map((w) => `
       <div class="inv-row" style="align-items:flex-start">
@@ -394,9 +491,10 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       ? snap.stock.map((s) => `<div class="inv-row"><span class="inv-ico">${s.icon}</span><div class="inv-name">${s.name}<span class="inv-count">×${s.qty}</span></div></div>`).join("")
       : `<div class="empty">The village has nothing stockpiled yet.</div>`;
     const claimBtn = snap.stock.length ? `<button class="btn btn-mini" data-lclaim="1">Collect stock</button>` : "";
-    this.panelBody.innerHTML = `
+    this.panelBody.innerHTML = tabRow + `
       <div class="set-val">Villagers</div>${workerRows}
       <div class="set-val">Village stock</div>${stockRows}${claimBtn}`;
+    wireTabs();
     this.panelBody.querySelectorAll<HTMLButtonElement>("[data-lassign]").forEach((btn) => {
       btn.addEventListener("click", () => {
         this.labourAssign?.(btn.dataset.vid ?? "", btn.dataset.lassign as LabourJob | "idle");

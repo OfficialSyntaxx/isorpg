@@ -6,6 +6,38 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase E — Farming, and a row-layout bug that had shipped
+
+- **Farming.** A twelfth skill, and the only one that advances on **wall-clock time**
+  rather than on actions. A bed stores just the seed and the epoch ms it was sown, so
+  growth is a function of `Date.now()`: no tick loop, no offline catch-up pass, no way
+  for it to drift out of step with the save or be paid twice the way offline gathering
+  once was. A crop sown before you close the tab is simply ripe when you return.
+- **Beds come from Farm Plot levels** (Construction 3, one bed per level), matching the
+  `levels()` rule established for every other passive effect. Shrinking the plot count
+  never bins a growing crop — only empty trailing beds are removed.
+- **Three seeds, each closing a loop** rather than adding a dead-end item: potato
+  (5 min), cabbage (12 min) and redberry (30 min), stocked by the town merchant.
+  Potatoes and cabbages feed two new Cooking recipes (Baked Potato, Cabbage Stew), and
+  redberries brew the **Combat Tonic** — which until now could only be bought at 120
+  coins. A QC check fails if any crop has no consumer.
+- **Farming mastery raises the yield floor** rather than adding a separate bonus roll:
+  at mastery 1 a harvest spans the crop's whole range, at 99 it always gives the
+  maximum. One knob, and the range printed in the wiki stays literally true.
+- Sown and harvested from **Village → Farm**, with a growth bar per bed, a ripe count
+  on the tab, and Harvest-all when more than one is ready. Sanitizer clamps a future
+  `plantedAt` to now, so a hand-edited save cannot leave a crop unripe forever.
+- **A row-layout bug that had already shipped.** `.btn { width: 100% }` is declared
+  *after* `.btn-mini`, and every row control is written `class="btn btn-mini"` — so the
+  button claimed the entire row and, being `flex-shrink: 0`, squeezed the row's label
+  to **zero width**. Bag equip/unequip, village labour, map travel and shop buy/sell
+  were all affected. Found by measuring the DOM after the new farm rows looked wrong;
+  three rounds of reading the CSS had not found it.
+- 24 new QC checks (**145/145**) · 25/25 rig · 47/47 UI audit · 5/5 smoke · visual
+  baseline clean.
+
+---
+
 ## 2026-08 · Phase E — collection log, real building upgrades, craftable weapons
 
 - **Smithing no longer dead-ends.** Not one weapon had a recipe: you could forge a

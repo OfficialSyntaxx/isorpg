@@ -124,8 +124,23 @@ its own.
   `max-height: none` and stands ~850 px tall, so lists were clipped at 488 px with
   360 px of dead panel below. Now `flex: 1; min-height: 0`.
 
-**Remaining.** Farming & seeds (M) · clue scrolls (L). The `SEED` item type and a
-`GEM` type exist with no members, so farming has a slot waiting for it.
+- **Farming & seeds** ✅ — a new skill that advances on **wall-clock time** rather than
+  on actions, which is why it needs no offline pass at all: a bed stores the seed and
+  the epoch ms it was sown, so growth is a function of `Date.now()` and cannot drift
+  or be paid twice. Beds come from **Farm Plot** levels (Construction 3), matching
+  every other passive effect. Three seeds (potato 5 min, cabbage 12 min, redberry
+  30 min) stocked by the merchant, and every crop closes a loop: potatoes and
+  cabbages feed new Cooking recipes, redberries brew the **Combat Tonic**, which was
+  previously shop-only. Farmed in Village → Farm.
+
+**Fixed along the way.** `.btn { width: 100% }` is declared *after* `.btn-mini`, and
+every row control is written `class="btn btn-mini"` — so the mini button took the
+whole row and, being `flex-shrink: 0`, squeezed the row's label to **zero width**.
+This affected Bag equip/unequip, village labour, map travel and shop buy/sell, and had
+been shipped for some time. Found by measuring the DOM after the farm rows looked
+wrong, not by reading the CSS.
+
+**Remaining.** Clue scrolls (L). The `GEM` item type still has no members.
 
 ---
 

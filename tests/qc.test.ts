@@ -27,6 +27,9 @@ import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
 import { DEFAULT_HERO_NAME, AUTO_EAT_STEPS, DEFAULT_AUTO_EAT_PCT } from "../src/state/GameState";
 import { MAX_BUILD_LEVEL } from "../src/data/Buildings";
 import { RECIPES } from "../src/data/Recipes";
+import { SEEDS, SEED_IDS, growthAt, isRipe, growthLabel } from "../src/data/Farming";
+import { SKILL_IDS } from "../src/data/Skills";
+import { FarmSystem } from "../src/systems/FarmSystem";
 
 const results: string[] = [];
 const check = (n: string, ok: boolean, x = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${n}${x ? "  [" + x + "]" : ""}`);
@@ -523,6 +526,101 @@ check("hero: has a name, not a placeholder", DEFAULT_HERO_NAME.length > 1 && !/^
   check("autoeat: a missing block falls back to the default",
     (sanitizeSave({ version: "1.1.0", timestamp: Date.now(), player: { name: "X", position: { x: 1, y: 1 }, stats: { hp: 1, maxHp: 1 }, skills: {}, inventory: [] } }) as any)
       .state.settings.autoEatPct === DEFAULT_AUTO_EAT_PCT);
+}
+
+// [farming] Crops grow on wall-clock time, stored as a plant timestamp — no tick
+// loop, no offline catch-up pass, and nothing that can be paid twice the way
+// offline gathering once was. These checks pin that property.
+{
+  const st = createFreshState(g, DEFAULT_HERO_NAME, 21, 21);
+  let beds = 2;
+  const farm = new FarmSystem(st, () => beds);
+
+  check("farm: no beds without a Farm Plot", new FarmSystem(st, () => 0).snapshot().bedCount === 0);
+  check("farm: seeds all declare a produce item", SEED_IDS.every((id) => !!ITEMS[SEEDS[id].produce.itemId]));
+  check("farm: seeds are all real items", SEED_IDS.every((id) => !!ITEMS[id]));
+  check("farm: seed grow times are ordered by tier",
+    SEEDS.potato_seed.growMs < SEEDS.cabbage_seed.growMs && SEEDS.cabbage_seed.growMs < SEEDS.redberry_seed.growMs);
+
+  // Sowing consumes the seed and takes a bed.
+  addItem(st.player.inventory, "potato_seed", 3);
+  const p1 = farm.plant("potato_seed");
+  check("farm: sowing works", p1.ok === true && countItem(st.player.inventory, "potato_seed") === 2);
+  check("farm: a fresh bed is not ripe", farm.snapshot().beds[0].ripe === false);
+  check("farm: harvesting an unripe bed is refused",
+    (farm.harvest(0) as any).reason === "unripe");
+
+  // Growth is a function of the timestamp, so rewinding plantedAt IS waiting.
+  st.town.farm.plots[0]!.plantedAt = Date.now() - SEEDS.potato_seed.growMs - 1000;
+  check("farm: time makes it ripe", farm.snapshot().beds[0].ripe === true);
+  check("farm: the label says so", growthLabel(st.town.farm.plots[0]!, Date.now()) === "Ripe");
+
+  const h = farm.harvest(0) as any;
+  const range = SEEDS.potato_seed.produce;
+  check("farm: harvest yields inside the declared range",
+    h.ok && h.amount >= range.min && h.amount <= range.max, `${h.amount} in ${range.min}-${range.max}`);
+  check("farm: harvest grants Farming XP", st.player.skills.farming.xp === SEEDS.potato_seed.xp);
+  check("farm: harvest frees the bed", st.town.farm.plots[0] === null);
+  check("farm: harvest fills the collection log", st.collectionLog.has(range.itemId));
+
+  // Beds are finite. Stock plenty of seed so the refusal can only be "no_bed".
+  addItem(st.player.inventory, "potato_seed", 10);
+  farm.plant("potato_seed");
+  farm.plant("potato_seed");
+  check("farm: beds run out before seeds do", (farm.plant("potato_seed") as any).reason === "no_bed");
+
+  // A locked seed cannot be sown at level 1.
+  addItem(st.player.inventory, "redberry_seed", 1);
+  check("farm: a seed above your level is refused",
+    (new FarmSystem(st, () => 8).plant("redberry_seed") as any).reason === "level");
+  check("farm: unknown seeds are refused", (farm.plant("not_a_seed") as any).reason === "unknown_seed");
+
+  // Shrinking the plot count must not bin a growing crop.
+  const st2 = createFreshState(g, DEFAULT_HERO_NAME, 21, 21);
+  let beds2 = 2;
+  const f2 = new FarmSystem(st2, () => beds2);
+  addItem(st2.player.inventory, "potato_seed", 2);
+  f2.plant("potato_seed");
+  beds2 = 1;
+  f2.snapshot();
+  check("farm: a shrunk plot keeps the sown bed", st2.town.farm.plots[0] !== null && st2.town.farm.plots.length === 1);
+
+  check("farm: growth is monotonic in time", (() => {
+    const plot = { seedId: "potato_seed", plantedAt: 1000 };
+    const a = growthAt(plot, 1000);
+    const b = growthAt(plot, 1000 + SEEDS.potato_seed.growMs / 2);
+    const c = growthAt(plot, 1000 + SEEDS.potato_seed.growMs * 5);
+    return a === 0 && b > 0 && b < 1 && c === 1 && isRipe(plot, 1000 + SEEDS.potato_seed.growMs);
+  })());
+}
+
+// [save] Farm beds survive a round-trip, and a future plantedAt must not leave a
+// crop unripe forever.
+{
+  const now = Date.now();
+  const raw = {
+    version: "1.1.0", timestamp: now,
+    player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: {}, inventory: [] },
+    town: { buildings: [], farm: { plots: [{ seedId: "potato_seed", plantedAt: now - 60_000 }, null, { seedId: "cabbage_seed", plantedAt: now + 9_000_000 }] } },
+  };
+  const out = (sanitizeSave(raw) as any).state;
+  const plots = out.town.farm.plots;
+  check("save: farm beds round-trip", plots.length === 3 && plots[1] === null && plots[0].seedId === "potato_seed");
+  check("save: a future plantedAt is clamped to now", plots[2].plantedAt <= Date.now(), `${plots[2].plantedAt - now}ms ahead`);
+  const junk = (sanitizeSave({ version: "1.1.0", timestamp: now, player: { name: "X", position: { x: 1, y: 1 }, stats: { hp: 1, maxHp: 1 }, skills: {}, inventory: [] }, town: { farm: { plots: [{ nonsense: 1 }, "x", 7] } } }) as any).state;
+  check("save: malformed beds become empty", junk.town.farm.plots.every((p: unknown) => p === null));
+}
+
+// [content] Farming has to close loops, not add dead-end items: every crop must
+// feed a recipe, and the Combat Tonic should no longer be shop-only.
+{
+  const inputs = new Set(RECIPES.flatMap((r: any) => r.inputs.map((i: any) => i.itemId)));
+  const produce = SEED_IDS.map((id) => SEEDS[id].produce.itemId);
+  const orphans = produce.filter((id) => !inputs.has(id));
+  check("farming: every crop feeds a recipe", orphans.length === 0, orphans.join(",") || "all");
+  check("farming: the Combat Tonic is craftable",
+    RECIPES.some((r: any) => r.output.itemId === "combat_potion"));
+  check("farming: farming is a real skill", SKILL_IDS.includes("farming" as any));
 }
 
 console.log(results.join("\n"));

@@ -85,6 +85,16 @@ export const ITEMS: Record<string, Item> = {
   small_net: { id: "small_net", name: "Small Fishing Net", type: "TOOL", value: 1, desc: "Catches shrimp in open water.", stack: false, tool: { skill: "fishing", tier: 1, speedPct: 0 } },
   fly_rod: { id: "fly_rod", name: "Fly Rod", type: "TOOL", value: 40, desc: "Lets you reach deeper, faster fish.", stack: false, tool: { skill: "fishing", tier: 2, speedPct: 15 } },
 
+  // ——— Farming (seeds are planted in Farm Plot beds; produce feeds Cooking) ———
+  potato_seed: { id: "potato_seed", name: "Potato Seed", type: "SEED", levelReq: { farming: 1 }, value: 3, desc: "Plant it in a Farm Plot bed. Ready in about 5 minutes.", stack: true },
+  cabbage_seed: { id: "cabbage_seed", name: "Cabbage Seed", type: "SEED", levelReq: { farming: 12 }, value: 12, desc: "A slower crop with a better yield. About 12 minutes.", stack: true },
+  redberry_seed: { id: "redberry_seed", name: "Redberry Seed", type: "SEED", levelReq: { farming: 30 }, value: 40, desc: "Half an hour in the ground, and the berries brew a Combat Tonic.", stack: true },
+  potato: { id: "potato", name: "Potato", type: "FOOD", xp: { cooking: 20 }, value: 6, desc: "Earthy and filling once baked.", stack: true },
+  cabbage: { id: "cabbage", name: "Cabbage", type: "FOOD", xp: { cooking: 45 }, value: 14, desc: "Hearty leaves. Better in a stew than raw.", stack: true },
+  redberry: { id: "redberry", name: "Redberry", type: "FOOD", value: 22, desc: "Tart and faintly medicinal — the base of a Combat Tonic.", stack: true },
+  baked_potato: { id: "baked_potato", name: "Baked Potato", type: "FOOD", value: 18, desc: "Hot from the fire. Heals 9.", stack: true },
+  cabbage_stew: { id: "cabbage_stew", name: "Cabbage Stew", type: "FOOD", value: 44, desc: "Thick and restoring. Heals 20.", stack: true },
+
   // ——— Combat drops / gear ———
   coins: { id: "coins", name: "Coins", type: "MISC", value: 1, desc: "Shiny currency the merchants accept.", stack: true },
   bones: { id: "bones", name: "Bones", type: "MISC", value: 2, desc: "Possibly worth burying.", stack: true },
@@ -136,6 +146,8 @@ export const ITEM_ICONS: Record<string, string> = {
   copper_ore: "🟠", tin_ore: "⚪", iron_ore: "⚙️", coal: "⚫",
   raw_shrimp: "🦐", raw_trout: "🐟",
   bronze_bar: "🟤", iron_bar: "🔩", steel_bar: "⛓️",
+  potato_seed: "🌰", cabbage_seed: "🌱", redberry_seed: "🫘",
+  potato: "🥔", cabbage: "🥬", redberry: "🍒", baked_potato: "🥔", cabbage_stew: "🍲",
   plank: "🪵",
   bronze_axe: "🪓", iron_axe: "🪓", steel_axe: "🪓",
   bronze_pickaxe: "⛏️", iron_pickaxe: "⛏️", steel_pickaxe: "⛏️",
