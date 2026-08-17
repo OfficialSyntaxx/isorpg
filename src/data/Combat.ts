@@ -38,6 +38,44 @@ export const ATTACK_STYLES: Record<AttackStyle, AttackStyleDef> = {
 };
 export const DEFAULT_ATTACK_STYLE: AttackStyle = "accurate";
 
+/**
+ * F.2: Resolve — a limited resource spent on a short combat buff, restored by
+ * resting at a Campfire. Gives food a rival for bag space: a buff costs
+ * nothing to carry but runs out mid-fight if you don't manage it.
+ */
+export type BuffId = "precision" | "power" | "warden";
+
+export interface BuffDef {
+  id: BuffId;
+  name: string;
+  description: string;
+  accuracyBonus: number;
+  maxHitBonus: number;
+  defenseBonus: number;
+  /** Resolve spent per combat tick (600ms) while active. */
+  costPerTick: number;
+}
+
+export const BUFFS: Record<BuffId, BuffDef> = {
+  precision: {
+    id: "precision", name: "Precision", description: "+6 accuracy while active",
+    accuracyBonus: 6, maxHitBonus: 0, defenseBonus: 0, costPerTick: 2,
+  },
+  power: {
+    id: "power", name: "Power", description: "+4 max hit while active",
+    accuracyBonus: 0, maxHitBonus: 4, defenseBonus: 0, costPerTick: 2,
+  },
+  warden: {
+    id: "warden", name: "Warden", description: "+6 defense while active",
+    accuracyBonus: 0, maxHitBonus: 0, defenseBonus: 6, costPerTick: 2,
+  },
+};
+export const RESOLVE_MAX = 100;
+/** Resolve regained per tick while resting within reach of a Campfire. */
+export const RESOLVE_REGEN_PER_TICK = 3;
+/** Tiles from a Campfire's centre that still count as "resting" there. */
+export const RESOLVE_REGEN_RANGE = 2;
+
 export interface WeaponDef {
   id: string;
   name: string;

@@ -9,8 +9,8 @@ import type { ActiveClue } from "../data/Clues";
 import type { ResourceNode } from "../world/ResourceNode";
 import type { BuildingType } from "../data/Buildings";
 import type { EquipSlot } from "../data/Items";
-import type { AttackStyle } from "../data/Combat";
-import { DEFAULT_ATTACK_STYLE } from "../data/Combat";
+import type { AttackStyle, BuffId } from "../data/Combat";
+import { DEFAULT_ATTACK_STYLE, RESOLVE_MAX } from "../data/Combat";
 import { createPosition } from "../components/Position";
 import { createHealth } from "../components/Health";
 import { createSkillComponent } from "../components/Skills";
@@ -67,6 +67,10 @@ export interface GameState {
     journal: string[];
     /** The one clue hunt in progress, or null. Persisted; see ClueSystem. */
     clue: ActiveClue | null;
+    /** F.2: Resolve — spent on a combat buff, restored resting at a Campfire. */
+    resolve: number;
+    /** F.2: the buff currently drawing from resolve, or null. */
+    activeBuff: BuffId | null;
     /** P6.4: meta-progress — kill tallies + unlocked achievements (persisted). */
     meta: { kills: Record<string, number>; achievements: string[]; counters: Record<string, number> };
   };
@@ -132,6 +136,8 @@ export function createFreshState(grid: Grid, name: string = DEFAULT_HERO_NAME, s
       map: { discovered: [], fastTravel: false, explored: [] },
       journal: [],
       clue: null,
+      resolve: RESOLVE_MAX,
+      activeBuff: null,
       meta: { kills: {}, achievements: [], counters: {} },
     },
     world: { grid, nodes: new Map() },

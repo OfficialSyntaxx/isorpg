@@ -3,7 +3,7 @@
 import type { GameState } from "../state/GameState";
 import type { MonsterCombat } from "../world/Monster";
 import { levelFromXp } from "../data/XPTable";
-import { FOODS, type WeaponDef, selectWeapon, type MonsterDef, ATTACK_STYLES } from "../data/Combat";
+import { FOODS, type WeaponDef, selectWeapon, type MonsterDef, ATTACK_STYLES, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, RESOLVE_REGEN_RANGE } from "../data/Combat";
 import type { SkillId } from "../data/Skills";
 import { addItem, removeItem, type InventoryComponent } from "../components/Inventory";
 import { armorBonuses } from "../components/Equipment";
@@ -21,6 +21,8 @@ export interface CombatEvents {
   onBossTelegraph?: (tile: { x: number; y: number } | null) => void;
   /** P4c: a ranged player attack connected — pitch a visible projectile. */
   onPlayerShot?: (toX: number, toY: number) => void;
+  /** F.2: a buff ran out of resolve and switched itself off. */
+  onBuffExhausted?: () => void;
 }
 
 
@@ -108,6 +110,7 @@ export class CombatSystem {
     const health = this.state.player.health;
     health.maxHp = this.maxHp();
     if (health.hp > health.maxHp) health.hp = health.maxHp;
+    this.updateResolve();
     this.aiChase();
     // P4b: bosses enrage below half HP.
     for (const mm of this.monsters.values()) {
@@ -255,15 +258,45 @@ export class CombatSystem {
     m.group.position.set(nx, 0, ny);
   }
 
+  /** F.2: drain resolve while a buff burns, else regen it resting by a Campfire. */
+  private updateResolve() {
+    const p = this.state.player;
+    if (p.activeBuff) {
+      const cost = BUFFS[p.activeBuff].costPerTick;
+      p.resolve = Math.max(0, p.resolve - cost);
+      if (p.resolve <= 0) {
+        p.activeBuff = null;
+        this.cb.onBuffExhausted?.();
+      }
+      return;
+    }
+    if (p.resolve < RESOLVE_MAX && this.nearCampfire()) {
+      p.resolve = Math.min(RESOLVE_MAX, p.resolve + RESOLVE_REGEN_PER_TICK);
+    }
+  }
+
+  private nearCampfire(): boolean {
+    const pos = this.state.player.pos;
+    return this.state.town.buildings.some((b) =>
+      b.type === "CAMPFIRE" && Math.max(Math.abs(b.x - pos.gx), Math.abs(b.y - pos.gy)) <= RESOLVE_REGEN_RANGE);
+  }
+
+  /** F.2: the active buff's contribution to the player's rolls — 0s if none. */
+  private buffBonus() {
+    const id = this.state.player.activeBuff;
+    return id ? BUFFS[id] : { accuracyBonus: 0, maxHitBonus: 0, defenseBonus: 0 };
+  }
+
   private tryPlayerAttack(target: MonsterCombat, weapon: WeaponDef, now: number) {
     const style = ATTACK_STYLES[this.state.settings.attackStyle];
+    const buff = this.buffBonus();
     const b = armorBonuses(this.state);
     const attackLevel = levelFromXp(this.state.player.skills.attack.xp);
-    const roll = weapon.accuracy + attackLevel + b.attack + style.accuracyBonus;
+    const roll = weapon.accuracy + attackLevel + b.attack + style.accuracyBonus + buff.accuracyBonus;
     if (Math.random() > hitChance(roll, target.def.defenseRoll)) return; // splash
 
     const strLevel = levelFromXp(this.state.player.skills.strength.xp);
-    const maxHit = weapon.maxHit + Math.floor(strLevel / 4) + b.strength + style.maxHitBonus;
+    const maxHit = weapon.maxHit + Math.floor(strLevel / 4) + b.strength + style.maxHitBonus + buff.maxHitBonus;
     const damage = 1 + Math.floor(Math.random() * Math.max(1, maxHit));
 
     target.hp = Math.max(0, target.hp - damage);
@@ -281,7 +314,8 @@ export class CombatSystem {
   private tryMonsterAttack(target: MonsterCombat) {
     const health = this.state.player.health;
     const style = ATTACK_STYLES[this.state.settings.attackStyle];
-    const defLevel = levelFromXp(this.state.player.skills.defense.xp) + armorBonuses(this.state).defense + style.defenseBonus;
+    const buff = this.buffBonus();
+    const defLevel = levelFromXp(this.state.player.skills.defense.xp) + armorBonuses(this.state).defense + style.defenseBonus + buff.defenseBonus;
     if (Math.random() > hitChance(target.def.attackRoll, 2 + defLevel)) return; // dodge
 
     const dmgMax = target.def.maxHit + (target.enraged ? 2 : 0); // P4b: enraged hits harder

@@ -279,6 +279,7 @@ function auditSave() {
   a.player.journal = ["caves"];
   a.player.meta = { kills: { giant_rat: 9 }, achievements: ["first_blood"], counters: { clues_done: 3 } };
   a.player.clue = { tier: "hard", seed: 4242, step: 1, sites: [{ x: 4, y: 9 }, { x: 30, y: 12 }, { x: 8, y: 33 }] };
+  a.player.resolve = 63; a.player.activeBuff = "warden";
   a.clock = { minute: 777, day: 5 };
   a.town.buildings = [{ id: "b1", type: "SAWMILL", x: 20, y: 20, level: 3 }];
   a.town.labour = { assignments: { bram: "mining" }, stock: { normal_log: 14 }, acc: { bram: 500 }, worked: { bram: 7200000 } };
@@ -308,6 +309,8 @@ function auditSave() {
   cmp("player.journal", a.player.journal, b.player.journal);
   cmp("player.meta", a.player.meta, b.player.meta);
   cmp("player.clue", a.player.clue, b.player.clue);
+  cmp("player.resolve", a.player.resolve, b.player.resolve);
+  cmp("player.activeBuff", a.player.activeBuff, b.player.activeBuff);
   cmp("clock", a.clock, b.clock);
   cmp("town.buildings", a.town.buildings, b.town.buildings);
   cmp("town.labour", a.town.labour, b.town.labour);
@@ -315,7 +318,7 @@ function auditSave() {
   cmp("town.farm", a.town.farm, b.town.farm);
   cmp("collectionLog", [...a.collectionLog].sort(), [...b.collectionLog].sort());
   cmp("settings", a.settings, b.settings);
-  stats.saveFields = 18; // settings carries 2 sub-fields (autoEatPct, attackStyle) but counts as one group
+  stats.saveFields = 20; // settings carries 2 sub-fields but counts as one group
   fs.rmSync(emit, { recursive: true, force: true });
 }
 

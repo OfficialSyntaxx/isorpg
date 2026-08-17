@@ -23,7 +23,7 @@ import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } fro
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from "../src/components/Skills";
 import { buildClip } from "../src/core/ClipLibrary";
-import { selectWeapon, WEAPONS, ATTACK_STYLES, DEFAULT_ATTACK_STYLE } from "../src/data/Combat";
+import { selectWeapon, WEAPONS, ATTACK_STYLES, DEFAULT_ATTACK_STYLE, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, type BuffId } from "../src/data/Combat";
 import { RESOURCES } from "../src/data/Skills";
 import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
 import { DEFAULT_HERO_NAME, AUTO_EAT_STEPS, DEFAULT_AUTO_EAT_PCT } from "../src/state/GameState";
@@ -472,6 +472,76 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
     after.strength > before.strength && after.attack === before.attack,
     JSON.stringify({ before, after }));
   check("styles: hitpoints still trickles in regardless of style", after.hitpoints > before.hitpoints);
+}
+
+// [combat] F.2 Resolve: a limited pool spent on a short buff, refilled resting
+// by a Campfire. Gives food a rival for bag space instead of a free lunch.
+{
+  check("resolve: exactly one bonus is nonzero per buff", Object.values(BUFFS).every((b: any) =>
+    [b.accuracyBonus, b.maxHitBonus, b.defenseBonus].filter((v) => v !== 0).length === 1 && b.costPerTick > 0));
+
+  const garbage = sanitizeSave({ version: "1.1.0", timestamp: Date.now(), player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: {}, inventory: [], resolve: 9001, activeBuff: "berserk!!" }, settings: {} }) as { ok: boolean; state: any };
+  check("resolve: out-of-range values clamp into 0..max",
+    garbage.ok && garbage.state.player.resolve === RESOLVE_MAX, garbage.state?.player?.resolve);
+  check("resolve: an unrecognised buff is dropped, not kept active",
+    garbage.ok && garbage.state.player.activeBuff === null, garbage.state?.player?.activeBuff);
+
+  const rsState = createFreshState(g, "Hero", 21, 21);
+  const rsCombat = new CombatSystem(rsState);
+  check("resolve: a fresh hero starts full", rsState.player.resolve === RESOLVE_MAX);
+
+  rsState.player.activeBuff = "power";
+  rsCombat.tick(600, Date.now());
+  check("resolve: an active buff drains resolve every tick",
+    rsState.player.resolve === RESOLVE_MAX - BUFFS.power.costPerTick, String(rsState.player.resolve));
+
+  // Drain it out entirely — the buff must switch itself off, not go negative.
+  for (let i = 0; i < 60; i++) rsCombat.tick(600, Date.now());
+  check("resolve: never goes negative", rsState.player.resolve === 0, String(rsState.player.resolve));
+  check("resolve: an exhausted buff turns itself off", rsState.player.activeBuff === null);
+
+  // Regen only happens resting within reach of a Campfire.
+  const noFireState = createFreshState(g, "Hero", 21, 21);
+  const noFireCombat = new CombatSystem(noFireState);
+  noFireState.player.resolve = 10;
+  noFireCombat.tick(600, Date.now());
+  check("resolve: does not regen with no Campfire nearby", noFireState.player.resolve === 10);
+
+  const fireState = createFreshState(g, "Hero", 21, 21);
+  fireState.town.buildings.push({ id: "f1", type: "CAMPFIRE", x: 21, y: 21, level: 1 });
+  const fireCombat = new CombatSystem(fireState);
+  fireState.player.resolve = 10;
+  fireCombat.tick(600, Date.now());
+  check("resolve: regens resting by a Campfire",
+    fireState.player.resolve === 10 + RESOLVE_REGEN_PER_TICK, String(fireState.player.resolve));
+  fireState.player.resolve = RESOLVE_MAX;
+  fireCombat.tick(600, Date.now());
+  check("resolve: regen caps at max", fireState.player.resolve === RESOLVE_MAX);
+
+  // The buff bonus actually reaches the damage roll, same wiring as styles —
+  // fight two identical rats with and without "power" at a pinned near-max roll.
+  const fightOnce = (buff: BuffId | null) => {
+    const st = createFreshState(g, "Hero", 21, 21);
+    const cb = new CombatSystem(st);
+    const mo = spawnMonster("giant_rat", MONSTERS.giant_rat, 22, 21);
+    cb.addMonster(mo);
+    cb.engage(mo);
+    cb.confirmFight();
+    st.player.activeBuff = buff;
+    cb.tick(600, Date.now());
+    return MONSTERS.giant_rat.hp - mo.hp; // damage dealt
+  };
+  const oldRandom2 = Math.random;
+  // First roll (hit chance) must land, so pin it low; the damage roll after it
+  // is pinned high so the +maxHit bonus is visible in the result.
+  let rollN = 0;
+  Math.random = () => (rollN++ % 2 === 0 ? 0 : 0.99);
+  const dmgPlain = fightOnce(null);
+  rollN = 0;
+  const dmgBuffed = fightOnce("power");
+  Math.random = oldRandom2;
+  check("resolve: an active buff's bonus reaches the damage roll",
+    dmgBuffed === dmgPlain + BUFFS.power.maxHitBonus, `${dmgPlain} -> ${dmgBuffed}`);
 }
 
 // [hero] The player character is a named wizard, not "Hero".

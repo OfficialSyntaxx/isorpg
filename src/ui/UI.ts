@@ -8,7 +8,7 @@ import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
 import { play as sfx } from "../core/Sfx";
-import { selectWeapon, ATTACK_STYLES, type AttackStyle } from "../data/Combat";
+import { selectWeapon, ATTACK_STYLES, BUFFS, RESOLVE_MAX, type AttackStyle, type BuffId } from "../data/Combat";
 import { CombatSystem } from "../systems/CombatSystem";
 import type { CraftingSystem } from "../systems/CraftingSystem";
 import type { BuildSystem } from "../systems/BuildSystem";
@@ -858,6 +858,10 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
     const styleBtns = Object.values(ATTACK_STYLES).map((s) =>
       `<button class="tab-btn${s.id === style ? " active" : ""}" data-style="${s.id}" title="${s.description}">${s.name}</button>`
     ).join("");
+    const buffBtns = Object.values(BUFFS).map((buf) =>
+      `<button class="tab-btn${buf.id === p.activeBuff ? " active" : ""}" data-buff="${buf.id}" title="${buf.description}"
+        ${p.resolve <= 0 && buf.id !== p.activeBuff ? "disabled" : ""}>${buf.name}</button>`
+    ).join("");
     this.panelBody.innerHTML = `
       <div class="combat-title">Battle Stats</div>
       <div class="set-row"><span>Attack</span><b>${atk}</b></div>
@@ -869,10 +873,21 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       <div class="combat-title">Fight Stance</div>
       <div class="tab-row">${styleBtns}</div>
       <div class="inv-desc">${ATTACK_STYLES[style].description}</div>
+      <div class="combat-title">Resolve — ${p.resolve}/${RESOLVE_MAX}</div>
+      <div class="grow-bar"><span style="width:${(p.resolve / RESOLVE_MAX) * 100}%"></span></div>
+      <div class="tab-row">${buffBtns}</div>
+      <div class="inv-desc">${p.activeBuff ? BUFFS[p.activeBuff].description + " — draining resolve." : "Pick a buff to spend resolve on it. Rest by a Campfire to refill."}</div>
     `;
     this.panelBody.querySelectorAll<HTMLButtonElement>("[data-style]").forEach((btn) => {
       btn.addEventListener("click", () => {
         this.state.settings.attackStyle = btn.dataset.style as AttackStyle;
+        this.renderCombat();
+      });
+    });
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-buff]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.buff as BuffId;
+        p.activeBuff = p.activeBuff === id ? null : id; // click again to turn off
         this.renderCombat();
       });
     });

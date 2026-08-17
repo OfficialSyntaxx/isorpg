@@ -427,6 +427,9 @@ if (m.def.id === "cave_brute" && dungeon.active) {
         this.shots.push({ mesh, sx: p.gx, sy: 1.0, sz: p.gy, tx: toX, ty: 0.9, tz: toY, born: performance.now(), dur: 0.26 });
       },
       onLevelUp: (skill, lvl) => { ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"); sfx("levelup"); },
+      // F.2: a buff burned through its resolve mid-fight — tell the player why
+      // their bonus just vanished rather than leaving it to the stat panel.
+      onBuffExhausted: () => showToast("🕯️ Resolve spent — buff faded.", "info", 1800),
     });
 
     // Crafting (Cooking / Smithing / Carpentry) events → HUD

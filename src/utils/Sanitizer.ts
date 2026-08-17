@@ -4,7 +4,7 @@
 import { BUILDING_TYPES } from "../data/Buildings";
 import { WORLD_SIZE } from "../world/Grid";
 import { AUTO_EAT_STEPS, DAY_START_MINUTE, DEFAULT_AUTO_EAT_PCT, DEFAULT_HERO_NAME, SAVE_VERSION } from "../state/GameState";
-import { ATTACK_STYLES, DEFAULT_ATTACK_STYLE, type AttackStyle } from "../data/Combat";
+import { ATTACK_STYLES, BUFFS, DEFAULT_ATTACK_STYLE, RESOLVE_MAX, type AttackStyle, type BuffId } from "../data/Combat";
 
 export interface Sanitized<T> {
   ok: boolean;
@@ -64,6 +64,14 @@ function nearestAutoEatStep(v: unknown): number {
 /** F.1: an unrecognised or missing stance falls back to Accurate, never crashes. */
 function coerceAttackStyle(v: unknown): AttackStyle {
   return typeof v === "string" && v in ATTACK_STYLES ? (v as AttackStyle) : DEFAULT_ATTACK_STYLE;
+}
+
+/** F.2: resolve is clamped into range; an unrecognised buff id is dropped, not kept active. */
+function clampResolve(v: unknown): number {
+  return isFiniteNumber(v) ? Math.max(0, Math.min(RESOLVE_MAX, Math.round(v))) : RESOLVE_MAX;
+}
+function coerceBuff(v: unknown): BuffId | null {
+  return typeof v === "string" && v in BUFFS ? (v as BuffId) : null;
 }
 
 export function needsMasteryRescale(version: string): boolean {
@@ -197,7 +205,7 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     state: {
       version: SAVE_VERSION,
       timestamp,
-      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe, clue },
+      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe, clue, resolve: clampResolve(p.resolve), activeBuff: coerceBuff(p.activeBuff) },
       town: { buildings, labour: labourSafe, market: marketSafe, farm: { plots: farmPlots } },
       collectionLog: { unlocked: collectionLog },
       settings: {

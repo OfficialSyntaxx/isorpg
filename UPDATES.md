@@ -6,6 +6,41 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase F.2 — Resolve, a buff pool
+
+Food was the only lever in a fight — no way to spend a resource on a short,
+active edge. Added **Resolve**, a 0–100 pool (starts full) spent on one of
+three toggleable buffs, picked in the Combat panel next to the fight stance:
+
+- **Precision** — +6 accuracy
+- **Power** — +4 max hit
+- **Warden** — +6 defense
+
+Each costs 2 Resolve per combat tick (600ms) while active — roughly 30s of
+uptime from a full pool — and switches itself off (with a toast) rather than
+going negative. Resolve only refills resting within 2 tiles of a Campfire,
+at 3/tick, so it's a resource you manage between fights, not a free stat.
+Stacks additively with attack styles: a Defensive/Warden pairing is the
+tankiest combination in the game right now, an Accurate/Precision pull is
+the most reliable, by design.
+
+Wired the same way as F.1's styles — a `buffBonus()` helper feeding the same
+accuracy/max-hit/defense rolls attack styles already touch, so there's one
+place, not two, doing the arithmetic. Persisted as `player.resolve` /
+`player.activeBuff`, sanitized (out-of-range resolve clamps into 0..100, an
+unrecognised buff id is dropped rather than kept "active" with no data behind
+it). 9 new QC checks: buff-shape sanity, sanitizer clamping, drain-per-tick,
+never-goes-negative, self-switch-off at zero, no-regen-without-a-campfire,
+regen-with-one, regen-caps-at-max, and a two-fight comparison (same pinned
+RNG, with and without the buff) proving the bonus reaches the actual damage
+roll rather than just existing in the data table.
+Updated `audit.cjs`'s save round-trip fixture again, same as F.1 — it caught
+nothing new this time, which is the point of running it every increment
+rather than trusting the last clean result.
+
+Gates: 212/212 QC, 5/5 smoke, visual baseline 0.00% drift, `npm run audit`
+0 bugs.
+
 ## 2026-08 · Phase F.1 — Attack styles
 
 The combat loop trained attack, strength and hitpoints on every single swing,
