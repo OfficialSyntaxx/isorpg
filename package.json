@@ -7,12 +7,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node scripts/verify-rig.cjs && node .qc-emit/tests/qc.test.js",
+    "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node scripts/verify-rig.cjs && node .qc-emit/tests/qc.test.js && node scripts/gen-wiki.cjs",
     "preview": "vite preview --port 4173",
     "test:smoke": "npm run build && node scripts/smoke.cjs",
     "models:manifest": "node scripts/gen-model-manifest.cjs",
     "prebuild": "node scripts/gen-model-manifest.cjs",
-    "predev": "node scripts/gen-model-manifest.cjs"
+    "predev": "node scripts/gen-model-manifest.cjs",
+    "wiki": "node scripts/gen-wiki.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

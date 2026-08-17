@@ -33,39 +33,11 @@ export interface LabourSnapshot {
 const WOOD_MS = 20_000; // one log per 20s per lumberjack
 const MINE_MS = 30_000; // one ore per 30s per miner
 
+export { VETERAN_TIERS, VILLAGER_SPECS, veteranTier, hoursLabel } from "../data/Npcs";
+export type { VillagerSpec } from "../data/Npcs";
+import { VILLAGER_SPECS, veteranTier, hoursLabel } from "../data/Npcs";
+
 export const LABOUR_INTERVALS: Record<LabourJob, number> = { woodcutting: WOOD_MS, mining: MINE_MS };
-
-/** P7.6: veteran tiers — cumulative worked hours raise the yield multiplier. */
-export const VETERAN_TIERS: [minMs: number, label: string, mult: number][] = [
-  [0, "New hand", 1],
-  [2 * 3_600_000, "Veteran", 2],
-  [8 * 3_600_000, "Reliable", 3],
-  [20 * 3_600_000, "Master", 4],
-];
-
-export function veteranTier(workedMs: number): { label: string; mult: number } {
-  let cur = { label: VETERAN_TIERS[0][1], mult: VETERAN_TIERS[0][2] };
-  for (const [min, label, mult] of VETERAN_TIERS) if (workedMs >= min) cur = { label, mult };
-  return cur;
-}
-
-export function hoursLabel(ms: number): string {
-  return `${Math.floor(ms / 3_600_000)}h`;
-}
-
-/** P7.7: lore specializations — each villager brings a small unique perk. */
-export interface VillagerSpec {
-  role: string;
-  perkName: string;
-  icon: string;
-  item?: string;   // per-cycle extra into the village stock
-  coins?: number;  // per-cycle coin tribute
-}
-export const VILLAGER_SPECS: Record<string, VillagerSpec> = {
-  bram: { role: "Fisher", perkName: "Fresh Catch", icon: "🎣", item: "raw_shrimp" },
-  wren: { role: "Woodcutter", perkName: "Fine Timber", icon: "🪓", item: "oak_log" },
-  tobias: { role: "Elder", perkName: "Elder's Due", icon: "🏛️", coins: 1 },
-};
 
 /** Deterministic per-villager output — logs, or copper/tin ore. */
 export function labourItemFor(id: string, job: LabourJob): string {

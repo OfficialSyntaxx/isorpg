@@ -7,7 +7,10 @@ import type { DungeonSystem } from "./DungeonSystem";
 import { addItem, type InventoryComponent } from "../components/Inventory";
 import { play as sfx } from "../core/Sfx";
 
-export type QuestStage = "INTRO" | "FIND_KEY" | "OPEN_DOOR" | "DEFEAT_BRUTE" | "DONE";
+export type { QuestStage } from "../data/Quests";
+import type { QuestStage, QuestDef } from "../data/Quests";
+import { QUESTS, questById, rewardText } from "../data/Quests";
+import { ITEMS } from "../data/Items";
 
 type ToastFn = (msg: string, kind?: "info" | "success" | "error", ms?: number) => void;
 
@@ -198,10 +201,8 @@ this.stage = "DONE";
        this.syncHint();
        sfx("quest_complete");
     if (!this.journal.includes("caves")) this.journal.push("caves");
-    addItem(inv, "coins", 50 + Math.floor(Math.random() * 51));
-    addItem(inv, "iron_ore", 4 + Math.floor(Math.random() * 5));
-    addItem(inv, "cooked_trout", 2);
-    this.toast("🏆 Quest complete — The Caves of the Deep! Reward: coins, iron ore, cooked trout.", "success", 5600);
+    grantRewards(inv, "caves");
+    this.toast(`🏆 Quest complete — ${questById("caves")!.title}! Reward: ${rewardsFor("caves")}.`, "success", 5600);
   }
 
   /** P6.3: second quest — the Forest Ogre falls, the surveyor's errand ends. */
@@ -209,44 +210,43 @@ this.stage = "DONE";
     if (this.ogreDone || this.journal.includes("ogre")) return;
     this.ogreDone = true;
     if (!this.journal.includes("ogre")) this.journal.push("ogre");
-    addItem(inv, "coins", 250);
-    addItem(inv, "steel_bar", 1);
-    addItem(inv, "cooked_trout", 3);
-    this.toast("🏆 Quest complete — The Surveyor's Errand! Reward: 250 coins, a steel bar, cooked trout.", "success", 5600);
+    grantRewards(inv, "ogre");
+    this.toast(`🏆 Quest complete — ${questById("ogre")!.title}! Reward: ${rewardsFor("ogre")}.`, "success", 5600);
     sfx("quest_complete");
   }
 
   /** P6.3: read-only journal rows for the quest panel. */
   journalSnapshot(): QuestJournalEntry[] {
-    const cavesDone = this.stage === "DONE" || this.journal.includes("caves");
-    const ogreDone = this.ogreDone || this.journal.includes("ogre");
-    return [
-      {
-        id: "caves",
-        title: "The Caves of the Deep",
-        givenBy: "Eldric",
-        objective: this.stageObjective(),
-        reward: "Coins, iron ore, cooked trout",
-        done: cavesDone,
-      },
-      {
-        id: "ogre",
-        title: "The Surveyor's Errand",
-        givenBy: "Eldric",
-        objective: ogreDone ? "The Forest Ogre is slain — the deep woods can breathe again." : "Slay the Forest Ogre that prowls the deep woods.",
-        reward: "250 coins, a steel bar, cooked trout",
-        done: ogreDone,
-      },
-    ];
+    const done: Record<string, boolean> = {
+      caves: this.stage === "DONE" || this.journal.includes("caves"),
+      ogre: this.ogreDone || this.journal.includes("ogre"),
+    };
+    return QUESTS.map((q) => ({
+      id: q.id,
+      title: q.title,
+      givenBy: q.givenBy.split(" ")[0],
+      objective: objectiveFor(q, done[q.id] ?? false, this.stage),
+      reward: rewardsFor(q.id),
+      done: done[q.id] ?? false,
+    }));
   }
+}
 
-  private stageObjective(): string {
-    switch (this.stage) {
-      case "FIND_KEY": return "Find the Iron Key in a side chamber of the Caves.";
-      case "OPEN_DOOR": return "Use the Iron Key on the door locked shut.";
-      case "DEFEAT_BRUTE": return "Slay the Cave Brute that guards the exit portal.";
-      case "DONE": return "The treasure of the Caves is claimed.";
-      default: return "Talk to Eldric by the deep-wilds door to begin.";
-    }
+/** Objective line for a quest given its completion state and the caves stage. */
+function objectiveFor(q: QuestDef, done: boolean, stage: QuestStage): string {
+  if (done) return q.doneText;
+  if (q.objective) return q.objective;
+  return q.objectives?.[stage] ?? q.objectives?.INTRO ?? q.doneText;
+}
+
+/** Roll and pay a quest's rewards into the bag. */
+function grantRewards(inv: InventoryComponent, id: string): void {
+  for (const r of questById(id)?.rewards ?? []) {
+    addItem(inv, r.itemId, r.min + Math.floor(Math.random() * (r.max - r.min + 1)));
   }
+}
+
+function rewardsFor(id: string): string {
+  const q = questById(id);
+  return q ? rewardText(q, (i) => ITEMS[i]?.name ?? i) : "";
 }
