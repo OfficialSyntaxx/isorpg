@@ -147,6 +147,45 @@ for (const [base, members] of Object.entries(groups)) {
   }
 }
 
+// Shared clips (public/models/clips/*.clip.json). These are rotation-only
+// quaternion tables meant to drive ANY rigged actor, so the checks that matter
+// are: the table is the size the header claims, every quaternion is a unit
+// quaternion (a truncated or misaligned decode shows up here immediately), and
+// every bone the clip drives exists on every rigged skeleton we ship.
+{
+  const CLIPS = path.join(DIR, "clips");
+  const clipFiles = fs.existsSync(CLIPS)
+    ? fs.readdirSync(CLIPS).filter((f) => f.endsWith(".clip.json")).sort()
+    : [];
+  const riggedBones = Object.entries(info)
+    .filter(([, m]) => m.joints.length)
+    .map(([name, m]) => [name, new Set(m.joints)]);
+
+  for (const f of clipFiles) {
+    const name = f.replace(/\.clip\.json$/, "");
+    const c = JSON.parse(fs.readFileSync(path.join(CLIPS, f), "utf8"));
+    const buf = Buffer.from(c.quat, "base64");
+    const expect = c.bones.length * c.frames * 4 * 2;
+    add(`clip ${name}: table matches header`, buf.length === expect, `${buf.length}/${expect}`);
+    if (buf.length !== expect) continue;
+
+    const q = new Int16Array(buf.buffer, buf.byteOffset, buf.length / 2);
+    let worst = 0;
+    for (let i = 0; i < q.length; i += 4) {
+      let sum = 0;
+      for (let k = 0; k < 4; k++) { const v = q[i + k] / 32767; sum += v * v; }
+      worst = Math.max(worst, Math.abs(Math.sqrt(sum) - 1));
+    }
+    add(`clip ${name}: quaternions are unit length`, worst < 0.01, `max err ${worst.toFixed(4)}`);
+
+    for (const [actor, bones] of riggedBones) {
+      const missing = c.bones.filter((b) => !bones.has(b));
+      add(`clip ${name}: drives ${actor}`, missing.length === 0,
+        missing.length ? `${missing.length} unknown: ${missing.slice(0, 3).join(",")}` : `${c.bones.length} bones`);
+    }
+  }
+}
+
 console.log(rows.join("\n"));
 const fails = rows.filter((r) => r.startsWith("FAIL")).length;
 console.log(`\n${rows.length - fails}/${rows.length} rig checks passed`);

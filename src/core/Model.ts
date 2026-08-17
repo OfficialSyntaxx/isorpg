@@ -14,7 +14,8 @@ import * as THREE from "three";
 import { ACTOR_HEIGHT } from "./Scale";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { hasModel } from "./ModelManifest";
+import { hasModel, hasClip } from "./ModelManifest";
+import { loadClip } from "./ClipLibrary";
 
 interface Template {
   scene: THREE.Group;
@@ -36,6 +37,12 @@ interface ActorDef {
   /** state → GLB whose first clip drives that state. */
   states: Partial<Record<ActorState, string>>;
   /**
+   * States driven by a shared clip from public/models/clips (see ClipLibrary).
+   * These are rotation-only by construction, so one clip animates every rig.
+   * Applied after `states`, so a shared clip supersedes a baked one.
+   */
+  shared?: Partial<Record<ActorState, string>>;
+  /**
    * States whose clip comes from a DIFFERENT character's rig. Those are loaded
    * rotation-only (see retargetable) so the donor's proportions don't transfer.
    */
@@ -51,21 +58,26 @@ interface ActorDef {
  */
 export const ACTOR_CLIPS: Record<string, ActorDef> = {
   hero: {
-    // hero_idle/hero_walk are the rigged clips; hero.glb is the static original.
-    base: ["hero_idle", "hero"],
-    states: { idle: "hero_idle", walk: "hero_walk" },
+    // hero_rigged is the skinned mesh; hero.glb is the static original, which
+    // has no skeleton and so cannot animate at all.
+    base: ["hero_rigged", "hero"],
+    states: {},
+    shared: { idle: "hero_idle", walk: "hero_walk" },
   },
   villager: {
     base: "villager",
     states: { idle: "villager" },
+    shared: { walk: "hero_walk" },
   },
   forest_ogre: {
     base: "forest_ogre",
     states: { walk: "forest_ogre" },
+    shared: { idle: "hero_idle" },
   },
   cave_brute: {
     base: "cave_brute",
     states: { walk: "cave_brute" },
+    shared: { idle: "hero_idle" },
   },
 };
 
@@ -173,7 +185,30 @@ export async function spawnActor(name: string): Promise<AnimatedActor | null> {
           actions.set(state, mixer.clipAction(borrowed ? retargetable(raw) : raw));
         } catch { /* that state simply stays unavailable */ }
       }));
-    } else if (base.clips.length) {
+    }
+
+    // Shared clips last, so they win over a baked clip for the same state.
+    // A clip whose bones aren't on this rig is skipped rather than bound: the
+    // mixer would silently drive nothing and the state would claim to exist.
+    // hero.glb, for instance, has no skeleton at all until its rigged mesh lands.
+    const shared = def?.shared ?? {};
+    const sharedStates = Object.keys(shared) as ActorState[];
+    if (sharedStates.length) {
+      const bones = new Set<string>();
+      root.traverse((o) => { if ((o as THREE.Bone).isBone) bones.add(o.name); });
+      if (bones.size) {
+        await Promise.all(sharedStates.map(async (state) => {
+          const file = shared[state];
+          if (!file || !hasClip(file)) return;
+          const clip = await loadClip(file);
+          if (!clip) return;
+          if (!clip.tracks.every((t) => bones.has(t.name.split(".")[0]))) return;
+          actions.set(state, mixer.clipAction(clip));
+        }));
+      }
+    }
+
+    if (!actions.size && base.clips.length) {
       // Undeclared actor: treat its single baked clip as idle.
       actions.set("idle", mixer.clipAction(base.clips[0]));
     }
