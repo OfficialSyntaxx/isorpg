@@ -32,7 +32,7 @@ function compile() {
       rootDir: path.join(ROOT, "src"), outDir: ".", noEmit: false,
       strict: false, declaration: false,
     },
-    include: [path.join(ROOT, "src/data/**/*.ts")],
+    include: [path.join(ROOT, "src/data/**/*.ts"), path.join(ROOT, "src/components/Skills.ts")],
   }, null, 2));
   execFileSync("npx", ["tsc", "-p", tsconfig], { cwd: ROOT, stdio: "pipe" });
   fs.writeFileSync(path.join(EMIT, "package.json"), '{"type":"commonjs"}');
@@ -49,6 +49,7 @@ const { ACHIEVEMENTS } = D("Achievements.js");
 const { XP_TABLE } = D("XPTable.js");
 const { VILLAGERS, CRITTERS, VILLAGER_SPECS, VETERAN_TIERS } = D("Npcs.js");
 const { QUESTS, rewardText } = D("Quests.js");
+const { masteryXpForLevel, MASTERY_MAX } = require(path.join(EMIT, "components", "Skills.js"));
 
 const L = [];
 const w = (s = "") => L.push(s);
@@ -247,6 +248,17 @@ for (const skill of ["cooking", "smithing", "carpentry"]) {
   }
   w("");
 }
+w("### Mastery");
+w("");
+w("Every resource and every recipe tracks its **own** mastery, earning 1 mastery XP");
+w("per unit produced. Mastery raises action speed (up to 33% faster at 99), the");
+w(`double-yield chance when gathering (up to 20%) and the material-preserve chance`);
+w("when crafting (up to 15%). It also reduces cooking burn.");
+w("");
+w("| Mastery level | Total XP (= actions) |");
+w("|---:|---:|");
+for (const l of [10, 25, 50, 75, MASTERY_MAX]) w(`| ${l} | ${masteryXpForLevel(l).toLocaleString()} |`);
+w("");
 w("Cooking can **burn** at low levels — the chance falls as your level rises above the");
 w("recipe's requirement and as mastery grows. A built Campfire makes cooking 25% faster.");
 w("");

@@ -2,7 +2,7 @@
 // Sanitizes an arbitrary parsed payload into a valid SaveState, returning
 // { ok, state, reason }. Never throws on malformed input.
 import { BUILDING_TYPES } from "../data/Buildings";
-import { DAY_START_MINUTE } from "../state/GameState";
+import { DAY_START_MINUTE, DEFAULT_HERO_NAME, SAVE_VERSION } from "../state/GameState";
 
 export interface Sanitized<T> {
   ok: boolean;
@@ -35,6 +35,21 @@ function strMap(v: unknown): Record<string, string> {
   return out;
 }
 
+/** Compare dotted version strings; true when `a` is older than `b`. */
+function olderThan(a: string, b: string): boolean {
+  const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = b.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d !== 0) return d < 0;
+  }
+  return false;
+}
+
+export function needsMasteryRescale(version: string): boolean {
+  return olderThan(version, "1.1.0");
+}
+
 /** Validate + coerce save JSON into a safe shape. Fields we don't recognize are dropped. */
 export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reason?: string } {
   if (raw === null || typeof raw !== "object") return { ok: false, state: null, reason: "Not an object" };
@@ -54,13 +69,21 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
   const hp = clampNonNeg(stats.hp, maxHp);
 
   // skills -> Record<skillId, {xp, mastery}>
+  //
+  // Pre-1.1.0 saves stored mastery XP at 4 per action on the OSRS skill curve;
+  // 1.1.0 stores 1 per action on mastery's own curve. Both scales are
+  // "actions performed x a constant", so dividing by 4 recovers the actions the
+  // player really did — read on the new curve those actions simply count for
+  // much more, which is the point of the retune. Reading the old number as-is
+  // would hand out near-max mastery instantly.
+  const masteryDivisor = needsMasteryRescale(version) ? 4 : 1;
   const skills: Record<string, { xp: number; mastery: Record<string, number> }> = {};
   const rawSkills = (p.skills ?? {}) as Record<string, unknown>;
   for (const [id, v] of Object.entries(rawSkills)) {
     const sv = (v ?? {}) as Record<string, unknown>;
     const mastery: Record<string, number> = {};
     const rawM = (sv.mastery ?? {}) as Record<string, unknown>;
-    for (const [k, mv] of Object.entries(rawM)) if (isFiniteNumber(mv)) mastery[k] = mv;
+    for (const [k, mv] of Object.entries(rawM)) if (isFiniteNumber(mv)) mastery[k] = Math.floor(mv / masteryDivisor);
     skills[id] = { xp: clampNonNeg(sv.xp, 0), mastery };
   }
 
@@ -123,9 +146,9 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
   return {
     ok: true,
     state: {
-      version,
+      version: SAVE_VERSION,
       timestamp,
-      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : "Hero", position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe },
+      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe },
       town: { buildings, labour: labourSafe, market: marketSafe },
       collectionLog: { unlocked: collectionLog },
       map: mapSafe,

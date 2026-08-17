@@ -378,6 +378,21 @@ Aggro range 6 tiles · respawns after 30s
 | 3× 🪵 Plank | 30 | 1× 🌿 Willow Logs | 80 | 2.4s | Sawmill |
 | 🎣 Fly Rod | 10 | 2× 🪵 Plank + 1× 🟤 Bronze Bar | 55 | 2.4s | Sawmill |
 
+### Mastery
+
+Every resource and every recipe tracks its **own** mastery, earning 1 mastery XP
+per unit produced. Mastery raises action speed (up to 33% faster at 99), the
+double-yield chance when gathering (up to 20%) and the material-preserve chance
+when crafting (up to 15%). It also reduces cooking burn.
+
+| Mastery level | Total XP (= actions) |
+|---:|---:|
+| 10 | 45 |
+| 25 | 300 |
+| 50 | 1,225 |
+| 75 | 2,775 |
+| 99 | 4,851 |
+
 Cooking can **burn** at low levels — the chance falls as your level rises above the
 recipe's requirement and as mastery grows. A built Campfire makes cooking 25% faster.
 

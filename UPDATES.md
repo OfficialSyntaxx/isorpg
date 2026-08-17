@@ -6,6 +6,44 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase C complete — mastery, weapons, and a name for the hero
+
+- **Mastery actually does something now.** It reused the *skill* XP curve, which
+  is built to span a whole skill's lifetime — but mastery is tracked **per item**,
+  one of eleven resources. Mastery 99 on normal logs worked out to **8,146 hours**
+  of chopping, and mastery 50 to 63; since the speed bonus scales with level/99,
+  mastery was inert in practice. It now has its own triangular curve at 1 XP per
+  unit produced, putting mastery 99 at **9.7 h (shrimp) to 25.9 h (coal)** — a real
+  long-term goal, and cheap resources master faster, which is the right incentive
+  since they are worth less.
+- **Save migration `1.1.0`.** Old saves stored mastery at 4 XP/action on the old
+  curve; read unmigrated on the new one they would have granted near-max mastery
+  instantly. Both scales are "actions × a constant", so the sanitizer divides
+  stored mastery by 4 — players keep the actions they really performed, and those
+  actions simply count for much more now. `SAVE_VERSION` is bumped and the
+  sanitizer stamps it, so this can never silently reinterpret a stored value again.
+- **Gathering speed reads the right mastery.** `actionTicks` summed *every* mastery
+  in a skill, so chopping normal logs sped up willow you had never touched, and the
+  summed total inflated the level far past any single resource's real mastery. It
+  now reads the resource being gathered, mirroring `CraftingSystem`, which had it
+  right all along.
+- **One weapon selector.** There were three — `CombatSystem.firstWeaponItem` (first
+  weapon in *inventory* order), `UI.equippedWeapon` (first in *declaration* order),
+  and `getWeapon` — and **none** checked `requiredAttack`. So a level-1 hero swung
+  an iron sword needing Attack 10, and the stats panel could name a different
+  weapon than the one combat was using. `selectWeapon(inv, equipped, attackLevel)`
+  in `data/Combat.ts` is now the single answer: the equipped slot wins when still
+  carried and usable, else the best usable carried weapon by damage-per-tick plus
+  accuracy, else fists.
+- **The hero is Corvin.** The player character is a young mystic apprentice, named
+  to sit alongside Bram, Wren, Tobias and Eldric — and after the corvid its
+  plum-black robe echoes. `DEFAULT_HERO_NAME` replaces the hardcoded `"Hero"` in
+  three places.
+- The wiki gained a **Mastery** section, generated from the curve itself.
+- 19 new QC checks (**98/98**) · 25/25 rig · 47/47 UI audit · 5/5 smoke.
+
+---
+
 ## 2026-08 · The player is a wizard — rigged hero mesh + shared clips
 
 - **The hero animates.** `hero.glb` had never had a skeleton, so the player

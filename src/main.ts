@@ -3,7 +3,7 @@ import "./style.css";
 import * as THREE from "three";
 import { Engine } from "./core/Engine";
 import { Grid, WORLD_SIZE } from "./world/Grid";
-import { createFreshState } from "./state/GameState";
+import { DEFAULT_HERO_NAME, createFreshState } from "./state/GameState";
 import { makeHero } from "./generators/Character";
 import { play as sfx } from "./core/Sfx";
 import { setMusicZone } from "./core/Music";
@@ -115,7 +115,7 @@ class Game {
     this.bossRing = makeBossRing();
     this.engine.scene.add(this.bossRing);
 
-    this.state = createFreshState(this.grid, "Hero", Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
+    this.state = createFreshState(this.grid, DEFAULT_HERO_NAME, Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
 
     // The UI is constructed BEFORE the systems that attach panels to it. It
     // needs only `state` plus callbacks that are invoked lazily on user action,

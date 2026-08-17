@@ -2,8 +2,8 @@
 // item mastery, and weighted drop rolls (GDD §5.A/D).
 import type { GameState } from "../state/GameState";
 import type { ResourceNode } from "../world/ResourceNode";
-import type { SkillId } from "../data/Skills";
-import { addItem, isBulk, storedAmount, type InventoryComponent } from "../components/Inventory";
+import type { ResourceDef, SkillId } from "../data/Skills";
+import { addItem, isBulk, storedAmount } from "../components/Inventory";
 import { addMasteryXp, masteryLevel } from "../components/Skills";
 import { levelFromXp } from "../data/XPTable";
 import { TICK_MS } from "../core/Engine";
@@ -70,7 +70,7 @@ export class SkillSystem {
     this.levelShortfall = false;
     this.active = node;
     this.tickAcc = 0;
-    this.ticksNeeded = this.actionTicks(def.ticksPerAction, def.skill);
+    this.ticksNeeded = this.actionTicks(def);
     this.cb.onActionStart?.(node);
     return true;
   }
@@ -79,12 +79,20 @@ export class SkillSystem {
     return this.active ? this.active.def.levelReq : 1;
   }
 
-  /** Action duration (ticks) — faster with mastery AND a better tool. */
-  private actionTicks(base: number, skill: SkillId): number {
-    const m = stateMasteryLevel(this.state, skill);
+  /**
+   * Action duration (ticks) — faster with mastery AND a better tool.
+   *
+   * Mastery is looked up for THIS resource, mirroring CraftingSystem. It used to
+   * sum every mastery in the skill, so chopping normal logs sped up willow you
+   * had never touched, and the summed total inflated the level well past any one
+   * resource's real mastery.
+   */
+  private actionTicks(def: ResourceDef): number {
+    const base = def.ticksPerAction;
+    const m = masteryLevel(this.state.player.skills[def.skill].mastery[def.masteryKey] || 0);
     const frac = Math.min(1, m / 99);
     const floor = Math.max(4, Math.ceil(base * 0.6));
-    const tool = getBestTool(this.state.player.inventory, skill);
+    const tool = getBestTool(this.state.player.inventory, def.skill);
     const speed = tool?.speedPct ?? 0;
     return Math.max(floor, Math.round(base * (1 - frac * 0.33) * (1 - speed / 100)));
   }
@@ -131,7 +139,7 @@ export class SkillSystem {
     // P2.3: early-game momentum — up to +50% XP below level 16, tapering to 0
     // by level 16 so the 1→15 band feels snappy while the OSRS curve holds.
     const xpGained = Math.round(baseXp * (doubled ? 2 : 1) * this.earlyBonus(skill));
-    const masteryGained = def.yield * 4;
+    const masteryGained = def.yield;
     sk[skill].xp += xpGained;
     addMasteryXp(sk, skill, def.masteryKey, masteryGained);
 
@@ -152,11 +160,6 @@ export class SkillSystem {
   }
 }
 
-function stateMasteryLevel(state: GameState, skill: SkillId): number {
-  const mastery = state.player.skills[skill].mastery;
-  const total = Object.values(mastery).reduce((a, b) => a + b, 0) || 0;
-  return masteryLevel(total);
-}
 
 function rollDrop(def: { drops: { itemId: string; weight: number; min: number; max: number }[] }): string | null {
   if (!def.drops.length) return null;

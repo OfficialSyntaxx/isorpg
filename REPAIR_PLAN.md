@@ -49,11 +49,20 @@ default zoom 1.75. 68/68 QC + 5/5 smoke.
 
 **Done when:** every actor has ≥2 clips and visibly changes state; one GLB code path.
 
-## Phase C — Correctness debt (~1–2 sessions)
-1. Enforce `storageCap` inside `addItem()` (offline currently grants 3× cap — verified).
-2. Per-item mastery for the speed bonus (mirror `CraftingSystem`).
-3. Retune mastery: 4 xp/action puts mastery 20 at ~2.8h of chopping.
-4. One weapon selector honouring `requiredAttack`; UI calls it instead of reimplementing.
+## Phase C — Correctness debt ✅ SHIPPED
+1. Enforce `storageCap` inside `addItem()` (offline currently grants 3× cap — verified). ✅
+2. Per-item mastery for the speed bonus (mirror `CraftingSystem`). ✅
+3. Retune mastery: 4 xp/action puts mastery 20 at ~2.8h of chopping. ✅
+4. One weapon selector honouring `requiredAttack`; UI calls it instead of reimplementing. ✅
+
+Shipped: the cap became an invariant inside `addItem`, scoped to bulk resources so
+currency/keys/quest items/gear are never blocked. Gathering speed reads mastery for
+the resource being gathered, not the sum of every mastery in the skill. Mastery got
+its own triangular curve at 1 XP/unit — level 99 is now 9.7–25.9 h per resource
+instead of 8,146 h — with a save migration (`1.1.0`) that rescales stored XP by 4 so
+existing players keep the actions they actually performed. `selectWeapon()` in
+`data/Combat.ts` is the single answer to "what is the hero swinging?", enforcing
+`requiredAttack`; combat and the stats panel both call it. 98/98 QC.
 
 ## Phase D — Release confidence (~1 session, run alongside)
 1. CI: build + test + smoke on every push, with a browser driver so smoke doesn't skip.

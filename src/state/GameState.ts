@@ -21,7 +21,22 @@ import { createInventory } from "../components/Inventory";
  */
 export const DAY_START_MINUTE = 10 * 60;
 
-export const SAVE_VERSION = "1.0.0";
+/**
+ * Bump when a stored field changes meaning, not merely when fields are added —
+ * the sanitizer migrates by version, and a value silently reinterpreted on a new
+ * scale is worse than a missing one.
+ *
+ * 1.1.0 — mastery XP moved off the OSRS skill curve onto its own triangular
+ *         curve at 1 XP per unit (was 4).
+ */
+/**
+ * The player character: a young mystic apprentice. Named to sit alongside the
+ * settlement's cast — Bram, Wren, Tobias, Eldric — and after the corvid its
+ * plum-black robe echoes.
+ */
+export const DEFAULT_HERO_NAME = "Corvin";
+
+export const SAVE_VERSION = "1.1.0";
 
 export interface TownBuilding {
   id: string;
@@ -73,7 +88,7 @@ export interface GameState {
 }
 
 /** Build a fresh state with a given grid (world wiring added by the world system). */
-export function createFreshState(grid: Grid, name: string = "Hero", startX = 10, startY = 10): GameState {
+export function createFreshState(grid: Grid, name: string = DEFAULT_HERO_NAME, startX = 10, startY = 10): GameState {
   return {
     version: SAVE_VERSION,
     timestamp: Date.now(),

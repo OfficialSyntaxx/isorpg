@@ -19,6 +19,11 @@ import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
 import { spawnMonster } from "../src/world/Monster";
 import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } from "../src/components/Inventory";
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
+import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from "../src/components/Skills";
+import { selectWeapon, WEAPONS } from "../src/data/Combat";
+import { RESOURCES } from "../src/data/Skills";
+import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
+import { DEFAULT_HERO_NAME } from "../src/state/GameState";
 
 const results: string[] = [];
 const check = (n: string, ok: boolean, x = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${n}${x ? "  [" + x + "]" : ""}`);
@@ -361,6 +366,71 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
     return addItem(i2, "coal", 20) === 5;
   })());
 }
+
+// [mastery] Mastery used to reuse the skill XP curve, which is built to span a
+// whole skill's lifetime — but mastery is tracked per ITEM, so mastery 99 on one
+// resource came out at 8,146 hours and the speed bonus (level/99) never moved.
+// The curve is now its own, and these checks pin the shape rather than the code.
+{
+  check("mastery: level 1 at zero xp", masteryLevel(0) === 1 && masteryXpForLevel(1) === 0);
+  check("mastery: the curve inverts exactly", [2, 10, 20, 50, 99].every(
+    (l) => masteryLevel(masteryXpForLevel(l)) === l && masteryLevel(masteryXpForLevel(l) - 1) === l - 1));
+  check("mastery: caps at 99", masteryLevel(masteryXpForLevel(99) * 100) === MASTERY_MAX);
+  check("mastery: progress runs 0..1 and pins at the cap",
+    masteryProgress(masteryXpForLevel(20)) === 0 && masteryProgress(masteryXpForLevel(99)) === 1);
+
+  // 1 mastery xp per unit gathered, so xp-to-99 IS actions-to-99.
+  const actions = masteryXpForLevel(99);
+  const hours = (ticks: number) => (actions * ticks * 0.6) / 3600;
+  const perResource = Object.values(RESOURCES).map((r: any) => hours(r.ticksPerAction));
+  const cheapest = Math.min(...perResource);
+  const dearest = Math.max(...perResource);
+  check("mastery: 99 is a reachable grind, not a myth", cheapest > 5 && dearest < 40,
+    `${cheapest.toFixed(1)}h - ${dearest.toFixed(1)}h`);
+  check("mastery: cheap resources master faster than dear ones", cheapest < dearest);
+}
+
+// [save] Pre-1.1.0 saves stored mastery at 4 xp/action on the old curve. Reading
+// those numbers on the new curve unmigrated would hand out near-max mastery.
+{
+  check("save: pre-1.1.0 saves are rescaled", needsMasteryRescale("1.0.0") === true);
+  check("save: 1.1.0 and later are not", needsMasteryRescale("1.1.0") === false && needsMasteryRescale("1.2.0") === false);
+  const raw = { version: "1.0.0", timestamp: Date.now(), player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: { woodcutting: { xp: 0, mastery: { normal: 4470 } } }, inventory: [] } };
+  const out = sanitizeSave(raw) as { ok: boolean; state: any };
+  const rescaled = out.state.player.skills.woodcutting.mastery.normal;
+  check("save: migration keeps the actions, not the number", out.ok && rescaled === 1117, `${rescaled}`);
+  check("save: migration stamps the current version", out.state.version === "1.1.0", out.state.version);
+}
+
+// [combat] There were three weapon selectors — combat, the stats panel, and a
+// helper — and none checked requiredAttack, so a level-1 hero swung an iron
+// sword needing Attack 10 and the panel could name a different weapon than the
+// one combat used.
+{
+  const inv = createInventory();
+  check("weapon: bare hands with nothing carried", selectWeapon(inv, null, 1).id === "fists");
+
+  addItem(inv, "iron_sword", 1); // requiredAttack 10
+  check("weapon: an unusable weapon is not wielded", selectWeapon(inv, null, 1).id === "fists",
+    selectWeapon(inv, null, 1).id);
+  check("weapon: usable once Attack is high enough", selectWeapon(inv, null, 10).id === "iron_sword");
+  check("weapon: the equipped slot is refused below its requirement",
+    selectWeapon(inv, "iron_sword", 5).id === "fists");
+
+  addItem(inv, "bronze_dagger", 1);
+  check("weapon: the best usable weapon wins", selectWeapon(inv, null, 1).id === "dagger",
+    selectWeapon(inv, null, 1).id);
+  check("weapon: an equipped weapon beats a better carried one",
+    selectWeapon(inv, "bronze_dagger", 99).id === "dagger");
+  const dropped = createInventory();
+  check("weapon: an equipped item you no longer carry is ignored",
+    selectWeapon(dropped, "iron_sword", 99).id === "fists");
+  check("weapon: every weapon declares a requirement",
+    Object.values(WEAPONS).every((w: any) => Number.isFinite(w.requiredAttack)));
+}
+
+// [hero] The player character is a named wizard, not "Hero".
+check("hero: has a name, not a placeholder", DEFAULT_HERO_NAME.length > 1 && !/^(hero|player)$/i.test(DEFAULT_HERO_NAME), DEFAULT_HERO_NAME);
 
 console.log(results.join("\n"));
 const fails = results.filter((r) => r.startsWith("FAIL")).length;

@@ -26,12 +26,40 @@ export function addMasteryXp(skills: SkillComponent, skillId: SkillId, itemKey: 
   m[itemKey] = (m[itemKey] || 0) + xp;
 }
 
+export const MASTERY_MAX = 99;
+
+/**
+ * Mastery XP needed for a level: a simple triangular curve, 1 XP per unit
+ * gathered or crafted.
+ *
+ * Mastery used to reuse the skill XP curve, which was wrong by a factor of
+ * thousands. That curve is designed to span a whole skill's lifetime, but
+ * mastery is tracked *per item* — one of eleven resources — so mastery 99 on
+ * normal logs came out at 8,146 hours of chopping, and mastery 50 at 63. The
+ * speed bonus scales with level/99, so in practice mastery did nothing.
+ *
+ * This curve puts mastery 99 on the cheapest resource at ~12 h and on the most
+ * expensive at ~26 h: a real long-term goal rather than an unreachable one, and
+ * cheap resources master faster, which is the right incentive since they are
+ * worth less.
+ */
+export function masteryXpForLevel(level: number): number {
+  const l = Math.max(1, Math.min(MASTERY_MAX, Math.floor(level)));
+  return (l * (l - 1)) / 2;
+}
+
 export function masteryLevel(xp: number): number {
-  // Mastery mirrors the same OSRS curve, also capped at 99.
-  let total = 0;
-  for (let n = 1; n < 99; n++) {
-    total += Math.floor(n + 300 * Math.pow(2, n / 7));
-    if (xp < Math.floor(total / 4)) return n;
-  }
-  return 99;
+  if (!(xp > 0)) return 1;
+  // Invert level*(level-1)/2 <= xp.
+  const level = Math.floor((1 + Math.sqrt(1 + 8 * xp)) / 2);
+  return Math.max(1, Math.min(MASTERY_MAX, level));
+}
+
+/** Progress through the current mastery level, 0..1 (1 at the cap). */
+export function masteryProgress(xp: number): number {
+  const level = masteryLevel(xp);
+  if (level >= MASTERY_MAX) return 1;
+  const from = masteryXpForLevel(level);
+  const to = masteryXpForLevel(level + 1);
+  return to > from ? Math.min(1, Math.max(0, (xp - from) / (to - from))) : 1;
 }

@@ -131,7 +131,7 @@ export class CraftingSystem {
       xpGained = Math.round(recipe.xp * 0.2);
     }
     this.state.player.skills[recipe.skill].xp += xpGained;
-    addMasteryXp(this.state.player.skills, recipe.skill, recipe.id, Math.max(1, recipe.output.qty) * 4);
+    addMasteryXp(this.state.player.skills, recipe.skill, recipe.id, Math.max(1, recipe.output.qty));
 
     this.cb.onCraft?.({ recipe, amount, xpGained, preserved, burned });
 

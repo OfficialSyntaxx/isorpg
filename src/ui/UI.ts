@@ -7,7 +7,7 @@ import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
 import { play as sfx } from "../core/Sfx";
-import { WEAPONS } from "../data/Combat";
+import { selectWeapon } from "../data/Combat";
 import { CombatSystem } from "../systems/CombatSystem";
 import type { CraftingSystem } from "../systems/CraftingSystem";
 import type { BuildSystem } from "../systems/BuildSystem";
@@ -620,13 +620,9 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
   }
 
   private equippedWeapon() {
-    // P2: the equipped weapon slot wins; otherwise the best carried weapon.
-    const eq = this.state.player.equipped.weapon;
-    if (eq) for (const w of Object.values(WEAPONS)) if (w.itemId === eq) return w;
-    for (const w of Object.values(WEAPONS)) {
-      if (w.itemId && this.state.player.inventory.items.some((i) => i.id === w.itemId)) return w;
-    }
-    return WEAPONS.fists;
+    // Same selector combat uses, so the panel cannot name a different weapon.
+    const p = this.state.player;
+    return selectWeapon(p.inventory, p.equipped.weapon, levelFromXp(p.skills.attack.xp));
   }
 
   private onFilePick = (e: Event) => {

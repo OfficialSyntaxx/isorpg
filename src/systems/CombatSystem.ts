@@ -3,7 +3,7 @@
 import type { GameState } from "../state/GameState";
 import type { MonsterCombat } from "../world/Monster";
 import { levelFromXp } from "../data/XPTable";
-import { WEAPONS, FOODS, type WeaponDef, getWeapon, type MonsterDef } from "../data/Combat";
+import { FOODS, type WeaponDef, selectWeapon, type MonsterDef } from "../data/Combat";
 import type { SkillId } from "../data/Skills";
 import { addItem, removeItem, type InventoryComponent } from "../components/Inventory";
 import { armorBonuses } from "../components/Equipment";
@@ -58,10 +58,8 @@ export class CombatSystem {
   }
 
   equippedWeapon(): WeaponDef {
-    // P2: the equipped weapon slot wins; otherwise the best carried weapon.
-    const eq = this.state.player.equipped.weapon;
-    if (eq) return getWeapon(eq);
-    return getWeapon(firstWeaponItem(this.state.player.inventory));
+    const p = this.state.player;
+    return selectWeapon(p.inventory, p.equipped.weapon, levelFromXp(p.skills.attack.xp));
   }
 
   maxHp(): number {
@@ -409,16 +407,6 @@ if (m.dead && now >= m.respawnAt) {
       }
     }
   }
-}
-
-function firstWeaponItem(inv: InventoryComponent): string | null {
-  // First weapon the hero carries; higher level-req weapons count too.
-  for (const item of inv.items) {
-    for (const w of Object.values(WEAPONS)) {
-      if (w.itemId === item.id) return item.id;
-    }
-  }
-  return null;
 }
 
 function hitChance(attackRoll: number, defenseRoll: number): number {

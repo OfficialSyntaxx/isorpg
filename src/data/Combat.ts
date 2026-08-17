@@ -1,4 +1,6 @@
 // Combat data: weapons, monsters, weighted drop tables (GDD §5.C/D).
+import type { InventoryComponent } from "../components/Inventory";
+
 export interface WeaponDef {
   id: string;
   name: string;
@@ -251,4 +253,43 @@ export function getWeapon(itemId: string | null): WeaponDef {
   if (!itemId) return WEAPONS.fists;
   for (const w of Object.values(WEAPONS)) if (w.itemId === itemId) return w;
   return WEAPONS.fists;
+}
+
+/** Rough power ordering — what "best" means when auto-picking a weapon. */
+function weaponScore(w: WeaponDef): number {
+  // Damage per tick plus accuracy, so a fast dagger can beat a slow 2H on
+  // sustained damage rather than on the max-hit number alone.
+  return (w.maxHit / w.ticks) * 10 + w.accuracy;
+}
+
+/**
+ * The single answer to "what is the hero swinging?".
+ *
+ * The equipped slot wins when the hero still carries that item and meets its
+ * Attack requirement; otherwise the best *usable* carried weapon; otherwise
+ * fists. `requiredAttack` is enforced here, which is the point — there were
+ * three separate implementations of this (combat, the UI panel, and a helper),
+ * none of which checked it, so a level-1 hero swung an iron sword that needs
+ * Attack 10 and the stats panel could name a different weapon than the one
+ * combat was actually using.
+ */
+export function selectWeapon(
+  inv: InventoryComponent,
+  equippedItemId: string | null | undefined,
+  attackLevel: number
+): WeaponDef {
+  const carried = (id: string | null | undefined) => !!id && inv.items.some((i) => i.id === id);
+  const usable = (w: WeaponDef) => w.requiredAttack <= attackLevel;
+
+  if (carried(equippedItemId)) {
+    const eq = getWeapon(equippedItemId ?? null);
+    if (eq.itemId && usable(eq)) return eq;
+  }
+
+  let best = WEAPONS.fists;
+  for (const w of Object.values(WEAPONS)) {
+    if (!w.itemId || !carried(w.itemId) || !usable(w)) continue;
+    if (weaponScore(w) > weaponScore(best)) best = w;
+  }
+  return best;
 }
