@@ -50,6 +50,7 @@ const { XP_TABLE } = D("XPTable.js");
 const { VILLAGERS, CRITTERS, VILLAGER_SPECS, VETERAN_TIERS } = D("Npcs.js");
 const { QUESTS, rewardText } = D("Quests.js");
 const { SEEDS, SEED_IDS } = D("Farming.js");
+const { CLUE_TIER_LIST } = D("Clues.js");
 const { masteryXpForLevel, MASTERY_MAX } = require(path.join(EMIT, "components", "Skills.js"));
 
 const L = [];
@@ -76,7 +77,7 @@ w("");
 [
   "Getting started", "Skills", "Experience table", "Gathering", "Weapons",
   "Armour & equipment", "Monsters & drops", "Crafting recipes", "Buildings",
-  "Food & healing", "Farming", "Villagers & labour", "Quests", "Items index",
+  "Food & healing", "Farming", "Villagers & labour", "Quests", "Clue scrolls", "Items index",
   "Achievements", "Guides",
 ].forEach((s) => w(`- [${s}](#${s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")})`));
 w("");
@@ -377,6 +378,32 @@ for (const q of QUESTS) {
   w(`**Reward:** ${rewardText(q, nameOf)}`);
   w("");
 }
+
+// ————— Clues —————
+w("## Clue scrolls");
+w("");
+w("A clue scroll starts a **treasure hunt**: read it, and a sequence of dig sites is");
+w("marked on your map one at a time. Walk to the marker, tap the tile to dig, and the");
+w("next site appears. The last dig pays out.");
+w("");
+w("Only one hunt runs at a time, and reading a scroll consumes it — abandoning a hunt");
+w("does not give the scroll back. Sites are always walkable ground outside the town");
+w("centre, and the hunt is stored with its seed, so it survives a reload unchanged.");
+w("");
+w("| Scroll | Digs | Range | Coins | Guaranteed loot | Unique |");
+w("|---|---:|---|---:|---|---|");
+for (const t of CLUE_TIER_LIST) {
+  const loot = t.loot.map((l) => `${l.min}–${l.max} × ${icon(l.itemId)} ${nameOf(l.itemId)}`).join(", ");
+  const rings = t.minRing === t.maxRing ? `ring ${t.minRing}` : `rings ${t.minRing}–${t.maxRing}`;
+  w(`| ${icon(t.itemId)} **${nameOf(t.itemId)}** | ${t.steps} | ${rings} | ${t.coins.min}–${t.coins.max} | ${loot} | ${icon(t.unique.itemId)} ${nameOf(t.unique.itemId)} (${pct(t.unique.chance * 100)}) |`);
+}
+w("");
+w("The uniques are the game's only **offhand** equipment — the slot existed with");
+w("nothing to put in it until clues shipped.");
+w("");
+w("Scrolls are tertiary drops, so they can fall alongside a normal drop. See the");
+w("monster tables above for which monsters carry which tier.");
+w("");
 
 // ————— Items —————
 w("## Items index");

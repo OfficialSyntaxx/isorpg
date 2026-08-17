@@ -5,6 +5,7 @@ import type { SkillComponent } from "../components/Skills";
 import type { InventoryComponent } from "../components/Inventory";
 import type { Grid } from "../world/Grid";
 import type { FarmPlot } from "../data/Farming";
+import type { ActiveClue } from "../data/Clues";
 import type { ResourceNode } from "../world/ResourceNode";
 import type { BuildingType } from "../data/Buildings";
 import type { EquipSlot } from "../data/Items";
@@ -62,6 +63,8 @@ export interface GameState {
     map: { discovered: string[]; fastTravel: boolean; explored: number[] };
     /** P6.3: quest-log — ids of quests the player has completed (persisted). */
     journal: string[];
+    /** The one clue hunt in progress, or null. Persisted; see ClueSystem. */
+    clue: ActiveClue | null;
     /** P6.4: meta-progress — kill tallies + unlocked achievements (persisted). */
     meta: { kills: Record<string, number>; achievements: string[]; counters: Record<string, number> };
   };
@@ -124,6 +127,7 @@ export function createFreshState(grid: Grid, name: string = DEFAULT_HERO_NAME, s
       equipped: {},
       map: { discovered: [], fastTravel: false, explored: [] },
       journal: [],
+      clue: null,
       meta: { kills: {}, achievements: [], counters: {} },
     },
     world: { grid, nodes: new Map() },

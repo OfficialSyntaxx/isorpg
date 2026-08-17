@@ -140,7 +140,19 @@ This affected Bag equip/unequip, village labour, map travel and shop buy/sell, a
 been shipped for some time. Found by measuring the DOM after the farm rows looked
 wrong, not by reading the CSS.
 
-**Remaining.** Clue scrolls (L). The `GEM` item type still has no members.
+- **Clue scrolls** ✅ — a multi-step treasure hunt. Reading a scroll consumes it and
+  writes one hunt onto the player: inventory stacks hold only an id and a count, so
+  per-scroll state could never live on the item. Each dig site is marked on the map
+  one at a time; tapping the tile walks there and digs. Sites are drawn from a stored
+  seed, so a hunt is reproducible and survives a reload unchanged, and the sanitizer
+  clamps a hand-edited step into the site list so a save cannot strand the player on
+  an unfinishable hunt. Two tiers (2 and 3 digs) as tertiary drops from goblins and
+  skeletons. **The rewards are the first `offhand` items in the game** — that slot had
+  been declared and empty since equipment shipped.
+
+## Phase E — complete
+
+Remaining ideas, not planned: the `GEM` item type still has no members.
 
 ---
 

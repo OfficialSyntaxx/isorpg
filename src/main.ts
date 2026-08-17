@@ -28,6 +28,7 @@ import { MetaSystem } from "./systems/MetaSystem";
 import { ShopSystem } from "./systems/ShopSystem";
 import { LabourSystem } from "./systems/LabourSystem";
 import { FarmSystem } from "./systems/FarmSystem";
+import { ClueSystem } from "./systems/ClueSystem";
 import { UI } from "./ui/UI";
 import { initToasts, showToast, clearToasts } from "./ui/Toast";
 import { findPath } from "./ai/AStar";
@@ -61,6 +62,8 @@ class Game {
   private heroActor: AnimatedActor | null = null;
 
   private pendingNode: ResourceNode | null = null;
+  /** Tile the hero is walking to in order to dig a clue site. */
+  private pendingDig: { x: number; y: number } | null = null;
   private activeSkill: SkillId | null = null;
 
   // P1: targeting — in-world ring + floating label/action chip.
@@ -76,6 +79,7 @@ class Game {
   private meta!: MetaSystem;
   private shop!: ShopSystem;
   private labour!: LabourSystem;
+  private clues!: ClueSystem;
   private farm!: FarmSystem;
   private savedPos = { gx: 0, gy: 0, wx: 0, wz: 0 };
   private heroFlashUntil = 0;
@@ -176,6 +180,27 @@ class Game {
         return c.length > 0;
       }
     );
+    // Clue hunts. Constructed before MapSystem so the dig-site marker can read it.
+    this.clues = new ClueSystem(this.state, this.grid);
+    this.ui.attachClues(
+      () => this.clues.snapshot(),
+      (itemId) => {
+        const r = this.clues.read(itemId);
+        if (r.ok) {
+          sfx("accept_quest");
+          showToast(`The scroll crumbles. ${r.hint}`, "success", 4200);
+          return;
+        }
+        showToast({
+          not_a_clue: "That is not a clue scroll.",
+          none_carried: "You are not carrying that scroll.",
+          already_active: "Finish the hunt you are already on.",
+          no_sites: "The scroll's marks make no sense here.",
+        }[r.reason], "error", 2200);
+      },
+      () => { if (this.clues.abandon()) showToast("You let the trail go cold.", "info", 1600); }
+    );
+
     // Farming. Beds come from Farm Plot levels, so BuildSystem stays the single
     // authority on what the settlement has — but it is constructed below, hence
     // the lazy provider rather than a value.
@@ -224,7 +249,8 @@ class Game {
           if (mm.def.id === "forest_ogre") return { x: mm.home.x, y: mm.home.y };
         }
         return null;
-      }
+      },
+      () => this.clues.currentSite()
     );
     this.ui.attachMap(
       () => this.mapSys.snapshot(this.state.player.pos.gx, this.state.player.pos.gy),
@@ -449,6 +475,43 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     document.body.setAttribute("data-canonical-frame", String(t));
   }
 
+  /**
+   * Dig at a clue site: walk there if needed, then search.
+   *
+   * The player must be standing on the tile — a hunt you can solve from across the
+   * map is not a hunt — so a distant tap walks first and digs on arrival.
+   */
+  private doDig(gx: number, gy: number): void {
+    const p = this.state.player.pos;
+    if (p.gx !== gx || p.gy !== gy) {
+      // Same pattern as tapping a resource node: path there and remember why.
+      const path = findPath(this.grid, p.gx, p.gy, gx, gy, true);
+      if (!path) { showToast("Can't reach that", "error", 1200); return; }
+      this.skill.interrupt();
+      this.craft.stop();
+      this.pendingNode = null;
+      this.pendingDig = { x: gx, y: gy };
+      this.setTarget("walk", gx, gy, "Dig site", null);
+      this.movement.setPath(path);
+      return;
+    }
+    const r = this.clues.dig(gx, gy);
+    if (!r.ok) {
+      showToast(r.reason === "no_clue" ? "You have no hunt to dig for." : "Nothing buried here.", "info", 1500);
+      return;
+    }
+    if (!r.done) {
+      sfx("chest_open");
+      showToast(`Dig ${r.step}/${r.total}. ${r.hint}`, "success", 4200);
+      return;
+    }
+    sfx("quest_complete");
+    this.meta.evaluate();
+    const bits = [`${r.reward.coins} coins`, ...r.reward.items.map((i) => `${ITEM_NAMES[i.itemId]?.name ?? i.itemId} ×${i.amount}`)];
+    if (r.reward.unique) bits.push(`✨ ${ITEM_NAMES[r.reward.unique]?.name ?? r.reward.unique}`);
+    showToast(`🏆 Treasure! ${bits.join(", ")}`, "success", 6000);
+  }
+
   /** Where the hero is in WORLD space — inside the dungeon its group is
    *  parented under DUNGEON_ORIGIN, so the offset has to be added back. */
   private heroWorldPos(): { x: number; z: number } {
@@ -471,6 +534,9 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     if (gx === this.dungeon.entrance.x && gy === this.dungeon.entrance.y) { this.enterDungeon(); return; }
     // P6: the tutorial guide NPC parked beside the dungeon door.
     if (this.quest.isGuideTile(gx, gy)) { this.quest.talkGuide(); return; }
+    // A clue site takes priority over whatever else is on the tile — the marker
+    // told the player to dig *there*, so tapping it must dig.
+    if (this.clues.isDigTile(gx, gy)) { this.doDig(gx, gy); return; }
     // P7.1: tap the town merchant to open the market.
     if (this.shop.isStallTile(gx, gy)) { this.ui.openPanel("shop"); return; }
 
@@ -508,7 +574,7 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
 
     const t = this.grid.at(gx, gy);
     if (t?.walkable) {
-      this.skill.interrupt(); this.craft.stop(); this.pendingNode = null;
+      this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.pendingDig = null;
       this.setTarget("walk", gx, gy, "Walk", null);
       this.setPath(gx, gy);
       return;
@@ -586,7 +652,7 @@ this.dungeon.openedChest = true;
       return;
     }
     if (this.dungeon.isWalkable(gx, gy)) {
-      this.skill.interrupt(); this.craft.stop(); this.pendingNode = null;
+      this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.pendingDig = null;
       this.setTarget("walk", gx, gy, "Walk", null);
       const px = this.state.player.pos.gx, py = this.state.player.pos.gy;
       const path = findPath(this.dungeon, px, py, gx, gy);
@@ -653,7 +719,7 @@ this.dungeon.openedChest = true;
     p.gx = t.x; p.gy = t.y; p.wx = t.x; p.wz = t.y;
     this.hero.group.position.set(p.wx, 0, p.wz);
     this.input?.recentre();
-    this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.target = null; this.combat.stop();
+    this.skill.interrupt(); this.craft.stop(); this.pendingNode = null; this.pendingDig = null; this.target = null; this.combat.stop();
     showToast(`🧭 Fast-travelled to ${this.mapSys.poiName(id)}`, "success", 2200);
     return true;
   }
@@ -719,6 +785,11 @@ this.dungeon.openedChest = true;
 
 private onArrive(x: number, y: number) {
     sfx("step");
+    const dig = this.pendingDig;
+    if (dig) {
+      this.pendingDig = null;
+      if (dig.x === x && dig.y === y) { this.doDig(x, y); return; }
+    }
    const node = this.pendingNode;
     if (node) { this.beginGather(node); return; }
     if (this.combat.engaged) this.combat.confirmFight();

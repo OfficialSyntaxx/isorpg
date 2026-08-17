@@ -113,6 +113,15 @@ export const ITEMS: Record<string, Item> = {
   steel_sword: { id: "steel_sword", name: "Steel Sword", type: "TOOL", value: 140, desc: "Forged from steel — the finest blade a settlement smith can make.", stack: false, equip: { slot: "weapon", tier: 3 } },
   shortbow: { id: "shortbow", name: "Shortbow", type: "TOOL", value: 25, desc: "A quick bow. 3-tick attack.", stack: false, equip: { slot: "weapon", tier: 1 } },
 
+  // ——— Clue scrolls + their uniques ———
+  // The scrolls are MISC so the bulk storage cap never blocks one dropping.
+  clue_simple: { id: "clue_simple", name: "Simple Clue Scroll", type: "MISC", value: 0, desc: "A crude map with two marks on it. Read it to begin the hunt.", stack: true },
+  clue_hard: { id: "clue_hard", name: "Hard Clue Scroll", type: "MISC", value: 0, desc: "Three marks, and none of them close to town. Read it to begin the hunt.", stack: true },
+  // The first two items that fit the offhand slot, which has existed unused since
+  // equipment shipped.
+  wayfarers_lantern: { id: "wayfarers_lantern", name: "Wayfarer's Lantern", type: "TOOL", value: 320, desc: "Clue reward. Steadies the hand and the nerve.", stack: false, equip: { slot: "offhand", tier: 1, bonus: { defense: 3, maxHp: 4 } } },
+  cartographers_tome: { id: "cartographers_tome", name: "Cartographer's Tome", type: "TOOL", value: 900, desc: "Clue reward. Eldric would very much like a look at this.", stack: false, equip: { slot: "offhand", tier: 2, bonus: { attack: 4, defense: 5, maxHp: 6 } } },
+
   // ——— Armor (equip slots: head / body / legs) ———
   bronze_helm: { id: "bronze_helm", name: "Bronze Helm", type: "TOOL", value: 25, desc: "+1 defence, +5 HP.", stack: false, equip: { slot: "head", tier: 1, bonus: { defense: 1, maxHp: 5 } } },
   bronze_plate: { id: "bronze_plate", name: "Bronze Platebody", type: "TOOL", value: 40, desc: "+2 defence, +10 HP.", stack: false, equip: { slot: "body", tier: 1, bonus: { defense: 2, maxHp: 10 } } },
@@ -159,6 +168,7 @@ export const ITEM_ICONS: Record<string, string> = {
   bronze_helm: "⛑️", bronze_plate: "🛡️", bronze_legs: "🦵",
   iron_helm: "⛑️", iron_plate: "🛡️", iron_legs: "🦵",
   goblin_key: "🗝️", dungeon_key: "🗝️", rat_bone: "🦴", loop_half_key: "🗝️", zombie_flesh: "🧟",
+  clue_simple: "📜", clue_hard: "📜", wayfarers_lantern: "🏮", cartographers_tome: "📖",
   pet_rat: "🐀", pet_goblin: "👹", pet_skeleton: "💀", pet_zombie: "🧟",
 };
 

@@ -34,4 +34,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "mogul", name: "Mogul", desc: "Bank 2,000 coins from market sales.", test: (s) => (s.player.meta.counters["shop_sold_value"] ?? 0) >= 2000 },
   { id: "flooder", name: "Market Flooder", desc: "Dump 100+ of the same item on the market.", test: (s) => Object.values(s.town.market.supply).some((v) => v >= 100) },
   { id: "regular", name: "Shop Regular", desc: "Buy 10 items from the town market.", test: (s) => (s.player.meta.counters["shop_bought"] ?? 0) >= 10 },
+  { id: "treasure_hunter", name: "Treasure Hunter", desc: "Solve a clue scroll.", test: (s) => (s.player.meta.counters["clues_done"] ?? 0) >= 1 },
+  { id: "cartographer", name: "Cartographer", desc: "Solve 10 clue scrolls.", test: (s) => (s.player.meta.counters["clues_done"] ?? 0) >= 10 },
+  { id: "green_thumb", name: "Green Thumb", desc: "Reach Farming level 20.", test: (s) => levelFromXp(s.player.skills.farming.xp) >= 20 },
 ];

@@ -59,6 +59,7 @@ export class SaveSystem {
         equipped: { ...p.equipped },
         journal: [...p.journal],
         meta: { kills: { ...p.meta.kills }, achievements: [...p.meta.achievements], counters: { ...p.meta.counters } },
+        clue: p.clue ? { tier: p.clue.tier, seed: p.clue.seed, step: p.clue.step, sites: p.clue.sites.map((s2) => ({ x: s2.x, y: s2.y })) } : null,
       },
       town: {
         buildings: this.state.town.buildings.map((b) => ({ id: b.id, type: b.type, x: b.x, y: b.y, level: b.level })),
@@ -116,6 +117,7 @@ export class SaveSystem {
       achievements: (sm?.achievements ?? []).map(String),
       counters: { ...(sm?.counters ?? {}) },
     };
+    p.clue = (s.player as any)?.clue ?? null;
     this.state.town.buildings = (s.town?.buildings ?? []).map((b: any) => ({
       id: String(b.id), type: b.type, x: b.x, y: b.y, level: b.level,
     }));

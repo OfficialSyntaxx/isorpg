@@ -234,6 +234,25 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   nothing to catch up and nothing to double-count. **Lesson: when state is a pure
   function of elapsed time, store the start time, not the progress.**
 
+## Phase E, part 3 2026-08-17 (clue scrolls)
+- **[qc] A synthetic tap is not a tap** — digging did nothing through Playwright. I
+  instrumented rather than assuming a bug, and the input controller reported
+  `up moved=false dur=453` against `TAP_DRAG_MS = 240`: headless rendering stretched
+  the gap between `down` and `up`, so the game correctly read a long press. Fixed the
+  *test* (`mouse.click(..., {delay: 0})`), not the game. **Lesson: this is the second
+  time a Playwright input artifact has looked like a game defect. Before changing
+  behaviour to satisfy a harness, log what the code actually received.**
+- **[qc] A test that asserts a literal count is a test you edit to keep passing** —
+  `check("meta: 16 achievements catalogued", ACHIEVEMENTS.length === 16)` failed the
+  moment content was added, and the tempting fix is to bump the number, which asserts
+  nothing. Replaced with unique-id, name, description and callable-test checks plus a
+  floor. **Lesson: assert the invariant, not the inventory.**
+- **[design] A declared slot with no members is invisible debt** — `offhand` shipped
+  with the equipment system and stayed empty for the whole project; `SEED` and `GEM`
+  were the same. Nothing failed, and nothing pointed at them. Clue uniques filled
+  `offhand`, farming filled `SEED`. **Lesson: an enum member with no data behind it is
+  a promise the code is making and not keeping. Worth grepping for periodically.**
+
 ## Open threads (not yet filed as bugs)
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.

@@ -21,6 +21,7 @@ _Last generated: 2026-08-17_
 - [Farming](#farming)
 - [Villagers & labour](#villagers-labour)
 - [Quests](#quests)
+- [Clue scrolls](#clue-scrolls)
 - [Items index](#items-index)
 - [Achievements](#achievements)
 - [Guides](#guides)
@@ -131,6 +132,8 @@ monsters, so a bow lets you open on an enemy before it closes.
 | ⚔️ **Iron Sword** | weapon | 0 | 0 | 0 | 0 | — |
 | ⚔️ **Steel Sword** | weapon | 0 | 0 | 0 | 0 | — |
 | 🏹 **Shortbow** | weapon | 0 | 0 | 0 | 0 | — |
+| 🏮 **Wayfarer's Lantern** | offhand | 0 | 0 | 0 | 0 | — |
+| 📖 **Cartographer's Tome** | offhand | 0 | 0 | 0 | 0 | — |
 | ⛑️ **Bronze Helm** | head | 0 | 0 | 0 | 0 | — |
 | 🛡️ **Bronze Platebody** | body | 0 | 0 | 0 | 0 | — |
 | 🦵 **Bronze Platelegs** | legs | 0 | 0 | 0 | 0 | — |
@@ -174,6 +177,7 @@ Aggro range 4 tiles · respawns after 30s
 | 🗝️ Goblin Key | 1 | 4.2% |
 | 🍖 Raw Rat Meat | 1 | 13% |
 | 🗝️ Goblin Key _(tertiary)_ | 1 | 5.0% |
+| 📜 Simple Clue Scroll _(tertiary)_ | 1 | 1/83 |
 | 👹 Eager Goblin _(pet)_ | 1 | 1/3,333 |
 
 ### Skeleton
@@ -191,6 +195,7 @@ Aggro range 4 tiles · respawns after 40s
 | ⚔️ Bronze Sword | 1 | 1.5% |
 | 🍤 Cooked Shrimp | 1 | 5.8% |
 | 🗝️ Loop Half of a Key _(tertiary)_ | 1 | 4.0% |
+| 📜 Hard Clue Scroll _(tertiary)_ | 1 | 1/125 |
 | 💀 Bones Malone _(pet)_ | 1 | 1/4,000 |
 
 ### Zombie
@@ -535,6 +540,27 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 
 **Reward:** 250 × Coins, 1 × Steel Bar, 3 × Cooked Trout
 
+## Clue scrolls
+
+A clue scroll starts a **treasure hunt**: read it, and a sequence of dig sites is
+marked on your map one at a time. Walk to the marker, tap the tile to dig, and the
+next site appears. The last dig pays out.
+
+Only one hunt runs at a time, and reading a scroll consumes it — abandoning a hunt
+does not give the scroll back. Sites are always walkable ground outside the town
+centre, and the hunt is stored with its seed, so it survives a reload unchanged.
+
+| Scroll | Digs | Range | Coins | Guaranteed loot | Unique |
+|---|---:|---|---:|---|---|
+| 📜 **Simple Clue Scroll** | 2 | rings 1–2 | 150–400 | 3–8 × ⚙️ Iron Ore, 2–6 × 🪵 Plank | 🏮 Wayfarer's Lantern (25%) |
+| 📜 **Hard Clue Scroll** | 3 | rings 2–3 | 600–1400 | 2–5 × ⛓️ Steel Bar, 5–12 × ⚫ Coal, 2–4 × 🍣 Cooked Trout | 📖 Cartographer's Tome (40%) |
+
+The uniques are the game's only **offhand** equipment — the slot existed with
+nothing to put in it until clues shipped.
+
+Scrolls are tertiary drops, so they can fall alongside a normal drop. See the
+monster tables above for which monsters carry which tier.
+
 ## Items index
 
 ### Bar
@@ -591,10 +617,12 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 | 🪙 **Coins** | 1 | — | Shiny currency the merchants accept. |
 | 👹 **Eager Goblin** | 1 | — | Unlocks a follower. 1/3333 per kill. |
 | 🗝️ **Goblin Key** | 5 | — | Rusted and noisy. |
+| 📜 **Hard Clue Scroll** | 0 | — | Three marks, and none of them close to town. Read it to begin the hunt. |
 | 🗝️ **Iron Key** | 0 | — | Fits the locked door that blocks the dungeon exit. Consumed on use. |
 | 🗝️ **Loop Half of a Key** | 20 | — | Half a mysterious key. |
 | 🧟 **Mortimer** | 1 | — | Unlocks a follower. 1/5000 per kill. |
 | 🦴 **Rat Bone (Triangular)** | 1 | — | A curious irregular bone. |
+| 📜 **Simple Clue Scroll** | 0 | — | A crude map with two marks on it. Read it to begin the hunt. |
 | 🐀 **Tiny Rat** | 1 | — | Unlocks a follower. 1/2500 per kill. |
 | 🧟 **Zombie Flesh** | 3 | — | Moves slightly on its own. |
 
@@ -627,6 +655,7 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 | 🛡️ **Bronze Platebody** | 40 | — | +2 defence, +10 HP. |
 | 🦵 **Bronze Platelegs** | 30 | — | +1 defence, +5 HP. |
 | ⚔️ **Bronze Sword** | 20 | — | A solid starter sword. 4-tick attack. |
+| 📖 **Cartographer's Tome** | 900 | — | Clue reward. Eldric would very much like a look at this. |
 | 🎣 **Fly Rod** | 40 | — | Lets you reach deeper, faster fish. |
 | 🪓 **Iron Axe** | 30 | — | Cuts wood noticeably faster. |
 | ⛑️ **Iron Helm** | 80 | — | +2 defence, +10 HP. |
@@ -639,6 +668,7 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 | 🪓 **Steel Axe** | 90 | — | Bites deep — swift and true. |
 | ⛏️ **Steel Pickaxe** | 90 | — | The miner's best friend. |
 | ⚔️ **Steel Sword** | 140 | — | Forged from steel — the finest blade a settlement smith can make. |
+| 🏮 **Wayfarer's Lantern** | 320 | — | Clue reward. Steadies the hand and the nerve. |
 
 ## Achievements
 
@@ -660,6 +690,9 @@ A Forest Ogre has moved into the deep woods and the surveyor cannot finish his m
 | **Mogul** | Bank 2,000 coins from market sales. |
 | **Market Flooder** | Dump 100+ of the same item on the market. |
 | **Shop Regular** | Buy 10 items from the town market. |
+| **Treasure Hunter** | Solve a clue scroll. |
+| **Cartographer** | Solve 10 clue scrolls. |
+| **Green Thumb** | Reach Farming level 20. |
 
 ## Guides
 

@@ -6,6 +6,43 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase E complete — clue scrolls, and the offhand slot finally has items
+
+- **Clue scrolls.** A multi-step treasure hunt. Reading a scroll consumes it and
+  writes **one** hunt onto the player — inventory stacks hold only an id and a count,
+  so which-tile-and-which-step could never live on the item itself. Each dig site is
+  marked on the map one at a time; tapping the tile walks there and digs, the next
+  site appears, and the last dig pays out.
+- **Reproducible by seed.** Sites are chosen from a stored seed with the same
+  mulberry32 the world uses, so a hunt survives a reload unchanged and a save
+  round-trip cannot move the target out from under the player. The sanitizer clamps a
+  hand-edited step into the site list and drops out-of-bounds sites, so a tampered
+  save cannot strand you on an unfinishable hunt.
+- **The offhand slot finally has items.** `offhand` has been a declared equip slot with
+  **zero items** in it since equipment shipped. Both clue uniques fill it: the
+  Wayfarer's Lantern (+3 Defence, +4 HP) and the Cartographer's Tome (+4 Attack,
+  +5 Defence, +6 HP).
+- Two tiers — Simple (2 digs, rings 1–2) and Hard (3 digs, rings 2–3) — as tertiary
+  drops from goblins and skeletons, so they can fall alongside a normal drop. Hints
+  name a direction and the ground underfoot rather than coordinates, since the map
+  marker already gives the exact tile.
+- Shown under the quest journal, because a clue *is* a quest — just a self-issued one.
+  Three new achievements (Treasure Hunter, Cartographer, Green Thumb).
+- **A near-miss worth recording.** Driving the hunt through real taps, digging did
+  nothing. Rather than "fixing" it I instrumented the input controller: the tap was
+  detected correctly, but the synthetic press measured **453 ms** against a 240 ms tap
+  threshold, so the game rightly rejected it as a long press. A test artifact, not a
+  bug — the same trap as the camera false alarm in Phase A. With a fast click the full
+  hunt completes: *"🏆 Treasure! 273 coins, Iron Ore ×4, Plank ×4, ✨ Wayfarer's
+  Lantern"*, coins credited and the hunt cleared in the save.
+- Also replaced a QC check that asserted a literal achievement count (`=== 16`) with
+  one that asserts the catalogue's integrity — unique ids, names, descriptions and
+  callable tests — so adding content no longer edits a test to keep it passing.
+- 39 new QC checks (**184/184**) · 49/49 UI audit · 25/25 rig · 5/5 smoke · visual
+  baseline clean.
+
+---
+
 ## 2026-08 · Phase E — Farming, and a row-layout bug that had shipped
 
 - **Farming.** A twelfth skill, and the only one that advances on **wall-clock time**

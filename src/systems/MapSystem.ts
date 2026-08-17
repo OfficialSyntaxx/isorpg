@@ -15,6 +15,15 @@ export interface PoiInfo {
   discovered: boolean;
   /** P6b: boss lairs render with a distinct (red) marker. */
   boss?: boolean;
+  /**
+   * Visible without being "discovered".
+   *
+   * Discovery is a persisted list of ids, which suits fixed landmarks. A clue's
+   * dig site is neither fixed nor something you find by exploring — the scroll
+   * just told you where it is — so it is shown directly instead of being written
+   * into the save's discovered list, which would fill up with dead sites.
+   */
+  always?: boolean;
 }
 
 /** The player-owned subset of map state (persisted with the save). */
@@ -47,6 +56,7 @@ export class MapSystem {
   private store: MapStore;
   /** P6b: resolves the Forest Ogre's current lair tile (its home). */
   private getOgre: () => { x: number; y: number } | null;
+  private getClueSite: () => { x: number; y: number } | null = () => null;
   /** P6.1: per-tile exploration flags (indexed y * size + x). */
   private explored = new Uint8Array(0);
 
@@ -55,31 +65,39 @@ export class MapSystem {
     dungeon: DungeonSystem,
     quest: QuestSystem,
     store: MapStore,
-    getOgre: () => { x: number; y: number } | null = () => null
+    getOgre: () => { x: number; y: number } | null = () => null,
+    /** The active clue's dig site, if a hunt is running. */
+    getClueSite: () => { x: number; y: number } | null = () => null
   ) {
     this.size = size;
     this.dungeon = dungeon;
     this.quest = quest;
     this.store = store;
     this.getOgre = getOgre;
+    this.getClueSite = getClueSite;
     if (!this.store.discovered.includes("town")) this.store.discovered.push("town");
     this.store.explored ??= [];
     this.explored = new Uint8Array(size * size);
     for (const idx of this.store.explored) if (idx >= 0 && idx < this.explored.length) this.explored[idx] = 1;
   }
 
-  private pois(): { id: string; name: string; icon: string; x: number; y: number; boss?: boolean }[] {
+  private pois(): Omit<PoiInfo, "discovered">[] {
     const cx = Math.floor(this.size / 2);
-    const base = [
+    const base: Omit<PoiInfo, "discovered">[] = [
       { id: "town", name: "Isoperia Centre", icon: "🏠", x: cx, y: cx },
       { id: "caves", name: "The Caves", icon: "🕳️", x: this.dungeon.entrance.x, y: this.dungeon.entrance.y },
       { id: "eldric", name: "Eldric's Camp", icon: "🧭", x: this.quest.guide.x, y: this.quest.guide.y },
     ];
     const ogre = this.getOgre();
-    if (!ogre) return base;
-    // Skip the boss marker if it would sit exactly on another waypoint.
-    if (base.some((p) => p.x === ogre.x && p.y === ogre.y)) return base;
-    return [...base, { id: "ogre", name: "The Forest Ogre", icon: "👹", x: ogre.x, y: ogre.y, boss: true }];
+    if (ogre && !base.some((p) => p.x === ogre.x && p.y === ogre.y)) {
+      // Skip the boss marker if it would sit exactly on another waypoint.
+      base.push({ id: "ogre", name: "The Forest Ogre", icon: "👹", x: ogre.x, y: ogre.y, boss: true });
+    }
+    // The dig site is the only marker that moves, so it is appended last and
+    // carries a fixed id — the discovery list must not fill up with dead sites.
+    const dig = this.getClueSite();
+    if (dig) base.push({ id: "clue_site", name: "Dig here", icon: "📜", x: dig.x, y: dig.y, always: true });
+    return base;
   }
 
   get unlocked(): boolean { return this.store.fastTravel; }
@@ -94,7 +112,7 @@ export class MapSystem {
       size: this.size,
       player: { x: px, y: py },
       unlocked: this.store.fastTravel,
-      pois: this.pois().map((p) => ({ ...p, discovered: this.store.discovered.includes(p.id) })),
+      pois: this.pois().map((p) => ({ ...p, discovered: p.always === true || this.store.discovered.includes(p.id) })),
       coverage: this.coverage(),
     };
   }

@@ -30,6 +30,8 @@ import { RECIPES } from "../src/data/Recipes";
 import { SEEDS, SEED_IDS, growthAt, isRipe, growthLabel } from "../src/data/Farming";
 import { SKILL_IDS } from "../src/data/Skills";
 import { FarmSystem } from "../src/systems/FarmSystem";
+import { CLUE_TIERS, CLUE_TIER_LIST, chooseSites, clueTierForItem, hintFor } from "../src/data/Clues";
+import { ClueSystem } from "../src/systems/ClueSystem";
 
 const results: string[] = [];
 const check = (n: string, ok: boolean, x = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${n}${x ? "  [" + x + "]" : ""}`);
@@ -159,7 +161,11 @@ check("offline: idle village earns nothing", accrueLabourOffline(off2, H, H).len
 const metaS = createFreshState(g, "Hero", 21, 21);
 const pops: string[] = [];
 const meta = new MetaSystem(metaS, (m) => pops.push(m));
-check("meta: 16 achievements catalogued", ACHIEVEMENTS.length === 16, `${ACHIEVEMENTS.length}`);
+check("meta: every achievement has a unique id, name and test",
+  ACHIEVEMENTS.length >= 16
+  && new Set(ACHIEVEMENTS.map((a: any) => a.id)).size === ACHIEVEMENTS.length
+  && ACHIEVEMENTS.every((a: any) => a.name && a.desc && typeof a.test === "function"),
+  `${ACHIEVEMENTS.length} achievements`);
 meta.bump("shop_bought", 1); meta.bump("shop_sold", 20); meta.bump("labour_assigns", 3); meta.bump("labour_collected", 50); meta.bump("floors_descended", 1);
 meta.evaluate();
 const metaGot = new Set(metaS.player.meta.achievements);
@@ -621,6 +627,101 @@ check("hero: has a name, not a placeholder", DEFAULT_HERO_NAME.length > 1 && !/^
   check("farming: the Combat Tonic is craftable",
     RECIPES.some((r: any) => r.output.itemId === "combat_potion"));
   check("farming: farming is a real skill", SKILL_IDS.includes("farming" as any));
+}
+
+// [clues] A clue is a hunt, not an item with hidden fields — inventory stacks hold
+// only an id and a count, so the active hunt lives on the player. These checks pin
+// that the hunt is reproducible from its seed and cannot be finished from afar.
+{
+  const st = createFreshState(g, DEFAULT_HERO_NAME, 21, 21);
+  const clues = new ClueSystem(st, g);
+
+  check("clue: nothing active on a fresh save", clues.active === null && clues.snapshot().active === null);
+  check("clue: reading nothing is refused", (clues.read("normal_log") as any).reason === "not_a_clue");
+  check("clue: reading a scroll you lack is refused", (clues.read("clue_simple") as any).reason === "none_carried");
+
+  addItem(st.player.inventory, "clue_simple", 2);
+  const r = clues.read("clue_simple") as any;
+  check("clue: reading starts a hunt", r.ok === true && !!st.player.clue, r.ok ? "" : r.reason);
+  check("clue: the scroll is consumed", countItem(st.player.inventory, "clue_simple") === 1);
+  check("clue: one hunt at a time", (clues.read("clue_simple") as any).reason === "already_active");
+
+  const hunt = st.player.clue!;
+  check("clue: the hunt has the declared number of sites",
+    hunt.sites.length === CLUE_TIERS.simple.steps, `${hunt.sites.length}`);
+  check("clue: sites are walkable and outside town",
+    hunt.sites.every((s2) => g.isWalkable(s2.x, s2.y) && g.at(s2.x, s2.y)!.zoneId !== "TOWN_CENTER"));
+  check("clue: sites are distinct", new Set(hunt.sites.map((s2) => `${s2.x},${s2.y}`)).size === hunt.sites.length);
+
+  // The seed is what makes a hunt reproducible across a save round-trip.
+  const again = chooseSites(CLUE_TIERS.simple, hunt.seed, g.width,
+    (x, y) => g.isWalkable(x, y) && g.at(x, y)!.zoneId !== "TOWN_CENTER");
+  check("clue: the same seed picks the same sites",
+    JSON.stringify(again) === JSON.stringify(hunt.sites));
+
+  const first = clues.currentSite()!;
+  check("clue: digging the wrong tile does nothing",
+    (clues.dig(first.x + 3, first.y + 3) as any).reason === "wrong_tile" && st.player.clue!.step === 0);
+
+  const d1 = clues.dig(first.x, first.y) as any;
+  check("clue: the first dig advances", d1.ok && d1.done === false && d1.step === 1, JSON.stringify(d1).slice(0, 60));
+  check("clue: the marker moved", clues.currentSite()!.x !== first.x || clues.currentSite()!.y !== first.y);
+
+  const last = clues.currentSite()!;
+  const coinsBefore = countItem(st.player.inventory, "coins");
+  const d2 = clues.dig(last.x, last.y) as any;
+  check("clue: the last dig completes the hunt", d2.ok && d2.done === true && st.player.clue === null);
+  const reward = d2.reward;
+  check("clue: coins land inside the declared range",
+    reward.coins >= CLUE_TIERS.simple.coins.min && reward.coins <= CLUE_TIERS.simple.coins.max, `${reward.coins}`);
+  check("clue: the coins were actually paid",
+    countItem(st.player.inventory, "coins") === coinsBefore + reward.coins);
+  check("clue: completion is counted", st.player.meta.counters.clues_done === 1);
+
+  // Abandoning clears the hunt but not the spent scroll.
+  clues.read("clue_simple");
+  check("clue: abandon clears the hunt", clues.abandon() === true && st.player.clue === null);
+  check("clue: abandoning nothing is a no-op", clues.abandon() === false);
+  check("clue: digging with no hunt is refused", (clues.dig(5, 5) as any).reason === "no_clue");
+}
+
+// [clues] Data-level invariants: every tier is reachable from a drop, every reward
+// item is real, and the uniques fill the offhand slot that had no items at all.
+{
+  for (const t of CLUE_TIER_LIST) {
+    check(`clue: ${t.tier} scroll is a real item`, !!ITEMS[t.itemId]);
+    check(`clue: ${t.tier} scroll drops from something`,
+      Object.values(MONSTERS).some((m: any) => (m.tertiary ?? []).some((d: any) => d.itemId === t.itemId)));
+    check(`clue: ${t.tier} loot is all real`, t.loot.every((l) => !!ITEMS[l.itemId]) && !!ITEMS[t.unique.itemId]);
+    check(`clue: ${t.tier} unique is an offhand`, ITEMS[t.unique.itemId].equip?.slot === "offhand");
+    check(`clue: ${t.tier} scroll is cap-exempt`, isBulk(t.itemId) === false);
+  }
+  check("clue: the offhand slot finally has items",
+    Object.values(ITEMS).some((i: any) => i.equip?.slot === "offhand"));
+  check("clue: hints name a direction, not coordinates", (() => {
+    const h = hintFor({ x: 5, y: 5 }, 42, "FOREST");
+    return h.startsWith("Dig ") && !/\d/.test(h);
+  })(), hintFor({ x: 5, y: 5 }, 42, "FOREST"));
+  check("clue: item ids map to tiers", clueTierForItem("clue_hard")?.tier === "hard" && clueTierForItem("nope") === undefined);
+}
+
+// [save] An active hunt round-trips, and a hand-edited one cannot strand the player.
+{
+  const now = Date.now();
+  const mk = (clue: unknown) => (sanitizeSave({
+    version: "1.1.0", timestamp: now,
+    player: { name: "X", position: { x: 5, y: 5 }, stats: { hp: 10, maxHp: 10 }, skills: {}, inventory: [], clue },
+  }) as any).state.player.clue;
+
+  const good = mk({ tier: "simple", seed: 7, step: 1, sites: [{ x: 4, y: 9 }, { x: 30, y: 12 }] });
+  check("save: a hunt round-trips", good && good.step === 1 && good.sites.length === 2 && good.seed === 7);
+  const overStep = mk({ tier: "simple", seed: 7, step: 99, sites: [{ x: 4, y: 9 }] });
+  check("save: an out-of-range step is clamped into the site list", overStep.step === 0, `${overStep.step}`);
+  check("save: an unknown tier is dropped", mk({ tier: "impossible", seed: 1, step: 0, sites: [{ x: 1, y: 1 }] }) === null);
+  check("save: a hunt with no sites is dropped", mk({ tier: "hard", seed: 1, step: 0, sites: [] }) === null);
+  const oob = mk({ tier: "simple", seed: 1, step: 0, sites: [{ x: 9999, y: 3 }, { x: 6, y: 6 }] });
+  check("save: out-of-bounds sites are dropped", oob !== null && oob.sites.length === 1 && oob.sites[0].x === 6);
+  check("save: junk becomes no hunt", mk("nonsense") === null && mk(null) === null);
 }
 
 console.log(results.join("\n"));

@@ -2,6 +2,7 @@
 // Sanitizes an arbitrary parsed payload into a valid SaveState, returning
 // { ok, state, reason }. Never throws on malformed input.
 import { BUILDING_TYPES } from "../data/Buildings";
+import { WORLD_SIZE } from "../world/Grid";
 import { AUTO_EAT_STEPS, DAY_START_MINUTE, DEFAULT_AUTO_EAT_PCT, DEFAULT_HERO_NAME, SAVE_VERSION } from "../state/GameState";
 
 export interface Sanitized<T> {
@@ -137,6 +138,24 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     .filter((b) => (BUILDING_TYPES as string[]).includes(b.type) && b.x < 200 && b.y < 200);
 
   // collection log
+  // An active clue hunt. Sites must be in bounds and the step must point inside
+  // the site list, or a hand-edited save could park the player on a hunt with no
+  // reachable tile and no way to finish it.
+  const rawClue = (p.clue ?? null) as Record<string, unknown> | null;
+  let clue: { tier: string; seed: number; step: number; sites: { x: number; y: number }[] } | null = null;
+  if (rawClue && (rawClue.tier === "simple" || rawClue.tier === "hard") && Array.isArray(rawClue.sites)) {
+    const sites = rawClue.sites
+      .map((v) => (v ?? {}) as Record<string, unknown>)
+      .filter((v) => isFiniteNumber(v.x) && isFiniteNumber(v.y))
+      .map((v) => ({ x: clampNonNeg(v.x, 0), y: clampNonNeg(v.y, 0) }))
+      .filter((v) => v.x < WORLD_SIZE && v.y < WORLD_SIZE)
+      .slice(0, 8);
+    if (sites.length) {
+      const step = isFiniteNumber(rawClue.step) ? Math.max(0, Math.min(sites.length - 1, Math.floor(rawClue.step))) : 0;
+      clue = { tier: rawClue.tier, seed: isFiniteNumber(rawClue.seed) ? rawClue.seed : 0, step, sites };
+    }
+  }
+
   // Farming beds: a bed is {seedId, plantedAt} or null. A future plantedAt would
   // leave a crop permanently unripe, so it is clamped to now.
   const rawPlots = Array.isArray((r.town as any)?.farm?.plots) ? (r.town as any).farm.plots : [];
@@ -172,7 +191,7 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
     state: {
       version: SAVE_VERSION,
       timestamp,
-      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe },
+      player: { name: typeof p.name === "string" ? p.name.slice(0, 24) : DEFAULT_HERO_NAME, position: { x: gx, y: gy }, stats: { hp, maxHp }, skills, inventory, equipped, journal, meta: metaSafe, clue },
       town: { buildings, labour: labourSafe, market: marketSafe, farm: { plots: farmPlots } },
       collectionLog: { unlocked: collectionLog },
       settings: { autoEatPct: nearestAutoEatStep((r as any).settings?.autoEatPct) },

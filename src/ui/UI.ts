@@ -21,6 +21,7 @@ import type { MapSnapshot } from "../systems/MapSystem";
 import type { QuestJournalEntry } from "../systems/QuestSystem";
 import type { MetaSnapshot } from "../systems/MetaSystem";
 import type { FarmSnapshot } from "../systems/FarmSystem";
+import type { ClueSnapshot } from "../systems/ClueSystem";
 import type { ShopSnapshot } from "../systems/ShopSystem";
 import type { LabourSnapshot, LabourJob } from "../systems/LabourSystem";
 
@@ -218,12 +219,21 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
     this.journalSource = snapshot;
   }
 
+  /** Clue hunts: the snapshot plus read/abandon (main.ts wires them). */
+  attachClues(snapshot: () => ClueSnapshot | null, read: (itemId: string) => void, abandon: () => void) {
+    this.clueSource = snapshot;
+    this.clueRead = read;
+    this.clueAbandon = abandon;
+  }
+
   // ————— Quest journal —————
   private renderJournal() {
     this.panelTitle.textContent = "Quests";
     const entries = this.journalSource?.() ?? [];
+    const clues = this.clueHtml();
     if (!entries.length) {
-      this.panelBody.innerHTML = `<div class="empty">No quests yet — talk to Eldric by the deep-wilds door.</div>`;
+      this.panelBody.innerHTML = `<div class="empty">No quests yet — talk to Eldric by the deep-wilds door.</div>${clues}`;
+      this.wireClues();
       return;
     }
     const rows = entries.map((q) => `
@@ -234,7 +244,50 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
           <div class="inv-desc"><b>Given by ${q.givenBy}</b> · Reward: ${q.reward}</div>
         </div>
       </div>`).join("");
-    this.panelBody.innerHTML = rows;
+    this.panelBody.innerHTML = rows + clues;
+    this.wireClues();
+  }
+
+  /**
+   * Clue hunts, shown under the quest journal — a clue *is* a quest, just a
+   * self-issued one, so it belongs beside them rather than behind its own button.
+   */
+  private clueHtml(): string {
+    const snap = this.clueSource?.();
+    if (!snap) return "";
+    const done = snap.completed > 0 ? ` <span class="inv-count">${snap.completed} solved</span>` : "";
+
+    if (snap.active) {
+      const a = snap.active;
+      return `<div class="set-val">📜 Clue Hunt${done}</div>
+        <div class="inv-row" style="align-items:flex-start">
+          <span class="inv-ico">📜</span>
+          <div class="inv-name">${escapeHtml(a.name)}<span class="inv-count">Dig ${a.step}/${a.total}</span>
+            <div class="inv-desc">${escapeHtml(a.hint)}</div>
+            <div class="inv-desc">Marked on the map at (${a.site.x}, ${a.site.y}). Tap that tile to dig.</div>
+          </div>
+          <button class="btn btn-mini" data-clue-abandon="1">Abandon</button>
+        </div>`;
+    }
+
+    if (!snap.carried.length) {
+      return `<div class="set-val">📜 Clue Hunt${done}</div>
+        <div class="empty">No scrolls. Goblins and skeletons drop them.</div>`;
+    }
+    const rows = snap.carried.map((c) => `<div class="inv-row">
+      <span class="inv-ico">${itemIcon(c.itemId)}</span>
+      <div class="inv-name">${escapeHtml(c.name)}<span class="inv-count">×${c.qty}</span></div>
+      <button class="btn btn-mini" data-clue-read="${c.itemId}">Read</button></div>`).join("");
+    return `<div class="set-val">📜 Clue Hunt${done}</div>${rows}`;
+  }
+
+  private wireClues(): void {
+    this.panelBody.querySelectorAll<HTMLButtonElement>("[data-clue-read]").forEach((btn) => {
+      btn.addEventListener("click", () => { this.clueRead?.(btn.dataset.clueRead!); this.renderJournal(); });
+    });
+    this.panelBody.querySelector<HTMLButtonElement>("[data-clue-abandon]")?.addEventListener("click", () => {
+      if (confirm("Abandon this hunt? The scroll is already spent.")) { this.clueAbandon?.(); this.renderJournal(); }
+    });
   }
 
   /** P6.4: main.ts feeds the progress/meta snapshot. */
@@ -296,6 +349,9 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
    * which is the entire point of a collection log.
    */
   private metaTab: MetaTab = "awards";
+  private clueSource?: () => ClueSnapshot | null;
+  private clueRead?: (itemId: string) => void;
+  private clueAbandon?: () => void;
   private villageTab: VillageTab = "labour";
   private farmSource?: () => FarmSnapshot | null;
   private farmPlant?: (seedId: string) => void;
