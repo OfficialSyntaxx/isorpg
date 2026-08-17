@@ -108,6 +108,39 @@ add("every HUD bullet has a bar-btn", (html.match(/bar-btn/g) || []).length >= 8
     }
   }
   add("boot(): no field used before it is assigned", offenders.length === 0, offenders.join("; "));
+
+  // boot() builds the system graph as `const` locals and publishes each one to the
+  // instance (`this.ui = ui;`) as soon as its statement completes. The locals are
+  // what matter: TypeScript's temporal dead zone turns a use-before-construction
+  // into a COMPILE error (TS2448 "used before its declaration") instead of a
+  // runtime TypeError hidden behind a `!` assertion — which is exactly the bug that
+  // shipped. Publishing immediately rather than in one block at the end is required
+  // because InputController's constructor synchronously calls back into
+  // heroWorldPos(), which reads `this.state`.
+  //
+  // Two shapes to hold: systems are declared as locals, and boot never *reads* one
+  // back off `this`. Either would put the compiler back on the sidelines.
+  {
+    const SYSTEMS = "engine|grid|state|ui|world|movement|skill|combat|craft|build|save|input|" +
+      "npcs|dungeon|quest|mapSys|meta|shop|labour|clues|farm|hero|ringGroup|ringUpdate|bossRing";
+
+    const constructedOnThis = [...bootBody.matchAll(new RegExp(`^\\s*this\\.(${SYSTEMS})\\s*=\\s*(.+)$`, "gm"))]
+      // `this.ui = ui;` is the publish line and is expected; anything else is a
+      // system being built straight onto the instance again.
+      .filter((m) => m[2].trim() !== `${m[1]};`)
+      .map((m) => m[1]);
+    add("boot(): systems are built as locals, not onto this", constructedOnThis.length === 0,
+      [...new Set(constructedOnThis)].join(", "));
+
+    const readBack = [...bootBody.matchAll(new RegExp(`^\\s*this\\.(${SYSTEMS})\\s*\\.`, "gm"))].map((m) => m[1]);
+    add("boot(): systems are read through locals, never off this", readBack.length === 0,
+      [...new Set(readBack)].join(", "));
+
+    const published = new Set([...bootBody.matchAll(new RegExp(`^\\s*this\\.(${SYSTEMS})\\s*=\\s*\\1;`, "gm"))].map((m) => m[1]));
+    const localised = new Set([...bootBody.matchAll(new RegExp(`^\\s*const (${SYSTEMS})\\s*=`, "gm"))].map((m) => m[1]));
+    const unpublished = [...localised].filter((f) => !published.has(f));
+    add("boot(): every local system is published to the instance", unpublished.length === 0, unpublished.join(", "));
+  }
 }
 
 rows.forEach((r) => console.log(r));

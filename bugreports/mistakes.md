@@ -253,6 +253,27 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   `offhand`, farming filled `SEED`. **Lesson: an enum member with no data behind it is
   a promise the code is making and not keeping. Worth grepping for periodically.**
 
+## Boot refactor 2026-08-17
+- **[arch] I recreated the bug I was removing, one layer down** — the refactor exists
+  to stop a system being used before construction, and my first version published all
+  25 fields in one block at the end of boot. `new InputController(...)` synchronously
+  invokes its own `getFollowTarget`, which reaches `this.heroWorldPos()` and reads
+  `this.state` — unassigned at that moment. Smoke went 2/5 with a stack trace pointing
+  straight at it. **Lesson: "assign everything at the end" assumes construction is
+  side-effect free. A constructor that calls back into its owner breaks that
+  assumption, and the fix is to keep the instance in step with construction rather
+  than to batch it.**
+- **[qc] The net built in Phase D paid for itself on the very next change** — a
+  361-line rewrite of the file that runs the whole game, and the failure was reported
+  in seconds with a stack trace, not discovered by a player. Worth remembering next
+  time a test harness looks like overhead.
+- **[process] The deferral was right, and so was doing it later** — I declined this
+  refactor in Phase D because the payoff was moving detection from an audit script to
+  the compiler, and the risk was a large diff in main.ts with nothing watching. Once
+  smoke + visual + a 52-check audit existed, the same diff was routine. **Lesson: the
+  answer to "is this refactor worth the risk" changes when the safety net changes.
+  Revisit deferrals after the tooling improves, not on a schedule.**
+
 ## Open threads (not yet filed as bugs)
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.

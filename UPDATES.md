@@ -6,6 +6,34 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · The boot refactor — the compiler guards boot() now
+
+- **`boot()` builds the system graph as `const` locals**, publishing each to the
+  instance (`this.ui = ui;`) the moment its statement completes. 25 systems, 212
+  `this.X` references rewritten across a 361-line method.
+- **The point is the temporal dead zone.** Re-injecting the exact bug that shipped —
+  `ui.attachQuestJournal(...)` sitting above `const ui = new UI(...)` — now produces
+  `TS2448 Block-scoped variable 'ui' used before its declaration`. Before the
+  refactor the compiler emitted nothing, because `ui!: UI` told it to trust the
+  field. The `!` assertions remain (they have to, being assigned in an async method)
+  but they can no longer hide anything: nothing in boot reads a system back off
+  `this`.
+- **Publishing per-statement is load-bearing, and I got it wrong first.** My initial
+  version published all 25 fields in one block at the end. That broke the opening
+  frame, because `new InputController(...)` synchronously calls its own
+  `getFollowTarget`, which reaches `this.heroWorldPos()` and reads `this.state` —
+  still unassigned. **The smoke test caught it at 2/5** with a stack trace straight to
+  `heroWorldPos`. This is precisely the net Phase D was built to provide, doing its
+  job on the very next refactor.
+- **Three new audit checks** assert the shape so the compiler cannot be sidelined
+  again: systems are built as locals rather than onto `this`; systems are read through
+  locals, never off `this`; every local system is published. Each verified by
+  injecting its own regression and watching it fail.
+- Behaviour is unchanged: 52/52 UI audit · 184/184 QC · 25/25 rig · 5/5 smoke ·
+  visual baseline **0.00% drift**.
+
+---
+
 ## 2026-08 · Phase E complete — clue scrolls, and the offhand slot finally has items
 
 - **Clue scrolls.** A multi-step treasure hunt. Reading a scroll consumes it and

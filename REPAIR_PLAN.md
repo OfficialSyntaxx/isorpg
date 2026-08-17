@@ -67,7 +67,7 @@ existing players keep the actions they actually performed. `selectWeapon()` in
 ## Phase D — Release confidence
 1. CI: build + test + smoke on every push, with a browser driver so smoke doesn't skip. ✅
 2. Visual regression on the opening frame (would have caught both Phase A defects). ✅
-3. Close the definite-assignment hole — `ui!: UI` is why the compiler stayed silent. ⚠️ gated, not removed
+3. Close the definite-assignment hole — `ui!: UI` is why the compiler stayed silent. ✅
 
 Shipped: `.github/workflows/ci.yml` runs build + audit + QC + rig + wiki + smoke +
 visual regression on every push and PR, installing Chromium so nothing skips, and
@@ -78,16 +78,20 @@ toasts, pins animation time and draws one frame without ever starting the loop.
 Measured: 0.00% drift across repeated runs; 73% on a camera that stops following the
 hero (Phase A defect #2), 7.3% on a 20% tree-scale change.
 
-**On item 3.** The `!` assertions are still there. Removing them means threading 196
-`this.X` references through locals inside a 302-line `boot()`, in the one file that
-runs the whole game — a large diff whose payoff is compile-time detection of a bug
-class that `audit-ui.cjs` check 7 already fails the build on. That check is verified
-against the original defect and is general: injecting a premature use of `ui`,
-`dungeon`, `labour` or `mapSys` each produces
-`FAIL boot(): no field used before it is assigned [this.X used at boot+3, assigned at boot+N]`.
-So the bug cannot ship, but the compiler still is not the thing stopping it. Worth
-doing when `boot()` is next restructured for another reason; not worth the risk on
-its own.
+**Item 3, done properly.** Every system in `boot()` is now a `const` local, published
+to the instance as soon as its statement completes. Locals get TypeScript's temporal
+dead zone, so re-injecting the original bug —
+`ui.attachQuestJournal(...)` above `const ui = new UI(...)` — is now a **compile
+error**: `TS2448 Block-scoped variable 'ui' used before its declaration`. The `!`
+assertions remain (they must, given async construction) but can no longer hide
+anything, because nothing in boot reads a system back off `this`.
+
+Publishing has to be per-statement, not one block at the end: `new InputController`
+synchronously calls its own `getFollowTarget`, which reaches `this.heroWorldPos()` and
+reads `this.state`. The first attempt deferred all publishing and broke the opening
+frame — **the smoke test caught it, 2/5**. Three `audit-ui.cjs` checks now assert the
+shape (built as locals, never read off `this`, every local published), each verified
+by injecting its regression.
 
 ## Phase E — Unbuilt content
 

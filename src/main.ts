@@ -87,13 +87,36 @@ class Game {
   private fx: FxPiece[] = [];
   private shots: { mesh: THREE.Mesh; sx: number; sy: number; sz: number; tx: number; ty: number; tz: number; born: number; dur: number }[] = [];
 
+  /**
+   * Build the world, wire the systems, start the loop.
+   *
+   * Every system is a `const` local here, published to the instance
+   * (`this.ui = ui;`) as soon as its statement completes. That is deliberate and
+   * load-bearing: a local gets TypeScript's temporal dead zone, so using one
+   * before its declaration is a **compile error** (TS2448). The fields are still
+   * declared `ui!: UI` — they have to be, being assigned in an async method — but
+   * the `!` can no longer hide anything, because nothing in here reads a system
+   * back off `this`. This is the bug that shipped once:
+   * `this.ui.attachQuestJournal(...)` sat 40 lines above `this.ui = new UI(...)`,
+   * the compiler was told to trust it, and boot died before `engine.start()`.
+   *
+   * Publishing has to happen per-statement rather than in one block at the end:
+   * `new InputController(...)` synchronously calls its own `getFollowTarget`, which
+   * reaches `this.heroWorldPos()` and reads `this.state`. Deferring the publish
+   * broke the opening frame, and the smoke test caught it.
+   *
+   * `audit-ui.cjs` asserts all three properties so the compiler cannot be quietly
+   * sidelined again.
+   */
   async boot() {
     initToasts();
 
-    this.engine = new Engine(document.getElementById("game-canvas") as HTMLElement);
-    this.grid = new Grid(WORLD_SIZE, WORLD_SIZE);
-    this.hero = makeHero();
-    this.engine.scene.add(this.hero.group);
+    const engine = new Engine(document.getElementById("game-canvas") as HTMLElement);
+    this.engine = engine;
+    const grid = new Grid(WORLD_SIZE, WORLD_SIZE);
+    this.grid = grid;
+    const hero = makeHero();
+    engine.scene.add(hero.group);
 
     // The hero goes through the same loader as every other actor, so it gets an
     // AnimationMixer and a clip state machine. The bespoke GLTFLoader call here
@@ -104,7 +127,7 @@ class Game {
       .then((a) => {
         if (!a) return;
         try {
-          this.hero.enableModel(a.root);
+          hero.enableModel(a.root);
           this.heroActor = a;
         } catch { /* keep boxes */ }
       })
@@ -112,68 +135,81 @@ class Game {
 
     // P1 targeting ring (hidden until the player taps something).
     const ring: SelectionRing = makeSelectionRing();
-    this.ringGroup = ring.group;
-    this.ringUpdate = ring.update;
-    this.ringGroup.visible = false;
-    this.engine.scene.add(this.ringGroup);
+    this.hero = hero;
+    const ringGroup = ring.group;
+    this.ringGroup = ringGroup;
+    const ringUpdate = ring.update;
+    ringGroup.visible = false;
+    engine.scene.add(ringGroup);
 
     // P4b: boss slam telegraph ring (hidden until a slam winds up).
-    this.bossRing = makeBossRing();
-    this.engine.scene.add(this.bossRing);
+    this.ringUpdate = ringUpdate;
+    const bossRing = makeBossRing();
+    engine.scene.add(bossRing);
 
-    this.state = createFreshState(this.grid, DEFAULT_HERO_NAME, Math.floor(this.grid.width / 2), Math.floor(this.grid.height / 2));
+    this.bossRing = bossRing;
+    const state = createFreshState(grid, DEFAULT_HERO_NAME, Math.floor(grid.width / 2), Math.floor(grid.height / 2));
 
     // The UI is constructed BEFORE the systems that attach panels to it. It
     // needs only `state` plus callbacks that are invoked lazily on user action,
     // so it is safe this early — and the attach* calls below would throw on an
-    // undefined `this.ui` otherwise, aborting boot before engine.start().
-    this.ui = new UI(this.state, {
+    // undefined `ui` otherwise, aborting boot before engine.start().
+    this.state = state;
+    const ui = new UI(state, {
       onExport: () => this.doExport(),
       onImport: (j) => this.doImport(j),
       onDeleteSave: () => this.doDelete(),
     });
 
-    this.combat = new CombatSystem(this.state);
-    this.world = new WorldSystem(this.engine.scene, this.grid, this.combat);
-    this.npcs = new NpcSystem(this.engine.scene, this.grid, { getBuildings: () => this.state.town.buildings });
-    this.dungeon = new DungeonSystem(this.engine.scene, this.combat, this.grid, this.grid.width);
-    this.dungeon.buildMeshes();
-    this.quest = new QuestSystem(this.engine.scene, this.dungeon, this.grid, showToast, this.state.player.journal);
-    this.ui.attachQuestJournal(() => this.quest.journalSnapshot()); // P6.3
-    this.meta = new MetaSystem(this.state, (m) => { this.ui.popAchievement(m); sfx("victory"); });
-    this.ui.attachMeta(() => this.meta.snapshot()); // P6.4
-    this.shop = new ShopSystem(this.engine.scene, this.grid, this.state); // P7.1 / P7.8
-    this.ui.attachShop(
-      () => this.shop.snapshot(this.state.player.inventory),
+    this.ui = ui;
+    const combat = new CombatSystem(state);
+    this.combat = combat;
+    const world = new WorldSystem(engine.scene, grid, combat);
+    this.world = world;
+    const npcs = new NpcSystem(engine.scene, grid, { getBuildings: () => state.town.buildings });
+    this.npcs = npcs;
+    const dungeon = new DungeonSystem(engine.scene, combat, grid, grid.width);
+    dungeon.buildMeshes();
+    this.dungeon = dungeon;
+    const quest = new QuestSystem(engine.scene, dungeon, grid, showToast, state.player.journal);
+    ui.attachQuestJournal(() => quest.journalSnapshot()); // P6.3
+    this.quest = quest;
+    const meta = new MetaSystem(state, (m) => { ui.popAchievement(m); sfx("victory"); });
+    ui.attachMeta(() => meta.snapshot()); // P6.4
+    this.meta = meta;
+    const shop = new ShopSystem(engine.scene, grid, state); // P7.1 / P7.8
+    ui.attachShop(
+      () => shop.snapshot(state.player.inventory),
       (id) => {
-        const qty = countItem(this.state.player.inventory, id);
-        const p = this.shop.sellItem(this.state.player.inventory, id);
-        if (p > 0) { showToast(`Sold for 🪙${p}`, "success", 1400); this.meta.bump("shop_sold", qty); this.meta.bump("shop_sold_value", p); sfx("coin"); }
+        const qty = countItem(state.player.inventory, id);
+        const p = shop.sellItem(state.player.inventory, id);
+        if (p > 0) { showToast(`Sold for 🪙${p}`, "success", 1400); meta.bump("shop_sold", qty); meta.bump("shop_sold_value", p); sfx("coin"); }
         return p > 0;
       },
       (id) => {
-        const ok = this.shop.buyItem(this.state.player.inventory, id);
-        if (ok) this.meta.bump("shop_bought");
+        const ok = shop.buyItem(state.player.inventory, id);
+        if (ok) meta.bump("shop_bought");
         if (ok) sfx("coin");
         showToast(ok ? "Purchase complete." : "Not enough coins.", ok ? "success" : "error", 1400);
         return ok;
       }
     );
-    this.labour = new LabourSystem(this.state, () =>
-      this.npcs.entities.filter((e) => e.def.kind === "villager").map((e) => ({ id: e.def.id, name: e.def.name }))
+    this.shop = shop;
+    const labour = new LabourSystem(state, () =>
+      npcs.entities.filter((e) => e.def.kind === "villager").map((e) => ({ id: e.def.id, name: e.def.name }))
     );
-    this.ui.attachVillage(
-      () => this.labour.snapshot(),
+    ui.attachVillage(
+      () => labour.snapshot(),
       (id, job) => {
-        this.labour.assign(id, job);
-        if (job !== "idle") this.meta.bump("labour_assigns");
+        labour.assign(id, job);
+        if (job !== "idle") meta.bump("labour_assigns");
         showToast(job === "idle" ? "The villager stands down." : "The villager takes the task.", "info", 1300);
         return true;
       },
       () => {
-        const c = this.labour.claim(this.state.player.inventory);
+        const c = labour.claim(state.player.inventory);
         if (c.length) {
-          this.meta.bump("labour_collected", c.reduce((a, x) => a + x.qty, 0));
+          meta.bump("labour_collected", c.reduce((a, x) => a + x.qty, 0));
           sfx("coin");
           showToast(`Collected: ${c.map((x) => `${ITEM_NAMES[x.itemId]?.name ?? x.itemId} ×${x.qty}`).join(", ")}`, "success", 2800);
         }
@@ -181,11 +217,12 @@ class Game {
       }
     );
     // Clue hunts. Constructed before MapSystem so the dig-site marker can read it.
-    this.clues = new ClueSystem(this.state, this.grid);
-    this.ui.attachClues(
-      () => this.clues.snapshot(),
+    this.labour = labour;
+    const clues = new ClueSystem(state, grid);
+    ui.attachClues(
+      () => clues.snapshot(),
       (itemId) => {
-        const r = this.clues.read(itemId);
+        const r = clues.read(itemId);
         if (r.ok) {
           sfx("accept_quest");
           showToast(`The scroll crumbles. ${r.hint}`, "success", 4200);
@@ -198,17 +235,18 @@ class Game {
           no_sites: "The scroll's marks make no sense here.",
         }[r.reason], "error", 2200);
       },
-      () => { if (this.clues.abandon()) showToast("You let the trail go cold.", "info", 1600); }
+      () => { if (clues.abandon()) showToast("You let the trail go cold.", "info", 1600); }
     );
 
     // Farming. Beds come from Farm Plot levels, so BuildSystem stays the single
     // authority on what the settlement has — but it is constructed below, hence
     // the lazy provider rather than a value.
-    this.farm = new FarmSystem(this.state, () => this.build?.levels("FARM_PLOT") ?? 0);
-    this.ui.attachFarm(
-      () => this.farm.snapshot(),
+    this.clues = clues;
+    const farm = new FarmSystem(state, () => build?.levels("FARM_PLOT") ?? 0);
+    ui.attachFarm(
+      () => farm.snapshot(),
       (seedId) => {
-        const r = this.farm.plant(seedId);
+        const r = farm.plant(seedId);
         if (r.ok) { sfx("ui_click"); showToast(`Sown in bed ${r.bed + 1}.`, "success", 1400); return; }
         showToast({
           no_bed: "Every bed is already sown.",
@@ -218,7 +256,7 @@ class Game {
         }[r.reason], "error", 1800);
       },
       (bed) => {
-        const r = this.farm.harvest(bed);
+        const r = farm.harvest(bed);
         if (r.ok) {
           sfx("pickup");
           showToast(`+${r.amount} ${ITEM_NAMES[r.itemId]?.name ?? r.itemId} · +${r.xp} Farming XP`, "success", 1900);
@@ -231,145 +269,153 @@ class Game {
         }[r.reason], "error", 1800);
       },
       () => {
-        const got = this.farm.harvestAll();
+        const got = farm.harvestAll();
         if (!got.length) { showToast("Nothing is ripe yet.", "info", 1400); return; }
         sfx("pickup");
         showToast(`Harvested: ${got.map((x) => `${ITEM_NAMES[x.itemId]?.name ?? x.itemId} ×${x.amount}`).join(", ")}`, "success", 2800);
       }
     );
 
-    this.mapSys = new MapSystem(
-      this.grid.width,
-      this.dungeon,
-      this.quest,
-      this.state.player.map,
+    this.farm = farm;
+    const mapSys = new MapSystem(
+      grid.width,
+      dungeon,
+      quest,
+      state.player.map,
       () => {
         // P6b: the boss waypoint tracks the Forest Ogre's lair (its home tile).
-        for (const mm of this.combat.registry.values()) {
+        for (const mm of combat.registry.values()) {
           if (mm.def.id === "forest_ogre") return { x: mm.home.x, y: mm.home.y };
         }
         return null;
       },
-      () => this.clues.currentSite()
+      () => clues.currentSite()
     );
-    this.ui.attachMap(
-      () => this.mapSys.snapshot(this.state.player.pos.gx, this.state.player.pos.gy),
+    ui.attachMap(
+      () => mapSys.snapshot(state.player.pos.gx, state.player.pos.gy),
       (id) => this.doFastTravel(id)
     );
-    this.movement = new MovementSystem(this.state.player.pos, this.hero);
-    this.skill = new SkillSystem(this.state, this.world.consume.bind(this.world));
-    this.build = new BuildSystem(this.engine.scene, this.grid, this.state);
-    this.craft = new CraftingSystem(this.state, this.build.hasBuilding.bind(this.build));
-    this.save = new SaveSystem(this.state);
-    this.save.setOfflineCapProvider(() => this.build.offlineCapHours);
-    this.ui.attachSystems(this.craft, this.build);
+    this.mapSys = mapSys;
+    const movement = new MovementSystem(state.player.pos, hero);
+    this.movement = movement;
+    const skill = new SkillSystem(state, world.consume.bind(world));
+    this.skill = skill;
+    const build = new BuildSystem(engine.scene, grid, state);
+    this.build = build;
+    const craft = new CraftingSystem(state, build.hasBuilding.bind(build));
+    this.craft = craft;
+    const save = new SaveSystem(state);
+    save.setOfflineCapProvider(() => build.offlineCapHours);
+    ui.attachSystems(craft, build);
 
     // Load exactly once. A second load() re-applied the payload over the live
     // state, discarding the first load's offline gains and recomputing the same
     // idle window.
-    const resumed = await this.save.load();
-    this.build.rehydrate();
+    const resumed = await save.load();
+    build.rehydrate();
 
     // Snap hero to town center (fresh) / current tile (saved)
-    const { cx, cy } = adjustedStart(this.state, this.grid);
-    this.state.player.pos.gx = cx;
-    this.state.player.pos.gy = cy;
-    this.state.player.pos.wx = cx;
-    this.state.player.pos.wz = cy;
-    this.hero.group.position.set(cx, 0, cy);
+    const { cx, cy } = adjustedStart(state, grid);
+    state.player.pos.gx = cx;
+    state.player.pos.gy = cy;
+    state.player.pos.wx = cx;
+    state.player.pos.wz = cy;
+    hero.group.position.set(cx, 0, cy);
 
     // Input
-    this.input = new InputController(this.engine, this.grid, {
+    this.save = save;
+    const input = new InputController(engine, grid, {
       onTileTap: (x, y) => this.onTileTap(x, y),
       getFollowTarget: () => this.heroWorldPos(),
     });
-    this.input.recentre();
+    this.input = input;
+    input.recentre();
 
     // Systems callback wiring
-    this.movement.setCallbacks({ onArrive: (x, y) => this.onArrive(x, y) });
-    this.skill.setCallbacks({
+    movement.setCallbacks({ onArrive: (x, y) => this.onArrive(x, y) });
+    skill.setCallbacks({
       onGather: (e) => {
         this.activeSkill = e.node.def.skill;
-        this.ui.flashGather(nameOf(e.itemId), e.amount, e.doubled);
+        ui.flashGather(nameOf(e.itemId), e.amount, e.doubled);
         const s = e.node.def.skill ?? "";
         sfx(s.includes("fish") ? "fish" : s.includes("mine") ? "mine" : "chop");
            sfx("pickup");
       },
       onActionStart: (node) => {
         this.activeSkill = node.def.skill;
-        this.hero.setAction(animFor(node.type));
+        hero.setAction(animFor(node.type));
         this.heroActor?.play("gather");
       },
       onActionEnd: (node, reason) => {
         if (reason === "level_shortfall") {
           const sk = node.def.skill;
-          const have = levelFromXp(this.state.player.skills[sk].xp);
+          const have = levelFromXp(state.player.skills[sk].xp);
           const label = NODE_NAMES[node.def.masteryKey] ?? SKILLS[sk].name;
           showToast(`${label} needs ${SKILLS[sk].name} ${node.def.levelReq} (you have ${have}) — chop a starter tree near town first`, "error");
         } else if (reason === "tool_shortfall") {
           const sk = node.def.skill;
-          const have = getToolTier(this.state.player.inventory, sk);
+          const have = getToolTier(state.player.inventory, sk);
           const label = NODE_NAMES[node.def.masteryKey] ?? SKILLS[sk].name;
           showToast(`${label} needs a tier ${node.def.toolTier ?? 1} ${TOOL_NAMES[sk] ?? "tool"} (you own tier ${have || "none"})`, "error");
         } else if (reason === "inventory_full") {
           showToast("Your pouch is full", "error");
         }
-        this.hero.setAction("idle");
+        hero.setAction("idle");
         if (this.pendingNode === node) this.pendingNode = null;
       },
     });
 
     // Combat events → HUD
-    this.combat.setCallbacks({
-      onPlayerHit: (m, dmg) => { this.ui.floatText(`${dmg}`, "dmg"); sfx("hit"); },
+    combat.setCallbacks({
+      onPlayerHit: (m, dmg) => { ui.floatText(`${dmg}`, "dmg"); sfx("hit"); },
       onHurtByMonster: (d) => {
-        this.ui.setPlayerHp(this.state.player.health.hp, this.state.player.health.maxHp);
+        ui.setPlayerHp(state.player.health.hp, state.player.health.maxHp);
         this.heroFlashUntil = Date.now() + 250;
-        this.engine.addShake(0.4); // P4b: camera kick on hits
+        engine.addShake(0.4); // P4b: camera kick on hits
         sfx("hurt");
       },
       onDeath: () => {
         // P5: dying underground still respawns in town — but exit the dungeon
         // first so the town-centre teleport lands on the surface.
-        if (this.dungeon.active) this.leaveDungeon();
+        if (dungeon.active) this.leaveDungeon();
         showToast("💀 You died… respawned in town.");
       },
 onKill: (m, drops, kc) => {
             if (m.def.id === "giant_rat" || m.def.id === "cave_bat") sfx("monster_squeak");
           // P6: slaying the Cave Brute completes the dungeon onboarding quest.
-if (m.def.id === "cave_brute" && this.dungeon.active) {
-          this.quest.notifyBruteDown(this.state.player.inventory);
-          this.mapSys.unlockFastTravel(); // P6: beating the boss opens fast travel
+if (m.def.id === "cave_brute" && dungeon.active) {
+          quest.notifyBruteDown(state.player.inventory);
+          mapSys.unlockFastTravel(); // P6: beating the boss opens fast travel
         }
         // P6.3: the surveyor's errand — slaying the Forest Ogre closes the quest.
         if (m.def.id === "forest_ogre") {
-          this.quest.notifyOgreSlain(this.state.player.inventory);
+          quest.notifyOgreSlain(state.player.inventory);
         }
-        this.ui.setCombat(null, 0, 0);
+        ui.setCombat(null, 0, 0);
         showToast(`⚔️ ${m.def.name} down! (+${kc} KC)`);
         if (drops.length) showToast(`Loot: ${drops.join(", ")}`, "info", 2000);
-        this.engine.addShake(0.35); // P4b: kill thump + burst
+        engine.addShake(0.35); // P4b: kill thump + burst
         // P5.3: bursts go to world space — offset inside the dungeon.
-        const ox = this.dungeon.active ? DUNGEON_ORIGIN.x : 0;
-        const oz = this.dungeon.active ? DUNGEON_ORIGIN.z : 0;
-        this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 0.6, m.tile.y + oz, "#c0392b"));
-        if (m.def.boss) this.fx.push(...spawnBurst(this.engine.scene, m.tile.x + ox, 1.0, m.tile.y + oz, "#ffd76a", 18));
+        const ox = dungeon.active ? DUNGEON_ORIGIN.x : 0;
+        const oz = dungeon.active ? DUNGEON_ORIGIN.z : 0;
+        this.fx.push(...spawnBurst(engine.scene, m.tile.x + ox, 0.6, m.tile.y + oz, "#c0392b"));
+        if (m.def.boss) this.fx.push(...spawnBurst(engine.scene, m.tile.x + ox, 1.0, m.tile.y + oz, "#ffd76a", 18));
       },
-      onAutoEat: (food, healed) => { this.ui.floatText(`+${healed}`, "heal"); sfx(food === "combat_potion" ? "drink" : "eat"); },
-      onPet: (itemId) => this.ui.floatText("🐾 pet!", "pet"),
+      onAutoEat: (food, healed) => { ui.floatText(`+${healed}`, "heal"); sfx(food === "combat_potion" ? "drink" : "eat"); },
+      onPet: (itemId) => ui.floatText("🐾 pet!", "pet"),
       // P4b: boss telegraph ring follows the slam target, then clears.
       onBossTelegraph: (tile) => {
-        if (!tile) { this.bossRing.visible = false; return; }
+        if (!tile) { bossRing.visible = false; return; }
         // P5.3: inside the dungeon the ring must sit at +DUNGEON_ORIGIN (world).
-        const ox = this.dungeon.active ? DUNGEON_ORIGIN.x : 0;
-        const oz = this.dungeon.active ? DUNGEON_ORIGIN.z : 0;
-        this.bossRing.position.set(tile.x + ox, 0.05, tile.y + oz);
+        const ox = dungeon.active ? DUNGEON_ORIGIN.x : 0;
+        const oz = dungeon.active ? DUNGEON_ORIGIN.z : 0;
+        bossRing.position.set(tile.x + ox, 0.05, tile.y + oz);
         sfx("boss_slam");
-        this.bossRing.visible = true;
+        bossRing.visible = true;
       },
       // P4c: ranged shots — fire a visible arrow at the struck monster.
       onPlayerShot: (toX, toY) => {
-        const p = this.state.player.pos;
+        const p = state.player.pos;
         const dir = Math.atan2(toX - p.gx, toY - p.gy);
         const mesh = new THREE.Mesh(
           new THREE.ConeGeometry(0.045, 0.3, 6),
@@ -377,23 +423,23 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
         );
         mesh.rotation.z = Math.PI / 2;
         mesh.rotation.y = -dir;
-        this.engine.scene.add(mesh);
+        engine.scene.add(mesh);
         this.shots.push({ mesh, sx: p.gx, sy: 1.0, sz: p.gy, tx: toX, ty: 0.9, tz: toY, born: performance.now(), dur: 0.26 });
       },
-      onLevelUp: (skill, lvl) => { this.ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"); sfx("levelup"); },
+      onLevelUp: (skill, lvl) => { ui.floatText(`L${lvl} ${SKILLS[skill].short}`, "gain"); sfx("levelup"); },
     });
 
     // Crafting (Cooking / Smithing / Carpentry) events → HUD
-    this.craft.setCallbacks({
-      onStart: (r) => { this.skill.interrupt(); this.activeSkill = r.skill; this.hero.setAction("chop"); this.heroActor?.play("gather"); },
+    craft.setCallbacks({
+      onStart: (r) => { skill.interrupt(); this.activeSkill = r.skill; hero.setAction("chop"); this.heroActor?.play("gather"); },
       onCraft: (e) => {
         this.activeSkill = e.recipe.skill;
         sfx(e.recipe.skill === "cooking" ? "craft_cook" : e.recipe.skill === "smithing" ? "craft_smelt" : "craft_carpentry");
         if (e.burned) showToast(`Burnt the ${ITEM_NAMES[e.recipe.inputs[0]?.itemId]?.name ?? "batch"}…`, "error", 1200);
-        else this.ui.flashGather(nameOf(e.recipe.output.itemId), e.amount, e.preserved);
+        else ui.flashGather(nameOf(e.recipe.output.itemId), e.amount, e.preserved);
       },
       onEnd: (r, reason) => {
-        this.hero.setAction("idle");
+        hero.setAction("idle");
         if (!r) return;
         if (reason === "level_shortfall") showToast(`Need ${r.levelReq} ${SKILLS[r.skill].name}`, "error");
         else if (reason === "missing_materials") showToast("Out of materials", "error");
@@ -403,45 +449,45 @@ if (m.def.id === "cave_brute" && this.dungeon.active) {
     });
 
     // Settlement building events → HUD
-    this.build.setCallbacks({
-      onPlacingChanged: (type) => this.ui.setPlacing(type),
+    build.setCallbacks({
+      onPlacingChanged: (type) => ui.setPlacing(type),
       onDenied: (_reason, msg) => showToast(msg, "error"),
       onPlaced: (b) => {
         showToast(`${BUILDINGS[b.type].icon} ${BUILDINGS[b.type].name} built!`, "success");
         // P3.4: a nearby villager comments and walks over to inspect it.
-        const comment = this.npcs.onBuildingPlaced(b.type, b.x, b.y);
+        const comment = npcs.onBuildingPlaced(b.type, b.x, b.y);
         if (comment) setTimeout(() => showToast(comment, "info", 3800), 500);
       },
     });
 
     // Engine hooks
-    this.engine.onTick((idx, dt) => this.tick(idx, dt));
-    this.engine.onFrame((dt) => this.frame(dt));
+    engine.onTick((idx, dt) => this.tick(idx, dt));
+    engine.onFrame((dt) => this.frame(dt));
 
     // Autosave on tab hide
-    window.addEventListener("pagehide", () => this.save.forceSave());
+    window.addEventListener("pagehide", () => save.forceSave());
 
-    this.engine.start();
+    engine.start();
     // The render loop is live: from here a subsystem throw is recoverable, so
     // guarded() switches from "fatal + rethrow" to "log, toast, carry on".
     markBooted();
 
     // Offline progression / new game — reported from the single load above.
     if (resumed.summary?.lines.length) {
-      this.ui.showOffline(resumed.summary.awaySeconds, resumed.summary.capApplied, resumed.summary.lines, resumed.summary.xpEarned);
+      ui.showOffline(resumed.summary.awaySeconds, resumed.summary.capApplied, resumed.summary.lines, resumed.summary.xpEarned);
     } else if (resumed.recoveredFrom === "fresh" || resumed.recoveredFrom === "indexeddb") {
       if (resumed.recoveredFrom === "fresh") {
         // Starter stash so a brand-new hero has something to cook/build with.
-        addItem(this.state.player.inventory, "normal_log", 5);
-        addItem(this.state.player.inventory, "raw_shrimp", 2);
-        addItem(this.state.player.inventory, "coins", 5);
+        addItem(state.player.inventory, "normal_log", 5);
+        addItem(state.player.inventory, "raw_shrimp", 2);
+        addItem(state.player.inventory, "coins", 5);
       }
       showToast("Welcome to Isoperia — tap a tree to begin gathering!", "info", 4200);
     }
     // Every load: grant any missing starter tool (covers old saves created
     // before the kit existed), so gathering always works.
     {
-      const inv = this.state.player.inventory;
+      const inv = state.player.inventory;
       if (getToolTier(inv, "woodcutting") === 0) addItem(inv, "bronze_axe", 1);
       if (getToolTier(inv, "mining") === 0) addItem(inv, "bronze_pickaxe", 1);
       if (getToolTier(inv, "fishing") === 0) addItem(inv, "small_net", 1);
