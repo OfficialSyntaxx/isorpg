@@ -6,6 +6,52 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase C — storage invariant, shared animation clips, the wiki
+
+- **The storage cap is now an invariant, and it means bulk resources.** `addItem`
+  clamps to `storageCap` itself and returns what actually fit. The cap used to be
+  advisory — some call sites checked it by hand, some didn't, so combat drops
+  slipped past it and offline gathering clamped each skill to the *whole* cap
+  independently (three gatherers banked 3× the cap). Following the GDD's
+  Storehouse wording, the cap now covers bulk resources only: coins, keys, quest
+  tokens, pets, gear and tools are carried regardless, so a bag full of logs can
+  never block income, a quest reward or a rare drop. `SkillSystem`,
+  `CraftingSystem` and `BuildSystem` route through `storedAmount`/`isFull`
+  instead of open-coding the same reduce three ways. 9 new QC checks (**79/79**).
+- **Animations ship as data, not as GLBs.** The rigging provider bakes each
+  animation into a complete GLB — mesh, skeleton, textures — ~770 kB for one walk
+  cycle on a mesh we already have. Every character it rigs shares the same
+  24-bone skeleton (`skel b6addeab77c8` across villager, forest_ogre,
+  cave_brute), so the motion is the only new information in that file. Clips now
+  ship as `.clip.json`: a header plus a base64 Int16 quaternion table at a
+  uniform sample rate, rotation only — which is exactly what lets one clip drive
+  every rig. **15 kB per clip, reusable across actors**, instead of 770 kB per
+  character per motion. Villagers gained a walk cycle; the ogre and brute gained
+  an idle. `verify-rig` now checks table size, unit-length quaternions and bone
+  coverage against every rigged skeleton (**13/13**).
+- **`WIKI.md` — the game's reference, generated from the game.** 647 lines
+  covering skills, the XP curve, gathering, weapons, armour, every monster's drop
+  table, recipes, buildings, food, villagers, quests, the full items index,
+  achievements and a hand-written Guides section. `scripts/gen-wiki.cjs` compiles
+  `src/data` and reads the real tables — drop chances are *computed* from the
+  weight tables, not transcribed — and it runs as part of `npm test`, so a data
+  change with a stale wiki fails the build.
+- **NPC and quest data left the systems that animate them.** New
+  `src/data/Npcs.ts` (villagers, critters, labour specializations, veteran tiers)
+  and `src/data/Quests.ts` (titles, givers, per-stage objectives, reward tables).
+  `QuestSystem` now rolls rewards *from* that table and builds its journal rows
+  from it, so a reward can no longer be described one way in the journal and paid
+  another.
+- `smoke.cjs` finds a pre-installed Chromium under `PLAYWRIGHT_BROWSERS_PATH`, so
+  the boot smoke test runs without a driver download (**5/5**).
+- Commits `1f0ef14`, `7f6f738`, `86fe1e3`.
+
+**Still outstanding:** `hero.glb` has no skeleton — it is the original static
+mesh — so the hero cannot animate yet. Its rigged mesh is the one asset the game
+is still waiting on; the idle and walk clips for it are already shipped.
+
+---
+
 ## 2026-08 · Phase B — animation states wired, generated model manifest
 
 - **The state machine now has callers.** `spawnActor().play(state)` is driven from

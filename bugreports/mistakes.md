@@ -127,12 +127,34 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   the model set from 21.5 MB to 1.53 MB with no visible change.
   **Lesson: check where the bytes actually are before optimising geometry.**
 
+## Phase C 2026-08-17 (storage, clips, wiki)
+- **[design] An invariant enforced in the wrong scope breaks the game instead of
+  fixing it** — moving the storage cap into `addItem()` was right, but enforcing
+  it over *every* item immediately broke three Town Hall tests: the hall's tax
+  coins were blocked once the bag was full of logs. The GDD had said so all along
+  ("bulk resource storage caps"); I had read the cap as "everything". Coins,
+  keys, quest tokens, pets, gear and tools are now exempt.
+  **Lesson: when tightening a rule breaks existing tests, the first question is
+  whether the rule's *scope* is wrong, not whether the tests are. Loosening the
+  tests would have shipped a real regression — a full bag silently eating quest
+  rewards — and left it invisible.**
+- **[process] Two of six base64 chunks arrived corrupted, silently** — moving a
+  binary through the transcript byte-for-byte failed on ~2 characters out of
+  14,172, and gzip's CRC was the only thing that caught it. Splitting the payload
+  and comparing per-chunk md5 against the source located both bad chunks in one
+  round. **Lesson: for any hand-carried binary, ship a checksum with it and
+  verify per chunk — "the length matches" proves nothing.**
+- **[assets] The cheapest asset is the one you don't ship** — the rigging service
+  returns a full ~770 kB GLB per animation, but every character shares one
+  skeleton, so the *motion* is the only new data: 15 kB as a quaternion table,
+  and reusable across every actor instead of bought per character.
+  **Lesson: before treating a vendor's output format as the unit of delivery,
+  ask what fraction of it is actually new information.**
+
 ## Open threads (not yet filed as bugs)
-- **[save] Offline storage cap is per-skill, not global** — `computeOffline()`
-  caps each skill at `Math.min(actions * yield, storageCap)` independently, so
-  three gathering skills can each fill the whole cap (observed: 500 oak + 500
-  copper + 500 shrimp against a 500 cap). `addItem()` never enforces the cap
-  itself. Worth making the cap an invariant inside `addItem()`.
+- **[assets] `hero.glb` has no skeleton** — it is the original static mesh, so
+  the hero cannot animate. Its idle and walk clips are already shipped and
+  verified; the rigged mesh is the one asset still outstanding.
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.
 - Market panel shows live prices but no trend arrows yet (cosmetic).
