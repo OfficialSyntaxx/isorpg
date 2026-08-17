@@ -159,11 +159,64 @@ export interface MonsterDef {
   slamChance?: number;
   /** P5.3: fixed slam damage if set (else the default 6–10 roll is used). */
   slamDmg?: number;
+  /** F.4: which affix scaled this *instance's* def, if any — the shared MONSTERS
+   *  entry is never mutated; a rolled monster carries its own scaled copy. */
+  affix?: AffixId;
   xp: { attack: number; strength: number; defense: number; hitpoints: number };
   main: DropEntry[];
   tertiary?: { itemId: string; chance: number; min: number; max: number }[];
   petTable?: { itemId: string; chance: number }[];
   respawnMs: number;
+}
+
+/**
+ * F.4: an occasional prefix on a common spawn — cheap variety across all ten
+ * non-boss monsters without new content. Bosses keep their fixed identity;
+ * they already have slam/enrage mechanics doing this job.
+ */
+export type AffixId = "hardened" | "swift" | "rich";
+
+export interface AffixDef {
+  id: AffixId;
+  label: string;
+  description: string;
+  /** Emissive tint applied to the monster's idle materials as a visual tell. */
+  tint: string;
+}
+
+export const AFFIXES: Record<AffixId, AffixDef> = {
+  hardened: { id: "hardened", label: "Hardened", description: "+50% HP, +30% max hit, +30% defense", tint: "#ff5a3a" },
+  swift: { id: "swift", label: "Swift", description: "~40% faster attacks, wider aggro range", tint: "#55d6ff" },
+  rich: { id: "rich", label: "Rich", description: "Double coin drops, doubled tertiary chance", tint: "#ffd75a" },
+};
+export const AFFIX_CHANCE = 0.12;
+
+/** Roll whether a freshly spawned monster gets an affix — null most of the time. */
+export function rollAffix(): AffixId | null {
+  if (Math.random() >= AFFIX_CHANCE) return null;
+  const ids = Object.keys(AFFIXES) as AffixId[];
+  return ids[Math.floor(Math.random() * ids.length)];
+}
+
+/**
+ * Scale a monster def for one rolled affix, producing a fresh per-instance
+ * copy — the shared MONSTERS table entry this came from is never touched, so
+ * an affixed spawn never leaks its stats onto every other monster of that type.
+ */
+export function applyAffix(def: MonsterDef, affix: AffixId): MonsterDef {
+  const named: MonsterDef = { ...def, name: `${AFFIXES[affix].label} ${def.name}`, affix };
+  switch (affix) {
+    case "hardened":
+      return { ...named, hp: Math.round(def.hp * 1.5), maxHit: Math.round(def.maxHit * 1.3), defenseRoll: Math.round(def.defenseRoll * 1.3) };
+    case "swift":
+      return { ...named, attackTick: Math.max(1, Math.round(def.attackTick * 0.6)), aggroRange: def.aggroRange + 2 };
+    case "rich":
+      return {
+        ...named,
+        main: def.main.map((d) => (d.itemId === "coins" ? { ...d, min: d.min * 2, max: d.max * 2 } : d)),
+        tertiary: def.tertiary?.map((t) => ({ ...t, chance: Math.min(1, t.chance * 2) })),
+      };
+  }
 }
 
 export const WEAPONS: Record<string, WeaponDef> = {

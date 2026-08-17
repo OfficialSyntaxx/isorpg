@@ -23,7 +23,7 @@ import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } fro
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from "../src/components/Skills";
 import { buildClip } from "../src/core/ClipLibrary";
-import { selectWeapon, WEAPONS, ATTACK_STYLES, DEFAULT_ATTACK_STYLE, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, WEAPON_SPECIALS, SPECIAL_MAX, SPECIAL_REGEN_PER_TICK, type BuffId } from "../src/data/Combat";
+import { selectWeapon, WEAPONS, ATTACK_STYLES, DEFAULT_ATTACK_STYLE, BUFFS, RESOLVE_MAX, RESOLVE_REGEN_PER_TICK, WEAPON_SPECIALS, SPECIAL_MAX, SPECIAL_REGEN_PER_TICK, AFFIXES, applyAffix, type BuffId } from "../src/data/Combat";
 import { RESOURCES } from "../src/data/Skills";
 import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
 import { DEFAULT_HERO_NAME, AUTO_EAT_STEPS, DEFAULT_AUTO_EAT_PCT } from "../src/state/GameState";
@@ -596,6 +596,60 @@ check("xp: level caps at 99, never above", levelFromXp(1e12) === 99);
   regenCombat.tick(600, Date.now());
   check("special: regains over time with no Campfire required",
     regenState.player.specialEnergy === 10 + SPECIAL_REGEN_PER_TICK, String(regenState.player.specialEnergy));
+}
+
+// [combat] F.4 monster affixes: an occasional Hardened/Swift/Rich prefix on a
+// common spawn, scaling stats or loot without touching the shared MONSTERS
+// table entry every other monster of that type reads from.
+{
+  const ids = Object.keys(AFFIXES);
+  check("affix: three distinct affixes, each with its own tint", ids.length === 3 &&
+    new Set(Object.values(AFFIXES).map((a: any) => a.tint)).size === 3);
+
+  const base = MONSTERS.goblin;
+  const hardened = applyAffix(base, "hardened");
+  check("affix: hardened scales hp/max hit/defense up and prefixes the name",
+    hardened.hp > base.hp && hardened.maxHit > base.maxHit && hardened.defenseRoll > base.defenseRoll &&
+    hardened.name === "Hardened Goblin", hardened.name);
+  check("affix: hardened never mutates the shared table entry",
+    MONSTERS.goblin === base && base.hp === 14, String(base.hp));
+
+  const swift = applyAffix(base, "swift");
+  check("affix: swift attacks faster and aggroes wider, HP untouched",
+    swift.attackTick < base.attackTick && swift.aggroRange > base.aggroRange && swift.hp === base.hp);
+
+  const rich = applyAffix(base, "rich");
+  const baseCoins = base.main.find((d) => d.itemId === "coins")!;
+  const richCoins = rich.main.find((d) => d.itemId === "coins")!;
+  check("affix: rich doubles coin drops, leaves combat stats alone",
+    richCoins.min === baseCoins.min * 2 && richCoins.max === baseCoins.max * 2 &&
+    rich.hp === base.hp && rich.maxHit === base.maxHit);
+  const baseTert = MONSTERS.skeleton.tertiary!.find((t) => t.itemId === "clue_hard")!;
+  const richSkeleton = applyAffix(MONSTERS.skeleton, "rich");
+  const richTert = richSkeleton.tertiary!.find((t) => t.itemId === "clue_hard")!;
+  check("affix: rich doubles tertiary chance too",
+    richTert.chance === baseTert.chance * 2, `${baseTert.chance} -> ${richTert.chance}`);
+
+  const oldRandom4 = Math.random;
+  Math.random = () => 0; // always rolls an affix (chance check) and always picks index 0
+  const affixed = spawnMonster("goblin", MONSTERS.goblin, 15, 15);
+  Math.random = oldRandom4;
+  check("affix: a rolled spawn carries the scaled def and a tint",
+    !!affixed.def.affix && affixed.def.id === "goblin" && !!affixed.affixTint,
+    `${affixed.def.affix} id=${affixed.def.id}`);
+  check("affix: the kill counter's key survives — def.id is never renamed",
+    affixed.def.id === "goblin");
+
+  Math.random = () => 0; // would roll an affix on a common spawn — bosses must refuse it
+  const boss = spawnMonster("forest_ogre", MONSTERS.forest_ogre, 16, 16);
+  Math.random = oldRandom4;
+  check("affix: bosses keep their fixed identity", !boss.def.affix && !boss.affixTint);
+
+  Math.random = () => 0.999; // above AFFIX_CHANCE — no roll
+  const plain = spawnMonster("goblin", MONSTERS.goblin, 17, 17);
+  Math.random = oldRandom4;
+  check("affix: an unaffixed spawn keeps the shared def, not a clone",
+    plain.def === MONSTERS.goblin);
 }
 
 // [hero] The player character is a named wizard, not "Hero".

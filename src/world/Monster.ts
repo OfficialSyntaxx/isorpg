@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import { ACTOR_HEIGHT, MONSTER_SCALE } from "../core/Scale";
 import type { MonsterDef } from "../data/Combat";
-import { MONSTER_STYLES } from "../data/Combat";
+import { MONSTER_STYLES, AFFIXES, rollAffix, applyAffix } from "../data/Combat";
 import { spawnActor, type AnimatedActor } from "../core/Model";
 
 /** Rigged bosses render their generated animated GLB over the box fallback. */
@@ -30,6 +30,9 @@ export interface MonsterCombat {
   actor?: AnimatedActor | null;
   /** Tile it occupied last tick — used to tell walking from standing. */
   lastTile?: { x: number; y: number };
+  /** F.4: idle emissive tint for a rolled affix — animateMonster applies it
+   *  whenever the monster isn't flashing or enraged (those still win). */
+  affixTint?: string;
 }
 
 const fistGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
@@ -95,12 +98,16 @@ export function buildMonsterMesh(id: string, seed: number): THREE.Group {
 
 export function spawnMonster(type: string, def: MonsterDef, gx: number, gy: number): MonsterCombat {
   const seed = gx * 31 + gy * 57 + 1000;
+  // F.4: bosses keep a fixed identity — only common spawns roll an affix.
+  const affix = def.boss ? null : rollAffix();
+  const effDef = affix ? applyAffix(def, affix) : def;
   const group = buildMonsterMesh(type, seed);
   group.position.set(gx, 0, gy);
 
   // Unique id so multiple monsters of one type can coexist in the registry.
   const id = `${type}_${gx}_${gy}`;
-  const out = buildMonster(id, def, gx, gy, seed, group);
+  const out = buildMonster(id, effDef, gx, gy, seed, group);
+  if (affix) out.affixTint = AFFIXES[affix].tint;
 
   // Rigged bosses: swap the placeholder boxes for the animated GLB when ready.
   // Built after `out` exists so the async handler can attach the actor to it.
@@ -173,6 +180,9 @@ export function animateMonster(m: MonsterCombat, now: number) {
     if (mm.isMesh && mm.material instanceof THREE.MeshStandardMaterial) {
       if (flash) { mm.material.emissive.set("#ff5a3a"); mm.material.emissiveIntensity = 1.6; }
       else if (enraged) { mm.material.emissive.set("#ff2a1a"); mm.material.emissiveIntensity = 0.3 + Math.abs(Math.sin(t * 8)) * 0.5; }
+      // F.4: an affixed monster keeps a faint, permanent tint the rest of the
+      // time — flash and enrage still take priority so they stay readable.
+      else if (m.affixTint) { mm.material.emissive.set(m.affixTint); mm.material.emissiveIntensity = 0.25; }
       else { mm.material.emissive.set("#000000"); mm.material.emissiveIntensity = 0; }
     }
   });

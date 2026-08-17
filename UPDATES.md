@@ -6,6 +6,45 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase F.4 — Monster affixes
+
+Cheap variety across all ten non-boss monsters, as the roadmap put it — no new
+content, just an occasional prefix on a spawn:
+
+- **Hardened** (12%/3 chance) — +50% HP, +30% max hit, +30% defense
+- **Swift** — attacks ~40% faster, wider aggro range
+- **Rich** — double coin drops, doubled tertiary-drop chance
+
+Rolled once per spawn (12% overall, evenly split three ways) inside
+`spawnMonster()` itself, so every spawner — the open world, both dungeon
+floors, the boss ladder — gets it for free with no call-site changes. Bosses
+are excluded; they already carry enrage/slam identity and stacking an affix
+on top felt like double-dipping rather than variety.
+
+The implementation leans on something already true of the codebase: combat,
+loot and XP all read from `monster.def.*`, and nothing else holds a second
+copy of those numbers. So an affix is just `applyAffix()` producing a *scaled
+copy* of the monster's def for that one spawn — the shared `MONSTERS` table
+entry every other instance of that type reads from is never touched — and
+every system that already reads `def.name` / `def.hp` / `def.main` etc.
+picks up the affix for free: kill toasts read "Hardened Goblin down!"
+without any UI change, and Rich's better loot shows up in the normal drop
+roll without a special case. No CombatSystem edit was needed at all.
+
+Visual tell: a faint permanent emissive tint (red/cyan/gold) on unaffixed —
+sorry, *affixed* — monsters, applied in `animateMonster()`'s idle branch so
+flash and enrage still take priority when they're active. Persistence-free —
+the affix lives on the def clone in memory, not in the save.
+
+10 new QC checks: affix data sanity, each affix's stat/loot math, proof the
+shared table entry is never mutated, a `def.id`-survives check (kill/collection
+counters key off `def.id`, not the affix-prefixed name), bosses refusing an
+affix even at a pinned 100% roll, and an unaffixed spawn keeping the exact
+same def reference rather than a needless clone.
+
+Gates: 236/236 QC, 5/5 smoke, visual baseline 0.00% drift, npm run audit
+0 bugs.
+
 ## 2026-08 · Phase F.3 — Weapon specials
 
 Every weapon differed from every other one by exactly two numbers — max hit
