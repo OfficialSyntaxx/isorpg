@@ -1108,21 +1108,45 @@ const toBase64 = (b: Uint8Array) => {
     [...(clip.tracks[1] as any).values].every((v, i) => close(v, i % 4 === 3 ? 1 : 0)));
 }
 
-// [items] H.1 icon atlas: itemIconHtml() falls back to the emoji until a real
-// icon file is registered — reversible by design, so this is a no-op check
-// today, but it pins the contract so a future ITEM_ICON_IMAGE_IDS entry can't
-// silently point at a file nobody sliced.
+// [items] H.1 icon atlas: itemIconHtml() prefers a real icon file over the
+// emoji, but only for ids in ITEM_ICON_IMAGE_IDS — unregistered ids still
+// get the exact emoji fallback, so the fallback path never rots even now
+// that every item has real art.
 {
   check("icons: every item has an emoji fallback", Object.keys(ITEMS).every((id) => itemIcon(id) !== "❔"), (() => {
     const missing = Object.keys(ITEMS).filter((id) => itemIcon(id) === "❔");
     return missing.join(",");
   })());
-  check("icons: with no registered image, itemIconHtml matches itemIcon exactly",
-    Object.keys(ITEMS).every((id) => itemIconHtml(id) === itemIcon(id)));
+  check("icons: every item is registered for a real icon",
+    Object.keys(ITEMS).every((id) => ITEM_ICON_IMAGE_IDS.has(id)),
+    Object.keys(ITEMS).filter((id) => !ITEM_ICON_IMAGE_IDS.has(id)).join(","));
   check("icons: every registered image id is a real item",
     [...ITEM_ICON_IMAGE_IDS].every((id) => id in ITEMS));
   check("icons: a registered id renders an <img>, not the emoji",
     [...ITEM_ICON_IMAGE_IDS].every((id) => itemIconHtml(id).startsWith(`<img class="item-icon-img" src="/icons/${id}.png"`)));
+  check("icons: a made-up id still falls back to the emoji contract",
+    itemIconHtml("not_a_real_item") === itemIcon("not_a_real_item"));
+
+  // The images are now real files, not just a plan — every registered id
+  // needs an actual, non-empty PNG on disk, or the <img> tag above 404s.
+  const iconsDir = path.join(__dirname, "..", "..", "public", "icons");
+  const missingFiles: string[] = [];
+  const emptyFiles: string[] = [];
+  for (const id of ITEM_ICON_IMAGE_IDS) {
+    const p = path.join(iconsDir, `${id}.png`);
+    if (!fs.existsSync(p)) { missingFiles.push(id); continue; }
+    if (fs.statSync(p).size === 0) emptyFiles.push(id);
+  }
+  check("icons: every registered id has a file on disk", missingFiles.length === 0, missingFiles.join(","));
+  check("icons: no icon file is empty", emptyFiles.length === 0, emptyFiles.join(","));
+  const pngHeader = [0x89, 0x50, 0x4e, 0x47];
+  const badHeader = [...ITEM_ICON_IMAGE_IDS].filter((id) => {
+    const p = path.join(iconsDir, `${id}.png`);
+    if (!fs.existsSync(p)) return false;
+    const buf: any = fs.readFileSync(p);
+    return !pngHeader.every((b, i) => buf[i] === b);
+  });
+  check("icons: every icon file is actually a PNG", badHeader.length === 0, badHeader.join(","));
 
   // The atlas manifests are the map slice-atlas.cjs will use once the sheets
   // exist. They're worth checking now, independent of the images: a manifest

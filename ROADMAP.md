@@ -1,15 +1,13 @@
 # Isoperia — Roadmap (Phases F onward)
 
-> Phases A–E, the boot refactor, and **Phase F (Combat depth) are shipped**;
-> `REPAIR_PLAN.md`/`UPDATES.md` hold that record. Approved execution order:
-> F → H.1–H.2 → G → H.5 → I. **H.1 (item icon atlas) is stuck on an
-> environment transfer blocker** — code/tooling shipped, generated art can't
-> reach the repo from this session (see H.1's `UPDATES.md` entry). Next real
-> step: **H.2** (sky regen) doesn't share that blocker since it's one image,
-> small enough to relay reliably with a checksum — try that path first if H.2
-> works, it's the fix for H.1 too.
+> Phases A–E, the boot refactor, **Phase F (Combat depth), and H.1 (item icon
+> atlas) are shipped**; `REPAIR_PLAN.md`/`UPDATES.md` hold that record.
+> Approved execution order: F → H.1–H.2 → G → H.5 → I. Next up: **H.2** (sky
+> regen) — a single image, and the user attaching files directly to the chat
+> turned out to route around the transfer blocker H.1 hit, so try that path
+> again first.
 >
-> Gates as of the last audit: 317/317 QC · 57/57 UI audit · 25/25 rig · 5/5 smoke ·
+> Gates as of the last audit: 321/321 QC · 57/57 UI audit · 25/25 rig · 5/5 smoke ·
 > visual baseline 0.00% drift · `npm run audit` 0 bugs.
 
 ## How to read this
@@ -88,14 +86,9 @@ biggest content hole.
 Ordered by visible-impact-per-credit. Every step is verified against the visual
 baseline before and after.
 
-1. **Item icon atlas** — ⏸ **infrastructure shipped, art blocked.** 4 sheets were
-   generated (~8 cr) and `scripts/slice-atlas.cjs` was written and verified, but
-   this session has no reliable way to move the generated images out of the
-   Higgsfield sandbox and into the repo (see `UPDATES.md`'s H.1 entry and
-   `bugreports/mistakes.md`). `itemIconHtml()`, the atlas manifests, and the CSS
-   are all live and tested — finishing this is one working transfer path plus
-   four `slice-atlas.cjs` runs away. **~2 cr more** (art already generated) ·
-   `S` remaining · risk LOW, still fully reversible: emoji stays the fallback.
+1. **Item icon atlas** — ✅ **shipped.** 4 sheets generated (~8 cr), sliced with
+   `scripts/slice-atlas.cjs`, all 62 items have real icons. Emoji is still the
+   fallback for anything unregistered, kept fully reversible by design.
 2. **Sky** — regenerate as a proper panorama and ship as JPEG. Replaces a 1.2 MB PNG
    with ~120 kB and stops it looking like a placeholder. **~1.25 cr** · `S`.
 3. **UI/brand pass** — a real logo, panel iconography, a title screen. **~5 cr** ·

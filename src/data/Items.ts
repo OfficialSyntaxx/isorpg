@@ -179,13 +179,33 @@ export function itemIcon(id: string): string {
 /**
  * Item ids with a real generated icon at `/icons/<id>.png` (Phase H.1: one
  * generated grid sheet per item group, sliced by `scripts/slice-atlas.cjs` —
- * see `assets/icon-atlas/README.md`). Empty until those sheets are actually
- * generated and sliced onto disk; everything meanwhile keeps rendering the
- * emoji above exactly as it always has. Deliberately reversible: emoji never
- * stops being a valid fallback, so a missing or bad icon file never breaks
- * the bag — it just falls back silently.
+ * see `assets/icon-atlas/README.md`). All 62 items are covered — `shrimp_food`
+ * shares `cooked_shrimp`'s file (a literal file copy, not just a lookup
+ * alias) since it's a legacy duplicate with no manifest cell of its own.
+ * Deliberately reversible: a bad or missing file just falls back to emoji,
+ * nothing breaks the bag.
  */
-export const ITEM_ICON_IMAGE_IDS: ReadonlySet<string> = new Set<string>([]);
+export const ITEM_ICON_IMAGE_IDS: ReadonlySet<string> = new Set<string>([
+  "normal_log", "oak_log", "willow_log",
+  "copper_ore", "tin_ore", "iron_ore", "coal",
+  "raw_shrimp", "raw_trout",
+  "bronze_bar", "iron_bar", "steel_bar",
+  "plank",
+  "bronze_axe", "iron_axe", "steel_axe",
+  "bronze_pickaxe", "iron_pickaxe", "steel_pickaxe",
+  "small_net", "fly_rod",
+  "potato_seed", "cabbage_seed", "redberry_seed",
+  "potato", "cabbage", "redberry", "baked_potato", "cabbage_stew",
+  "coins", "bones",
+  "raw_rat_meat", "cooked_shrimp", "shrimp_food", "cooked_trout", "cooked_rat_meat",
+  "combat_potion",
+  "bronze_dagger", "bronze_sword", "bronze_2h", "iron_sword", "steel_sword", "shortbow",
+  "clue_simple", "clue_hard", "wayfarers_lantern", "cartographers_tome",
+  "bronze_helm", "bronze_plate", "bronze_legs",
+  "iron_helm", "iron_plate", "iron_legs",
+  "goblin_key", "dungeon_key", "rat_bone", "loop_half_key", "zombie_flesh",
+  "pet_rat", "pet_goblin", "pet_skeleton", "pet_zombie",
+]);
 
 /**
  * The bag/panel icon slot's HTML: a real icon image where one exists,

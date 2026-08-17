@@ -6,6 +6,29 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase H.1 complete — the transfer blocker resolved itself
+
+The blocker below was environment-specific, not fundamental: the user attached
+the 4 generated sheets directly to the conversation, which reaches this
+session through the chat attachment path rather than the sandbox/proxy one —
+sidestepping every failure mode the previous entry documents. Matched each of
+the 4 uploaded PNGs to its manifest by eye (filenames don't reveal which is
+which; content does), ran `slice-atlas.cjs` for real this time, and spot-
+checked several output icons visually (coins, steel sword, zombie pet, cooked
+trout) before trusting the batch.
+
+All 62 items now have a real icon: `ITEM_ICON_IMAGE_IDS` went from empty to
+every item id, and `shrimp_food` got a literal file copy of `cooked_shrimp`'s
+icon (it was always going to share the art, per the atlas README — a copy is
+simpler than adding lookup indirection for one legacy duplicate). The QC
+block gained file-level checks that didn't make sense before there were
+files to check: every registered id has a non-empty PNG on disk, and every
+one of those PNGs actually starts with a PNG header rather than trusting the
+extension. ~514 KB total for 62 icons at 64×64.
+
+Gates: 321/321 QC, 5/5 smoke, visual baseline 0.00% drift, npm run audit
+0 bugs.
+
 ## 2026-08 · Phase H.1 — Icon atlas: infrastructure shipped, art blocked
 
 Generated 4 grid sheets (`nano_banana_2`, 4×4, 1:1, 2k, ~8 credits total)

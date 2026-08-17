@@ -25,6 +25,16 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   whatever real progress doesn't depend on it — here, the generation prompts,
   the manifests, and a slicing script verified against a synthetic image —
   not a corrupted asset that passes casual inspection.
+  **Resolution, next session:** the user attached the 4 sheets directly to
+  the conversation. That path reaches this session through chat attachments,
+  not the sandbox/proxy, so it hit none of the above failure modes — the
+  files decoded and sliced correctly on the first try. Filenames didn't
+  reveal which sheet was which (`IMG_1891`–`1894` in upload order, not
+  content order); matched each to its manifest by reading the image before
+  slicing, not by assuming the paste order held. **Lesson: when a transfer
+  path is blocked, the fix is sometimes a different path entirely, not a
+  cleverer retry of the same one — worth surfacing the blocker to the user
+  rather than assuming it's unsolvable.**
 
 ## QC sprint 2026-08-16
 - **[save] Import sanitizer dropped P6–P8 fields** — `Sanitizer.ts` whitelisted
