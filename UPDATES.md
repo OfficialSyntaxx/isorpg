@@ -6,6 +6,64 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Full audit & QC pass
+
+Ran a fresh sweep over the whole project — data integrity, save round-trip, dead
+code, UI layout, payload, stability — and fixed what it found.
+
+**The headline finding: monsters were never animated.** `animateMonster()` has
+existed since the first commit and was **never called from the frame loop**. It is
+the only code that draws the hit flash, the boss enrage tint, the death pose, and
+the idle motion for the ten monsters that have no rigged GLB. So:
+- hitting a monster set `flashUntil` and drew nothing;
+- a boss below half HP gained +2 max hit and double attack speed with **no visual
+  tell**, on a boss whose whole design is a telegraphed slam;
+- ten of twelve monsters stood perfectly still;
+- corpses never settled into the defeated pose.
+Now wired, with two care points: the idle bob is skipped for rigged monsters (their
+clip owns the pose), and rigged clones get **per-instance materials** — `SkeletonUtils.clone()`
+shares them, so without a copy flashing one Cave Brute would flash all three on
+dungeon floor 3. Seven QC checks pin the behaviour with real `MeshStandardMaterial`
+stubs, and four audit checks assert the frame loop calls it at all — the failure was
+missing wiring, not wrong logic.
+
+**Also fixed**
+- `public/hero.png` — 612 kB, referenced by nothing since the 3D hero replaced it,
+  shipped in every build. Deleted, and `audit-ui.cjs` now fails on any unreferenced
+  file in `public/` so it cannot happen again (verified against a planted orphan).
+- 14 dead exports removed, including `loadModelSizing`, whose comment read "Legacy
+  name kept so existing call sites compile" with zero call sites left.
+- `buildClip`'s doc claimed "Exported for tests" and no test used it. Now six checks
+  cover the clip decoder, including the `Int16` alignment trap that would produce a
+  garbage pose rather than an error.
+- An inline SVG favicon: every page load was logging a 404 for `/favicon.ico`, which
+  the smoke test then had to filter out.
+
+**Came back clean**
+- **Data integrity** — every item id referenced by a recipe, drop table, building
+  cost, crop, clue or shop row exists; no unobtainable items; every bar has a
+  consumer; every weapon has a recipe; drop weights and ranges all sane.
+- **Save round-trip** — populated all 18 persisted field groups with distinctive
+  values, serialised, sanitised and re-applied into a fresh state: every one
+  survived. (`storageCap` is derived and recomputed by `BuildSystem.rehydrate()`.)
+- **UI layout** — 8 panels × 2 viewports (390×844 and 1280×900), checking for
+  zero-width labels, horizontal overflow, off-screen rows and clipped bodies. Clean;
+  the `.btn-mini` and `.panel-body` fixes from Phase E hold.
+- **Stability** — 41 s of driven play: heap 41 MB → 29 MB (GC, no leak), DOM 79 → 109
+  nodes, no toast accumulation, no page errors, no failed requests.
+- **Payload** — music is lazily loaded per zone, so the 4.4 MB of tracks is not a boot
+  cost. Bundle 786 kB, models 2.1 MB, clips 32 kB.
+- No `TODO`/`FIXME`/`@ts-ignore` anywhere; no stray `console.log` in `src/`.
+
+**Known and deliberate:** `ItemType.GEM` still has no members, and `sky.png` is a
+1.2 MB PNG that would recompress to roughly a tenth as a JPEG — left alone because it
+is an art change and the visual baseline does not frame the horizon, so I could not
+verify it without your eye on it.
+
+- 197/197 QC · 57/57 UI audit · 25/25 rig · 5/5 smoke · visual baseline 0.00% drift.
+
+---
+
 ## 2026-08 · The boot refactor — the compiler guards boot() now
 
 - **`boot()` builds the system graph as `const` locals**, publishing each to the

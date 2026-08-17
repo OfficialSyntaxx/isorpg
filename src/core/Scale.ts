@@ -9,8 +9,6 @@
 // Treat one tile as roughly 1.5 m (the OSRS convention) and size everything from
 // that.
 
-/** Tile edge length in world units. The grid maps 1 tile → 1 unit. */
-export const TILE = 1;
 
 /**
  * Y of the walkable terrain surface. Terrain tiles are 0.6-tall boxes centred at

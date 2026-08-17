@@ -39,6 +39,3 @@ export function setMusicZone(z: MusicZone): void {
   }
 }
 
-export function getMusicZone(): MusicZone {
-  return current;
-}

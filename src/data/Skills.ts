@@ -35,8 +35,6 @@ export const SKILL_IDS: SkillId[] = [
 ];
 /** Skills craftable via the Craft panel (artisan, excludes construction which uses the Build panel). */
 export const CRAFT_SKILLS: SkillId[] = ["cooking", "smithing", "carpentry"];
-/** The three skills visible in the gather quick-bar (M1 era) + combat trio. */
-export const GATHER_SKILLS: SkillId[] = ["woodcutting", "mining", "fishing"];
 export const COMBAT_SKILLS: SkillId[] = ["attack", "strength", "defense", "hitpoints"];
 
 export interface ResourceDrop {

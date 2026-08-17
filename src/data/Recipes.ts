@@ -106,6 +106,3 @@ export function recipesFor(skill: SkillId): CraftRecipe[] {
   return RECIPES.filter((r) => r.skill === skill);
 }
 
-export function getRecipe(id: string): CraftRecipe | undefined {
-  return RECIPES.find((r) => r.id === id);
-}

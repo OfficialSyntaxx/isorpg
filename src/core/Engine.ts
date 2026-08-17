@@ -209,4 +209,3 @@ export class Engine {
   }
 }
 
-export const isomConstants = { PITCH, YAW, FRUSTUM };

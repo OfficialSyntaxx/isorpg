@@ -42,7 +42,7 @@ import { BUILDINGS } from "./data/Buildings";
 import type { ResourceNode } from "./world/ResourceNode";
 import { nodeKey } from "./world/ResourceNode";
 import { animFor } from "./generators/Nature";
-import type { MonsterCombat } from "./world/Monster";
+import { animateMonster, type MonsterCombat } from "./world/Monster";
 
 class Game {
   engine!: Engine;
@@ -895,6 +895,14 @@ private onArrive(x: number, y: number) {
       }
     });
     guarded("Meta", () => this.meta.evaluate()); // P6.4: achievement pops
+    // Monster presentation. CombatSystem stamps `flashUntil` on every hit and
+    // flips `enraged` when a boss halves; animateMonster is the only thing that
+    // draws either, and it also supplies the idle motion for the ten monsters that
+    // have no rigged GLB. Date.now() to match the clock combat stamps with.
+    guarded("Monsters", () => {
+      const now = Date.now();
+      for (const m of this.combat.registry.values()) animateMonster(m, now);
+    });
     // P4: hero flashes red briefly when a monster lands a hit.
     flashHero(this.hero, Date.now() < this.heroFlashUntil ? "#ff4030" : "#000000");
     // P4b: advance kill-burst shards.

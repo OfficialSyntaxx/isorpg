@@ -201,13 +201,3 @@ export function sanitizeSave(raw: unknown): { ok: boolean; state: unknown; reaso
   };
 }
 
-export function validateLegacy(raw: string): unknown {
-  try {
-    const parsed = JSON.parse(raw);
-    const res = sanitizeSave(parsed);
-    if (!res.ok) throw new Error(`Sanitize failed: ${res.reason ?? "unknown"}`);
-    return res.state;
-  } catch (e) {
-    throw e; // caller routes to backup / fresh profile
-  }
-}

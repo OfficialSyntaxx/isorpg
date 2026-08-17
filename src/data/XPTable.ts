@@ -41,7 +41,3 @@ export function levelProgress(xp: number): { level: number; into: number } {
   return { level, into: Number.isFinite(into) ? Math.max(0, Math.min(1, into)) : 0 };
 }
 
-export function xpToNext(level: number): number {
-  if (level >= MAX_LEVEL) return 0;
-  return XP_TABLE[level + 1] - XP_TABLE[level];
-}

@@ -22,7 +22,6 @@ export interface Tile {
   seed: number;
 }
 
-export const TILE_SIZE = 1;
 
 /** Chunk edge length for zoning/regions (6 → a 42x42 map yields four bands:
  *  town → settlement → wilderness → deep wilds). */

@@ -111,6 +111,17 @@ export function spawnMonster(type: string, def: MonsterDef, gx: number, gy: numb
       if (!a) return;
       for (const child of [...group.children]) child.visible = false;
       a.root.scale.multiplyScalar(big);
+      // SkeletonUtils.clone() shares materials between clones — one download, one
+      // set of GPU state, which is what we want for geometry. But the hit flash
+      // and enrage tint write to the material, so without a per-instance copy
+      // flashing one Cave Brute would flash all three on dungeon floor 3.
+      a.root.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (!m.isMesh) return;
+        m.material = Array.isArray(m.material)
+          ? m.material.map((x) => x.clone())
+          : (m.material as THREE.Material).clone();
+      });
       group.add(a.root);
       out.actor = a;
     });
@@ -126,7 +137,18 @@ function buildMonster(id: string, def: MonsterDef, gx: number, gy: number, seed:
   };
 }
 
-/** Frame-time idle bob + red hit-flash. */
+/**
+ * Per-frame monster presentation: idle motion, hit flash, enrage tint, death pose.
+ *
+ * Call this every frame for every registered monster. It had existed since the
+ * first commit and was never wired to the frame loop, so `flashUntil` (set on every
+ * player hit) and `enraged` (set when a boss drops below half HP, and worth two
+ * extra max hit and double attack speed) were computed and never drawn — and the
+ * ten monsters without a rigged GLB stood perfectly still.
+ *
+ * `now` must be `Date.now()`: that is the clock CombatSystem stamps `flashUntil`
+ * with, and a mismatched one would make the flash either permanent or invisible.
+ */
 export function animateMonster(m: MonsterCombat, now: number) {
   if (m.dead) {
     // Sunk + rolled over to read as "defeated" (removed by the spawner on respawn).
@@ -137,8 +159,12 @@ export function animateMonster(m: MonsterCombat, now: number) {
     return;
   }
   const t = now / 1000;
-  m.group.position.y = Math.abs(Math.sin(t * 3 + m.seed * 0.01)) * 0.04;
-  m.group.rotation.y = Math.sin(t * 1.5 + m.seed * 0.01) * 0.08;
+  // A rigged monster's motion comes from its animation clip; bobbing the group on
+  // top of that fights it. Unrigged monsters are static meshes and need this.
+  if (!m.actor) {
+    m.group.position.y = Math.abs(Math.sin(t * 3 + m.seed * 0.01)) * 0.04;
+    m.group.rotation.y = Math.sin(t * 1.5 + m.seed * 0.01) * 0.08;
+  }
 
   const flash = now < m.flashUntil;
   const enraged = m.enraged && !flash;

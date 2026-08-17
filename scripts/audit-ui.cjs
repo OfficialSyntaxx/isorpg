@@ -11,6 +11,17 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const ui = fs.readFileSync(path.join(root, "src/ui/UI.ts"), "utf8");
 const main = fs.readFileSync(path.join(root, "src/main.ts"), "utf8");
 
+/** Every .ts file under a directory, recursively. */
+function walkFiles(dir, acc = []) {
+  if (!fs.existsSync(dir)) return acc;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkFiles(p, acc);
+    else if (e.name.endsWith(".ts")) acc.push(p);
+  }
+  return acc;
+}
+
 const rows = [];
 const add = (name, ok, x = "") => rows.push(`${ok ? "PASS" : "FAIL"}  ${name}${x ? "  [" + x + "]" : ""}`);
 const uniq = (a) => [...new Set(a)];
@@ -140,6 +151,55 @@ add("every HUD bullet has a bar-btn", (html.match(/bar-btn/g) || []).length >= 8
     const localised = new Set([...bootBody.matchAll(new RegExp(`^\\s*const (${SYSTEMS})\\s*=`, "gm"))].map((m) => m[1]));
     const unpublished = [...localised].filter((f) => !published.has(f));
     add("boot(): every local system is published to the instance", unpublished.length === 0, unpublished.join(", "));
+  }
+
+  // Presentation that only a frame handler can drive. Each of these writes state
+  // somewhere and is drawn nowhere else, so a missing call is silent: the game
+  // computes a hit flash, an enrage tint or an animation pose that nobody sees.
+  // animateMonster sat unwired since the first commit for exactly that reason.
+  const frameBody = (() => {
+    const at = main.indexOf("private frame(dt: number) {");
+    if (at < 0) return "";
+    let depth = 0;
+    for (let i = at; i < main.length; i++) {
+      if (main[i] === "{") depth++;
+      else if (main[i] === "}") { depth--; if (depth === 0) return main.slice(at, i); }
+    }
+    return "";
+  })();
+  for (const fn of ["animateMonster", "updateFx", "flashHero"]) {
+    add(`frame(): calls ${fn}`, frameBody.includes(`${fn}(`));
+  }
+  add("frame(): animates every registered monster",
+    /combat\.registry\.values\(\)\)\s*animateMonster/.test(frameBody));
+
+  // Unreferenced files in public/ ship in every build and cost the player download
+  // for nothing. A 612 kB hero.png sat there for weeks after the 3D hero replaced
+  // it, and nothing pointed at it. Model clips and GLBs are resolved by name at
+  // runtime, so they are matched loosely.
+  {
+    const publicDir = path.join(root, "public");
+    const haystack = [
+      ...walkFiles(path.join(root, "src")),
+      path.join(root, "index.html"),
+    ].filter((f) => fs.existsSync(f)).map((f) => fs.readFileSync(f, "utf8")).join("\n");
+    const orphans = [];
+    const scan = (dir, rel = "") => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p2 = path.join(dir, e.name);
+        const r = rel ? `${rel}/${e.name}` : e.name;
+        if (e.isDirectory()) { scan(p2, r); continue; }
+        // Strip every extension, not just the last: clips are `x.clip.json` on disk
+        // and referenced as `"x"`.
+        const base = e.name.replace(/\..*$/, "");
+        // A file counts as referenced by full path, by filename, or by basename —
+        // models and clips are fetched as `models/${name}.glb`.
+        if (haystack.includes(r) || haystack.includes(e.name) || new RegExp(`["'\`]${base}["'\`]`).test(haystack)) continue;
+        orphans.push(`${r} (${Math.round(fs.statSync(p2).size / 1024)} kB)`);
+      }
+    };
+    if (fs.existsSync(publicDir)) scan(publicDir);
+    add("public/: every shipped file is referenced", orphans.length === 0, orphans.join(", "));
   }
 }
 

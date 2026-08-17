@@ -274,7 +274,35 @@ details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
   answer to "is this refactor worth the risk" changes when the safety net changes.
   Revisit deferrals after the tooling improves, not on a schedule.**
 
+## Audit pass 2026-08-17
+- **[design] The third instance of "state computed, never consumed"** — after building
+  upgrades that only scaled cost, and craftable weapons that had no recipes,
+  `animateMonster()` turned out to have been written in commit one and never called.
+  Combat dutifully stamped `flashUntil` on every hit and flipped `enraged` on bosses;
+  nothing drew either, and ten monsters never moved. **Lesson: this project's
+  characteristic bug is a producer with no consumer. Worth a standing check — for any
+  field written by a system, grep for who reads it.**
+- **[qc] A wiring bug needs a wiring test** — I first "verified" the fix by grepping
+  main.ts for the call, which proves nothing about behaviour. The useful pair turned
+  out to be: unit checks on the pure function with real `MeshStandardMaterial`
+  instances (a duck-typed stub silently skipped the whole tint branch, because the
+  code gates on `instanceof`), plus an audit check that the frame loop calls it.
+  **Lesson: test the function for logic and the call site for existence; neither
+  alone would have caught this.**
+- **[perf] Dead assets are invisible without a check** — 612 kB of `hero.png` shipped
+  in every build for weeks after the 3D hero replaced it. No test, lint or review step
+  looks at `public/`. Now `audit-ui.cjs` does. **Lesson: build output deserves the same
+  unused-symbol scrutiny as code.**
+- **[process] Comments rot faster than code** — `loadModelSizing` was documented as
+  "Legacy name kept so existing call sites compile"; the call sites were gone. The
+  comment was actively misleading about why the code existed. **Lesson: when deleting
+  the last caller, delete the compatibility shim too.**
+
 ## Open threads (not yet filed as bugs)
 - Offline **coin tax** (Town Hall) only accrues online, unlike labour — by
   design vs bug, decide next sprint.
 - Market panel shows live prices but no trend arrows yet (cosmetic).
+- `ItemType.GEM` has no members — a declared type with nothing behind it.
+- `public/sky.png` is a 1.2 MB PNG; a 512-1024px JPEG would be ~10% of that. Not done
+  because it is an art change the visual baseline cannot verify (the horizon is not in
+  the opening frame).

@@ -27,7 +27,6 @@ export interface SeedDef {
   masteryKey: string;
 }
 
-export const FARM_SKILL: SkillId = "farming";
 
 /** Beds a settlement has: one per Farm Plot *level* (see BuildSystem.levels). */
 export const SEEDS: Record<string, SeedDef> = {
@@ -52,10 +51,6 @@ export const SEEDS: Record<string, SeedDef> = {
 };
 
 export const SEED_IDS: string[] = Object.keys(SEEDS);
-
-export function seedDef(id: string): SeedDef | undefined {
-  return SEEDS[id];
-}
 
 /** A planted bed. `plantedAt` is epoch ms, so growth survives a reload. */
 export interface FarmPlot {

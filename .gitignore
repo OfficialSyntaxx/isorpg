@@ -6,3 +6,4 @@ dist/
 .qc-emit/
 .wiki-emit/
 .visual/
+.audit-emit*/

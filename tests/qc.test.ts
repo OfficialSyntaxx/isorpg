@@ -1,3 +1,4 @@
+import * as THREE from "three";
 // QC consolidated regression suite — the durable `npm test` core.
 // Covers P1–P7.8 mechanics: world/grid, dungeon depth, quests, map & fast
 // travel, market pricing, villager labour (live + offline + perks + specs),
@@ -17,10 +18,11 @@ import { SaveSystem, offlineTaxFor } from "../src/systems/SaveSystem";
 import { monsterPoolFor } from "../src/systems/WorldSystem";
 import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
 import { ITEMS } from "../src/data/Items";
-import { spawnMonster } from "../src/world/Monster";
+import { spawnMonster, animateMonster } from "../src/world/Monster";
 import { countItem, addItem, createInventory, storedAmount, isFull, isBulk } from "../src/components/Inventory";
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
 import { masteryLevel, masteryXpForLevel, masteryProgress, MASTERY_MAX } from "../src/components/Skills";
+import { buildClip } from "../src/core/ClipLibrary";
 import { selectWeapon, WEAPONS } from "../src/data/Combat";
 import { RESOURCES } from "../src/data/Skills";
 import { needsMasteryRescale, sanitizeSave } from "../src/utils/Sanitizer";
@@ -722,6 +724,126 @@ check("hero: has a name, not a placeholder", DEFAULT_HERO_NAME.length > 1 && !/^
   const oob = mk({ tier: "simple", seed: 1, step: 0, sites: [{ x: 9999, y: 3 }, { x: 6, y: 6 }] });
   check("save: out-of-bounds sites are dropped", oob !== null && oob.sites.length === 1 && oob.sites[0].x === 6);
   check("save: junk becomes no hunt", mk("nonsense") === null && mk(null) === null);
+}
+
+// [monsters] animateMonster is the only code that draws the hit flash, the boss
+// enrage tint, the death pose and — for the ten monsters with no rigged GLB — any
+// motion at all. It existed from the first commit and was never called from the
+// frame loop, so all of that was computed and never seen. Tested here with a stub
+// group so the behaviour is pinned, not just the wiring.
+{
+  const stub = () => {
+    const mats: any[] = [];
+    // Real materials: animateMonster gates on `instanceof MeshStandardMaterial`,
+    // so a duck-typed stub would silently skip the tint branch entirely.
+    const mk = () => { const m = { isMesh: true, material: new THREE.MeshStandardMaterial() }; mats.push(m); return m; };
+    const meshes = [mk(), mk()];
+    return {
+      mats,
+      group: {
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        visible: true,
+        traverse(fn: (o: unknown) => void) { meshes.forEach(fn); },
+      },
+    };
+  };
+  const mon = (over: Record<string, unknown> = {}) => {
+    const st = stub();
+    return { m: { seed: 12345, dead: false, flashUntil: 0, enraged: false, actor: null, group: st.group, ...over } as any, st };
+  };
+
+  // Idle motion: the group must actually move between two different times.
+  {
+    const { m } = mon();
+    animateMonster(m, 1_000_000);
+    const y1 = m.group.position.y, r1 = m.group.rotation.y;
+    animateMonster(m, 1_000_400);
+    check("monster: unrigged monsters have idle motion",
+      m.group.position.y !== y1 || m.group.rotation.y !== r1, `${y1} -> ${m.group.position.y}`);
+    check("monster: the bob stays subtle", Math.abs(m.group.position.y) < 0.1, `${m.group.position.y}`);
+  }
+
+  // A rigged monster's pose comes from its clip, so the bob must not fight it.
+  {
+    const { m } = mon({ actor: {} });
+    animateMonster(m, 1_000_000);
+    check("monster: rigged monsters are left to their clip",
+      m.group.position.y === 0 && m.group.rotation.y === 0);
+  }
+
+  // Hit flash: set by CombatSystem on every player hit, using Date.now().
+  {
+    const { m, st } = mon({ flashUntil: 2_000_000 });
+    animateMonster(m, 1_999_000);
+    check("monster: a hit flashes the monster",
+      st.mats.every((x: any) => x.material.emissiveIntensity > 1), `${st.mats[0].material.emissiveIntensity}`);
+    animateMonster(m, 2_000_500);
+    check("monster: the flash clears once it expires",
+      st.mats.every((x: any) => x.material.emissiveIntensity === 0));
+  }
+
+  // Enrage: a boss below half HP hits harder and twice as fast, so it needs a tell.
+  {
+    const { m, st } = mon({ enraged: true });
+    animateMonster(m, 1_000_000);
+    check("monster: an enraged boss is tinted",
+      st.mats.every((x: any) => x.material.emissiveIntensity > 0 && x.material.emissive.getHexString() === "ff2a1a"));
+  }
+
+  // Death pose, held until the spawner respawns it.
+  {
+    const { m } = mon({ dead: true, actor: {} });
+    m.group.position.y = 3; m.group.rotation.x = 1;
+    animateMonster(m, 1_000_000);
+    check("monster: a dead monster settles into a corpse pose",
+      m.group.position.y === 0.05 && m.group.rotation.x === 0 && m.group.visible === true);
+  }
+}
+
+// btoa rather than Buffer: the suite has no @types/node, and btoa is what the
+// browser path uses anyway.
+const toBase64 = (b: Uint8Array) => {
+  let s2 = "";
+  for (const x of b) s2 += String.fromCharCode(x);
+  return typeof btoa === "function" ? btoa(s2) : (globalThis as any).Buffer.from(b).toString("base64");
+};
+
+// [clips] buildClip decodes the shipped .clip.json tables. It is exported for this
+// test: the Int16 view has an alignment trap (atob's buffer is not guaranteed
+// 2-byte aligned) and a wrong stride would silently produce a garbage pose rather
+// than an error, so decode a table with known values and check the tracks.
+{
+  const bones = ["Hips", "Spine"];
+  const frames = 3;
+  const quats = [
+    // Hips: three distinct rotations.
+    [0, 0, 0, 1], [0, 0.5, 0, 0.8660254], [0, 0.7071068, 0, 0.7071068],
+    // Spine: held.
+    [0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1],
+  ];
+  const table = new Int16Array(bones.length * frames * 4);
+  quats.flat().forEach((v, i) => { table[i] = Math.round(v * 32767); });
+  const clip = buildClip({
+    name: "probe", duration: 1, fps: 2, frames, bones,
+    quat: toBase64(new Uint8Array(table.buffer)),
+  });
+
+  check("clip: one track per bone", clip.tracks.length === bones.length, `${clip.tracks.length}`);
+  check("clip: tracks are quaternion tracks named for their bone",
+    clip.tracks.map((t: any) => t.name).join(",") === "Hips.quaternion,Spine.quaternion",
+    clip.tracks.map((t: any) => t.name).join(","));
+  check("clip: times are spaced by 1/fps",
+    JSON.stringify([...(clip.tracks[0] as any).times]) === JSON.stringify([0, 0.5, 1]),
+    JSON.stringify([...(clip.tracks[0] as any).times]));
+  const vals = [...(clip.tracks[0] as any).values];
+  const close = (a: number, b: number) => Math.abs(a - b) < 0.001;
+  check("clip: quaternions survive the Int16 round-trip",
+    close(vals[0], 0) && close(vals[3], 1) && close(vals[5], 0.5) && close(vals[7], 0.8660254),
+    vals.slice(0, 8).map((v: number) => v.toFixed(3)).join(","));
+  check("clip: the declared duration is kept", clip.duration === 1);
+  check("clip: a held bone decodes as constant",
+    [...(clip.tracks[1] as any).values].every((v, i) => close(v, i % 4 === 3 ? 1 : 0)));
 }
 
 console.log(results.join("\n"));

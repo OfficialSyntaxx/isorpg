@@ -22,10 +22,6 @@ export function markBooted() {
   booted = true;
 }
 
-export function isBooted(): boolean {
-  return booted;
-}
-
 /** Full-screen, impossible-to-miss failure card. Used for boot-phase errors. */
 export function showFatalOverlay(systemName: string, error: unknown) {
   const msg = error instanceof Error ? (error.stack ?? error.message) : String(error);

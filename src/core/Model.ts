@@ -305,8 +305,6 @@ export function sizeToActor(scene: THREE.Object3D): void {
   scene.position.set(-c.x, -b2.min.y, -c.z);
 }
 
-/** Legacy name kept so existing call sites compile. */
-export const loadModelSizing = sizeToActor;
 
 /** Advance every active animation mixer. */
 export function updateModelMixers(dt: number): void {
