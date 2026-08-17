@@ -1,4 +1,10 @@
 import * as THREE from "three";
+// No @types/node in this project — declared locally rather than pulling in a
+// dependency just for two Node builtins used by one test block.
+declare const require: (id: string) => any;
+declare const __dirname: string;
+const fs = require("fs");
+const path = require("path");
 // QC consolidated regression suite — the durable `npm test` core.
 // Covers P1–P7.8 mechanics: world/grid, dungeon depth, quests, map & fast
 // travel, market pricing, villager labour (live + offline + perks + specs),
@@ -17,7 +23,7 @@ import { BuildSystem } from "../src/systems/BuildSystem";
 import { SaveSystem, offlineTaxFor } from "../src/systems/SaveSystem";
 import { monsterPoolFor } from "../src/systems/WorldSystem";
 import { MONSTERS, MONSTER_STYLES, FOODS } from "../src/data/Combat";
-import { ITEMS } from "../src/data/Items";
+import { ITEMS, itemIcon, itemIconHtml, ITEM_ICON_IMAGE_IDS } from "../src/data/Items";
 import { spawnMonster, animateMonster } from "../src/world/Monster";
 import { countItem, addItem, createInventory, storedAmount, isFull, isBulk, applyDeathPenalty } from "../src/components/Inventory";
 import { XP_TABLE, levelFromXp, levelProgress } from "../src/data/XPTable";
@@ -1100,6 +1106,52 @@ const toBase64 = (b: Uint8Array) => {
   check("clip: the declared duration is kept", clip.duration === 1);
   check("clip: a held bone decodes as constant",
     [...(clip.tracks[1] as any).values].every((v, i) => close(v, i % 4 === 3 ? 1 : 0)));
+}
+
+// [items] H.1 icon atlas: itemIconHtml() falls back to the emoji until a real
+// icon file is registered — reversible by design, so this is a no-op check
+// today, but it pins the contract so a future ITEM_ICON_IMAGE_IDS entry can't
+// silently point at a file nobody sliced.
+{
+  check("icons: every item has an emoji fallback", Object.keys(ITEMS).every((id) => itemIcon(id) !== "❔"), (() => {
+    const missing = Object.keys(ITEMS).filter((id) => itemIcon(id) === "❔");
+    return missing.join(",");
+  })());
+  check("icons: with no registered image, itemIconHtml matches itemIcon exactly",
+    Object.keys(ITEMS).every((id) => itemIconHtml(id) === itemIcon(id)));
+  check("icons: every registered image id is a real item",
+    [...ITEM_ICON_IMAGE_IDS].every((id) => id in ITEMS));
+  check("icons: a registered id renders an <img>, not the emoji",
+    [...ITEM_ICON_IMAGE_IDS].every((id) => itemIconHtml(id).startsWith(`<img class="item-icon-img" src="/icons/${id}.png"`)));
+
+  // The atlas manifests are the map slice-atlas.cjs will use once the sheets
+  // exist. They're worth checking now, independent of the images: a manifest
+  // that drifts from ITEMS (a renamed item, a new one nobody added to any
+  // sheet) is a bug whether or not any PNG has been generated yet.
+  const atlasDir = path.join(__dirname, "..", "..", "assets", "icon-atlas");
+  const manifestFiles = fs.readdirSync(atlasDir).filter((f) => f.endsWith(".json")).sort();
+  check("icons: the atlas has its 4 manifests", manifestFiles.length === 4, manifestFiles.join(","));
+
+  const covered = new Set<string>();
+  for (const file of manifestFiles) {
+    const m = JSON.parse(fs.readFileSync(path.join(atlasDir, file), "utf8"));
+    check(`icons: ${file} declares a consistent grid`,
+      Array.isArray(m.cells) && m.cells.length === m.cols * m.rows,
+      `${m.cols}x${m.rows} vs ${m.cells?.length}`);
+    for (const id of m.cells) {
+      if (id === null) continue;
+      check(`icons: ${file} cell "${id}" is a real item`, id in ITEMS);
+      covered.add(id);
+    }
+  }
+  // shrimp_food is a legacy duplicate of cooked_shrimp's icon by design (see
+  // the atlas README) — it deliberately has no cell of its own.
+  const expectedCovered = Object.keys(ITEMS).filter((id) => id !== "shrimp_food");
+  const missing = expectedCovered.filter((id) => !covered.has(id));
+  const extra = [...covered].filter((id) => !expectedCovered.includes(id));
+  check("icons: the 4 manifests together cover every item exactly once",
+    missing.length === 0 && extra.length === 0,
+    `missing: ${missing.join(",")} extra: ${extra.join(",")}`);
 }
 
 console.log(results.join("\n"));

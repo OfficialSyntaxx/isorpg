@@ -1,0 +1,9 @@
+{
+  "cols": 4, "rows": 4,
+  "cells": [
+    "cooked_rat_meat", "combat_potion", "bronze_dagger", "bronze_sword",
+    "bronze_2h", "iron_sword", "steel_sword", "shortbow",
+    "bronze_helm", "bronze_plate", "bronze_legs", "iron_helm",
+    "iron_plate", "iron_legs", "wayfarers_lantern", "cartographers_tome"
+  ]
+}

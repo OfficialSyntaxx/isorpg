@@ -1,0 +1,9 @@
+{
+  "cols": 4, "rows": 4,
+  "cells": [
+    "bronze_pickaxe", "iron_pickaxe", "steel_pickaxe", "small_net",
+    "fly_rod", "potato_seed", "cabbage_seed", "redberry_seed",
+    "potato", "cabbage", "redberry", "baked_potato",
+    "cabbage_stew", "raw_rat_meat", "cooked_shrimp", "cooked_trout"
+  ]
+}

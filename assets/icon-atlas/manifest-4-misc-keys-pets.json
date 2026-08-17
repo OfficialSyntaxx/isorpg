@@ -1,0 +1,9 @@
+{
+  "cols": 4, "rows": 4,
+  "cells": [
+    "coins", "bones", "clue_simple", "clue_hard",
+    "goblin_key", "dungeon_key", "rat_bone", "loop_half_key",
+    "zombie_flesh", "pet_rat", "pet_goblin", "pet_skeleton",
+    "pet_zombie", null, null, null
+  ]
+}

@@ -3,6 +3,29 @@
 Convention: append every defect here with a one-line category tag, plus a
 details file `//bugreports/<date>_<slug>.md` for anything non-trivial.
 
+## Phase H.1 2026-08-17
+- **[tooling] No reliable path to move generated images from the Higgsfield
+  sandbox into the repo.** Direct download of the generated sheets hit a 403
+  at this session's egress proxy (the CDN host isn't on the allowed list).
+  Routing through Higgsfield's own presigned-S3-upload pattern (the
+  documented way to get sandbox output out) also 403'd, with a signature
+  failure I didn't get to the bottom of. Fell back to relaying the image
+  bytes as base64 through chat text — and that silently produced two
+  corrupted files in a row. I only caught it because I computed sha256 in
+  the sandbox and diffed it against what I'd decoded locally; without that
+  check both would have shipped looking fine and rendering as either a
+  decode error or a subtly wrong image.
+  **Lesson: a large binary payload copied through a text channel is not a
+  copy — verify it, every time, with a checksum computed on the source side,
+  not by eyeballing that the string "looks complete."** The two corruptions
+  here weren't edge cases; they were most of the attempts.
+  **Second lesson: when the second independent transfer path also fails, stop
+  and say so rather than trying a third workaround.** The honest, useful
+  output of a blocked task is a clear description of the blocker plus
+  whatever real progress doesn't depend on it — here, the generation prompts,
+  the manifests, and a slicing script verified against a synthetic image —
+  not a corrupted asset that passes casual inspection.
+
 ## QC sprint 2026-08-16
 - **[save] Import sanitizer dropped P6–P8 fields** — `Sanitizer.ts` whitelisted
   only buildings; `player.journal/meta`, `town.labour/market`, and `map` were

@@ -176,6 +176,28 @@ export function itemIcon(id: string): string {
   return ITEM_ICONS[id] ?? "❔";
 }
 
+/**
+ * Item ids with a real generated icon at `/icons/<id>.png` (Phase H.1: one
+ * generated grid sheet per item group, sliced by `scripts/slice-atlas.cjs` —
+ * see `assets/icon-atlas/README.md`). Empty until those sheets are actually
+ * generated and sliced onto disk; everything meanwhile keeps rendering the
+ * emoji above exactly as it always has. Deliberately reversible: emoji never
+ * stops being a valid fallback, so a missing or bad icon file never breaks
+ * the bag — it just falls back silently.
+ */
+export const ITEM_ICON_IMAGE_IDS: ReadonlySet<string> = new Set<string>([]);
+
+/**
+ * The bag/panel icon slot's HTML: a real icon image where one exists,
+ * otherwise the emoji placeholder as plain text — the same value `itemIcon`
+ * has always returned, so this is a no-op until icons start shipping.
+ */
+export function itemIconHtml(id: string): string {
+  return ITEM_ICON_IMAGE_IDS.has(id)
+    ? `<img class="item-icon-img" src="/icons/${id}.png" alt="" loading="lazy">`
+    : itemIcon(id);
+}
+
 /** Best owned gathering tool for a skill (P2). Null = no tool for it. */
 export function getBestTool(inv: InventoryComponent, skill: SkillId): { tier: number; speedPct: number } | null {
   let best: { tier: number; speedPct: number } | null = null;

@@ -1,0 +1,9 @@
+{
+  "cols": 4, "rows": 4,
+  "cells": [
+    "normal_log", "oak_log", "willow_log", "copper_ore",
+    "tin_ore", "iron_ore", "coal", "raw_shrimp",
+    "raw_trout", "bronze_bar", "iron_bar", "steel_bar",
+    "plank", "bronze_axe", "iron_axe", "steel_axe"
+  ]
+}

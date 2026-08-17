@@ -215,6 +215,9 @@ p.float-tex.heal { color: var(--good); }
 .inv-name > .inv-desc { flex: 0 0 100%; max-width: none; text-align: left; margin-top: 2px; }
 .inv-row .btn-mini { flex-shrink: 0; }
 .inv-ico { font-size: 19px; margin-right: 8px; flex-shrink: 0; }
+/* H.1: a real icon <img>, once one exists, sits where the emoji text used to —
+   sized off the same line-height so it drops in without a layout change. */
+.inv-ico img.item-icon-img, .log-ico img.item-icon-img { width: 1em; height: 1em; object-fit: contain; vertical-align: -0.15em; }
 .empty { color: var(--muted); text-align: center; padding: 24px 8px; }
 
 /* Crop growth. A bar rather than a number: the useful question at a glance is

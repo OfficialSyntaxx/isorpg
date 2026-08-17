@@ -3,7 +3,7 @@ import type { GameState } from "../state/GameState";
 import { AUTO_EAT_STEPS } from "../state/GameState";
 import { levelProgress, levelFromXp } from "../data/XPTable";
 import { ITEMS } from "../data/Items";
-import { itemIcon } from "../data/Items";
+import { itemIconHtml } from "../data/Items";
 import { SKILLS, CRAFT_SKILLS, type SkillId } from "../data/Skills";
 import { showToast } from "./Toast";
 import { EngineLogger } from "../utils/Logger";
@@ -277,7 +277,7 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
         <div class="empty">No scrolls. Goblins and skeletons drop them.</div>`;
     }
     const rows = snap.carried.map((c) => `<div class="inv-row">
-      <span class="inv-ico">${itemIcon(c.itemId)}</span>
+      <span class="inv-ico">${itemIconHtml(c.itemId)}</span>
       <div class="inv-name">${escapeHtml(c.name)}<span class="inv-count">×${c.qty}</span></div>
       <button class="btn btn-mini" data-clue-read="${c.itemId}">Read</button></div>`).join("");
     return `<div class="set-val">📜 Clue Hunt${done}</div>${rows}`;
@@ -385,7 +385,7 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       ? snap.seeds.map((sd) => {
           const can = sd.unlocked && sd.qty > 0;
           const why = !sd.unlocked ? `needs Farming ${sd.levelReq}` : sd.qty === 0 ? "none carried" : `×${sd.qty}`;
-          return `<div class="inv-row"><span class="inv-ico">${itemIcon(sd.id)}</span>
+          return `<div class="inv-row"><span class="inv-ico">${itemIconHtml(sd.id)}</span>
             <div class="inv-name">${escapeHtml(sd.name)}<span class="inv-count">${why}</span></div>
             <button class="btn btn-mini" data-sow="${sd.id}"${can ? "" : " disabled"}>Sow</button></div>`;
         }).join("")
@@ -434,7 +434,7 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
           .map((i) => {
             const has = log.has(i.id);
             return `<div class="log-cell${has ? "" : " log-locked"}" title="${has ? escapeHtml(i.name) : "Undiscovered"}">
-              <span class="log-ico">${has ? itemIcon(i.id) : "❔"}</span>
+              <span class="log-ico">${has ? itemIconHtml(i.id) : "❔"}</span>
               <span class="log-name">${has ? escapeHtml(i.name) : "???"}</span>
             </div>`;
           }).join("");
@@ -678,7 +678,7 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
       .map((s) => {
         const id = eq[s]!;
         const it = ITEMS[id];
-        return `<div class="inv-row"><span class="inv-ico">${itemIcon(id)}</span><div class="inv-name"><span class="inv-count">${SLOT_NAMES[s]}</span> ${it ? it.name : id}</div><button class="btn btn-mini" data-act="unequip" data-slot="${s}">Unequip</button></div>`;
+        return `<div class="inv-row"><span class="inv-ico">${itemIconHtml(id)}</span><div class="inv-name"><span class="inv-count">${SLOT_NAMES[s]}</span> ${it ? it.name : id}</div><button class="btn btn-mini" data-act="unequip" data-slot="${s}">Unequip</button></div>`;
       })
       .join("");
 
@@ -695,7 +695,7 @@ openPanel(id: "inventory" | "settings" | "combat" | "craft" | "build" | "map" | 
         const name = it ? it.name : s.id;
         const desc = it ? it.desc : "";
         const equipBtn = it?.equip ? `<button class="btn btn-mini" data-act="equip" data-item="${s.id}">Equip</button>` : "";
-        return `<div class="inv-row"><span class="inv-ico">${itemIcon(s.id)}</span><div class="inv-name"><span class="inv-count">${s.amount.toLocaleString()}</span> ${name}</div><div class="inv-desc">${desc}</div>${equipBtn}</div>`;
+        return `<div class="inv-row"><span class="inv-ico">${itemIconHtml(s.id)}</span><div class="inv-name"><span class="inv-count">${s.amount.toLocaleString()}</span> ${name}</div><div class="inv-desc">${desc}</div>${equipBtn}</div>`;
       })
       .join("");
 

@@ -6,6 +6,57 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase H.1 — Icon atlas: infrastructure shipped, art blocked
+
+Generated 4 grid sheets (`nano_banana_2`, 4×4, 1:1, 2k, ~8 credits total)
+covering all 61 unique item icons, grouped thematically (resources / farming
+& food / weapons & armor / misc-keys-pets — the game's `ItemType` field
+conflates gathering tools, weapons and armor under `TOOL`, so it's useless
+for visual grouping). Wrote `scripts/slice-atlas.cjs` to turn a sheet into
+named per-item PNGs — same trick `optimize-glb.cjs` already uses (headless
+Chromium + canvas `drawImage` with a source rect, no image library to
+install), verified end-to-end against a synthetic 4-color test sheet before
+touching anything real.
+
+**The generated sheets are not in this repo.** This session's environment
+has no reliable way to move them from the Higgsfield sandbox that rendered
+them into this checkout:
+- direct download is blocked by this session's egress policy (403 at the proxy)
+- routing through Higgsfield's presigned S3 upload also 403'd, for reasons
+  I couldn't isolate before giving up on it
+- relaying the bytes as base64 through chat text — the fallback — produced
+  two silently corrupted files, caught only because I checksummed them
+  against the sandbox afterward rather than trusting the copy. Neither was
+  committed.
+
+Rather than keep retrying a transfer path that had already corrupted output
+twice, I stopped and asked; the call was to ship the code now and finish the
+art later. So what's actually live:
+
+- `itemIconHtml()` in `src/data/Items.ts` — prefers a real `/icons/<id>.png`
+  over the emoji, but only for ids in `ITEM_ICON_IMAGE_IDS`, which is **empty
+  right now**. Every call site in `UI.ts` (5 of them) switched from
+  `itemIcon()` to `itemIconHtml()`, and with the set empty this is
+  byte-for-byte the old behaviour — pinned by a QC check that
+  `itemIconHtml(id) === itemIcon(id)` for every item while the set is empty.
+- `assets/icon-atlas/` — the 4 manifests (row-major cell → item id, matching
+  the sheets' generation prompts exactly) plus a README with the full prompt
+  text, so regenerating doesn't mean re-deriving the mapping. A QC check
+  confirms the 4 manifests together cover every item exactly once (61/61,
+  `shrimp_food` deliberately excluded as a legacy duplicate of
+  `cooked_shrimp`'s icon) — this caught nothing wrong this time, but it's the
+  check that would catch a manifest drifting from `ITEMS` after the fact.
+- CSS for `.item-icon-img` sized off the emoji's line-height, so an icon
+  drops into the existing 19-20px slot with no layout change once one exists.
+
+Finishing this needs someone/something with a working transfer path to get
+the 4 PNGs onto disk, then `node scripts/slice-atlas.cjs <sheet> <manifest>
+public/icons --size 64` four times, then add the new ids to
+`ITEM_ICON_IMAGE_IDS`. Everything downstream is already built and tested.
+
+Gates: 317/317 QC, 5/5 smoke, visual baseline 0.00% drift, npm run audit
+0 bugs.
+
 ## 2026-08 · Phase F.5 — Death has stakes (Phase F complete)
 
 Death was purely soft: full heal, walk back to town centre, nothing else.
