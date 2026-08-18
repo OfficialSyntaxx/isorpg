@@ -485,7 +485,35 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
   load, a JSON number grammar loose enough to accept `01` and `.5`, and a
   fallback item catalog that clamped the player's coins at the resource cap.
 
-**Next: Phase 1 (Editor lane), then Phase 2c** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
+- **Phase 2c — done.** Combat resolution ported: hit chance, attack and defense
+  rolls, max hit, the three attack styles, Resolve and its buffs, all six weapon
+  specials including execute, the three affixes, weighted drop tables, and boss
+  enrage and slam behaviour.
+  - `npm run verify:core` — 167 EditMode assertions (was 120)
+  - `npm run verify:parity` — the combat dump is **byte-identical** to the
+    TypeScript across 1,338 lines: the full hit-chance table, max hit for every
+    weapon × style × buff × strength combination, affix application, upkeep,
+    enrage, and 25 simulated fights driven off a shared mulberry32 stream
+
+  **Randomness is injected** (`IRandom`) rather than taken from a global, which
+  is what makes roll-for-roll parity possible at all — the TypeScript calls
+  `Math.random()` directly and cannot be checked this way. **Draw order is
+  therefore part of the contract**, and is documented per method: a guaranteed
+  special skips the accuracy draw entirely, a tertiary that misses takes no
+  quantity draw, and an affix roll takes one value when it fails and two when it
+  succeeds. Getting any of those wrong leaves every formula correct and still
+  produces a different fight from the same seed.
+
+  The parity harness was itself checked by mutation: six deliberate breakages,
+  four caught. The two that were not are provably equivalent mutants rather than
+  coverage gaps — the hit-chance branches are algebraically identical at equal
+  rolls, and the other differs only on an exact float equality that a PRNG
+  reaches with probability zero. Both are now pinned by tests that say so.
+
+  Not ported here, and deliberately: chase AI, actor animation, callbacks and
+  respawn scheduling. Those are coupled to the world and to presentation.
+
+**Next: Phase 1 (Editor lane), then Phase 2d** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
 to end. Creating the project is Editor-lane (yours); the WebGL template, manifest, service
 worker, loading screen, audio unlock, and Netlify/Vercel headers are code-lane and can be
 written ahead of time so they are waiting when you open the Editor.

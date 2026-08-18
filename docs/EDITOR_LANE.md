@@ -19,7 +19,7 @@ installs on a phone home screen as a fullscreen PWA.
 |---|---|
 | `unity/Packages/manifest.json` | package dependencies, pre-declared |
 | `unity/.gitignore`, `unity/.gitattributes` | Unity ignores + Git LFS routing |
-| `unity/Assets/Isoperia/Core/` | ported simulation core + 120 EditMode tests |
+| `unity/Assets/Isoperia/Core/` | ported simulation core + 167 EditMode tests |
 | `unity/Assets/Isoperia/Unity/` | `GameLoop`, `IsometricCamera`, `SaveDriver`, `FileSaveStore` |
 | `unity/Assets/Isoperia/Unity/Plugins/WebGL/` | `IsoperiaFS.jslib` — the IndexedDB save flush |
 | `unity/Assets/Isoperia/Editor/` | `IsoperiaBuild` — settings + build, as code |
@@ -123,7 +123,7 @@ it automatically).
   -logFile -
 ```
 
-**Expect 120 passing, 0 failing.** These same assertions already pass outside
+**Expect 167 passing, 0 failing.** These same assertions already pass outside
 Unity via `npm run verify:core`, so a failure here means an Editor integration
 problem (assembly references, package resolution), not a logic problem.
 
@@ -211,7 +211,7 @@ Post the following, which is what the next phase depends on:
 1. Exact Unity version used.
 2. Any `manifest.json` versions changed, and to what.
 3. Any line of `IsoperiaBuild.cs` changed for API differences.
-4. EditMode result (expect 120/120).
+4. EditMode result (expect 167/167).
 5. The deployed URL.
 6. Build size: `du -sh unity/WebGLBuild` and the compressed `Build/` total.
 7. The `curl -I` output from Step 6.

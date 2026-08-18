@@ -182,7 +182,7 @@ your exact patch release may differ.
 3. Select the camera, attach `Isoperia.Unity.IsometricCamera`. It sets projection,
    size, rotation and clip planes itself in `Awake` — do not hand-tune them in the
    inspector, the values are pinned by `docs/PORTING_SPEC.md` §2.
-4. Open Window → General → Test Runner → EditMode → Run All. Expect 120 passing.
+4. Open Window → General → Test Runner → EditMode → Run All. Expect 167 passing.
 
 ---
 
@@ -207,9 +207,9 @@ Editor involved:
 
 ```
 npm run verify:pwa         #  18 assertions: PWA shell behaviour
-npm run verify:core        # 120 assertions: the EditMode tests, run outside Unity
+npm run verify:core        # 167 assertions: the EditMode tests, run outside Unity
 npm run verify:json        #  72 assertions: Core's JSON parser vs Node's
-npm run verify:parity      #   9 assertions: world gen, pathfinding and the XP curve vs TypeScript
+npm run verify:parity      #  10 assertions: world gen, pathfinding, XP curve and combat vs TypeScript
 npm run verify:sanitizer   #  84 assertions: the save sanitizer vs TypeScript, on adversarial input
 npm run verify:unity       # all of the above
 ```
