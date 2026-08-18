@@ -1,8 +1,8 @@
 {
   "dependencies": {
     "com.unity.render-pipelines.universal": "17.0.3",
-    "com.unity.inputsystem": "1.11.2",
-    "com.unity.addressables": "2.2.2",
+    "com.unity.inputsystem": "1.20.0",
+    "com.unity.addressables": "2.11.1",
     "com.unity.ugui": "2.0.0",
     "com.unity.nuget.newtonsoft-json": "3.2.1",
     "com.unity.test-framework": "1.4.5",
