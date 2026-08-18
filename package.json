@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "2.5D isometric hybrid RPG & settlement builder \u2014 mobile-first, zero-asset procedural Three.js",
+  "description": "2.5D isometric hybrid RPG & settlement builder — mobile-first, zero-asset procedural Three.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -17,13 +17,21 @@
     "visual": "node scripts/visual-regress.cjs",
     "visual:update": "node scripts/visual-regress.cjs --update",
     "audit": "node scripts/audit.cjs",
-    "audit:quick": "node scripts/audit.cjs --quick"
+    "audit:quick": "node scripts/audit.cjs --quick",
+    "verify:pwa": "node scripts/verify-pwa-template.cjs",
+    "icons:app": "node scripts/gen-app-icons.cjs",
+    "verify:core": "node scripts/verify-core-tests.cjs",
+    "verify:parity": "node scripts/verify-core-parity.cjs",
+    "verify:unity": "node scripts/verify-pwa-template.cjs && node scripts/verify-core-tests.cjs && node scripts/verify-json-parity.cjs && node scripts/verify-core-parity.cjs && node scripts/verify-sanitizer-parity.cjs",
+    "verify:json": "node scripts/verify-json-parity.cjs",
+    "verify:sanitizer": "node scripts/verify-sanitizer-parity.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"
   },
   "devDependencies": {
     "@types/three": "^0.170.0",
+    "playwright-core": "^1.62.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.11"
   }
