@@ -1,0 +1,1079 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="168" result="Passed" total="168" passed="168" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.4838995">
+  <test-suite type="TestSuite" id="1000" name="Isoperia" fullname="Isoperia" runstate="Runnable" testcasecount="168" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.483900" total="168" passed="168" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1177" name="Isoperia.Core.Tests.dll" fullname="/Users/syntaxx/Desktop/isorpg-unity-migration/unity/Library/ScriptAssemblies/Isoperia.Core.Tests.dll" runstate="Runnable" testcasecount="167" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.479855" total="167" passed="167" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="57938" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1178" name="Isoperia" fullname="Isoperia" runstate="Runnable" testcasecount="167" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.479645" total="167" passed="167" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1179" name="Core" fullname="Isoperia.Core" runstate="Runnable" testcasecount="167" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.479542" total="167" passed="167" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1180" name="Tests" fullname="Isoperia.Core.Tests" runstate="Runnable" testcasecount="167" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.479390" total="167" passed="167" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1001" name="AStarTests" fullname="Isoperia.Core.Tests.AStarTests" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.020152" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1009" name="AdjacentFallbackIsHowHarvestingWorks" fullname="Isoperia.Core.Tests.AStarTests.AdjacentFallbackIsHowHarvestingWorks" methodname="AdjacentFallbackIsHowHarvestingWorks" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="299664462" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.007677" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="DoesNotCutCorners" fullname="Isoperia.Core.Tests.AStarTests.DoesNotCutCorners" methodname="DoesNotCutCorners" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="92938596" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000144" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1002" name="ExcludesTheStartTileAndEndsOnTheGoal" fullname="Isoperia.Core.Tests.AStarTests.ExcludesTheStartTileAndEndsOnTheGoal" methodname="ExcludesTheStartTileAndEndsOnTheGoal" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="1531937958" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001815" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1011" name="FindsTheOptimalCostThroughAMaze" fullname="Isoperia.Core.Tests.AStarTests.FindsTheOptimalCostThroughAMaze" methodname="FindsTheOptimalCostThroughAMaze" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="1114393581" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000346" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="GoalEqualToStartYieldsAnEmptyPath" fullname="Isoperia.Core.Tests.AStarTests.GoalEqualToStartYieldsAnEmptyPath" methodname="GoalEqualToStartYieldsAnEmptyPath" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="1834811989" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000086" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1012" name="IsDeterministicAcrossRuns" fullname="Isoperia.Core.Tests.AStarTests.IsDeterministicAcrossRuns" methodname="IsDeterministicAcrossRuns" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="473502541" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000169" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="RefusesABlockedGoalUnlessAdjacentIsAllowed" fullname="Isoperia.Core.Tests.AStarTests.RefusesABlockedGoalUnlessAdjacentIsAllowed" methodname="RefusesABlockedGoalUnlessAdjacentIsAllowed" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="1775897504" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001211" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="ReturnsNullWhenTheStartIsBlocked" fullname="Isoperia.Core.Tests.AStarTests.ReturnsNullWhenTheStartIsBlocked" methodname="ReturnsNullWhenTheStartIsBlocked" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="649148208" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000058" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="ReturnsNullWhenUnreachable" fullname="Isoperia.Core.Tests.AStarTests.ReturnsNullWhenUnreachable" methodname="ReturnsNullWhenUnreachable" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="837176866" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000040" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="RoutesAroundAWall" fullname="Isoperia.Core.Tests.AStarTests.RoutesAroundAWall" methodname="RoutesAroundAWall" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="2139747999" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000131" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="UsesDiagonalsAtRootTwoCost" fullname="Isoperia.Core.Tests.AStarTests.UsesDiagonalsAtRootTwoCost" methodname="UsesDiagonalsAtRootTwoCost" classname="Isoperia.Core.Tests.AStarTests" runstate="Runnable" seed="981885041" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000487" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1013" name="CombatMathTests" fullname="Isoperia.Core.Tests.CombatMathTests" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" testcasecount="47" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.045340" total="47" passed="47" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1051" name="ABuffLapsesWhenResolveRunsOut" fullname="Isoperia.Core.Tests.CombatMathTests.ABuffLapsesWhenResolveRunsOut" methodname="ABuffLapsesWhenResolveRunsOut" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1096616919" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000713" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1060" name="ACalmBossUsesItsOwnSlamChance" fullname="Isoperia.Core.Tests.CombatMathTests.ACalmBossUsesItsOwnSlamChance" methodname="ACalmBossUsesItsOwnSlamChance" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1530012578" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000579" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1041" name="AFailedTertiaryConsumesOnlyItsChanceDraw" fullname="Isoperia.Core.Tests.CombatMathTests.AFailedTertiaryConsumesOnlyItsChanceDraw" methodname="AFailedTertiaryConsumesOnlyItsChanceDraw" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1556912512" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000564" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1042" name="AffixChanceAndRollOrder" fullname="Isoperia.Core.Tests.CombatMathTests.AffixChanceAndRollOrder" methodname="AffixChanceAndRollOrder" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1223466301" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000135" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1058" name="AFixedSlamDamageSkipsTheDamageDraw" fullname="Isoperia.Core.Tests.CombatMathTests.AFixedSlamDamageSkipsTheDamageDraw" methodname="AFixedSlamDamageSkipsTheDamageDraw" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1782721400" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000071" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1027" name="AGuaranteedSpecialSkipsTheAccuracyDraw" fullname="Isoperia.Core.Tests.CombatMathTests.AGuaranteedSpecialSkipsTheAccuracyDraw" methodname="AGuaranteedSpecialSkipsTheAccuracyDraw" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="532798456" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000585" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1026" name="AHitConsumesAccuracyThenDamageInThatOrder" fullname="Isoperia.Core.Tests.CombatMathTests.AHitConsumesAccuracyThenDamageInThatOrder" methodname="AHitConsumesAccuracyThenDamageInThatOrder" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1118502267" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000131" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1025" name="AMissConsumesOnlyTheAccuracyDraw" fullname="Isoperia.Core.Tests.CombatMathTests.AMissConsumesOnlyTheAccuracyDraw" methodname="AMissConsumesOnlyTheAccuracyDraw" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1485341581" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000083" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1050" name="AnActiveBuffDrainsResolveEachTick" fullname="Isoperia.Core.Tests.CombatMathTests.AnActiveBuffDrainsResolveEachTick" methodname="AnActiveBuffDrainsResolveEachTick" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1215572614" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000052" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1034" name="AnEnragedBossHitsHarder" fullname="Isoperia.Core.Tests.CombatMathTests.AnEnragedBossHitsHarder" methodname="AnEnragedBossHitsHarder" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1157106513" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000114" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1056" name="AnEnragedBossSwingsOnTheFasterFixedTick" fullname="Isoperia.Core.Tests.CombatMathTests.AnEnragedBossSwingsOnTheFasterFixedTick" methodname="AnEnragedBossSwingsOnTheFasterFixedTick" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1341230331" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000080" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1059" name="ANonBossNeverSlams" fullname="Isoperia.Core.Tests.CombatMathTests.ANonBossNeverSlams" methodname="ANonBossNeverSlams" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1731962977" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000055" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1049" name="AnUnknownAffixLeavesTheDefinitionAlone" fullname="Isoperia.Core.Tests.CombatMathTests.AnUnknownAffixLeavesTheDefinitionAlone" methodname="AnUnknownAffixLeavesTheDefinitionAlone" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="323318494" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000322" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1022" name="AnUnknownStyleOrBuffDegradesToTheDefault" fullname="Isoperia.Core.Tests.CombatMathTests.AnUnknownStyleOrBuffDegradesToTheDefault" methodname="AnUnknownStyleOrBuffDegradesToTheDefault" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1820058211" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000072" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1048" name="ApplyAffixNeverMutatesTheSharedDefinition" fullname="Isoperia.Core.Tests.CombatMathTests.ApplyAffixNeverMutatesTheSharedDefinition" methodname="ApplyAffixNeverMutatesTheSharedDefinition" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1114494645" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000683" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1031" name="ASpecialWithoutExecuteNeverExecutes" fullname="Isoperia.Core.Tests.CombatMathTests.ASpecialWithoutExecuteNeverExecutes" methodname="ASpecialWithoutExecuteNeverExecutes" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="917235655" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000097" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="AttackRollSumsWeaponLevelGearStyleAndBuff" fullname="Isoperia.Core.Tests.CombatMathTests.AttackRollSumsWeaponLevelGearStyleAndBuff" methodname="AttackRollSumsWeaponLevelGearStyleAndBuff" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="474535071" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000062" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1024" name="AZeroMaxHitStillDealsOne" fullname="Isoperia.Core.Tests.CombatMathTests.AZeroMaxHitStillDealsOne" methodname="AZeroMaxHitStillDealsOne" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="261595376" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000048" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1023" name="DamageIsAtLeastOneAndNeverExceedsMaxHit" fullname="Isoperia.Core.Tests.CombatMathTests.DamageIsAtLeastOneAndNeverExceedsMaxHit" methodname="DamageIsAtLeastOneAndNeverExceedsMaxHit" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="685704019" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.007973" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1040" name="DropDrawOrderIsMainThenTertiaryThenPets" fullname="Isoperia.Core.Tests.CombatMathTests.DropDrawOrderIsMainThenTertiaryThenPets" methodname="DropDrawOrderIsMainThenTertiaryThenPets" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1230786818" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000231" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1032" name="EverySpecialMatchesTheShippedNumbers" fullname="Isoperia.Core.Tests.CombatMathTests.EverySpecialMatchesTheShippedNumbers" methodname="EverySpecialMatchesTheShippedNumbers" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1514578017" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001671" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1030" name="ExactlyAtTheThresholdDoesNotExecute" fullname="Isoperia.Core.Tests.CombatMathTests.ExactlyAtTheThresholdDoesNotExecute" methodname="ExactlyAtTheThresholdDoesNotExecute" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="68951278" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000128" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1029" name="ExecuteAppliesOnlyBelowTheThreshold" fullname="Isoperia.Core.Tests.CombatMathTests.ExecuteAppliesOnlyBelowTheThreshold" methodname="ExecuteAppliesOnlyBelowTheThreshold" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="397652211" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000158" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1043" name="HardenedScalesTheRightThreeStats" fullname="Isoperia.Core.Tests.CombatMathTests.HardenedScalesTheRightThreeStats" methodname="HardenedScalesTheRightThreeStats" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="535327381" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000150" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1017" name="HitChanceIsAlwaysAProbability" fullname="Isoperia.Core.Tests.CombatMathTests.HitChanceIsAlwaysAProbability" methodname="HitChanceIsAlwaysAProbability" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1155557741" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001299" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="HitChanceRisesWithAccuracyAndFallsWithDefense" fullname="Isoperia.Core.Tests.CombatMathTests.HitChanceRisesWithAccuracyAndFallsWithDefense" methodname="HitChanceRisesWithAccuracyAndFallsWithDefense" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="2062825450" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000179" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1014" name="HitChanceUsesTheHighRollBranchWhenAttackExceedsDefense" fullname="Isoperia.Core.Tests.CombatMathTests.HitChanceUsesTheHighRollBranchWhenAttackExceedsDefense" methodname="HitChanceUsesTheHighRollBranchWhenAttackExceedsDefense" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="891846934" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000101" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1015" name="HitChanceUsesTheLowRollBranchOtherwise" fullname="Isoperia.Core.Tests.CombatMathTests.HitChanceUsesTheLowRollBranchOtherwise" methodname="HitChanceUsesTheLowRollBranchOtherwise" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1222079244" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000308" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1020" name="MaxHitTakesOnePointPerFourStrengthLevels" fullname="Isoperia.Core.Tests.CombatMathTests.MaxHitTakesOnePointPerFourStrengthLevels" methodname="MaxHitTakesOnePointPerFourStrengthLevels" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="551195944" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000503" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1033" name="MonsterAccuracyIsMeasuredAgainstTwoPlusPlayerDefense" fullname="Isoperia.Core.Tests.CombatMathTests.MonsterAccuracyIsMeasuredAgainstTwoPlusPlayerDefense" methodname="MonsterAccuracyIsMeasuredAgainstTwoPlusPlayerDefense" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="146754471" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000296" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1055" name="OnlyBossesEnrageAndOnlyAtOrBelowHalfHealth" fullname="Isoperia.Core.Tests.CombatMathTests.OnlyBossesEnrageAndOnlyAtOrBelowHalfHealth" methodname="OnlyBossesEnrageAndOnlyAtOrBelowHalfHealth" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1068766259" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000093" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1038" name="RandIsInclusiveAtBothEnds" fullname="Isoperia.Core.Tests.CombatMathTests.RandIsInclusiveAtBothEnds" methodname="RandIsInclusiveAtBothEnds" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="725256980" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000082" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1053" name="ResolveIsCappedAtMax" fullname="Isoperia.Core.Tests.CombatMathTests.ResolveIsCappedAtMax" methodname="ResolveIsCappedAtMax" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1332195270" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000089" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1052" name="ResolveRegeneratesOnlyAtACampfireAndOnlyWithNoBuff" fullname="Isoperia.Core.Tests.CombatMathTests.ResolveRegeneratesOnlyAtACampfireAndOnlyWithNoBuff" methodname="ResolveRegeneratesOnlyAtACampfireAndOnlyWithNoBuff" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1683147078" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000065" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1047" name="RichCapsATertiaryChanceAtCertainty" fullname="Isoperia.Core.Tests.CombatMathTests.RichCapsATertiaryChanceAtCertainty" methodname="RichCapsATertiaryChanceAtCertainty" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="419548330" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000291" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1046" name="RichDoublesCoinsAndTertiaryChances" fullname="Isoperia.Core.Tests.CombatMathTests.RichDoublesCoinsAndTertiaryChances" methodname="RichDoublesCoinsAndTertiaryChances" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="330682386" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000183" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1057" name="SlamRollsDefaultDamageWhenNoneIsFixed" fullname="Isoperia.Core.Tests.CombatMathTests.SlamRollsDefaultDamageWhenNoneIsFixed" methodname="SlamRollsDefaultDamageWhenNoneIsFixed" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="547233365" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000095" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1054" name="SpecialEnergyRegeneratesAnywhereAndCaps" fullname="Isoperia.Core.Tests.CombatMathTests.SpecialEnergyRegeneratesAnywhereAndCaps" methodname="SpecialEnergyRegeneratesAnywhereAndCaps" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="128364810" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000079" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1028" name="SpecialsMultiplyTheMaxHit" fullname="Isoperia.Core.Tests.CombatMathTests.SpecialsMultiplyTheMaxHit" methodname="SpecialsMultiplyTheMaxHit" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="117977673" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000072" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1021" name="StylesShiftExactlyOneStatEach" fullname="Isoperia.Core.Tests.CombatMathTests.StylesShiftExactlyOneStatEach" methodname="StylesShiftExactlyOneStatEach" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="39464657" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000119" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1045" name="SwiftNeverDropsBelowOneTick" fullname="Isoperia.Core.Tests.CombatMathTests.SwiftNeverDropsBelowOneTick" methodname="SwiftNeverDropsBelowOneTick" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1017819627" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000088" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1044" name="SwiftSpeedsAttacksAndWidensAggro" fullname="Isoperia.Core.Tests.CombatMathTests.SwiftSpeedsAttacksAndWidensAggro" methodname="SwiftSpeedsAttacksAndWidensAggro" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1064188049" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000078" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1039" name="TheMainDropRollsItsQuantity" fullname="Isoperia.Core.Tests.CombatMathTests.TheMainDropRollsItsQuantity" methodname="TheMainDropRollsItsQuantity" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1237181107" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000212" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1016" name="TheTwoBranchesMeetAtEqualRolls" fullname="Isoperia.Core.Tests.CombatMathTests.TheTwoBranchesMeetAtEqualRolls" methodname="TheTwoBranchesMeetAtEqualRolls" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1382639018" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001519" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1036" name="WeightedRollFallsThroughToTheLastEntry" fullname="Isoperia.Core.Tests.CombatMathTests.WeightedRollFallsThroughToTheLastEntry" methodname="WeightedRollFallsThroughToTheLastEntry" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1897238106" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.007339" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1037" name="WeightedRollOnAnEmptyTableIsNull" fullname="Isoperia.Core.Tests.CombatMathTests.WeightedRollOnAnEmptyTableIsNull" methodname="WeightedRollOnAnEmptyTableIsNull" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1697229424" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000158" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1035" name="WeightedRollPicksByCumulativeWeight" fullname="Isoperia.Core.Tests.CombatMathTests.WeightedRollPicksByCumulativeWeight" methodname="WeightedRollPicksByCumulativeWeight" classname="Isoperia.Core.Tests.CombatMathTests" runstate="Runnable" seed="1175108179" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.010899" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1061" name="GridGenerationTests" fullname="Isoperia.Core.Tests.GridGenerationTests" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.076899" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1066" name="BiomeDistributionMatchesTypeScript" fullname="Isoperia.Core.Tests.GridGenerationTests.BiomeDistributionMatchesTypeScript" methodname="BiomeDistributionMatchesTypeScript" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="404628597" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.004174" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1069" name="DecorationSeedsMatchTypeScript" fullname="Isoperia.Core.Tests.GridGenerationTests.DecorationSeedsMatchTypeScript" methodname="DecorationSeedsMatchTypeScript" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="130104436" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.002132" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1071" name="ElevationStaysInRange" fullname="Isoperia.Core.Tests.GridGenerationTests.ElevationStaysInRange" methodname="ElevationStaysInRange" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="2039592264" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.024855" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1070" name="GenerationIsRepeatable" fullname="Isoperia.Core.Tests.GridGenerationTests.GenerationIsRepeatable" methodname="GenerationIsRepeatable" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="732350724" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.029629" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1062" name="HasProductionDimensions" fullname="Isoperia.Core.Tests.GridGenerationTests.HasProductionDimensions" methodname="HasProductionDimensions" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="325262308" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001388" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1068" name="MapIsBoundedByWater" fullname="Isoperia.Core.Tests.GridGenerationTests.MapIsBoundedByWater" methodname="MapIsBoundedByWater" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="113661062" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001878" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1073" name="OccupiedTilesBlockMovement" fullname="Isoperia.Core.Tests.GridGenerationTests.OccupiedTilesBlockMovement" methodname="OccupiedTilesBlockMovement" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="1805151140" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001180" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1072" name="OnlyCentreChunkStartsUnlocked" fullname="Isoperia.Core.Tests.GridGenerationTests.OnlyCentreChunkStartsUnlocked" methodname="OnlyCentreChunkStartsUnlocked" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="2067976783" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001131" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1074" name="OutOfBoundsIsNeitherAtNorWalkable" fullname="Isoperia.Core.Tests.GridGenerationTests.OutOfBoundsIsNeitherAtNorWalkable" methodname="OutOfBoundsIsNeitherAtNorWalkable" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="1397973947" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001219" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1063" name="TerrainDistributionMatchesTypeScript" fullname="Isoperia.Core.Tests.GridGenerationTests.TerrainDistributionMatchesTypeScript" methodname="TerrainDistributionMatchesTypeScript" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="812132370" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.002091" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1067" name="TownCentreIsAlwaysBuildableGround" fullname="Isoperia.Core.Tests.GridGenerationTests.TownCentreIsAlwaysBuildableGround" methodname="TownCentreIsAlwaysBuildableGround" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="1074885192" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001353" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1064" name="WalkableTileCountMatchesTypeScript" fullname="Isoperia.Core.Tests.GridGenerationTests.WalkableTileCountMatchesTypeScript" methodname="WalkableTileCountMatchesTypeScript" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="1312969936" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001188" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1065" name="ZoneBandsMatchTypeScript" fullname="Isoperia.Core.Tests.GridGenerationTests.ZoneBandsMatchTypeScript" methodname="ZoneBandsMatchTypeScript" classname="Isoperia.Core.Tests.GridGenerationTests" runstate="Runnable" seed="310467891" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.001439" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1075" name="InventoryTests" fullname="Isoperia.Core.Tests.InventoryTests" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.004439" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1078" name="AddIgnoresNonPositiveAmounts" fullname="Isoperia.Core.Tests.InventoryTests.AddIgnoresNonPositiveAmounts" methodname="AddIgnoresNonPositiveAmounts" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="2035563676" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000429" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1079" name="AddReturnsWhatWasActuallyStored" fullname="Isoperia.Core.Tests.InventoryTests.AddReturnsWhatWasActuallyStored" methodname="AddReturnsWhatWasActuallyStored" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="648408929" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000271" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1077" name="AddStacksTheSameItem" fullname="Isoperia.Core.Tests.InventoryTests.AddStacksTheSameItem" methodname="AddStacksTheSameItem" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="142304795" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000150" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1085" name="DeathPenaltyIsFifteenPercent" fullname="Isoperia.Core.Tests.InventoryTests.DeathPenaltyIsFifteenPercent" methodname="DeathPenaltyIsFifteenPercent" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="650055587" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000032" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1088" name="DeathPenaltyNeverTouchesNonBulkItems" fullname="Isoperia.Core.Tests.InventoryTests.DeathPenaltyNeverTouchesNonBulkItems" methodname="DeathPenaltyNeverTouchesNonBulkItems" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="515286207" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000328" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1089" name="DeathPenaltyOnAnEmptyBagIsHarmless" fullname="Isoperia.Core.Tests.InventoryTests.DeathPenaltyOnAnEmptyBagIsHarmless" methodname="DeathPenaltyOnAnEmptyBagIsHarmless" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="258918943" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000075" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1087" name="DeathPenaltySparesSmallStacks" fullname="Isoperia.Core.Tests.InventoryTests.DeathPenaltySparesSmallStacks" methodname="DeathPenaltySparesSmallStacks" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="470572246" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000075" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1086" name="DeathPenaltyTakesAFlooredSliceOfEachBulkStack" fullname="Isoperia.Core.Tests.InventoryTests.DeathPenaltyTakesAFlooredSliceOfEachBulkStack" methodname="DeathPenaltyTakesAFlooredSliceOfEachBulkStack" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="1777693426" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000141" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1080" name="NonBulkItemsBypassTheCap" fullname="Isoperia.Core.Tests.InventoryTests.NonBulkItemsBypassTheCap" methodname="NonBulkItemsBypassTheCap" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="56962020" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000146" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1084" name="RemoveRefusesToOverdraw" fullname="Isoperia.Core.Tests.InventoryTests.RemoveRefusesToOverdraw" methodname="RemoveRefusesToOverdraw" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="1436134452" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000141" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1083" name="RemoveTakesFromAStackAndDropsItWhenEmpty" fullname="Isoperia.Core.Tests.InventoryTests.RemoveTakesFromAStackAndDropsItWhenEmpty" methodname="RemoveTakesFromAStackAndDropsItWhenEmpty" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="1927397849" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000106" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1076" name="StartsEmptyWithTheDefaultCap" fullname="Isoperia.Core.Tests.InventoryTests.StartsEmptyWithTheDefaultCap" methodname="StartsEmptyWithTheDefaultCap" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="2115973701" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000087" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1090" name="StoredAmountCountsOnlyBulk" fullname="Isoperia.Core.Tests.InventoryTests.StoredAmountCountsOnlyBulk" methodname="StoredAmountCountsOnlyBulk" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="2100541553" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000048" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1082" name="TheFallbackCatalogStillExemptsCoins" fullname="Isoperia.Core.Tests.InventoryTests.TheFallbackCatalogStillExemptsCoins" methodname="TheFallbackCatalogStillExemptsCoins" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="2055149862" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000095" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1081" name="UnknownItemsAreTreatedAsBulk" fullname="Isoperia.Core.Tests.InventoryTests.UnknownItemsAreTreatedAsBulk" methodname="UnknownItemsAreTreatedAsBulk" classname="Isoperia.Core.Tests.InventoryTests" runstate="Runnable" seed="1258033956" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000079" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1091" name="Mulberry32Tests" fullname="Isoperia.Core.Tests.Mulberry32Tests" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.307667" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1098" name="IsRepeatableForAGivenSeed" fullname="Isoperia.Core.Tests.Mulberry32Tests.IsRepeatableForAGivenSeed" methodname="IsRepeatableForAGivenSeed" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" seed="917866927" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.004132" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1092" name="MatchesTypeScript_BaseWorldSeed" fullname="Isoperia.Core.Tests.Mulberry32Tests.MatchesTypeScript_BaseWorldSeed" methodname="MatchesTypeScript_BaseWorldSeed" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" seed="901164445" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000338" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1095" name="MatchesTypeScript_IntBoundarySeeds" fullname="Isoperia.Core.Tests.Mulberry32Tests.MatchesTypeScript_IntBoundarySeeds" methodname="MatchesTypeScript_IntBoundarySeeds" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" seed="1660466575" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000133" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1094" name="MatchesTypeScript_NegativeSeed" fullname="Isoperia.Core.Tests.Mulberry32Tests.MatchesTypeScript_NegativeSeed" methodname="MatchesTypeScript_NegativeSeed" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" seed="1690706451" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000065" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1096" name="MatchesTypeScript_PerTileSeeding" fullname="Isoperia.Core.Tests.Mulberry32Tests.MatchesTypeScript_PerTileSeeding" methodname="MatchesTypeScript_PerTileSeeding" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" seed="1259307239" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000128" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1093" name="MatchesTypeScript_ZeroSeed" fullname="Isoperia.Core.Tests.Mulberry32Tests.MatchesTypeScript_ZeroSeed" methodname="MatchesTypeScript_ZeroSeed" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" seed="352702199" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:52Z" duration="0.000065" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1097" name="StaysInUnitInterval" fullname="Isoperia.Core.Tests.Mulberry32Tests.StaysInUnitInterval" methodname="StaysInUnitInterval" classname="Isoperia.Core.Tests.Mulberry32Tests" runstate="Runnable" seed="699371072" result="Passed" start-time="2026-08-18 22:41:52Z" end-time="2026-08-18 22:41:53Z" duration="0.301392" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1099" name="SanitizerTests" fullname="Isoperia.Core.Tests.SanitizerTests" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" testcasecount="31" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.008370" total="31" passed="31" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1115" name="AClueWithNoValidSitesBecomesNull" fullname="Isoperia.Core.Tests.SanitizerTests.AClueWithNoValidSitesBecomesNull" methodname="AClueWithNoValidSitesBecomesNull" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1906163710" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.003618" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1117" name="AFuturePlantedAtIsClampedToNow" fullname="Isoperia.Core.Tests.SanitizerTests.AFuturePlantedAtIsClampedToNow" methodname="AFuturePlantedAtIsClampedToNow" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1954039832" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000236" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1124" name="ALongNameIsTruncated" fullname="Isoperia.Core.Tests.SanitizerTests.ALongNameIsTruncated" methodname="ALongNameIsTruncated" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="141138186" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000129" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1121" name="AnUnknownAttackStyleFallsBackToAccurate" fullname="Isoperia.Core.Tests.SanitizerTests.AnUnknownAttackStyleFallsBackToAccurate" methodname="AnUnknownAttackStyleFallsBackToAccurate" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="48742450" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000088" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1116" name="AnUnknownClueTierIsRejected" fullname="Isoperia.Core.Tests.SanitizerTests.AnUnknownClueTierIsRejected" methodname="AnUnknownClueTierIsRejected" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1010020780" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000051" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1120" name="AnUnrecognisedBuffIsDroppedRatherThanLeftActive" fullname="Isoperia.Core.Tests.SanitizerTests.AnUnrecognisedBuffIsDroppedRatherThanLeftActive" methodname="AnUnrecognisedBuffIsDroppedRatherThanLeftActive" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1264785546" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000079" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1112" name="ARecoveredBuildingIdIsDeterministic" fullname="Isoperia.Core.Tests.SanitizerTests.ARecoveredBuildingIdIsDeterministic" methodname="ARecoveredBuildingIdIsDeterministic" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="55816549" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000112" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1130" name="ATimestampIsPreservedAndDefaultsToNow" fullname="Isoperia.Core.Tests.SanitizerTests.ATimestampIsPreservedAndDefaultsToNow" methodname="ATimestampIsPreservedAndDefaultsToNow" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="2020805139" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000090" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1102" name="ATruncatedSaveSurvivesWithDefaults" fullname="Isoperia.Core.Tests.SanitizerTests.ATruncatedSaveSurvivesWithDefaults" methodname="ATruncatedSaveSurvivesWithDefaults" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1214945052" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000171" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1122" name="AutoEatSnapsToTheNearestOfferedStep" fullname="Isoperia.Core.Tests.SanitizerTests.AutoEatSnapsToTheNearestOfferedStep" methodname="AutoEatSnapsToTheNearestOfferedStep" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1397467957" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000119" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1111" name="BuildingLevelIsAtLeastOne" fullname="Isoperia.Core.Tests.SanitizerTests.BuildingLevelIsAtLeastOne" methodname="BuildingLevelIsAtLeastOne" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1692424329" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000075" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1123" name="ClockMinuteIsClampedToADay" fullname="Isoperia.Core.Tests.SanitizerTests.ClockMinuteIsClampedToADay" methodname="ClockMinuteIsClampedToADay" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="843161153" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000075" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1114" name="ClueSitesOutsideTheWorldAreDropped" fullname="Isoperia.Core.Tests.SanitizerTests.ClueSitesOutsideTheWorldAreDropped" methodname="ClueSitesOutsideTheWorldAreDropped" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="2061676189" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000071" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1113" name="ClueStepIsClampedIntoTheSiteList" fullname="Isoperia.Core.Tests.SanitizerTests.ClueStepIsClampedIntoTheSiteList" methodname="ClueStepIsClampedIntoTheSiteList" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="246400368" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000059" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1127" name="CollectionLogAcceptsBothTheOldAndNewShapes" fullname="Isoperia.Core.Tests.SanitizerTests.CollectionLogAcceptsBothTheOldAndNewShapes" methodname="CollectionLogAcceptsBothTheOldAndNewShapes" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="247959006" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000091" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1106" name="CurrentSavesKeepMasteryUnchanged" fullname="Isoperia.Core.Tests.SanitizerTests.CurrentSavesKeepMasteryUnchanged" methodname="CurrentSavesKeepMasteryUnchanged" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1609834256" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000068" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1118" name="EmptyBedsSurviveAsNulls" fullname="Isoperia.Core.Tests.SanitizerTests.EmptyBedsSurviveAsNulls" methodname="EmptyBedsSurviveAsNulls" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1744949487" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000121" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1108" name="EveryRealBuildingTypeIsAccepted" fullname="Isoperia.Core.Tests.SanitizerTests.EveryRealBuildingTypeIsAccepted" methodname="EveryRealBuildingTypeIsAccepted" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="812449363" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000199" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1129" name="MapFlagsAreCoercedStrictly" fullname="Isoperia.Core.Tests.SanitizerTests.MapFlagsAreCoercedStrictly" methodname="MapFlagsAreCoercedStrictly" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1534647769" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000158" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1104" name="NeedsMasteryRescaleOnlyBelowOnePointOne" fullname="Isoperia.Core.Tests.SanitizerTests.NeedsMasteryRescaleOnlyBelowOnePointOne" methodname="NeedsMasteryRescaleOnlyBelowOnePointOne" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="384993389" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000044" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1128" name="NonFiniteNumbersFallBackRatherThanPropagate" fullname="Isoperia.Core.Tests.SanitizerTests.NonFiniteNumbersFallBackRatherThanPropagate" methodname="NonFiniteNumbersFallBackRatherThanPropagate" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="41117609" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000064" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1105" name="OldSavesHaveMasteryDividedByFour" fullname="Isoperia.Core.Tests.SanitizerTests.OldSavesHaveMasteryDividedByFour" methodname="OldSavesHaveMasteryDividedByFour" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="390229485" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000094" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1126" name="OnlyRealEquipSlotsSurvive" fullname="Isoperia.Core.Tests.SanitizerTests.OnlyRealEquipSlotsSurvive" methodname="OnlyRealEquipSlotsSurvive" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="89468442" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000079" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1110" name="OutOfBoundsBuildingsAreDropped" fullname="Isoperia.Core.Tests.SanitizerTests.OutOfBoundsBuildingsAreDropped" methodname="OutOfBoundsBuildingsAreDropped" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1909179545" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000056" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1101" name="RejectsASaveWithNoPlayer" fullname="Isoperia.Core.Tests.SanitizerTests.RejectsASaveWithNoPlayer" methodname="RejectsASaveWithNoPlayer" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="956082554" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000052" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1100" name="RejectsNonObjects" fullname="Isoperia.Core.Tests.SanitizerTests.RejectsNonObjects" methodname="RejectsNonObjects" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1819584380" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000058" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1119" name="ResolveAndSpecialAreClampedIntoRange" fullname="Isoperia.Core.Tests.SanitizerTests.ResolveAndSpecialAreClampedIntoRange" methodname="ResolveAndSpecialAreClampedIntoRange" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1679155647" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000062" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1107" name="SanitizingIsIdempotent" fullname="Isoperia.Core.Tests.SanitizerTests.SanitizingIsIdempotent" methodname="SanitizingIsIdempotent" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="1341891431" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000109" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1109" name="UnknownBuildingTypesAreDropped" fullname="Isoperia.Core.Tests.SanitizerTests.UnknownBuildingTypesAreDropped" methodname="UnknownBuildingTypesAreDropped" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="803095385" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000071" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1103" name="VersionCompareOrdersDottedVersions" fullname="Isoperia.Core.Tests.SanitizerTests.VersionCompareOrdersDottedVersions" methodname="VersionCompareOrdersDottedVersions" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="811251603" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000124" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1125" name="ZeroAndNegativeStacksAreDropped" fullname="Isoperia.Core.Tests.SanitizerTests.ZeroAndNegativeStacksAreDropped" methodname="ZeroAndNegativeStacksAreDropped" classname="Isoperia.Core.Tests.SanitizerTests" runstate="Runnable" seed="942395335" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000116" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1131" name="SaveSystemTests" fullname="Isoperia.Core.Tests.SaveSystemTests" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.008354" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1150" name="AClockGoingBackwardsEarnsNothingRatherThanBreaking" fullname="Isoperia.Core.Tests.SaveSystemTests.AClockGoingBackwardsEarnsNothingRatherThanBreaking" methodname="AClockGoingBackwardsEarnsNothingRatherThanBreaking" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="792973980" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.002509" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1148" name="ATownHallPaysTaxIntoTheBagWhileAway" fullname="Isoperia.Core.Tests.SaveSystemTests.ATownHallPaysTaxIntoTheBagWhileAway" methodname="ATownHallPaysTaxIntoTheBagWhileAway" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="1657357138" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000282" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1145" name="ATownHallRaisesTheCapToTwelveHours" fullname="Isoperia.Core.Tests.SaveSystemTests.ATownHallRaisesTheCapToTwelveHours" methodname="ATownHallRaisesTheCapToTwelveHours" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="486299899" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000149" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1137" name="AutosaveFiresEveryTwentyTicks" fullname="Isoperia.Core.Tests.SaveSystemTests.AutosaveFiresEveryTwentyTicks" methodname="AutosaveFiresEveryTwentyTicks" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="192224289" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000122" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1143" name="AwayTimeIsMeasuredFromTheSavedTimestamp" fullname="Isoperia.Core.Tests.SaveSystemTests.AwayTimeIsMeasuredFromTheSavedTimestamp" methodname="AwayTimeIsMeasuredFromTheSavedTimestamp" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="2109330155" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000086" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1134" name="ClueSurvivesARoundTrip" fullname="Isoperia.Core.Tests.SaveSystemTests.ClueSurvivesARoundTrip" methodname="ClueSurvivesARoundTrip" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="712222369" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.001588" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1133" name="ExportedJsonIsParseableAndIndented" fullname="Isoperia.Core.Tests.SaveSystemTests.ExportedJsonIsParseableAndIndented" methodname="ExportedJsonIsParseableAndIndented" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="400366986" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000150" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1136" name="ForceSaveReportsAFailedWrite" fullname="Isoperia.Core.Tests.SaveSystemTests.ForceSaveReportsAFailedWrite" methodname="ForceSaveReportsAFailedWrite" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="1281731732" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000078" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1135" name="ForceSaveWritesPrimaryAndFlushes" fullname="Isoperia.Core.Tests.SaveSystemTests.ForceSaveWritesPrimaryAndFlushes" methodname="ForceSaveWritesPrimaryAndFlushes" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="1964618782" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000113" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1139" name="LoadFallsBackToTheBackupWhenThePrimaryIsCorrupt" fullname="Isoperia.Core.Tests.SaveSystemTests.LoadFallsBackToTheBackupWhenThePrimaryIsCorrupt" methodname="LoadFallsBackToTheBackupWhenThePrimaryIsCorrupt" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="789531897" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000279" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1138" name="LoadReadsBackAPrimarySave" fullname="Isoperia.Core.Tests.SaveSystemTests.LoadReadsBackAPrimarySave" methodname="LoadReadsBackAPrimarySave" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="482254284" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000193" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1141" name="LoadReportsFreshWhenBothCopiesAreUnusable" fullname="Isoperia.Core.Tests.SaveSystemTests.LoadReportsFreshWhenBothCopiesAreUnusable" methodname="LoadReportsFreshWhenBothCopiesAreUnusable" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="847731687" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000060" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1140" name="LoadReportsFreshWhenNothingIsStored" fullname="Isoperia.Core.Tests.SaveSystemTests.LoadReportsFreshWhenNothingIsStored" methodname="LoadReportsFreshWhenNothingIsStored" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="1598669223" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000057" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1142" name="NoTimeAwayEarnsNothing" fullname="Isoperia.Core.Tests.SaveSystemTests.NoTimeAwayEarnsNothing" methodname="NoTimeAwayEarnsNothing" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="1346904444" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000052" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1147" name="OfflineTaxScalesWithHallLevelAndTime" fullname="Isoperia.Core.Tests.SaveSystemTests.OfflineTaxScalesWithHallLevelAndTime" methodname="OfflineTaxScalesWithHallLevelAndTime" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="314466390" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000094" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1132" name="SerializeThenApplyPreservesState" fullname="Isoperia.Core.Tests.SaveSystemTests.SerializeThenApplyPreservesState" methodname="SerializeThenApplyPreservesState" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="437673466" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.001113" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1146" name="TheElapsedWindowIsConsumedSoItCannotPayTwice" fullname="Isoperia.Core.Tests.SaveSystemTests.TheElapsedWindowIsConsumedSoItCannotPayTwice" methodname="TheElapsedWindowIsConsumedSoItCannotPayTwice" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="371502194" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000092" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1144" name="TimeBeyondTheCapIsReportedButNotPaid" fullname="Isoperia.Core.Tests.SaveSystemTests.TimeBeyondTheCapIsReportedButNotPaid" methodname="TimeBeyondTheCapIsReportedButNotPaid" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="464755839" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000086" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1149" name="WithoutATownHallNoTaxIsPaid" fullname="Isoperia.Core.Tests.SaveSystemTests.WithoutATownHallNoTaxIsPaid" methodname="WithoutATownHallNoTaxIsPaid" classname="Isoperia.Core.Tests.SaveSystemTests" runstate="Runnable" seed="2022871983" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000079" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1151" name="TickRunnerTests" fullname="Isoperia.Core.Tests.TickRunnerTests" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.002225" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1155" name="AccumulatesRemainderAcrossFrames" fullname="Isoperia.Core.Tests.TickRunnerTests.AccumulatesRemainderAcrossFrames" methodname="AccumulatesRemainderAcrossFrames" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="562258607" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000162" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1157" name="ClampsCatchUpAfterALongStall" fullname="Isoperia.Core.Tests.TickRunnerTests.ClampsCatchUpAfterALongStall" methodname="ClampsCatchUpAfterALongStall" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="1312069774" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000430" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1153" name="DoesNotFireBelowOneTick" fullname="Isoperia.Core.Tests.TickRunnerTests.DoesNotFireBelowOneTick" methodname="DoesNotFireBelowOneTick" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="689796105" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000051" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1154" name="FiresExactlyOnceAtTheBoundary" fullname="Isoperia.Core.Tests.TickRunnerTests.FiresExactlyOnceAtTheBoundary" methodname="FiresExactlyOnceAtTheBoundary" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="569041087" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000046" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1156" name="FiresMultipleTicksForALargeDelta" fullname="Isoperia.Core.Tests.TickRunnerTests.FiresMultipleTicksForALargeDelta" methodname="FiresMultipleTicksForALargeDelta" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="464062286" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000044" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1162" name="HandlersCanBeRemoved" fullname="Isoperia.Core.Tests.TickRunnerTests.HandlersCanBeRemoved" methodname="HandlersCanBeRemoved" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="1049539321" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000138" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1161" name="IgnoresNegativeAndNaNDeltas" fullname="Isoperia.Core.Tests.TickRunnerTests.IgnoresNegativeAndNaNDeltas" methodname="IgnoresNegativeAndNaNDeltas" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="672433096" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000061" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1159" name="PassesTheTickIndexToHandlers" fullname="Isoperia.Core.Tests.TickRunnerTests.PassesTheTickIndexToHandlers" methodname="PassesTheTickIndexToHandlers" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="108613170" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000279" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1163" name="ResetAccumulatorDropsPartialProgress" fullname="Isoperia.Core.Tests.TickRunnerTests.ResetAccumulatorDropsPartialProgress" methodname="ResetAccumulatorDropsPartialProgress" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="1096196699" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000052" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1160" name="RunsHandlersInRegistrationOrder" fullname="Isoperia.Core.Tests.TickRunnerTests.RunsHandlersInRegistrationOrder" methodname="RunsHandlersInRegistrationOrder" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="305353468" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000119" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1158" name="TickIndexIsMonotonic" fullname="Isoperia.Core.Tests.TickRunnerTests.TickIndexIsMonotonic" methodname="TickIndexIsMonotonic" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="228113850" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000085" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1152" name="TickIsSixHundredMilliseconds" fullname="Isoperia.Core.Tests.TickRunnerTests.TickIsSixHundredMilliseconds" methodname="TickIsSixHundredMilliseconds" classname="Isoperia.Core.Tests.TickRunnerTests" runstate="Runnable" seed="684695938" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000030" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1164" name="XpTableTests" fullname="Isoperia.Core.Tests.XpTableTests" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.002925" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1170" name="CurveIsStrictlyIncreasing" fullname="Isoperia.Core.Tests.XpTableTests.CurveIsStrictlyIncreasing" methodname="CurveIsStrictlyIncreasing" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1493595183" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000218" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1169" name="EveryThresholdIsAnExactBoundary" fullname="Isoperia.Core.Tests.XpTableTests.EveryThresholdIsAnExactBoundary" methodname="EveryThresholdIsAnExactBoundary" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1621055032" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000261" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1168" name="LevelFromXpMatchesTypeScript" fullname="Isoperia.Core.Tests.XpTableTests.LevelFromXpMatchesTypeScript" methodname="LevelFromXpMatchesTypeScript" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1909961960" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000077" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1172" name="LevelProgressAtMaxLevelIsFull" fullname="Isoperia.Core.Tests.XpTableTests.LevelProgressAtMaxLevelIsFull" methodname="LevelProgressAtMaxLevelIsFull" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1600440146" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000125" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1173" name="LevelProgressIsAlwaysInUnitInterval" fullname="Isoperia.Core.Tests.XpTableTests.LevelProgressIsAlwaysInUnitInterval" methodname="LevelProgressIsAlwaysInUnitInterval" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1806251792" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000899" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1171" name="LevelProgressIsFractionalWithinTheLevel" fullname="Isoperia.Core.Tests.XpTableTests.LevelProgressIsFractionalWithinTheLevel" methodname="LevelProgressIsFractionalWithinTheLevel" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="591208843" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000065" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1175" name="MasteryLevelFromXpIsTheInverse" fullname="Isoperia.Core.Tests.XpTableTests.MasteryLevelFromXpIsTheInverse" methodname="MasteryLevelFromXpIsTheInverse" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1256086024" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000260" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1176" name="MasteryMaxIsReachableInAPlausibleNumberOfActions" fullname="Isoperia.Core.Tests.XpTableTests.MasteryMaxIsReachableInAPlausibleNumberOfActions" methodname="MasteryMaxIsReachableInAPlausibleNumberOfActions" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1204793819" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000053" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1174" name="MasteryUsesItsOwnTriangularCurve" fullname="Isoperia.Core.Tests.XpTableTests.MasteryUsesItsOwnTriangularCurve" methodname="MasteryUsesItsOwnTriangularCurve" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1007750778" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000113" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1165" name="MaxLevelIsNinetyNine" fullname="Isoperia.Core.Tests.XpTableTests.MaxLevelIsNinetyNine" methodname="MaxLevelIsNinetyNine" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="2069723786" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000029" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1167" name="SumOfAllThresholdsMatchesTypeScript" fullname="Isoperia.Core.Tests.XpTableTests.SumOfAllThresholdsMatchesTypeScript" methodname="SumOfAllThresholdsMatchesTypeScript" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="168869783" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000042" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1166" name="ThresholdsMatchTypeScript" fullname="Isoperia.Core.Tests.XpTableTests.ThresholdsMatchTypeScript" methodname="ThresholdsMatchTypeScript" classname="Isoperia.Core.Tests.XpTableTests" runstate="Runnable" seed="1446201341" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000124" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1183" name="Unity.Addressables.DocExampleCode.Editor.Tests.dll" fullname="/Users/syntaxx/Desktop/isorpg-unity-migration/unity/Library/ScriptAssemblies/Unity.Addressables.DocExampleCode.Editor.Tests.dll" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000381" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="57938" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1184" name="AddressableAssets" fullname="AddressableAssets" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000305" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1185" name="DocExampleCode" fullname="AddressableAssets.DocExampleCode" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000258" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1181" name="TestStub" fullname="AddressableAssets.DocExampleCode.TestStub" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000213" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1182" name="RequiredTest" fullname="AddressableAssets.DocExampleCode.TestStub.RequiredTest" methodname="RequiredTest" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" seed="421825703" result="Passed" start-time="2026-08-18 22:41:53Z" end-time="2026-08-18 22:41:53Z" duration="0.000027" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/syntaxx/Library/Application Support/Isoperia/Isoperia/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
