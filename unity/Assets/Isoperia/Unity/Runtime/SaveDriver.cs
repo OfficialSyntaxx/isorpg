@@ -59,7 +59,22 @@ namespace Isoperia.Unity
         {
             // Autosave rides the simulation tick rather than a wall-clock timer,
             // so it cannot fire while the game is paused mid-tick.
-            GameLoop.Instance?.Tick.OnTick(Save.OnTick);
+            //
+            // Loudly, not with a null-conditional. A missing GameLoop means
+            // autosave never registers and the only saves that ever happen are
+            // the ones on page-hide — which looks like the game working right up
+            // until a session ends in a way that does not fire those, and then
+            // silently loses hours. There is no safe way to fail quietly here.
+            if (GameLoop.Instance == null)
+            {
+                Debug.LogError(
+                    "[Isoperia] SaveDriver found no GameLoop in the scene, so autosave is NOT " +
+                    "running. Add a GameObject with the GameLoop component, or rebuild the " +
+                    "scene with Isoperia > Create bootstrap scene.");
+                return;
+            }
+
+            GameLoop.Instance.Tick.OnTick(Save.OnTick);
         }
 
         /// <summary>Epoch milliseconds. The single source of "now" for saves.</summary>

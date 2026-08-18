@@ -32,12 +32,12 @@ The only things missing are the ones Unity itself generates: `ProjectSettings/`,
 
 ## Prerequisites
 
-- **Unity 6 LTS (6000.0.x)** with the **WebGL Build Support** module.
-  Install via Unity Hub, or:
+- **Unity 6** with the **WebGL Build Support** module. The project is currently
+  on **6000.5.8f1**, which is what `unity/ProjectSettings/ProjectVersion.txt`
+  records — match it, or expect a one-way project upgrade on first open.
   ```
-  unityhub -- --headless install --version 6000.0.32f1 --module webgl --childModules
+  unityhub -- --headless install --version 6000.5.8f1 --module webgl --childModules
   ```
-  Substitute the 6000.0 LTS release you actually have; record the exact version.
 - A Unity account and an activated licence (Personal is fine). Batch mode still
   requires activation.
 - **Git LFS**: `git lfs install` before committing anything binary.
@@ -71,10 +71,14 @@ Then open the project once so Unity resolves packages and generates `.meta` file
 "$UNITY" -quit -batchmode -nographics -projectPath unity -logFile -
 ```
 
-> **If package resolution fails** on a version in `unity/Packages/manifest.json`:
-> the pinned versions target 6000.0 LTS and your patch release may differ. Delete
-> the offending line and re-open; Unity resolves a compatible version. Required
-> packages are: URP, Input System, Addressables, Newtonsoft Json, Test Framework.
+> **Steps 1–4 are already done** for the committed project (`af82dc6`) — skip to
+> Step 4's re-run note, then Step 5. They remain here for rebuilding from scratch.
+
+> **If package resolution fails** on a version in `unity/Packages/manifest.json`,
+> delete the offending line and re-open; Unity resolves a compatible one. That has
+> already happened once: Input System and Addressables resolved up to 1.20.0 and
+> 2.11.1 on 6000.5. Required packages are URP, Input System, Addressables,
+> Newtonsoft Json, Test Framework.
 
 ---
 
@@ -91,6 +95,14 @@ Expect in the log:
 ```
 [Isoperia] WebGL configured: Brotli, exceptions=None, stripping=High, heap=320MB, Linear, WebGL2 (GLES3), ASTC, template=PROJECT:IsoperiaPWA
 ```
+
+> **Texture compression does not persist.** `EditorUserBuildSettings.webGLBuildSubtarget`
+> lives in `Library/`, which is not version-controlled, so ASTC survives only in the
+> working copy that set it. `IsoperiaBuild.BuildWebGL` calls `ConfigureWebGL` first
+> and therefore always sets it — but a manual **File → Build** on a fresh clone will
+> use Unity's default instead. Build through the menu item or the `-executeMethod`
+> above, not File → Build. This is harmless while there are no textures; it stops
+> being harmless in Phase 5.
 
 > **If `IsoperiaBuild.cs` fails to compile**, a Unity API was renamed between
 > versions. Fix the offending line — every setting has a documented manual
@@ -118,6 +130,14 @@ problem (assembly references, package resolution), not a logic problem.
 ---
 
 ## Step 4 — Create the bootstrap scene
+
+> **Re-run this if your project predates commit `10ca527`.** The first version of
+> `CreateBootstrapScene` omitted the `SaveDriver` object, so nothing loaded on
+> startup, nothing autosaved, and the WebGL IndexedDB flush was never installed —
+> every session's progress lost silently, with no error. Re-running fixes it.
+> Verify afterwards that the scene contains **four** objects: `Main Camera`,
+> `Sun`, `GameLoop`, and `SaveDriver`.
+
 
 ```bash
 "$UNITY" -quit -batchmode -nographics -projectPath unity \

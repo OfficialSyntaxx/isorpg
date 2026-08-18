@@ -440,7 +440,20 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
 
 - **Phase 1 (code lane) — done** (commit `5ab974a`). PWA WebGL template, service
   worker, icons, Netlify/Vercel headers, and `npm run verify:pwa` (18 assertions).
-  Editor lane pending: see `docs/UNITY_SETUP.md`.
+
+- **Phase 1 (Editor lane) — project configured; build and deploy still outstanding**
+  (commit `af82dc6`, by dispatch). Unity **6000.5.8f1**. `ProjectSettings/`, every
+  `.meta` file and `Bootstrap.unity` are committed, and the stored WebGL settings
+  match what `ConfigureWebGL` writes (Brotli, exceptions None, stripping High,
+  320 MB heap, Linear, GLES3-only, `PROJECT:IsoperiaPWA`) — so the Editor script
+  compiles and runs on 6000.5 with no API changes. Package versions resolved
+  upward: Input System 1.20.0, Addressables 2.11.1. Dispatch also added
+  `AssemblyInfo.cs` with `InternalsVisibleTo("Isoperia.Core.Tests")`, which the
+  sanitizer tests need; none of the ported source was modified.
+
+  **Not yet done:** no WebGL build, no deploy, no `curl` header check, no device
+  install. Phase 1's actual exit criterion — the icon on a home screen, launching
+  fullscreen — is therefore not met. Steps 5–8 of `docs/EDITOR_LANE.md` remain.
 
 - **Phase 2a — done.** `Isoperia.Core` ported to C#: `Mulberry32`, `Grid` world
   generation, `AStar`, `TickRunner`, plus `GameLoop` and `IsometricCamera` on the

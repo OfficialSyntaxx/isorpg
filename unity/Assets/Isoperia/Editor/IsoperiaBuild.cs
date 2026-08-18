@@ -122,6 +122,14 @@ namespace Isoperia.EditorTools
             var loopGo = new GameObject("GameLoop");
             loopGo.AddComponent<GameLoop>();
 
+            // The save system. Without this object in the scene nothing loads on
+            // startup, nothing autosaves, and the WebGL IndexedDB flush is never
+            // installed — so every session's progress is lost silently, with no
+            // error anywhere. It is named by GameObjectName because the JavaScript
+            // lifecycle bridge addresses it by name.
+            var saveGo = new GameObject(SaveDriver.GameObjectName);
+            saveGo.AddComponent<SaveDriver>();
+
             // A grey ground plane, so the first build renders something and the
             // camera angle is visually checkable.
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
