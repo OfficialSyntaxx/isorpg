@@ -162,8 +162,9 @@ The repo already contains, verified and passing:
 | Path | What |
 |---|---|
 | `unity/Packages/manifest.json` | the four required packages, pre-declared |
-| `unity/Assets/Isoperia/Core/` | the ported simulation core (Phase 2a) + its tests |
-| `unity/Assets/Isoperia/Unity/` | `GameLoop` (tick bridge) and `IsometricCamera` |
+| `unity/Assets/Isoperia/Core/` | the ported simulation core (Phases 2a-2b) + its tests |
+| `unity/Assets/Isoperia/Unity/` | `GameLoop`, `IsometricCamera`, `SaveDriver`, `FileSaveStore` |
+| `unity/Assets/Isoperia/Unity/Plugins/WebGL/` | `IsoperiaFS.jslib` — the IndexedDB flush |
 | `unity/Assets/WebGLTemplates/IsoperiaPWA/` | the PWA shell |
 
 Read `unity/Assets/Isoperia/README.md` for why `Isoperia.Core` is barred from
@@ -181,7 +182,7 @@ your exact patch release may differ.
 3. Select the camera, attach `Isoperia.Unity.IsometricCamera`. It sets projection,
    size, rotation and clip planes itself in `Awake` — do not hand-tune them in the
    inspector, the values are pinned by `docs/PORTING_SPEC.md` §2.
-4. Open Window → General → Test Runner → EditMode → Run All. Expect 43 passing.
+4. Open Window → General → Test Runner → EditMode → Run All. Expect 120 passing.
 
 ---
 
@@ -205,10 +206,12 @@ PWA shell, core unit tests, and TypeScript parity — in a couple of seconds wit
 Editor involved:
 
 ```
-npm run verify:pwa      # 18 assertions: PWA shell behaviour
-npm run verify:core     # 43 assertions: the EditMode tests, run outside Unity
-npm run verify:parity   # 8 assertions:  C# vs TypeScript, all 1,764 tiles
-npm run verify:unity    # all three
+npm run verify:pwa         #  18 assertions: PWA shell behaviour
+npm run verify:core        # 120 assertions: the EditMode tests, run outside Unity
+npm run verify:json        #  72 assertions: Core's JSON parser vs Node's
+npm run verify:parity      #   9 assertions: world gen, pathfinding and the XP curve vs TypeScript
+npm run verify:sanitizer   #  84 assertions: the save sanitizer vs TypeScript, on adversarial input
+npm run verify:unity       # all of the above
 ```
 
 These need a C# toolchain (`apt-get install -y mono-mcs mono-runtime`) and skip

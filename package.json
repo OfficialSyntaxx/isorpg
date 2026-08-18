@@ -22,7 +22,9 @@
     "icons:app": "node scripts/gen-app-icons.cjs",
     "verify:core": "node scripts/verify-core-tests.cjs",
     "verify:parity": "node scripts/verify-core-parity.cjs",
-    "verify:unity": "node scripts/verify-pwa-template.cjs && node scripts/verify-core-tests.cjs && node scripts/verify-core-parity.cjs"
+    "verify:unity": "node scripts/verify-pwa-template.cjs && node scripts/verify-core-tests.cjs && node scripts/verify-json-parity.cjs && node scripts/verify-core-parity.cjs && node scripts/verify-sanitizer-parity.cjs",
+    "verify:json": "node scripts/verify-json-parity.cjs",
+    "verify:sanitizer": "node scripts/verify-sanitizer-parity.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

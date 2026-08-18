@@ -455,7 +455,24 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
     portable across runtimes (Mono, Roslyn, IL2CPP/emscripten) despite depending
     on `sin`/`cos`
 
-**Next: Phase 1 (Editor lane), then Phase 2b** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
+- **Phase 2b — done.** State and persistence ported: `GameState`, the five
+  components, the XP and mastery curves, save serialization, the sanitizer, and
+  offline progression, plus `SaveDriver`, `FileSaveStore` and the
+  `IsoperiaFS.jslib` IndexedDB flush on the Unity side. `Isoperia.Core` carries
+  its own JSON implementation so it stays dependency-free and testable outside
+  Unity; it is checked against Node's parser rather than trusted.
+  - `npm run verify:core` — 120 EditMode assertions
+  - `npm run verify:json` — 72, Core's JSON vs Node's, including malformed input
+    that must be rejected
+  - `npm run verify:sanitizer` — 84, the sanitizer vs the TypeScript over an
+    adversarial corpus, with five deliberate divergences listed and pinned
+  - `npm run verify:parity` — 9, now covering the XP curve as well as world gen
+  Three real bugs were caught by these rather than by inspection: an invented
+  building-type list that would have deleted every storage bin and farm plot on
+  load, a JSON number grammar loose enough to accept `01` and `.5`, and a
+  fallback item catalog that clamped the player's coins at the resource cap.
+
+**Next: Phase 1 (Editor lane), then Phase 2c** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
 to end. Creating the project is Editor-lane (yours); the WebGL template, manifest, service
 worker, loading screen, audio unlock, and Netlify/Vercel headers are code-lane and can be
 written ahead of time so they are waiting when you open the Editor.

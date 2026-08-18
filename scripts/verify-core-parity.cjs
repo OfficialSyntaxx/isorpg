@@ -45,6 +45,11 @@ const SOURCES = [
   path.join(ROOT, "tools/parity/DumpWorld.cs"),
 ];
 
+const XP_SOURCES = [
+  `${CORE}/Data/XpTable.cs`,
+  path.join(ROOT, "tools/parity/DumpXpTable.cs"),
+];
+
 function have(cmd) {
   return spawnSync("sh", ["-c", `command -v ${cmd}`], { encoding: "utf8" }).status === 0;
 }
@@ -137,6 +142,33 @@ for (const label of ["TERRAIN", "BIOME", "ZONE", "SEED", "ELEVATION", "WALKABLE"
 }
 
 ok("whole dump byte-identical", tsDump === run.stdout);
+
+// --- 4. XP curve ------------------------------------------------------------
+// Separate binary because the curve has no dependency on the world.
+const xpExe = path.join(OUT, "dumpxp.exe");
+const xpBuild = spawnSync("mcs", ["-out:" + xpExe, "-optimize+", "-langversion:latest", ...XP_SOURCES],
+  { cwd: ROOT, encoding: "utf8" });
+
+if (xpBuild.status !== 0) {
+  ok("XP curve: C# compiled", false, (xpBuild.stdout || "") + (xpBuild.stderr || ""));
+} else {
+  const xpCs = spawnSync("mono", [xpExe], { cwd: ROOT, encoding: "utf8" });
+  const xpTs = spawnSync("node", [path.join(ROOT, "tools/parity/dump-xp-ts.cjs")],
+    { cwd: ROOT, encoding: "utf8" });
+
+  if (xpCs.status !== 0 || xpTs.status !== 0) {
+    ok("XP curve: both dumps ran", false, (xpCs.stderr || "") + (xpTs.stderr || ""));
+  } else {
+    const a = xpTs.stdout.split("\n"), b = xpCs.stdout.split("\n");
+    const bad = a.findIndex((l, i) => l !== b[i]);
+    ok(
+      `XP curve  ${String(a.length - 1).padStart(5)} lines match`,
+      a.length === b.length && bad === -1,
+      bad >= 0 ? `line ${bad + 1}: ts=${JSON.stringify(a[bad])} cs=${JSON.stringify(b[bad])}`
+               : `length ${a.length} vs ${b.length}`
+    );
+  }
+}
 
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);
