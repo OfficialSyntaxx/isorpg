@@ -1,0 +1,62 @@
+# Netlify headers for a Unity WebGL build.
+#
+# Unity ships the payload pre-compressed as .br (Brotli). The browser will only
+# accept those bytes if the server declares Content-Encoding, and the WASM
+# streaming compiler will only take the fast path if Content-Type is
+# application/wasm. Getting this wrong is the single most common reason a Unity
+# WebGL build works from a local file server and fails once hosted — usually as
+# "Unable to parse Build/xxx.wasm" or a silent hang on the loading bar.
+#
+# Unity copies every file in the WebGL template folder to the build output root,
+# so this file lands next to index.html automatically. Deploy the build folder.
+
+/Build/*.wasm.br
+  Content-Type: application/wasm
+  Content-Encoding: br
+
+/Build/*.js.br
+  Content-Type: application/javascript
+  Content-Encoding: br
+
+/Build/*.symbols.json.br
+  Content-Type: application/octet-stream
+  Content-Encoding: br
+
+/Build/*.data.br
+  Content-Type: application/octet-stream
+  Content-Encoding: br
+
+# Gzip fallback, for builds configured with gzip instead of Brotli.
+/Build/*.wasm.gz
+  Content-Type: application/wasm
+  Content-Encoding: gzip
+
+/Build/*.js.gz
+  Content-Type: application/javascript
+  Content-Encoding: gzip
+
+/Build/*.symbols.json.gz
+  Content-Type: application/octet-stream
+  Content-Encoding: gzip
+
+/Build/*.data.gz
+  Content-Type: application/octet-stream
+  Content-Encoding: gzip
+
+# Build filenames are NOT content-hashed by Unity, so a redeploy reuses them.
+# `immutable` would therefore serve stale code after an update. An hour is long
+# enough to help repeat visitors while the service worker does the real caching.
+/Build/*
+  Cache-Control: public, max-age=3600
+
+# The service worker decides when everything else updates, so it must never be
+# served stale — a cached worker cannot ship a fix.
+/ServiceWorker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache

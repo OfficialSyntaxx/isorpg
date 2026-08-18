@@ -4,10 +4,20 @@
 
 Isoperia today is a ~11k-LOC TypeScript/three.js browser game: a mobile-first hybrid
 settlement-builder + OSRS-style RPG. It is mature and complete in *systems* — 600 ms
-tick loop, OSRS combat math, 8 gathering/crafting skills, 66 items, buildings, farming,
+tick loop, OSRS combat math, 12 skills, 62 items, buildings, farming,
 quests, clue scrolls, a procedural dungeon, save/load with offline progression — but its
 *visuals* are a dead end: nearly every mesh is procedurally assembled three.js primitives
 with Canvas-2D-painted textures. That ceiling is why we're moving to Unity.
+
+**A note on "2D → 3D".** The game is *already* 3D — every mesh is real three.js geometry.
+What makes it read as flat is that the camera is **orthographic and locked** at 35.264°/45°
+and never moves off that angle. We are keeping that framing. So the visual migration is
+precisely: **procedurally assembled primitives → authored low-poly models, under the same
+fixed isometric camera.** It is not a projection change, and that is deliberate — a fixed
+camera means models only ever have to look right from one angle, backfaces never show,
+buildings need no real backs, and the tile grid, tap-to-move, A*, and the whole panel UI
+keep working untouched. Against a 256–384 MB WebGL heap, that saving is not a nicety; it
+is what makes the art budget survivable.
 
 **Decisions taken:**
 - **Engine:** Unity 6 LTS, URP.
@@ -18,8 +28,9 @@ with Canvas-2D-painted textures. That ceiling is why we're moving to Unity.
   authoritative); completely remodel the visuals.
 - **Repo:** the Unity project **replaces** the web version. The three.js code is tagged
   and archived, not deleted from history.
-- **Art:** stylized low-poly, sourced free from Unity Asset Store / itch.io / Kenney /
-  Quaternius, gap-filled in Blender.
+- **Art:** stylized low-poly under a fixed isometric camera. **Free assets first**
+  (Kenney / Quaternius / Poly Pizza / itch.io / Asset Store free tier), Higgsfield credits
+  spent only where free sources can't match, Blender for gaps and re-materialing.
 - **Hosting:** Netlify or Vercel now (own webhost later), with a proper landing page.
   itch.io as a discovery mirror. `WIKI.md` published as part of the site.
 
@@ -51,6 +62,50 @@ and architecture decision below is downstream of these limits:
 **Rule for the whole project:** every phase is validated on a real iPhone in Safari and a
 real mid-range Android in Chrome, not in the Editor. A thing that only works in the Editor
 does not work.
+
+---
+
+## What we already own
+
+Verified against the repo and the live Higgsfield account, 2026-08-18. This is the
+starting inventory, not a wish list — several phases below are cheaper than they look
+because of it.
+
+**Higgsfield balance: 168.45 credits** (Plus plan).
+
+**Carries into Unity essentially unchanged:**
+- **62 item icons**, `public/icons/*.png` — already sliced from four generated atlas
+  sheets. These drop straight into UI Toolkit and give Phase 3 real content on day one.
+- **4 rigged character GLBs**, `public/models/` (~2.1 MB total): `hero_rigged`,
+  `villager`, `forest_ogre`, `cave_brute`, each already optimised ~96% by
+  `scripts/optimize-glb.cjs`.
+- **3 music tracks** (`public/music/` — town / wilds / dungeon, 40 s loopable, **4.4 MB**)
+  and **23 SFX** (`public/sfx/`, 296 kB). Note the ratio: the music is ~15× the size of
+  every sound effect combined, and is what Phase 7 has to keep out of the initial bundle.
+- **Sky panorama** `public/sky.jpg` — reusable as a skybox source.
+- **Concept art PNGs** for villager, forest ogre and cave brute — the source images
+  behind the meshes, useful for art-bible reference and for regenerating variants.
+
+**The finding that matters most:** `ASSETS_PIPELINE.md` records that **every Meshy rig
+uses the same 24-bone humanoid skeleton**, verified identical across villager, forest ogre
+and cave brute. In three.js this was only half a win — rest poses differ per character, so
+clips had to be hand-marked `retargetable()` (rotation-only) to be shared, and anything
+else dragged the target into the donor's proportions.
+
+**Unity's Humanoid avatar solves this outright.** Import each GLB as Humanoid, and Mecanim
+retargets any clip onto any rig regardless of limb proportions — that is exactly what the
+avatar system is for. One Animator controller and one animation set serve every character.
+This deletes the `ClipLibrary` / `verify-rig.cjs` machinery rather than porting it, and it
+means new characters cost a mesh, not a mesh plus an animation set.
+
+**Established generation pipeline** (costs observed on real jobs, not list prices):
+- `3d_rigging` accepts an existing GLB **URL**, so owned meshes can be rigged without
+  regenerating: **5 cr to rig, 8 cr to rig + one clip** (one clip per call).
+- `image_to_3d` ≈ 9–30 cr depending on model; `optimize-glb.cjs` then cuts ~96% of the
+  size, which is what makes the cheap-but-enormous output usable — a character lands
+  around **~15 cr all-in**.
+- Images are near-free; **characters are where credits go.** 12 monsters at full price
+  would consume most of the balance, which is why free-first is the standing rule.
 
 ---
 
@@ -183,13 +238,35 @@ Decide the look *before* downloading 40 mismatched packs.
   props ≤ 300 tris, characters ≤ 2k, **one shared 1024–2048 ASTC atlas per category**,
   flat/gradient shading, a single URP unlit-or-simple-lit material family.
   These are tighter than a native mobile game would need — that's the WebGL tax.
+- **Fixed-camera dividend.** Because the camera never leaves 35.264°/45°, budgets buy more
+  than they look like they should: model only what the camera sees, delete backfaces and
+  undersides, skip interior detail, and bake the lighting direction that the one sun
+  actually uses. Write this into the bible as an explicit modelling rule — it is the main
+  reason these tight numbers are achievable at all.
 - **Consistency rule:** every downloaded asset is re-materialed onto our atlas. This is
-  what makes mixed free sources look like one game. Non-negotiable.
-- Sourcing shortlist, CC0/permissive only: Kenney (CC0 — nature, tools, UI),
-  Quaternius (CC0 — low-poly rigged characters), Poly Pizza, itch.io low-poly packs,
-  Unity Asset Store free tier. Log every source + license in `docs/ASSET_CREDITS.md`.
-- Blender fills gaps: buildings matching our exact grid footprints, and retopo/
-  re-material passes on downloaded meshes.
+  what makes mixed free sources look like one game. Non-negotiable, and it applies equally
+  to Higgsfield output and to CC0 packs.
+
+**Sourcing order — free first, credits last.** The rule is not thrift for its own sake:
+168 credits against 12 monsters, 7 NPCs, 8 buildings and 8 weapons does not close at
+~15 cr a character, so credits have to go where nothing free will do.
+
+1. **Already owned** (see inventory above) — the 4 rigged GLBs, 62 icons, music, SFX, sky.
+   Zero cost. Start here and see what's actually still missing on screen.
+2. **CC0 / permissive packs** — Kenney (nature, tools, props, UI), Quaternius (low-poly
+   rigged humanoids, Mixamo-compatible), Poly Pizza, itch.io low-poly packs, Asset Store
+   free tier. This should cover trees, rocks, ore, crops, generic villagers and most
+   props outright.
+3. **Blender** — buildings that must match exact grid footprints, kitbashing pack pieces
+   into something specific, and every re-material pass.
+4. **Higgsfield credits** — only for what the above genuinely can't produce: named bosses
+   with a specific identity, hero variants, and any remaining monster with no free
+   equivalent. Preflight every job with `get_cost: true`, and run new meshes through
+   `scripts/optimize-glb.cjs` (or its Unity-side equivalent) before import.
+
+Log **every** asset's source and license in `docs/ASSET_CREDITS.md`, including the
+Higgsfield generations — the itch.io page and landing page will need the attributions,
+and reconstructing them later from memory is miserable.
 - Addressables groups per region/category + one import preset per category.
   **Set a hard MB budget per group and track it** — this is the memory ceiling made visible.
 
@@ -216,10 +293,26 @@ Decide the look *before* downloading 40 mismatched packs.
 
 ## Phase 6 — Characters, animation & combat feel
 
-- Hero, 5 villagers/critters, all monsters as rigged low-poly (Quaternius / Mixamo-compatible).
-- Humanoid rig everywhere → one shared Animator controller, retargeted clips. This
-  replaces the fragile custom `ClipLibrary`/`verify-rig` pipeline entirely.
-- Clips: idle, walk, attack (per weapon class), hurt, die, gather, craft.
+**Start from what's owned.** `hero_rigged`, `villager`, `forest_ogre` and `cave_brute` are
+already rigged and optimised. Import each as **Unity Humanoid** — all four share the same
+24-bone Meshy skeleton, so they map onto the avatar cleanly. Remaining cast (4 critters,
+the other 8 monsters) comes from Quaternius CC0 rigged humanoids first, Higgsfield only
+where nothing free fits.
+
+**The retargeting win, stated plainly.** Under three.js, clips animated *translation* on
+all 24 bones, so a clip authored for one actor visibly dragged another into the donor's
+limb proportions — hence the hand-maintained `retargetable()` rotation-only marking in
+`ACTOR_CLIPS[...].borrowed`. Unity's Humanoid avatar retargets by muscle space and is
+proportion-independent by construction, so **one Animator controller and one clip set drive
+every character**, and `ClipLibrary` / `verify-rig.cjs` are deleted rather than ported.
+Practical consequence for the budget: a new character costs a mesh, not a mesh plus an
+animation set — which is why the per-character Higgsfield estimate is a rig, not 5 clips.
+
+- Clips: idle, walk, attack (per weapon class), hurt, die, gather, craft. Author or source
+  **once**, retarget to all. Mixamo is free and Humanoid-compatible if the CC0 packs come
+  up short.
+- Verify retargeting on the *worst* pair — hero against `forest_ogre`, the most extreme
+  proportion gap in the cast. If it holds there it holds everywhere.
 - **Critical:** animation is *presentation only*. Combat outcomes stay on the 600 ms tick;
   blend clip length to the tick, never gate damage on animation events.
 - Feel: hit VFX, damage-number popups, screen shake (port `addShake`), death dissolve,
@@ -229,9 +322,16 @@ Decide the look *before* downloading 40 mismatched packs.
 
 ## Phase 7 — Audio & polish
 
-- Port the 23 music tracks + SFX onto an audio mixer with music/sfx volume settings.
-  **Re-encode for WebGL:** these are a large share of download size — compress
-  aggressively, load music via Addressables/streaming rather than the initial bundle.
+- Port the owned audio onto an audio mixer with music/sfx volume settings:
+  **3 music tracks** (`public/music/` — town, wilds, dungeon; 40 s loopable, **4.4 MB**)
+  and **23 SFX** (`public/sfx/`, 296 kB total).
+- **Music is the download problem, not SFX.** Three tracks are 4.4 MB against a
+  < 40 MB initial-load budget, while all 23 SFX together are under 300 kB. So: SFX import
+  as **Decompress On Load** (tiny, must fire instantly on the tick — a decode stall on a
+  hit sound is audible); music imports as **Streaming**, lives in an Addressables group,
+  and is **excluded from the initial bundle** so the first load doesn't pay for it.
+- First-tap audio unlock from the PWA shell (Phase 1) gates all of this on iOS — verify
+  music actually starts after the unlock, not just that it's loaded.
 - Footsteps per terrain, UI clicks, gather/craft/level-up stings.
 - Particles: biome weather, campfire, forge smoke, level-up burst — all pooled, low count.
 - Dungeon ambience and lighting mood.
@@ -328,7 +428,19 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
 
 ---
 
-## First step
+## Progress
 
-Phase 0: write `docs/PORTING_SPEC.md`, regenerate the wiki, tag `web-final`.
+- **Phase 0 — done** (commit `97a26c4`). `docs/PORTING_SPEC.md` written and merged;
+  `WIKI.md` regenerated; `legacy/threejs` pushed at `18f3ddc` with a clean build and
+  321/321 QC assertions passing. The `web-final` tag exists locally but this environment's
+  git proxy rejects tag refs — push it from your own machine if you want it on the remote.
+  Two traps documented there before they could cost a week: the stateful per-tile PRNG
+  draw ordering in `Grid.generate()`, and the Unity WebGL `FS.syncfs` flush without which
+  saves vanish on tab close.
+
+**Next: Phase 1** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
+to end. Creating the project is Editor-lane (yours); the WebGL template, manifest, service
+worker, loading screen, audio unlock, and Netlify/Vercel headers are code-lane and can be
+written ahead of time so they are waiting when you open the Editor.
+
 Nothing is deleted or replaced until Phase 9.

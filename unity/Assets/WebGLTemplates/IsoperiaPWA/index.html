@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <title>{{{ PRODUCT_NAME }}}</title>
+
+  <!--
+    viewport-fit=cover is what lets env(safe-area-inset-*) report real values on
+    notched iPhones. Without it the insets are all 0 and the game gets clipped by
+    the notch and the home indicator.
+    user-scalable=no + maximum-scale=1 kills the double-tap and pinch zoom that
+    would otherwise fight the game's own pinch-to-zoom camera control.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <!-- PWA: this is what makes "Add to Home Screen" launch chrome-less and fullscreen. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1a1610">
+
+  <!-- iOS needs its own set; it does not read the manifest for these. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{{ PRODUCT_NAME }}}">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+
+  <!-- Declared explicitly: without a rel="icon" the browser silently requests
+       /favicon.ico and logs a 404 on every load. -->
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <meta name="description" content="A settlement-builder RPG.">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <style>
+    :root {
+      --bg: #1a1610;
+      --ink: #e8dcc8;
+      --dim: #8a7f6d;
+      --accent: #c9a227;
+      --track: #2e281f;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      /* Stop iOS rubber-band scroll and pull-to-refresh dragging the whole page
+         while the player is panning the camera. */
+      overscroll-behavior: none;
+      position: fixed;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+
+    #unity-container {
+      position: absolute;
+      inset: 0;
+      /* The canvas fills the whole screen including under the notch — the game
+         renders edge to edge. UI Toolkit applies the safe-area insets itself,
+         which is why they are exported as CSS vars below rather than padding
+         the canvas (padding would letterbox the render). */
+    }
+
+    #unity-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: var(--bg);
+      /* Keep the browser from smoothing our low-poly pixels on DPR mismatch. */
+      image-rendering: auto;
+    }
+
+    /* ---------- Loading screen ---------- */
+    #loader {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      background: var(--bg);
+      z-index: 10;
+      padding: calc(env(safe-area-inset-top) + 1rem) 1.5rem calc(env(safe-area-inset-bottom) + 1rem);
+      text-align: center;
+      transition: opacity .4s ease;
+    }
+    #loader.hidden { opacity: 0; pointer-events: none; }
+
+    #loader h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 6vw, 2.25rem);
+      font-weight: 600;
+      letter-spacing: .02em;
+      color: var(--ink);
+    }
+
+    #bar-track {
+      width: min(78vw, 22rem);
+      height: 6px;
+      background: var(--track);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    #bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width .2s ease;
+    }
+
+    #loader p {
+      margin: 0;
+      font-size: .875rem;
+      color: var(--dim);
+      min-height: 1.2em;
+    }
+
+    /* ---------- Tap-to-start (also the iOS audio unlock gesture) ---------- */
+    #start {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      background: var(--bg);
+      z-index: 20;
+      cursor: pointer;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    #start.show { display: flex; }
+    #start .cta {
+      font-size: clamp(1.125rem, 5vw, 1.5rem);
+      font-weight: 600;
+      color: var(--accent);
+    }
+    #start .hint { font-size: .8125rem; color: var(--dim); max-width: 24rem; }
+
+    /* ---------- Error ---------- */
+    #error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .75rem;
+      background: var(--bg);
+      z-index: 30;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    #error.show { display: flex; }
+    #error .msg {
+      font-size: .8125rem;
+      color: var(--dim);
+      max-width: 32rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+  </div>
+
+  <div id="loader">
+    <h1>{{{ PRODUCT_NAME }}}</h1>
+    <div id="bar-track"><div id="bar-fill"></div></div>
+    <p id="loader-status">Loading…</p>
+  </div>
+
+  <div id="start">
+    <div class="cta">Tap to play</div>
+    <div class="hint">Sound is enabled on first tap.</div>
+  </div>
+
+  <div id="error">
+    <div class="cta">Something went wrong</div>
+    <div class="msg" id="error-msg"></div>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    var canvas    = document.querySelector("#unity-canvas");
+    var loader    = document.querySelector("#loader");
+    var barFill   = document.querySelector("#bar-fill");
+    var status    = document.querySelector("#loader-status");
+    var startPane = document.querySelector("#start");
+    var errPane   = document.querySelector("#error");
+    var errMsg    = document.querySelector("#error-msg");
+
+    var unityInstance = null;
+
+    function fail(message) {
+      loader.classList.add("hidden");
+      startPane.classList.remove("show");
+      errMsg.textContent = String(message);
+      errPane.classList.add("show");
+    }
+
+    /* ------------------------------------------------------------------
+       Safe-area insets exported to the Unity side.
+
+       env(safe-area-inset-*) is CSS-only — C# cannot read it. We resolve the
+       values here and stash them on window so a JSLib plugin can hand them to
+       UI Toolkit, which is what keeps panels clear of the notch and the home
+       indicator. Recomputed on rotation because the insets swap.
+    ------------------------------------------------------------------ */
+    function readSafeArea() {
+      var probe = document.createElement("div");
+      probe.style.cssText =
+        "position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;" +
+        "padding-top:env(safe-area-inset-top);" +
+        "padding-right:env(safe-area-inset-right);" +
+        "padding-bottom:env(safe-area-inset-bottom);" +
+        "padding-left:env(safe-area-inset-left);";
+      document.body.appendChild(probe);
+      var cs = getComputedStyle(probe);
+      var out = {
+        top:    parseFloat(cs.paddingTop)    || 0,
+        right:  parseFloat(cs.paddingRight)  || 0,
+        bottom: parseFloat(cs.paddingBottom) || 0,
+        left:   parseFloat(cs.paddingLeft)   || 0
+      };
+      document.body.removeChild(probe);
+      window.isoperiaSafeArea = out;
+      return out;
+    }
+    readSafeArea();
+    window.addEventListener("orientationchange", function () {
+      setTimeout(readSafeArea, 200);
+    });
+    window.addEventListener("resize", readSafeArea);
+
+    /* ------------------------------------------------------------------
+       Device pixel ratio cap.
+
+       A modern phone reports DPR 3, which on a full-screen canvas means ~9x the
+       fragments of DPR 1. Unity WebGL on mobile cannot afford that, and at our
+       flat-shaded low-poly art style the visual difference above ~2 is minimal.
+       This single line is worth more frames than most render settings.
+    ------------------------------------------------------------------ */
+    var DPR_CAP = 2;
+    function targetDpr() {
+      return Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    }
+
+    /* ------------------------------------------------------------------
+       Unity loader config. The triple-brace macros below are substituted by
+       Unity at build time. Do not write that macro syntax in a comment — the
+       template processor does not skip comments, and an empty expression is a
+       build error.
+    ------------------------------------------------------------------ */
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+
+    var config = {
+      dataUrl:       buildUrl + "/{{{ DATA_FILENAME }}}",
+      frameworkUrl:  buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+      codeUrl:       buildUrl + "/{{{ CODE_FILENAME }}}",
+#if MEMORY_FILENAME
+      memoryUrl:     buildUrl + "/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+      symbolsUrl:    buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+      streamingAssetsUrl: "StreamingAssets",
+      companyName:   {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName:   {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion:{{{ JSON.stringify(PRODUCT_VERSION) }}},
+      devicePixelRatio: targetDpr(),
+      matchWebGLToCanvasSize: true,
+      showBanner: function (msg, type) {
+        if (type === "error") fail(msg);
+        else console.warn("[unity]", msg);
+      }
+    };
+
+    /* ------------------------------------------------------------------
+       Service worker — offline launch and instant relaunch.
+
+       Registered only over HTTPS (or localhost); browsers refuse otherwise, and
+       a rejected registration would log a confusing error on plain-http testing.
+    ------------------------------------------------------------------ */
+    if ("serviceWorker" in navigator &&
+        (location.protocol === "https:" || location.hostname === "localhost")) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("ServiceWorker.js").catch(function (e) {
+          console.warn("[pwa] service worker registration failed:", e);
+        });
+      });
+    }
+
+    /* ------------------------------------------------------------------
+       Boot.
+    ------------------------------------------------------------------ */
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+
+    script.onerror = function () {
+      fail("Could not load the game files.\n\nIf you are hosting this yourself, check that " +
+           "the Build/ directory was uploaded and that .br files are served with " +
+           "Content-Encoding: br.");
+    };
+
+    script.onload = function () {
+      if (typeof createUnityInstance !== "function") {
+        fail("Unity loader script loaded but createUnityInstance is missing.");
+        return;
+      }
+
+      createUnityInstance(canvas, config, function (progress) {
+        var pct = Math.round(progress * 100);
+        barFill.style.width = pct + "%";
+        status.textContent = pct < 100 ? "Loading… " + pct + "%" : "Starting…";
+      }).then(function (instance) {
+        unityInstance = instance;
+        window.unityInstance = instance;
+
+        loader.classList.add("hidden");
+
+        /* iOS will not start an AudioContext without a user gesture, and Unity
+           starts its context during load — so on iOS it comes up suspended and
+           the game is silent forever unless we resume it from inside a real
+           gesture handler. The tap-to-play pane exists for exactly this. */
+        startPane.classList.add("show");
+
+        var unlock = function () {
+          try {
+            var mod = instance.Module;
+            var ctx = mod && mod.WEBAudio && mod.WEBAudio.audioContext;
+            if (ctx && typeof ctx.resume === "function" && ctx.state !== "running") {
+              ctx.resume();
+            }
+          } catch (e) {
+            console.warn("[audio] unlock failed:", e);
+          }
+          startPane.classList.remove("show");
+          canvas.focus();
+        };
+
+        startPane.addEventListener("pointerdown", unlock, { once: true });
+
+        /* Belt and braces: if the context suspends again after backgrounding
+           (iOS does this aggressively), resume on the next interaction. */
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState !== "visible" || !unityInstance) return;
+          try {
+            var mod = unityInstance.Module;
+            var ctx = mod && mod.WEBAudio && mod.WEBAudio.audioContext;
+            if (ctx && ctx.state === "suspended") ctx.resume();
+          } catch (e) { /* non-fatal */ }
+        });
+
+        /* Keep the backing store in step with DPR changes (browser zoom, or
+           dragging the window to a different-density display on desktop). */
+        window.addEventListener("resize", function () {
+          if (unityInstance && unityInstance.Module) {
+            unityInstance.Module.devicePixelRatio = targetDpr();
+          }
+        });
+
+      }).catch(function (err) {
+        fail(err && err.message ? err.message : err);
+      });
+    };
+
+    document.body.appendChild(script);
+
+    /* Suppress the browser's own gestures that would otherwise interfere:
+       context menu on long-press, and gesture zoom on iOS. */
+    window.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    ["gesturestart", "gesturechange", "gestureend"].forEach(function (n) {
+      document.addEventListener(n, function (e) { e.preventDefault(); });
+    });
+  })();
+  </script>
+</body>
+</html>
