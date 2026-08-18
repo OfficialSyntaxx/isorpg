@@ -438,7 +438,24 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
   draw ordering in `Grid.generate()`, and the Unity WebGL `FS.syncfs` flush without which
   saves vanish on tab close.
 
-**Next: Phase 1** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
+- **Phase 1 (code lane) — done** (commit `5ab974a`). PWA WebGL template, service
+  worker, icons, Netlify/Vercel headers, and `npm run verify:pwa` (18 assertions).
+  Editor lane pending: see `docs/UNITY_SETUP.md`.
+
+- **Phase 2a — done.** `Isoperia.Core` ported to C#: `Mulberry32`, `Grid` world
+  generation, `AStar`, `TickRunner`, plus `GameLoop` and `IsometricCamera` on the
+  Unity side. Verified **without the Editor**, because `Isoperia.Core` is built
+  with `noEngineReferences` and therefore compiles with any C# compiler:
+  - `npm run verify:core` — 43 EditMode assertions, run outside Unity
+  - `npm run verify:parity` — the C# world dump is **byte-identical** to the
+    TypeScript across all 1,764 tiles (terrain, biome, zone, decoration seed,
+    elevation to 12 dp, walkability) and pathfinding matches on endpoints, step
+    count and cost
+  - Threshold margins measured at ~10^12 x one ULP, so world generation is
+    portable across runtimes (Mono, Roslyn, IL2CPP/emscripten) despite depending
+    on `sin`/`cos`
+
+**Next: Phase 1 (Editor lane), then Phase 2b** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
 to end. Creating the project is Editor-lane (yours); the WebGL template, manifest, service
 worker, loading screen, audio unlock, and Netlify/Vercel headers are code-lane and can be
 written ahead of time so they are waiting when you open the Editor.

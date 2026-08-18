@@ -19,7 +19,10 @@
     "audit": "node scripts/audit.cjs",
     "audit:quick": "node scripts/audit.cjs --quick",
     "verify:pwa": "node scripts/verify-pwa-template.cjs",
-    "icons:app": "node scripts/gen-app-icons.cjs"
+    "icons:app": "node scripts/gen-app-icons.cjs",
+    "verify:core": "node scripts/verify-core-tests.cjs",
+    "verify:parity": "node scripts/verify-core-parity.cjs",
+    "verify:unity": "node scripts/verify-pwa-template.cjs && node scripts/verify-core-tests.cjs && node scripts/verify-core-parity.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

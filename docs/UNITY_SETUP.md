@@ -155,7 +155,37 @@ before debugging anything in Unity.
 
 ---
 
-## 6. Shell changes without a Unity build
+## 6. What is already written
+
+The repo already contains, verified and passing:
+
+| Path | What |
+|---|---|
+| `unity/Packages/manifest.json` | the four required packages, pre-declared |
+| `unity/Assets/Isoperia/Core/` | the ported simulation core (Phase 2a) + its tests |
+| `unity/Assets/Isoperia/Unity/` | `GameLoop` (tick bridge) and `IsometricCamera` |
+| `unity/Assets/WebGLTemplates/IsoperiaPWA/` | the PWA shell |
+
+Read `unity/Assets/Isoperia/README.md` for why `Isoperia.Core` is barred from
+referencing UnityEngine — it is what lets the whole port be tested without the
+Editor.
+
+**If Package Manager rejects a version** in `manifest.json`, delete that line and
+add the package through the UI; the pinned versions target Unity 6000.0 LTS and
+your exact patch release may differ.
+
+### Scene wiring (a few minutes, once)
+
+1. New scene. Delete the default `Main Camera`'s skybox settings later if needed.
+2. Add an empty GameObject `GameLoop`, attach `Isoperia.Unity.GameLoop`.
+3. Select the camera, attach `Isoperia.Unity.IsometricCamera`. It sets projection,
+   size, rotation and clip planes itself in `Awake` — do not hand-tune them in the
+   inspector, the values are pinned by `docs/PORTING_SPEC.md` §2.
+4. Open Window → General → Test Runner → EditMode → Run All. Expect 43 passing.
+
+---
+
+## 7. Shell changes without a Unity build
 
 The template shell is plain web code, so iterate on it with:
 
@@ -170,6 +200,20 @@ manifest — it has already caught one bug that would have failed a real build.
 
 Regenerate the app icons with `npm run icons:app`.
 
+The C# core has the same property. `npm run verify:unity` runs all three suites —
+PWA shell, core unit tests, and TypeScript parity — in a couple of seconds with no
+Editor involved:
+
+```
+npm run verify:pwa      # 18 assertions: PWA shell behaviour
+npm run verify:core     # 43 assertions: the EditMode tests, run outside Unity
+npm run verify:parity   # 8 assertions:  C# vs TypeScript, all 1,764 tiles
+npm run verify:unity    # all three
+```
+
+These need a C# toolchain (`apt-get install -y mono-mcs mono-runtime`) and skip
+cleanly without one.
+
 > The current icons are **placeholders** — a generated isometric tile in the app
 > palette. They are correct in shape, size and purpose (including a maskable
 > variant) so the install flow is testable now. Replace the artwork before you
@@ -177,7 +221,7 @@ Regenerate the app icons with `npm run icons:app`.
 
 ---
 
-## 7. Known gotchas
+## 8. Known gotchas
 
 - **Template macros are not comment-aware.** Writing the triple-brace macro
   syntax inside an HTML or JS comment in the template is a build error, because
