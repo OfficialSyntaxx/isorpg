@@ -1,11 +1,9 @@
 # Isoperia — Roadmap (Phases F onward)
 
-> Phases A–E, the boot refactor, **Phase F (Combat depth), and H.1 (item icon
-> atlas) are shipped**; `REPAIR_PLAN.md`/`UPDATES.md` hold that record.
-> Approved execution order: F → H.1–H.2 → G → H.5 → I. Next up: **H.2** (sky
-> regen) — a single image, and the user attaching files directly to the chat
-> turned out to route around the transfer blocker H.1 hit, so try that path
-> again first.
+> Phases A–E, the boot refactor, **Phase F (Combat depth), and H.1–H.2 (item
+> icon atlas + sky) are shipped**; `REPAIR_PLAN.md`/`UPDATES.md` hold that
+> record. Approved execution order: F → H.1–H.2 → G → H.5 → I. Next up:
+> **Phase G** (second dungeon).
 >
 > Gates as of the last audit: 321/321 QC · 57/57 UI audit · 25/25 rig · 5/5 smoke ·
 > visual baseline 0.00% drift · `npm run audit` 0 bugs.
@@ -89,8 +87,10 @@ baseline before and after.
 1. **Item icon atlas** — ✅ **shipped.** 4 sheets generated (~8 cr), sliced with
    `scripts/slice-atlas.cjs`, all 62 items have real icons. Emoji is still the
    fallback for anything unregistered, kept fully reversible by design.
-2. **Sky** — regenerate as a proper panorama and ship as JPEG. Replaces a 1.2 MB PNG
-   with ~120 kB and stops it looking like a placeholder. **~1.25 cr** · `S`.
+2. **Sky** — ✅ **shipped.** Regenerated as a flat low-poly gradient backdrop
+   (`nano_banana_2`, ~1 cr) matching the game's art style and the existing
+   fog colours, shipped as JPEG. `public/sky.png` (1.2 MB) → `public/sky.jpg`
+   (~114 kB).
 3. **UI/brand pass** — a real logo, panel iconography, a title screen. **~5 cr** ·
    `M`.
 4. **SFX gap-fill** — farming, digging, clue completion, tonic brewing, the new
@@ -121,8 +121,7 @@ baseline before and after.
 - `npm run audit` before every phase boundary. Shipped this session: data integrity,
   save round-trip, dead code and assets, producer/consumer wiring, an 8-panel × 2-viewport
   layout sweep, and a 35s stability run. `--quick` skips the browser passes.
-- Two known items deliberately left: `ItemType.GEM` has no members, and `sky.png` is
-  the 1.2 MB PNG Phase H.2 replaces.
+- One known item deliberately left: `ItemType.GEM` has no members.
 
 ## Suggested order and why
 

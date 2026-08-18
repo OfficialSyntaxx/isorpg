@@ -6,6 +6,41 @@ the game-repo commit, and the live build (cache-bust version at
 
 ---
 
+## 2026-08 · Phase H.2 — Sky regen
+
+Replaced `public/sky.png` (a 1.2 MB realistic HDRI-style equirect panorama,
+with a mirrored "reflection" baked into its lower half per HDRI convention)
+with `public/sky.jpg` (~114 kB): a flat low-poly gradient sky matching the
+rest of the game's art style — deep blue at the top through soft blue-grey
+to a warm tan haze at the horizon, a few flat-shaded low-poly clouds, solid
+tan (not mirrored sky) below the horizon line. Generated with `nano_banana_2`
+at `16:9`/`2k` (~1 credit), converted PNG→JPEG at quality 0.85 with the same
+headless-Chromium canvas trick `optimize-glb.cjs` already uses for texture
+recompression (no native image library needed). `WorldSystem.buildSky()`'s
+`TextureLoader` URL updated from `sky.png` to `sky.jpg`; nothing else about
+the wiring changed (still hot-swapped in over the procedural gradient sky
+with silent fallback, still `THREE.UVMapping` rather than equirectangular —
+see the code comment on why, unchanged from Phase 8).
+
+**Transfer blocker, again — and the fix scaled.** Downloading the generated
+image hit the same egress block H.1 hit, this time confirmed precisely via
+the proxy's own status log (`$HTTPS_PROXY/__agentproxy/status` →
+`recentRelayFailures`: `connect_rejected`, `policy denial`, naming the exact
+cloudfront host) rather than trial-and-error. Asked the user to download and
+attach it directly, same as H.1's resolution — worked on the first try, file
+size matched the generation exactly (2752×1536, no corruption).
+
+Verified beyond the QC suite: the visual baseline (which frames the map
+tightly enough that the sky isn't in shot) still matches at 0.00% drift, and
+a manual zoomed-out screenshot (mouse-wheel to `ZOOM_MIN` against the live
+build) confirms the sky actually renders as intended — gradient, clouds, and
+horizon haze all visible and blending with the existing fog colour, no
+stretching or mirroring artifact.
+
+Gates: 321/321 QC, 5/5 smoke ("all assets load" catches a bad path — it
+would have failed here on a stale `sky.png` reference), visual baseline
+0.00% drift, `npm run audit` clean.
+
 ## 2026-08 · Post-H.1 polish — hero scale, camera, and real transparent icons
 
 Two follow-up complaints on the just-shipped H.1 icons and the existing hero

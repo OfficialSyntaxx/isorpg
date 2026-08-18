@@ -54,7 +54,7 @@ export class WorldSystem {
     this.scene.fog = new THREE.Fog(0xe8d9b0, 95, 175);
     this.fog = this.scene.fog;
     try {
-      const url = new URL("sky.png", window.location.href).href;
+      const url = new URL("sky.jpg", window.location.href).href;
       new THREE.TextureLoader().load(url, (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         // NOT EquirectangularReflectionMapping. three.js renders an equirect
