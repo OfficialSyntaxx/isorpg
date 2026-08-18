@@ -73,6 +73,22 @@ namespace NUnit.Framework
                     $"Expected: {Show(expected)} +/- {delta}\n  But was: {Show(actual)}{Msg(message, args)}");
         }
 
+        /// <summary>Reference identity, not value equality. The distinction is the
+        /// whole point of the assertion -- a test that a function returned the very
+        /// object it was given, rather than an equal copy.</summary>
+        public static void AreSame(object expected, object actual, string message = null, params object[] args)
+        {
+            if (!ReferenceEquals(expected, actual))
+                throw new AssertionException(
+                    $"Expected the same instance: {Show(expected)}\n  But was a different one: {Show(actual)}{Msg(message, args)}");
+        }
+
+        public static void AreNotSame(object expected, object actual, string message = null, params object[] args)
+        {
+            if (ReferenceEquals(expected, actual))
+                throw new AssertionException($"Expected a different instance{Msg(message, args)}");
+        }
+
         public static void AreNotEqual(object expected, object actual, string message = null, params object[] args)
         {
             if (ValuesEqual(expected, actual))

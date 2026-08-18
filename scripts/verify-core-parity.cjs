@@ -50,6 +50,48 @@ const XP_SOURCES = [
   path.join(ROOT, "tools/parity/DumpXpTable.cs"),
 ];
 
+const COMBAT_SOURCES = [
+  `${CORE}/Sim/Mulberry32.cs`,
+  `${CORE}/Sim/IRandom.cs`,
+  `${CORE}/Data/XpTable.cs`,
+  `${CORE}/Data/CombatData.cs`,
+  `${CORE}/Combat/CombatMath.cs`,
+  path.join(ROOT, "tools/parity/DumpCombat.cs"),
+];
+
+/**
+ * Builds one C# dumper and diffs its output against a Node one, line by line.
+ * Reports the first differing line rather than dumping both documents.
+ */
+function compareDump(label, sources, exeName, tsScript) {
+  const exe = path.join(OUT, exeName);
+  const build = spawnSync("mcs", ["-out:" + exe, "-optimize+", "-langversion:latest", ...sources],
+    { cwd: ROOT, encoding: "utf8" });
+
+  if (build.status !== 0) {
+    ok(`${label}: C# compiled`, false, (build.stdout || "") + (build.stderr || ""));
+    return;
+  }
+
+  const cs = spawnSync("mono", [exe], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const ts = spawnSync("node", [path.join(ROOT, tsScript)], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+
+  if (cs.status !== 0 || ts.status !== 0) {
+    ok(`${label}: both dumps ran`, false, (cs.stderr || "") + (ts.stderr || ""));
+    return;
+  }
+
+  const a = ts.stdout.split("\n"), b = cs.stdout.split("\n");
+  const bad = a.findIndex((l, i) => l !== b[i]);
+
+  ok(
+    `${label.padEnd(9)} ${String(a.length - 1).padStart(5)} lines match`,
+    a.length === b.length && bad === -1,
+    bad >= 0 ? `line ${bad + 1}: ts=${JSON.stringify(a[bad])} cs=${JSON.stringify(b[bad])}`
+             : `length ${a.length} vs ${b.length}`
+  );
+}
+
 function have(cmd) {
   return spawnSync("sh", ["-c", `command -v ${cmd}`], { encoding: "utf8" }).status === 0;
 }
@@ -143,32 +185,11 @@ for (const label of ["TERRAIN", "BIOME", "ZONE", "SEED", "ELEVATION", "WALKABLE"
 
 ok("whole dump byte-identical", tsDump === run.stdout);
 
-// --- 4. XP curve ------------------------------------------------------------
-// Separate binary because the curve has no dependency on the world.
-const xpExe = path.join(OUT, "dumpxp.exe");
-const xpBuild = spawnSync("mcs", ["-out:" + xpExe, "-optimize+", "-langversion:latest", ...XP_SOURCES],
-  { cwd: ROOT, encoding: "utf8" });
-
-if (xpBuild.status !== 0) {
-  ok("XP curve: C# compiled", false, (xpBuild.stdout || "") + (xpBuild.stderr || ""));
-} else {
-  const xpCs = spawnSync("mono", [xpExe], { cwd: ROOT, encoding: "utf8" });
-  const xpTs = spawnSync("node", [path.join(ROOT, "tools/parity/dump-xp-ts.cjs")],
-    { cwd: ROOT, encoding: "utf8" });
-
-  if (xpCs.status !== 0 || xpTs.status !== 0) {
-    ok("XP curve: both dumps ran", false, (xpCs.stderr || "") + (xpTs.stderr || ""));
-  } else {
-    const a = xpTs.stdout.split("\n"), b = xpCs.stdout.split("\n");
-    const bad = a.findIndex((l, i) => l !== b[i]);
-    ok(
-      `XP curve  ${String(a.length - 1).padStart(5)} lines match`,
-      a.length === b.length && bad === -1,
-      bad >= 0 ? `line ${bad + 1}: ts=${JSON.stringify(a[bad])} cs=${JSON.stringify(b[bad])}`
-               : `length ${a.length} vs ${b.length}`
-    );
-  }
-}
+// --- 4. the XP curve and the combat rules -----------------------------------
+// Separate binaries: neither depends on the world, and a focused failure names
+// which subsystem drifted.
+compareDump("XP curve", XP_SOURCES, "dumpxp.exe", "tools/parity/dump-xp-ts.cjs");
+compareDump("Combat", COMBAT_SOURCES, "dumpcombat.exe", "tools/parity/dump-combat-ts.cjs");
 
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);
