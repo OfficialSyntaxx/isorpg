@@ -4,7 +4,7 @@
 > Do not edit by hand — run `npm run wiki` after changing anything in `src/data/`.
 > Every number here is read straight from the code, so it cannot drift out of date.
 
-_Last generated: 2026-08-18_
+_Last generated: 2026-08-19_
 
 ## Contents
 

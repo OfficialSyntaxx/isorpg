@@ -174,10 +174,41 @@ namespace Isoperia.EditorTools
             Debug.Log($"[Isoperia] Build {summary.result}: " +
                       $"{summary.totalSize / (1024 * 1024)} MB in {summary.totalTime}");
 
+            StripDoNotShipArtifacts();
             WriteBuildReport(summary);
 
             if (summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 EditorApplication.Exit(1);
+        }
+
+        /// <summary>
+        /// Deletes the Burst debug folder Unity emits beside the build.
+        ///
+        /// Unity names it "..._BurstDebugInformation_DoNotShip" and then ships it
+        /// anyway if you deploy the output directory wholesale, which is exactly
+        /// what our deploy step does. It is only ~77 kB today so this is tidiness
+        /// rather than a size problem — but it is unobfuscated internal build
+        /// information sitting on a public host, and the cost of not shipping it
+        /// is one directory delete.
+        /// </summary>
+        private static void StripDoNotShipArtifacts()
+        {
+            try
+            {
+                if (!Directory.Exists(BuildOutput)) return;
+
+                foreach (string dir in Directory.GetDirectories(BuildOutput))
+                {
+                    if (!Path.GetFileName(dir).EndsWith("DoNotShip", System.StringComparison.Ordinal)) continue;
+
+                    Directory.Delete(dir, recursive: true);
+                    Debug.Log("[Isoperia] removed from the build output: " + Path.GetFileName(dir));
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[Isoperia] could not strip DoNotShip artifacts: " + e.Message);
+            }
         }
 
         /// <summary>

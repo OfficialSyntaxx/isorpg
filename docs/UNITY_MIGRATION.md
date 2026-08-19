@@ -441,7 +441,23 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
 - **Phase 1 (code lane) — done** (commit `5ab974a`). PWA WebGL template, service
   worker, icons, Netlify/Vercel headers, and `npm run verify:pwa` (18 assertions).
 
-- **Phase 1 (Editor lane) — project configured; build and deploy still outstanding**
+- **Phase 1 — built and deployed.** First WebGL build shipped to
+  `inspiring-tarsier-8973d6.netlify.app`. Both header checks pass
+  (`application/wasm` and `application/octet-stream`, brotli), all five PWA
+  template files present, and the served byte counts match the built ones exactly
+  — so the host really is serving this build. Evidence is committed as
+  `unity/build-report.txt`, `unity/deploy-report.txt` and `unity/test-results.xml`
+  rather than living in a chat message.
+
+  **The compressed initial download is 6.77 MB against the 40 MB budget** — 17%
+  used, leaving roughly 33 MB of headroom for the art phases. That is the single
+  most useful number to come out of Phase 1: the WebGL size constraint that
+  shaped this whole plan has far more room than assumed.
+
+  Still outstanding: no device install, so the home-screen launch and the
+  save-durability check are unverified. Those need a human with a phone.
+
+- **Phase 1 (Editor lane) — earlier: project configured; build and deploy then outstanding**
   (commit `af82dc6`, by dispatch). Unity **6000.5.8f1**. `ProjectSettings/`, every
   `.meta` file and `Bootstrap.unity` are committed, and the stored WebGL settings
   match what `ConfigureWebGL` writes (Brotli, exceptions None, stripping High,

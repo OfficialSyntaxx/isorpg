@@ -34,8 +34,14 @@ if [ -z "$SITE" ]; then
   DEPLOY_LOG=$(npx netlify-cli deploy --dir "$BUILD_DIR" --prod --no-build 2>&1)
   echo "$DEPLOY_LOG"
 
-  # Netlify prints the live URL on a line containing "Website URL" or similar.
-  SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9.-]+\.netlify\.app' | tail -1)
+  # Netlify prints two URLs: an immutable per-deploy one
+  # (https://<hash>--<site>.netlify.app) and the production one
+  # (https://<site>.netlify.app). Prefer production -- it is the URL people
+  # actually get shared, the one the PWA installs under, and the only one that
+  # keeps working after the next deploy. Round 3 captured the per-deploy URL,
+  # which verified a real deploy but not the address anyone would use.
+  SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9-]+\.netlify\.app' | grep -v -- '--' | tail -1)
+  [ -z "$SITE" ] && SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9.-]+\.netlify\.app' | tail -1)
 
   if [ -z "$SITE" ]; then
     echo "url: COULD NOT PARSE FROM DEPLOY OUTPUT -- paste it in by hand" >> "$REPORT"

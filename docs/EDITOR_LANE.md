@@ -123,9 +123,15 @@ it automatically).
   -logFile -
 ```
 
-**Expect 167 passing, 0 failing.** These same assertions already pass outside
-Unity via `npm run verify:core`, so a failure here means an Editor integration
-problem (assembly references, package resolution), not a logic problem.
+**Expect 167 of ours passing, 0 failing.** These same assertions already pass
+outside Unity via `npm run verify:core`, so a failure here means an Editor
+integration problem (assembly references, package resolution), not a logic
+problem.
+
+> The runner reports **168**, not 167, and that is correct. The extra is
+> `AddressableAssets.DocExampleCode.TestStub`, a test the Addressables package
+> ships inside its own doc-example assembly. It is not ours and not cruft in this
+> repo — do not go looking for it, and do not "correct" the 167 to match.
 
 ---
 
