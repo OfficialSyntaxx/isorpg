@@ -133,6 +133,12 @@ namespace Isoperia.EditorTools
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
+            // Clear the generated materials once per run, so Paint can treat an
+            // existing asset as "already written by this run" and reuse it rather
+            // than recreating it under every object that shares the name.
+            if (AssetDatabase.IsValidFolder(MaterialsDir)) AssetDatabase.DeleteAsset(MaterialsDir);
+            AssetDatabase.Refresh();
+
             // Camera. IsometricCamera writes projection, size, rotation and clip
             // planes in Awake, so nothing here should be hand-tuned.
             var camGo = new GameObject("Main Camera");
@@ -214,6 +220,8 @@ namespace Isoperia.EditorTools
             spawn.transform.position = new Vector3(10.5f, 1f, 10.5f);
             Paint(spawn, "SpawnMarker", new Color(0.91f, 0.86f, 0.78f));
 
+            AssertEveryRendererIsPainted(scene);
+
             Directory.CreateDirectory(Path.GetDirectoryName(BootstrapScene));
             EditorSceneManager.SaveScene(scene, BootstrapScene);
 
@@ -267,14 +275,73 @@ namespace Isoperia.EditorTools
             Directory.CreateDirectory(MaterialsDir);
             string path = $"{MaterialsDir}/{materialName}.mat";
 
-            var mat = new Material(shader);
-            mat.color = colour;    // maps to _BaseColor on URP/Lit, _Color on Standard
+            // CREATE EACH NAMED MATERIAL AT MOST ONCE.
+            //
+            // This used to DeleteAsset then CreateAsset on every call, which is
+            // fine for a material with one user and silently destructive for one
+            // with several: four of the five reference cubes share
+            // "ReferenceStone", so each cube after the first deleted the asset
+            // its predecessors already referenced and recreated it under a new
+            // GUID. Their renderers were left pointing at nothing and rendered
+            // magenta — three of five cubes, on a build whose materials and
+            // pipeline were otherwise entirely correct.
+            //
+            // CreateBootstrapScene clears the directory once before composing,
+            // so an existing asset here is always one this same run wrote.
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(shader);
+                mat.color = colour;    // _BaseColor on URP/Lit, _Color on Standard
+                AssetDatabase.CreateAsset(mat, path);
+            }
 
-            AssetDatabase.DeleteAsset(path);
-            AssetDatabase.CreateAsset(mat, path);
+            go.GetComponent<Renderer>().sharedMaterial = mat;
+        }
 
-            go.GetComponent<Renderer>().sharedMaterial =
-                AssetDatabase.LoadAssetAtPath<Material>(path);
+        /// <summary>
+        /// Fails if any renderer in the open scene has no material.
+        ///
+        /// A missing material is Unity's magenta, and it is invisible everywhere
+        /// a build is normally checked: the build succeeds, the deploy succeeds,
+        /// the headers pass, the pipeline is correctly assigned and the material
+        /// assets on disk are all valid. The only symptom is on screen. So assert
+        /// the one thing that actually connects them — that every renderer holds
+        /// a reference to a real material.
+        /// </summary>
+        private static void AssertEveryRendererIsPainted(UnityEngine.SceneManagement.Scene scene)
+        {
+            int checkedCount = 0;
+
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(includeInactive: true))
+                {
+                    checkedCount++;
+
+                    var materials = renderer.sharedMaterials;
+                    if (materials.Length == 0)
+                    {
+                        throw new BuildFailedException(
+                            $"[Isoperia] renderer on \"{renderer.name}\" has no material slots. " +
+                            "It would render magenta.");
+                    }
+
+                    for (int i = 0; i < materials.Length; i++)
+                    {
+                        if (materials[i] == null)
+                        {
+                            throw new BuildFailedException(
+                                $"[Isoperia] renderer on \"{renderer.name}\" has no material in " +
+                                $"slot {i}. It would render magenta. If several objects share a " +
+                                "material name, check that Paint is not recreating the asset and " +
+                                "orphaning the earlier references.");
+                        }
+                    }
+                }
+            }
+
+            Debug.Log($"[Isoperia] all {checkedCount} renderers have materials.");
         }
 
         /// <summary>
@@ -388,6 +455,13 @@ namespace Isoperia.EditorTools
             if (!File.Exists(BootstrapScene)) CreateBootstrapScene();
 
             AssertRenderPipelineMatchesMaterials();
+
+            // Re-check the COMMITTED scene, not just a freshly composed one. The
+            // scene file is what ships, and it can be stale relative to this
+            // script — that has already caused a build that shipped an old scene
+            // and looked like the fix had failed.
+            AssertEveryRendererIsPainted(
+                EditorSceneManager.OpenScene(BootstrapScene, OpenSceneMode.Single));
 
             var options = new BuildPlayerOptions
             {

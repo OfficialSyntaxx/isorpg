@@ -172,11 +172,25 @@ problem.
 > Verify afterwards that the scene contains **four** objects: `Main Camera`,
 > `Sun`, `GameLoop`, and `SaveDriver`.
 
-> **Re-run this if your project predates the URP fix.** The placeholder colours
-> now come from real `.mat` assets under `Assets/Isoperia/Materials/`, written by
-> this step. Confirm four of them exist afterwards — `Ground`, `ReferenceStone`,
-> `ReferenceAccent`, `SpawnMarker` — and that each one's shader reads
-> `Universal Render Pipeline/Lit`, not `Standard` and not `Hidden/InternalErrorShader`.
+> **Re-run this if your project predates the shared-material fix.** The
+> placeholder colours come from real `.mat` assets under
+> `Assets/Isoperia/Materials/`, written by this step. Confirm four exist —
+> `Ground`, `ReferenceStone`, `ReferenceAccent`, `SpawnMarker` — each with shader
+> `Universal Render Pipeline/Lit`.
+>
+> **Then count the references, which is the check that was missed.** The scene has
+> **seven** renderers (ground, five cubes, capsule) and four materials, because
+> four cubes share `ReferenceStone`. So the scene must contain **seven** material
+> references and **zero** `m_Materials` entries reading `{fileID: 0}`:
+>
+> ```bash
+> grep -A2 'm_Materials:' unity/Assets/Isoperia/Scenes/Bootstrap.unity | grep -c 'fileID: 0}'   # must be 0
+> ```
+>
+> A count of four references looks reassuring and is the bug: it means three cube
+> renderers point at nothing and render magenta. `CreateBootstrapScene` and
+> `BuildWebGL` both now fail outright on a null material, so this should be
+> impossible — the command is here because that guard is newer than the trap.
 
 
 ```bash
