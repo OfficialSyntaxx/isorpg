@@ -111,19 +111,23 @@ Expect in the log, both lines:
 > materials, so you must re-run Step 4 after it, or you rebuild the same magenta
 > scene. Steps 2 → 4 → 5, in that order, every time.
 
-> **Texture compression does not persist, and setting it is not currently enough.**
+> **Texture compression is a local-build problem, not a code problem.**
 > `EditorUserBuildSettings.webGLBuildSubtarget` lives in `Library/`, which is not
-> version-controlled, so ASTC survives only in the working copy that set it.
-> `BuildWebGL` calls `ConfigureWebGL` first and therefore always assigns it — but
-> **every build report so far records `Generic`**, so on this Unity version the
-> assignment is not taking. `ConfigureWebGL` now reads the value back and warns,
-> and `build-report.txt` flags the mismatch inline.
+> version-controlled. `ConfigureWebGL` assigns ASTC every time, yet **every local
+> build reported `Generic`** — while the first CI build reported **`ASTC`** from
+> the same code. The difference is that CI starts with no `Library/` at all, so
+> the value is written and read inside one clean session; a long-lived local
+> `Library/` holds the old value.
 >
-> This is harmless while the build has no textures and it is a memory-budget
-> failure the moment Phase 5 art lands — an uncompressed atlas is several times
-> its ASTC size against a 320 MB heap. **If you see the warning, set Build
-> Profiles → WebGL → Texture Compression to ASTC by hand** and report whether
-> `texture_subtarget` then reads `ASTC`. Do not treat a `Generic` line as noise.
+> So a `Generic` line means *your working copy*, not the build script.
+> `ConfigureWebGL` warns when the value does not stick and `build-report.txt`
+> flags it inline. If you see it, set Build Profiles → WebGL → Texture
+> Compression to ASTC by hand, or delete `unity/Library/` and re-run. Do not
+> treat a `Generic` line as noise: it ships uncompressed textures against a
+> 320 MB heap once Phase 5 art lands.
+>
+> **This is the first concrete reason to prefer the CI build over a local one**
+> for anything that actually ships. See `docs/CI_DEPLOY.md`.
 
 > **If `IsoperiaBuild.cs` fails to compile**, a Unity API was renamed between
 > versions. Fix the offending line — every setting has a documented manual

@@ -470,10 +470,37 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
   did not stick. Evidence stays committed as `build-report.txt` and
   `deploy-report.txt`.
 
-  **Known and deliberately not yet fixed:** `texture_subtarget` reports
-  `Generic` rather than `ASTC` despite being assigned. Harmless while the build
-  has no textures; a memory-budget problem the moment Phase 5 art lands. It now
-  warns instead of passing silently.
+  **The texture subtarget question is settled, and the answer was the machine.**
+  Every local build reported `Generic` rather than the `ASTC` that
+  `ConfigureWebGL` assigns; the first CI build reported `ASTC` from identical
+  code. The setting lives in `Library/`, which CI starts without, so it is
+  written and read in one clean session. A stale local `Library/` was holding
+  the old value. Phase 5's texture budget is not at risk, and this is the first
+  concrete reason to treat the CI build as the one that ships.
+
+- **Phase 1 — build and deploy are automated** (`.github/workflows/unity-webgl.yml`).
+  Push to `main` touching `unity/**` and it builds with GameCI and deploys to
+  Netlify: preflight 14s, build 15m18s, deploy 1m21s on the first run with a cold
+  cache. Netlify's own git deploy cannot do this — it builds in an image with no
+  Unity and no licence — so Actions builds and Netlify is a dumb host.
+
+  The `preflight` job is the part worth keeping: scene materials, the PWA
+  template, and the ported core's parity, JSON and sanitizer suites, all in
+  ~14 seconds with **no Editor and no licence**, because `Isoperia.Core` is
+  declared `noEngineReferences` and `verify-scene-materials.cjs` reads the scene
+  *file*. A broken scene now fails in under a minute rather than after a
+  fifteen-minute build. It is mutation-tested against the real broken scene from
+  `80623b8` and names renderers 0, 2 and 6 — exactly the three cubes that
+  shipped magenta.
+
+  Licensing needed a one-time human step: the build machine's Unity licence is a
+  newer per-seat one that writes no local `.ulf`, so there was nothing to copy
+  into a secret. `unity-activation.yml` requests an activation file which the
+  account owner exchanges at license.unity3d.com.
+
+  **What this does not do is remove the device check.** All four Phase 1 faults
+  passed the build, the deploy and the header checks, and were visible only on a
+  phone. CI now guards each one, but every guard was written from a screenshot.
 
 - **Phase 1 — built and deployed.** First WebGL build shipped to
   `inspiring-tarsier-8973d6.netlify.app`. Both header checks pass
