@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Isoperia.Core.Components;
+using Isoperia.Core.Sim;
 using Isoperia.Core.State;
 
 namespace Isoperia.Core.Save
@@ -110,6 +111,18 @@ namespace Isoperia.Core.Save
         /// raises the ceiling.</summary>
         public Func<double> OfflineCapHoursProvider =
             () => DefaultOfflineCapSeconds / 3600.0;
+
+        /// <summary>
+        /// The content tables. Optional: when unset, offline progression pays the
+        /// Town Hall tax and villager labour but NO per-skill gathering, which is
+        /// how this behaved for the whole of Phase 2b.
+        ///
+        /// Set rather than constructor-injected so every existing caller and test
+        /// keeps working unchanged, and so a save can still be loaded and
+        /// recovered when content is unavailable — losing a few hours of idle
+        /// gathering is recoverable, refusing to load a save is not.
+        /// </summary>
+        public Content.ContentDatabase Content;
 
         public SaveSystem(GameState state, ISaveStore store, Func<long> nowMsProvider)
         {
@@ -491,7 +504,14 @@ namespace Isoperia.Core.Save
             int capHours = (int)Math.Round(capSeconds / 3600.0, MidpointRounding.AwayFromZero);
             if (capHours > 8) summary.Lines.Add($"Town Hall: offline cap raised to {capHours}h");
 
-            // --- Phase 2d slots per-skill idle gathering in here ---------------
+            // Per-skill idle gathering. Each skill idles on the best resource it
+            // can currently use, at the resource's base speed.
+            //
+            // Base speed DELIBERATELY: no tool bonus and no mastery discount,
+            // unlike the online loop in SkillSystem.ActionTicks. That is what the
+            // TypeScript does and it is the conservative direction — offline
+            // should not out-earn playing.
+            AccrueOfflineGathering(capS, summary);
 
             // The Town Hall keeps taxing while you are away.
             int hallLevel = 0;
@@ -568,5 +588,110 @@ namespace Isoperia.Core.Save
             foreach (var kv in v.Members) outp[kv.Key] = kv.Value.AsString();
             return outp;
         }
+        /// <summary>
+        /// Fast-forwards idle gathering for the capped away-time.
+        ///
+        /// THE STORAGE CAP IS SHARED ACROSS EVERY SKILL, and that is the whole
+        /// difficulty. An earlier version clamped each skill independently, so
+        /// three gathering skills banked three times the cap. The fix is to ask
+        /// for the full haul and let <see cref="InventoryComponent.Add"/> report
+        /// what actually fit, then credit XP only for the actions whose drops
+        /// were stored — which is why <c>done</c> is derived from <c>gained</c>
+        /// rather than counted up front.
+        /// </summary>
+        private void AccrueOfflineGathering(long capS, OfflineSummary summary)
+        {
+            if (Content == null) return;
+
+            JsonValue skillIds = Content.Table("skills", "SKILL_IDS");
+            JsonValue resources = Content.Resources;
+
+            for (int i = 0; i < skillIds.Count; i++)
+            {
+                string skill = skillIds[i].AsString(null);
+                if (skill == null) continue;
+
+                int level = _state.Player.Skills.LevelOf(skill);
+
+                JsonValue best = BestResource(resources, skill, level);
+                if (best == null) continue;
+
+                double ticksPerAction = best["ticksPerAction"].AsNumber(0);
+                if (ticksPerAction <= 0) continue;
+
+                long actions = (long)Math.Floor(capS / (ticksPerAction * TickRunner.TickMs / 1000.0));
+                if (actions <= 0) continue;
+
+                JsonValue drops = best["drops"];
+                if (drops.IsNull || drops.Count == 0) continue;
+
+                // The FIRST drop, not a weighted roll. Offline progression is
+                // deterministic on purpose: it must pay the same for a given
+                // away-time regardless of when the player happens to return.
+                string itemId = drops[0]["itemId"].AsString(null);
+                if (itemId == null) continue;
+
+                int yield = (int)best["yield"].AsNumber(1);
+                long wanted = actions * yield;
+                if (wanted <= 0) continue;
+
+                int gained = _state.Player.Inventory.Add(itemId, (int)Math.Min(wanted, int.MaxValue));
+                if (gained <= 0) continue;
+
+                long done = (long)Math.Ceiling(actions * ((double)gained / wanted));
+
+                double baseXp = 5;
+                JsonValue item = Content.Item(itemId);
+                if (item != null)
+                {
+                    JsonValue xp = item["xp"];
+                    if (!xp.IsNull && !xp[skill].IsNull) baseXp = xp[skill].AsNumber(5);
+                }
+
+                double earned = baseXp * done;
+                _state.Player.Skills.AddXp(skill, earned);
+                _state.CollectionLog.Add(itemId);
+
+                summary.Lines.Add($"{gained} x {Content.ItemName(itemId)}");
+            }
+        }
+
+        /// <summary>
+        /// The highest-requirement resource for a skill that the player can use.
+        ///
+        /// TIES MATTER AND ARE NOT HYPOTHETICAL: rock_copper and rock_tin are
+        /// both levelReq 1, so what a level-1 miner earns overnight is decided
+        /// entirely here. The TypeScript iterates RESOURCES in declaration order
+        /// and replaces only on a strict &gt;, so it keeps the first declared —
+        /// rock_copper. This iterates in sorted id order, which is deterministic
+        /// (a Dictionary's order is not something to rely on) and happens to
+        /// agree. Pinned by OfflineGatheringPicksCopperOverTin so a data change
+        /// that breaks the agreement is caught rather than silently repaying
+        /// every returning miner in tin.
+        /// </summary>
+        private static JsonValue BestResource(JsonValue resources, string skill, int level)
+        {
+            var ids = new List<string>(resources.Members.Keys);
+            ids.Sort(StringComparer.Ordinal);
+
+            JsonValue best = null;
+            int bestReq = -1;
+
+            foreach (string id in ids)
+            {
+                JsonValue def = resources[id];
+                if (def["skill"].AsString(null) != skill) continue;
+
+                int req = (int)def["levelReq"].AsNumber(1);
+                if (req > level) continue;
+                if (best != null && req <= bestReq) continue;
+
+                best = def;
+                bestReq = req;
+            }
+
+            return best;
+        }
+
     }
 }

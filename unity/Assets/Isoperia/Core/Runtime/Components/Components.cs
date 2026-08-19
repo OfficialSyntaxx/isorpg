@@ -179,6 +179,14 @@ namespace Isoperia.Core.Components
         public bool IsFull() => StoredAmount() >= StorageCap;
 
         /// <summary>
+        /// Does this item count against the bulk cap? Exposed because callers
+        /// need to decide BEFORE adding — SkillSystem stops the gathering action
+        /// on a full bag rather than storing less, and silently storing less
+        /// would leave the player mining into a full bag forever.
+        /// </summary>
+        public bool IsBulkItem(string itemId) => _catalog.IsBulk(itemId);
+
+        /// <summary>
         /// Add up to <paramref name="amount"/>, respecting the cap.
         /// </summary>
         /// <returns>
