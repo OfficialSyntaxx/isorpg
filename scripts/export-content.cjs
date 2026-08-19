@@ -81,11 +81,31 @@ function pick(mod, names) {
 // Stable stringify: object keys sorted, so a re-export diffs only on real change.
 // Insertion order is not stable across a TS refactor and would produce noisy
 // diffs that hide the one line that actually moved.
-function stable(v) {
-  if (Array.isArray(v)) return v.map(stable);
-  if (v && typeof v === "object") {
+function stable(v, where = "root") {
+  if (Array.isArray(v)) return v.map((x, i) => stable(x, `${where}[${i}]`));
+
+  // Set and Map are NOT plain objects and JSON.stringify turns both into {}.
+  // ITEM_ICON_IMAGE_IDS is a Set of 62 ids and exported as an empty object on
+  // the first run of this script — silently, with a valid-looking file. Handle
+  // them explicitly, and treat any OTHER exotic object as fatal below rather
+  // than letting the next one through the same hole.
+  if (v instanceof Set) return [...v].map(String).sort();
+  if (v instanceof Map) {
     const out = {};
-    for (const k of Object.keys(v).sort()) out[k] = stable(v[k]);
+    for (const k of [...v.keys()].sort()) out[String(k)] = stable(v.get(k), `${where}.${k}`);
+    return out;
+  }
+
+  if (v && typeof v === "object") {
+    const proto = Object.getPrototypeOf(v);
+    if (proto !== Object.prototype && proto !== null) {
+      console.error(`FATAL  ${where} is a ${v.constructor && v.constructor.name} — ` +
+                    `JSON.stringify would silently emit {} or lose fields. ` +
+                    `Add explicit handling in stable().`);
+      process.exit(1);
+    }
+    const out = {};
+    for (const k of Object.keys(v).sort()) out[k] = stable(v[k], `${where}.${k}`);
     return out;
   }
   if (typeof v === "number" && !Number.isFinite(v)) {
