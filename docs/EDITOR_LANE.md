@@ -310,8 +310,12 @@ git push -u origin claude/unity-engine-migration-roadmap-fz9w8y
 - [ ] "Tap to play" appears, and **sound works after that tap** on iOS
 - [ ] Nothing clipped by the notch or the home indicator
 - [ ] Airplane mode → relaunch from the icon still boots
-- [ ] The scene shows a muted green ground with **five reference cubes** running
-      diagonally (the middle one gold) and a pale capsule at the spawn tile
+- [ ] The scene shows a muted green ground with **five reference cubes** in a
+      **vertical** row (the middle one gold) and a pale capsule **above** them
+- [ ] Both of those are correct and neither means the camera is wrong. The cubes
+      sit on the `x = z` diagonal, which projects to a vertical line under a 45
+      degree yaw. The capsule is at tile 10 and the cubes at 17-25; the camera is
+      at the `+x/+z` corner, so the LOWER tile is FARTHER and renders higher
 - [ ] **Nothing on screen is magenta.** Magenta anywhere means the render pipeline
       is not assigned — go back to Step 2, then Step 4, then rebuild
 

@@ -199,8 +199,15 @@ namespace Isoperia.EditorTools
             // the check `docs/EDITOR_LANE.md` asks for, and it is not verifiable
             // without something three-dimensional on screen.
             //
-            // Placed on a known diagonal so the tile grid's orientation is legible
-            // too: the row should recede toward the top-right of the screen.
+            // Placed on the x = z diagonal. Under a 45 degree yaw that line
+            // projects to a VERTICAL row on screen, not a diagonal one — the
+            // screen-x term is proportional to (x - z), which is zero all along
+            // it. A vertical row is the correct result and not a sign the yaw is
+            // wrong.
+            //
+            // The row also reads bottom-to-top as tile 17 to tile 25: the camera
+            // is at the +x/+z corner, so a LARGER x+z is nearer to it and lower
+            // on screen. See IsometricCamera.YawDegrees.
             for (int i = 0; i < 5; i++)
             {
                 int t = 17 + i * 2;

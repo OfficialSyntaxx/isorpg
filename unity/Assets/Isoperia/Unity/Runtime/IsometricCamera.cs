@@ -19,7 +19,21 @@ namespace Isoperia.Unity
         /// </summary>
         public const float PitchDegrees = 35.264389682f;
 
-        /// <summary>Camera sits to the south-west looking north-east.</summary>
+        /// <summary>
+        /// The camera sits at the +x/+z corner and looks back toward the origin —
+        /// i.e. NORTH-EAST looking SOUTH-WEST. Matching src/core/Engine.ts, which
+        /// places it at target + (r·cosP·sinY, r·sinP, r·cosP·cosY), all positive.
+        ///
+        /// The consequence is worth stating because it looks like a bug the first
+        /// time you see it: a SMALLER x+z is FARTHER from the camera, so a tile
+        /// nearer the world origin renders HIGHER on screen. The spawn marker at
+        /// tile 10 correctly appears above the reference cubes at tiles 17-25.
+        ///
+        /// Note also that ApplyTransform uses YawDegrees + 180. That is not a
+        /// fudge: Unity's forward must point back at the target from that corner,
+        /// which is the opposite of the direction the corner lies in. Removing it
+        /// puts the camera on the far side and mirrors the world.
+        /// </summary>
         public const float YawDegrees = 45f;
 
         /// <summary>
