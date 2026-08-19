@@ -88,7 +88,26 @@ namespace Isoperia.EditorTools
 
             // ASTC is supported by modern iOS and Android GPUs via
             // WEBGL_compressed_texture_astc.
+            //
+            // READ THE VALUE BACK. This assignment does not always stick: the
+            // field lives in Library/, which is not version-controlled, and both
+            // Phase 1 build reports recorded "Generic" despite this line running
+            // immediately beforehand. That costs nothing while the build has no
+            // textures, and costs the entire memory budget in Phase 5 — an
+            // uncompressed atlas is several times the size of its ASTC form, and
+            // nothing anywhere would say so. Warn now rather than discover it
+            // when the heap starts killing iOS tabs.
             EditorUserBuildSettings.webGLBuildSubtarget = WebGLTextureSubtarget.ASTC;
+
+            if (EditorUserBuildSettings.webGLBuildSubtarget != WebGLTextureSubtarget.ASTC)
+            {
+                Debug.LogWarning(
+                    "[Isoperia] texture subtarget did not stick: asked for ASTC, got " +
+                    EditorUserBuildSettings.webGLBuildSubtarget + ". Textures will build " +
+                    "UNCOMPRESSED. Harmless while the build has none; a memory-budget " +
+                    "failure once Phase 5 art lands. Set Build Profiles > WebGL > Texture " +
+                    "Compression to ASTC by hand and re-check unity/build-report.txt.");
+            }
 
             // --- Behaviour -----------------------------------------------------
             // Without this a backgrounded tab hard-stalls mid-tick.
@@ -528,7 +547,11 @@ namespace Isoperia.EditorTools
                 sb.AppendLine("data_caching:      " + PlayerSettings.WebGL.dataCaching);
                 sb.AppendLine("template:          " + PlayerSettings.WebGL.template);
                 sb.AppendLine("colour_space:      " + PlayerSettings.colorSpace);
-                sb.AppendLine("texture_subtarget: " + EditorUserBuildSettings.webGLBuildSubtarget);
+                var subtarget = EditorUserBuildSettings.webGLBuildSubtarget;
+                sb.AppendLine("texture_subtarget: " + subtarget +
+                              (subtarget == WebGLTextureSubtarget.ASTC
+                                   ? ""
+                                   : "   << WANTED ASTC. Textures build UNCOMPRESSED; see ConfigureWebGL."));
                 sb.AppendLine("run_in_background: " + PlayerSettings.runInBackground);
                 sb.AppendLine();
 

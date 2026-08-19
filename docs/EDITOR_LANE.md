@@ -111,13 +111,19 @@ Expect in the log, both lines:
 > materials, so you must re-run Step 4 after it, or you rebuild the same magenta
 > scene. Steps 2 → 4 → 5, in that order, every time.
 
-> **Texture compression does not persist.** `EditorUserBuildSettings.webGLBuildSubtarget`
-> lives in `Library/`, which is not version-controlled, so ASTC survives only in the
-> working copy that set it. `IsoperiaBuild.BuildWebGL` calls `ConfigureWebGL` first
-> and therefore always sets it — but a manual **File → Build** on a fresh clone will
-> use Unity's default instead. Build through the menu item or the `-executeMethod`
-> above, not File → Build. This is harmless while there are no textures; it stops
-> being harmless in Phase 5.
+> **Texture compression does not persist, and setting it is not currently enough.**
+> `EditorUserBuildSettings.webGLBuildSubtarget` lives in `Library/`, which is not
+> version-controlled, so ASTC survives only in the working copy that set it.
+> `BuildWebGL` calls `ConfigureWebGL` first and therefore always assigns it — but
+> **every build report so far records `Generic`**, so on this Unity version the
+> assignment is not taking. `ConfigureWebGL` now reads the value back and warns,
+> and `build-report.txt` flags the mismatch inline.
+>
+> This is harmless while the build has no textures and it is a memory-budget
+> failure the moment Phase 5 art lands — an uncompressed atlas is several times
+> its ASTC size against a 320 MB heap. **If you see the warning, set Build
+> Profiles → WebGL → Texture Compression to ASTC by hand** and report whether
+> `texture_subtarget` then reads `ASTC`. Do not treat a `Generic` line as noise.
 
 > **If `IsoperiaBuild.cs` fails to compile**, a Unity API was renamed between
 > versions. Fix the offending line — every setting has a documented manual
