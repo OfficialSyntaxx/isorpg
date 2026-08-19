@@ -3,7 +3,8 @@
   "rootNamespace": "Isoperia.EditorTools",
   "references": [
     "Isoperia.Core",
-    "Isoperia.Unity"
+    "Isoperia.Unity",
+    "Unity.RenderPipelines.Universal.Runtime"
   ],
   "includePlatforms": [
     "Editor"
