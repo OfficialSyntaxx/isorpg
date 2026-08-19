@@ -1,0 +1,59 @@
+{
+  "QUESTS": [
+    {
+      "doneText": "The treasure of the Caves is claimed.",
+      "givenBy": "Eldric the Cartographer",
+      "id": "caves",
+      "objectives": {
+        "DEFEAT_BRUTE": "Slay the Cave Brute that guards the exit portal.",
+        "FIND_KEY": "Find the Iron Key in a side chamber of the Caves.",
+        "INTRO": "Talk to Eldric by the deep-wilds door to begin.",
+        "OPEN_DOOR": "Use the Iron Key on the door locked shut."
+      },
+      "rewards": [
+        {
+          "itemId": "coins",
+          "max": 100,
+          "min": 50
+        },
+        {
+          "itemId": "iron_ore",
+          "max": 8,
+          "min": 4
+        },
+        {
+          "itemId": "cooked_trout",
+          "max": 2,
+          "min": 2
+        }
+      ],
+      "summary": "Descend into the dungeon beneath the deep wilds, unlock the sealed door and put down the Cave Brute guarding the exit.",
+      "title": "The Caves of the Deep"
+    },
+    {
+      "doneText": "The Forest Ogre is slain — the deep woods can breathe again.",
+      "givenBy": "Eldric the Cartographer",
+      "id": "ogre",
+      "objective": "Slay the Forest Ogre that prowls the deep woods.",
+      "rewards": [
+        {
+          "itemId": "coins",
+          "max": 250,
+          "min": 250
+        },
+        {
+          "itemId": "steel_bar",
+          "max": 1,
+          "min": 1
+        },
+        {
+          "itemId": "cooked_trout",
+          "max": 3,
+          "min": 3
+        }
+      ],
+      "summary": "A Forest Ogre has moved into the deep woods and the surveyor cannot finish his map while it prowls. Kill it.",
+      "title": "The Surveyor's Errand"
+    }
+  ]
+}

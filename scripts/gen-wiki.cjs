@@ -18,28 +18,9 @@ const ROOT = path.join(__dirname, "..");
 const EMIT = path.join(ROOT, ".wiki-emit");
 const OUT = path.join(ROOT, "WIKI.md");
 
-// Compile the data layer to CommonJS so we can require it.
-function compile() {
-  fs.rmSync(EMIT, { recursive: true, force: true });
-  const tsconfig = path.join(EMIT, "tsconfig.json");
-  fs.mkdirSync(EMIT, { recursive: true });
-  fs.writeFileSync(tsconfig, JSON.stringify({
-    compilerOptions: {
-      target: "ES2020", module: "CommonJS", moduleResolution: "Node",
-      esModuleInterop: true, skipLibCheck: true, lib: ["ES2020", "DOM"],
-      // rootDir pinned so emitted paths are predictable — tsc otherwise infers
-      // it from the input set and the output layout shifts as imports change.
-      rootDir: path.join(ROOT, "src"), outDir: ".", noEmit: false,
-      strict: false, declaration: false,
-    },
-    include: [path.join(ROOT, "src/data/**/*.ts"), path.join(ROOT, "src/components/Skills.ts")],
-  }, null, 2));
-  execFileSync("npx", ["tsc", "-p", tsconfig], { cwd: ROOT, stdio: "pipe" });
-  fs.writeFileSync(path.join(EMIT, "package.json"), '{"type":"commonjs"}');
-}
+const { compileData } = require("./lib/compile-data.cjs");
 
-compile();
-const D = (m) => require(path.join(EMIT, "data", m));
+const D = compileData(EMIT);
 const { ITEMS, ITEM_ICONS } = D("Items.js");
 const { SKILLS, SKILL_IDS, RESOURCES } = D("Skills.js");
 const { WEAPONS, MONSTERS, FOODS } = D("Combat.js");

@@ -1,0 +1,128 @@
+{
+  "CLUE_TIERS": {
+    "hard": {
+      "coins": {
+        "max": 1400,
+        "min": 600
+      },
+      "itemId": "clue_hard",
+      "loot": [
+        {
+          "itemId": "steel_bar",
+          "max": 5,
+          "min": 2
+        },
+        {
+          "itemId": "coal",
+          "max": 12,
+          "min": 5
+        },
+        {
+          "itemId": "cooked_trout",
+          "max": 4,
+          "min": 2
+        }
+      ],
+      "maxRing": 3,
+      "minRing": 2,
+      "name": "Hard Clue Scroll",
+      "steps": 3,
+      "tier": "hard",
+      "unique": {
+        "chance": 0.4,
+        "itemId": "cartographers_tome"
+      }
+    },
+    "simple": {
+      "coins": {
+        "max": 400,
+        "min": 150
+      },
+      "itemId": "clue_simple",
+      "loot": [
+        {
+          "itemId": "iron_ore",
+          "max": 8,
+          "min": 3
+        },
+        {
+          "itemId": "plank",
+          "max": 6,
+          "min": 2
+        }
+      ],
+      "maxRing": 2,
+      "minRing": 1,
+      "name": "Simple Clue Scroll",
+      "steps": 2,
+      "tier": "simple",
+      "unique": {
+        "chance": 0.25,
+        "itemId": "wayfarers_lantern"
+      }
+    }
+  },
+  "CLUE_TIER_LIST": [
+    {
+      "coins": {
+        "max": 400,
+        "min": 150
+      },
+      "itemId": "clue_simple",
+      "loot": [
+        {
+          "itemId": "iron_ore",
+          "max": 8,
+          "min": 3
+        },
+        {
+          "itemId": "plank",
+          "max": 6,
+          "min": 2
+        }
+      ],
+      "maxRing": 2,
+      "minRing": 1,
+      "name": "Simple Clue Scroll",
+      "steps": 2,
+      "tier": "simple",
+      "unique": {
+        "chance": 0.25,
+        "itemId": "wayfarers_lantern"
+      }
+    },
+    {
+      "coins": {
+        "max": 1400,
+        "min": 600
+      },
+      "itemId": "clue_hard",
+      "loot": [
+        {
+          "itemId": "steel_bar",
+          "max": 5,
+          "min": 2
+        },
+        {
+          "itemId": "coal",
+          "max": 12,
+          "min": 5
+        },
+        {
+          "itemId": "cooked_trout",
+          "max": 4,
+          "min": 2
+        }
+      ],
+      "maxRing": 3,
+      "minRing": 2,
+      "name": "Hard Clue Scroll",
+      "steps": 3,
+      "tier": "hard",
+      "unique": {
+        "chance": 0.4,
+        "itemId": "cartographers_tome"
+      }
+    }
+  ]
+}

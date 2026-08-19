@@ -1,0 +1,99 @@
+{
+  "ACHIEVEMENTS": [
+    {
+      "desc": "Slay your first monster.",
+      "id": "first_kill",
+      "name": "First Blood"
+    },
+    {
+      "desc": "Slay 10 giant rats.",
+      "id": "rat_hunter",
+      "name": "Rat Hunter"
+    },
+    {
+      "desc": "Slay 5 dire wolves.",
+      "id": "woodsman",
+      "name": "Heart of the Forest"
+    },
+    {
+      "desc": "Slay the Forest Ogre or the Cave Brute.",
+      "id": "boss_slayer",
+      "name": "Boss Breaker"
+    },
+    {
+      "desc": "Reach level 10 in any skill.",
+      "id": "skiller_10",
+      "name": "Tenacious"
+    },
+    {
+      "desc": "Collect 10 different items.",
+      "id": "collector_10",
+      "name": "Pack Rat"
+    },
+    {
+      "desc": "Complete any quest.",
+      "id": "quest_done",
+      "name": "Eldric's Student"
+    },
+    {
+      "desc": "Explore a quarter of the world.",
+      "id": "explorer_25",
+      "name": "Pathfinder"
+    },
+    {
+      "desc": "Buy something from the town market.",
+      "id": "merchant",
+      "name": "First Purchase"
+    },
+    {
+      "desc": "Sell 20 items to the town market.",
+      "id": "hawker",
+      "name": "Junk Trader"
+    },
+    {
+      "desc": "Give three villagers a job.",
+      "id": "foreman",
+      "name": "Foreman"
+    },
+    {
+      "desc": "Collect 50 items from the village stock.",
+      "id": "quartermaster",
+      "name": "Quartermaster"
+    },
+    {
+      "desc": "Descend to dungeon floor 2.",
+      "id": "spelunker",
+      "name": "Spelunker"
+    },
+    {
+      "desc": "Bank 2,000 coins from market sales.",
+      "id": "mogul",
+      "name": "Mogul"
+    },
+    {
+      "desc": "Dump 100+ of the same item on the market.",
+      "id": "flooder",
+      "name": "Market Flooder"
+    },
+    {
+      "desc": "Buy 10 items from the town market.",
+      "id": "regular",
+      "name": "Shop Regular"
+    },
+    {
+      "desc": "Solve a clue scroll.",
+      "id": "treasure_hunter",
+      "name": "Treasure Hunter"
+    },
+    {
+      "desc": "Solve 10 clue scrolls.",
+      "id": "cartographer",
+      "name": "Cartographer"
+    },
+    {
+      "desc": "Reach Farming level 20.",
+      "id": "green_thumb",
+      "name": "Green Thumb"
+    }
+  ]
+}

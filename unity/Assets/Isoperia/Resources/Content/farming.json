@@ -1,0 +1,48 @@
+{
+  "SEEDS": {
+    "cabbage_seed": {
+      "growMs": 720000,
+      "id": "cabbage_seed",
+      "levelReq": 12,
+      "masteryKey": "cabbage",
+      "name": "Cabbage Seed",
+      "produce": {
+        "itemId": "cabbage",
+        "max": 3,
+        "min": 2
+      },
+      "xp": 90
+    },
+    "potato_seed": {
+      "growMs": 300000,
+      "id": "potato_seed",
+      "levelReq": 1,
+      "masteryKey": "potato",
+      "name": "Potato Seed",
+      "produce": {
+        "itemId": "potato",
+        "max": 4,
+        "min": 2
+      },
+      "xp": 35
+    },
+    "redberry_seed": {
+      "growMs": 1800000,
+      "id": "redberry_seed",
+      "levelReq": 30,
+      "masteryKey": "redberry",
+      "name": "Redberry Seed",
+      "produce": {
+        "itemId": "redberry",
+        "max": 6,
+        "min": 3
+      },
+      "xp": 220
+    }
+  },
+  "SEED_IDS": [
+    "potato_seed",
+    "cabbage_seed",
+    "redberry_seed"
+  ]
+}

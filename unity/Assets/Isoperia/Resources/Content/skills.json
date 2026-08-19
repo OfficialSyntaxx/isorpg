@@ -1,0 +1,283 @@
+{
+  "COMBAT_SKILLS": [
+    "attack",
+    "strength",
+    "defense",
+    "hitpoints"
+  ],
+  "CRAFT_SKILLS": [
+    "cooking",
+    "smithing",
+    "carpentry"
+  ],
+  "RESOURCES": {
+    "rock_coal": {
+      "depletes": true,
+      "drops": [
+        {
+          "itemId": "coal",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 30,
+      "masteryKey": "coal",
+      "maxUses": 7,
+      "nodeType": "ROCK",
+      "skill": "mining",
+      "ticksPerAction": 32,
+      "toolTier": 3,
+      "yield": 1
+    },
+    "rock_copper": {
+      "depletes": true,
+      "drops": [
+        {
+          "itemId": "copper_ore",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 1,
+      "masteryKey": "copper",
+      "maxUses": 5,
+      "nodeType": "ROCK",
+      "skill": "mining",
+      "ticksPerAction": 20,
+      "yield": 1
+    },
+    "rock_iron": {
+      "depletes": true,
+      "drops": [
+        {
+          "itemId": "iron_ore",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 15,
+      "masteryKey": "iron",
+      "maxUses": 6,
+      "nodeType": "ROCK",
+      "skill": "mining",
+      "ticksPerAction": 26,
+      "toolTier": 2,
+      "yield": 1
+    },
+    "rock_tin": {
+      "depletes": true,
+      "drops": [
+        {
+          "itemId": "tin_ore",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 1,
+      "masteryKey": "tin",
+      "maxUses": 5,
+      "nodeType": "ROCK",
+      "skill": "mining",
+      "ticksPerAction": 20,
+      "yield": 1
+    },
+    "tree_normal": {
+      "depletes": true,
+      "drops": [
+        {
+          "itemId": "normal_log",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 1,
+      "masteryKey": "normal",
+      "maxUses": 4,
+      "nodeType": "TREE",
+      "skill": "woodcutting",
+      "ticksPerAction": 15,
+      "yield": 1
+    },
+    "tree_oak": {
+      "depletes": true,
+      "drops": [
+        {
+          "itemId": "oak_log",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 15,
+      "masteryKey": "oak",
+      "maxUses": 6,
+      "nodeType": "TREE",
+      "skill": "woodcutting",
+      "ticksPerAction": 22,
+      "toolTier": 2,
+      "yield": 1
+    },
+    "tree_willow": {
+      "depletes": true,
+      "drops": [
+        {
+          "itemId": "willow_log",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 30,
+      "masteryKey": "willow",
+      "maxUses": 8,
+      "nodeType": "TREE",
+      "skill": "woodcutting",
+      "ticksPerAction": 28,
+      "toolTier": 3,
+      "yield": 1
+    },
+    "water_shrimp": {
+      "depletes": false,
+      "drops": [
+        {
+          "itemId": "raw_shrimp",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 1,
+      "masteryKey": "shrimp",
+      "nodeType": "WATER",
+      "skill": "fishing",
+      "ticksPerAction": 12,
+      "yield": 1
+    },
+    "water_trout": {
+      "depletes": false,
+      "drops": [
+        {
+          "itemId": "raw_trout",
+          "max": 1,
+          "min": 1,
+          "weight": 1
+        }
+      ],
+      "levelReq": 20,
+      "masteryKey": "trout",
+      "nodeType": "WATER",
+      "skill": "fishing",
+      "ticksPerAction": 18,
+      "toolTier": 2,
+      "yield": 1
+    }
+  },
+  "SKILLS": {
+    "attack": {
+      "icon": "⚔️",
+      "id": "attack",
+      "kind": "combat_skill",
+      "name": "Attack",
+      "short": "ATK"
+    },
+    "carpentry": {
+      "icon": "🪚",
+      "id": "carpentry",
+      "kind": "artisan",
+      "name": "Carpentry",
+      "short": "CARP"
+    },
+    "construction": {
+      "icon": "🏗️",
+      "id": "construction",
+      "kind": "artisan",
+      "name": "Construction",
+      "short": "CON"
+    },
+    "cooking": {
+      "icon": "🍳",
+      "id": "cooking",
+      "kind": "artisan",
+      "name": "Cooking",
+      "short": "COOK"
+    },
+    "defense": {
+      "icon": "🛡️",
+      "id": "defense",
+      "kind": "combat_skill",
+      "name": "Defense",
+      "short": "DEF"
+    },
+    "farming": {
+      "icon": "🌱",
+      "id": "farming",
+      "kind": "artisan",
+      "name": "Farming",
+      "short": "FARM"
+    },
+    "fishing": {
+      "icon": "🎣",
+      "id": "fishing",
+      "kind": "gathering",
+      "name": "Fishing",
+      "nodeKind": "WATER",
+      "short": "FISH"
+    },
+    "hitpoints": {
+      "icon": "❤️",
+      "id": "hitpoints",
+      "kind": "combat_lvl",
+      "name": "Hitpoints",
+      "short": "HP"
+    },
+    "mining": {
+      "icon": "⛏️",
+      "id": "mining",
+      "kind": "gathering",
+      "name": "Mining",
+      "nodeKind": "ROCK",
+      "short": "MIN"
+    },
+    "smithing": {
+      "icon": "🔨",
+      "id": "smithing",
+      "kind": "artisan",
+      "name": "Smelting",
+      "short": "SMITH"
+    },
+    "strength": {
+      "icon": "💪",
+      "id": "strength",
+      "kind": "combat_skill",
+      "name": "Strength",
+      "short": "STR"
+    },
+    "woodcutting": {
+      "icon": "🪓",
+      "id": "woodcutting",
+      "kind": "gathering",
+      "name": "Woodcutting",
+      "nodeKind": "TREE",
+      "short": "WC"
+    }
+  },
+  "SKILL_IDS": [
+    "attack",
+    "strength",
+    "defense",
+    "hitpoints",
+    "cooking",
+    "smithing",
+    "carpentry",
+    "construction",
+    "farming",
+    "woodcutting",
+    "mining",
+    "fishing"
+  ]
+}

@@ -1,0 +1,772 @@
+{
+  "ITEMS": {
+    "baked_potato": {
+      "desc": "Hot from the fire. Heals 9.",
+      "id": "baked_potato",
+      "name": "Baked Potato",
+      "stack": true,
+      "type": "FOOD",
+      "value": 18
+    },
+    "bones": {
+      "desc": "Possibly worth burying.",
+      "id": "bones",
+      "name": "Bones",
+      "stack": true,
+      "type": "MISC",
+      "value": 2
+    },
+    "bronze_2h": {
+      "desc": "Slow but heavy. 6-tick attack.",
+      "equip": {
+        "slot": "weapon",
+        "tier": 1
+      },
+      "id": "bronze_2h",
+      "name": "Bronze 2H Sword",
+      "stack": false,
+      "type": "TOOL",
+      "value": 30
+    },
+    "bronze_axe": {
+      "desc": "A starter woodcutting axe.",
+      "id": "bronze_axe",
+      "name": "Bronze Axe",
+      "stack": false,
+      "tool": {
+        "skill": "woodcutting",
+        "speedPct": 0,
+        "tier": 1
+      },
+      "type": "TOOL",
+      "value": 1
+    },
+    "bronze_bar": {
+      "desc": "Smelted copper and tin.",
+      "id": "bronze_bar",
+      "name": "Bronze Bar",
+      "stack": true,
+      "type": "BAR",
+      "value": 15,
+      "xp": {
+        "smithing": 30
+      }
+    },
+    "bronze_dagger": {
+      "desc": "Fast but small. 3-tick attack.",
+      "equip": {
+        "slot": "weapon",
+        "tier": 1
+      },
+      "id": "bronze_dagger",
+      "name": "Bronze Dagger",
+      "stack": false,
+      "type": "TOOL",
+      "value": 12
+    },
+    "bronze_helm": {
+      "desc": "+1 defence, +5 HP.",
+      "equip": {
+        "bonus": {
+          "defense": 1,
+          "maxHp": 5
+        },
+        "slot": "head",
+        "tier": 1
+      },
+      "id": "bronze_helm",
+      "name": "Bronze Helm",
+      "stack": false,
+      "type": "TOOL",
+      "value": 25
+    },
+    "bronze_legs": {
+      "desc": "+1 defence, +5 HP.",
+      "equip": {
+        "bonus": {
+          "defense": 1,
+          "maxHp": 5
+        },
+        "slot": "legs",
+        "tier": 1
+      },
+      "id": "bronze_legs",
+      "name": "Bronze Platelegs",
+      "stack": false,
+      "type": "TOOL",
+      "value": 30
+    },
+    "bronze_pickaxe": {
+      "desc": "A starter mining pickaxe.",
+      "id": "bronze_pickaxe",
+      "name": "Bronze Pickaxe",
+      "stack": false,
+      "tool": {
+        "skill": "mining",
+        "speedPct": 0,
+        "tier": 1
+      },
+      "type": "TOOL",
+      "value": 1
+    },
+    "bronze_plate": {
+      "desc": "+2 defence, +10 HP.",
+      "equip": {
+        "bonus": {
+          "defense": 2,
+          "maxHp": 10
+        },
+        "slot": "body",
+        "tier": 1
+      },
+      "id": "bronze_plate",
+      "name": "Bronze Platebody",
+      "stack": false,
+      "type": "TOOL",
+      "value": 40
+    },
+    "bronze_sword": {
+      "desc": "A solid starter sword. 4-tick attack.",
+      "equip": {
+        "slot": "weapon",
+        "tier": 1
+      },
+      "id": "bronze_sword",
+      "name": "Bronze Sword",
+      "stack": false,
+      "type": "TOOL",
+      "value": 20
+    },
+    "cabbage": {
+      "desc": "Hearty leaves. Better in a stew than raw.",
+      "id": "cabbage",
+      "name": "Cabbage",
+      "stack": true,
+      "type": "FOOD",
+      "value": 14,
+      "xp": {
+        "cooking": 45
+      }
+    },
+    "cabbage_seed": {
+      "desc": "A slower crop with a better yield. About 12 minutes.",
+      "id": "cabbage_seed",
+      "levelReq": {
+        "farming": 12
+      },
+      "name": "Cabbage Seed",
+      "stack": true,
+      "type": "SEED",
+      "value": 12
+    },
+    "cabbage_stew": {
+      "desc": "Thick and restoring. Heals 20.",
+      "id": "cabbage_stew",
+      "name": "Cabbage Stew",
+      "stack": true,
+      "type": "FOOD",
+      "value": 44
+    },
+    "cartographers_tome": {
+      "desc": "Clue reward. Eldric would very much like a look at this.",
+      "equip": {
+        "bonus": {
+          "attack": 4,
+          "defense": 5,
+          "maxHp": 6
+        },
+        "slot": "offhand",
+        "tier": 2
+      },
+      "id": "cartographers_tome",
+      "name": "Cartographer's Tome",
+      "stack": false,
+      "type": "TOOL",
+      "value": 900
+    },
+    "clue_hard": {
+      "desc": "Three marks, and none of them close to town. Read it to begin the hunt.",
+      "id": "clue_hard",
+      "name": "Hard Clue Scroll",
+      "stack": true,
+      "type": "MISC",
+      "value": 0
+    },
+    "clue_simple": {
+      "desc": "A crude map with two marks on it. Read it to begin the hunt.",
+      "id": "clue_simple",
+      "name": "Simple Clue Scroll",
+      "stack": true,
+      "type": "MISC",
+      "value": 0
+    },
+    "coal": {
+      "desc": "Black, glossy fuel for the smelter.",
+      "id": "coal",
+      "levelReq": {
+        "mining": 30
+      },
+      "name": "Coal",
+      "stack": true,
+      "type": "ORE",
+      "value": 33,
+      "xp": {
+        "mining": 50
+      }
+    },
+    "coins": {
+      "desc": "Shiny currency the merchants accept.",
+      "id": "coins",
+      "name": "Coins",
+      "stack": true,
+      "type": "MISC",
+      "value": 1
+    },
+    "combat_potion": {
+      "desc": "A fiery red tonic. Heals 30, gulped down automatically when you're hurt.",
+      "id": "combat_potion",
+      "name": "Combat Tonic",
+      "stack": true,
+      "type": "FOOD",
+      "value": 45
+    },
+    "cooked_rat_meat": {
+      "desc": "Better than it sounds. Heals 4.",
+      "id": "cooked_rat_meat",
+      "name": "Cooked Rat Meat",
+      "stack": true,
+      "type": "FOOD",
+      "value": 9
+    },
+    "cooked_shrimp": {
+      "desc": "A tasty cooked shrimp. Heals 6.",
+      "id": "cooked_shrimp",
+      "name": "Cooked Shrimp",
+      "stack": true,
+      "type": "FOOD",
+      "value": 12
+    },
+    "cooked_trout": {
+      "desc": "Flaky and filling. Heals 14.",
+      "id": "cooked_trout",
+      "name": "Cooked Trout",
+      "stack": true,
+      "type": "FOOD",
+      "value": 32
+    },
+    "copper_ore": {
+      "desc": "Soft, orange-gold ore.",
+      "id": "copper_ore",
+      "name": "Copper Ore",
+      "stack": true,
+      "type": "ORE",
+      "value": 5,
+      "xp": {
+        "mining": 17.5
+      }
+    },
+    "dungeon_key": {
+      "desc": "Fits the locked door that blocks the dungeon exit. Consumed on use.",
+      "id": "dungeon_key",
+      "name": "Iron Key",
+      "stack": true,
+      "type": "MISC",
+      "value": 0
+    },
+    "fly_rod": {
+      "desc": "Lets you reach deeper, faster fish.",
+      "id": "fly_rod",
+      "name": "Fly Rod",
+      "stack": false,
+      "tool": {
+        "skill": "fishing",
+        "speedPct": 15,
+        "tier": 2
+      },
+      "type": "TOOL",
+      "value": 40
+    },
+    "goblin_key": {
+      "desc": "Rusted and noisy.",
+      "id": "goblin_key",
+      "name": "Goblin Key",
+      "stack": true,
+      "type": "MISC",
+      "value": 5
+    },
+    "iron_axe": {
+      "desc": "Cuts wood noticeably faster.",
+      "id": "iron_axe",
+      "name": "Iron Axe",
+      "stack": false,
+      "tool": {
+        "skill": "woodcutting",
+        "speedPct": 15,
+        "tier": 2
+      },
+      "type": "TOOL",
+      "value": 30
+    },
+    "iron_bar": {
+      "desc": "Smelted iron — hard and reliable.",
+      "id": "iron_bar",
+      "levelReq": {
+        "smithing": 20
+      },
+      "name": "Iron Bar",
+      "stack": true,
+      "type": "BAR",
+      "value": 40,
+      "xp": {
+        "smithing": 60
+      }
+    },
+    "iron_helm": {
+      "desc": "+2 defence, +10 HP.",
+      "equip": {
+        "bonus": {
+          "defense": 2,
+          "maxHp": 10
+        },
+        "slot": "head",
+        "tier": 2
+      },
+      "id": "iron_helm",
+      "name": "Iron Helm",
+      "stack": false,
+      "type": "TOOL",
+      "value": 80
+    },
+    "iron_legs": {
+      "desc": "+2 defence, +10 HP.",
+      "equip": {
+        "bonus": {
+          "defense": 2,
+          "maxHp": 10
+        },
+        "slot": "legs",
+        "tier": 2
+      },
+      "id": "iron_legs",
+      "name": "Iron Platelegs",
+      "stack": false,
+      "type": "TOOL",
+      "value": 100
+    },
+    "iron_ore": {
+      "desc": "Dense grey ore, ready to smelt.",
+      "id": "iron_ore",
+      "levelReq": {
+        "mining": 15
+      },
+      "name": "Iron Ore",
+      "stack": true,
+      "type": "ORE",
+      "value": 17,
+      "xp": {
+        "mining": 35
+      }
+    },
+    "iron_pickaxe": {
+      "desc": "Cracks ore clean off the rock.",
+      "id": "iron_pickaxe",
+      "name": "Iron Pickaxe",
+      "stack": false,
+      "tool": {
+        "skill": "mining",
+        "speedPct": 15,
+        "tier": 2
+      },
+      "type": "TOOL",
+      "value": 30
+    },
+    "iron_plate": {
+      "desc": "+4 defence, +15 HP.",
+      "equip": {
+        "bonus": {
+          "defense": 4,
+          "maxHp": 15
+        },
+        "slot": "body",
+        "tier": 2
+      },
+      "id": "iron_plate",
+      "name": "Iron Platebody",
+      "stack": false,
+      "type": "TOOL",
+      "value": 130
+    },
+    "iron_sword": {
+      "desc": "A sharp iron blade.",
+      "equip": {
+        "slot": "weapon",
+        "tier": 2
+      },
+      "id": "iron_sword",
+      "name": "Iron Sword",
+      "stack": false,
+      "type": "TOOL",
+      "value": 60
+    },
+    "loop_half_key": {
+      "desc": "Half a mysterious key.",
+      "id": "loop_half_key",
+      "name": "Loop Half of a Key",
+      "stack": true,
+      "type": "MISC",
+      "value": 20
+    },
+    "normal_log": {
+      "desc": "A sturdy cut of ordinary wood.",
+      "id": "normal_log",
+      "name": "Logs",
+      "stack": true,
+      "type": "LOG",
+      "value": 4,
+      "xp": {
+        "woodcutting": 25
+      }
+    },
+    "oak_log": {
+      "desc": "Heavier, denser oak timber.",
+      "id": "oak_log",
+      "levelReq": {
+        "woodcutting": 15
+      },
+      "name": "Oak Logs",
+      "stack": true,
+      "type": "LOG",
+      "value": 10,
+      "xp": {
+        "woodcutting": 37.5
+      }
+    },
+    "pet_goblin": {
+      "desc": "Unlocks a follower. 1/3333 per kill.",
+      "id": "pet_goblin",
+      "name": "Eager Goblin",
+      "stack": true,
+      "type": "MISC",
+      "value": 1
+    },
+    "pet_rat": {
+      "desc": "Unlocks a follower. 1/2500 per kill.",
+      "id": "pet_rat",
+      "name": "Tiny Rat",
+      "stack": true,
+      "type": "MISC",
+      "value": 1
+    },
+    "pet_skeleton": {
+      "desc": "Unlocks a follower. 1/4000 per kill.",
+      "id": "pet_skeleton",
+      "name": "Bones Malone",
+      "stack": true,
+      "type": "MISC",
+      "value": 1
+    },
+    "pet_zombie": {
+      "desc": "Unlocks a follower. 1/5000 per kill.",
+      "id": "pet_zombie",
+      "name": "Mortimer",
+      "stack": true,
+      "type": "MISC",
+      "value": 1
+    },
+    "plank": {
+      "desc": "Sawn, seasoned timber — settlement building material.",
+      "id": "plank",
+      "name": "Plank",
+      "stack": true,
+      "type": "MATERIAL",
+      "value": 8,
+      "xp": {
+        "carpentry": 20
+      }
+    },
+    "potato": {
+      "desc": "Earthy and filling once baked.",
+      "id": "potato",
+      "name": "Potato",
+      "stack": true,
+      "type": "FOOD",
+      "value": 6,
+      "xp": {
+        "cooking": 20
+      }
+    },
+    "potato_seed": {
+      "desc": "Plant it in a Farm Plot bed. Ready in about 5 minutes.",
+      "id": "potato_seed",
+      "levelReq": {
+        "farming": 1
+      },
+      "name": "Potato Seed",
+      "stack": true,
+      "type": "SEED",
+      "value": 3
+    },
+    "rat_bone": {
+      "desc": "A curious irregular bone.",
+      "id": "rat_bone",
+      "name": "Rat Bone (Triangular)",
+      "stack": true,
+      "type": "MISC",
+      "value": 1
+    },
+    "raw_rat_meat": {
+      "desc": "Edible once cooked. Heals a little raw.",
+      "id": "raw_rat_meat",
+      "name": "Raw Rat Meat",
+      "stack": true,
+      "type": "FOOD",
+      "value": 4,
+      "xp": {
+        "cooking": 12
+      }
+    },
+    "raw_shrimp": {
+      "desc": "A fresh little shrimp.",
+      "id": "raw_shrimp",
+      "name": "Raw Shrimp",
+      "stack": true,
+      "type": "FISH",
+      "value": 5,
+      "xp": {
+        "fishing": 10
+      }
+    },
+    "raw_trout": {
+      "desc": "A lively spotted trout.",
+      "id": "raw_trout",
+      "levelReq": {
+        "fishing": 20
+      },
+      "name": "Raw Trout",
+      "stack": true,
+      "type": "FISH",
+      "value": 15,
+      "xp": {
+        "fishing": 50
+      }
+    },
+    "redberry": {
+      "desc": "Tart and faintly medicinal — the base of a Combat Tonic.",
+      "id": "redberry",
+      "name": "Redberry",
+      "stack": true,
+      "type": "FOOD",
+      "value": 22
+    },
+    "redberry_seed": {
+      "desc": "Half an hour in the ground, and the berries brew a Combat Tonic.",
+      "id": "redberry_seed",
+      "levelReq": {
+        "farming": 30
+      },
+      "name": "Redberry Seed",
+      "stack": true,
+      "type": "SEED",
+      "value": 40
+    },
+    "shortbow": {
+      "desc": "A quick bow. 3-tick attack.",
+      "equip": {
+        "slot": "weapon",
+        "tier": 1
+      },
+      "id": "shortbow",
+      "name": "Shortbow",
+      "stack": false,
+      "type": "TOOL",
+      "value": 25
+    },
+    "shrimp_food": {
+      "desc": "A tasty cooked shrimp. Heals 6.",
+      "id": "shrimp_food",
+      "name": "Cooked Shrimp",
+      "stack": true,
+      "type": "FOOD",
+      "value": 12
+    },
+    "small_net": {
+      "desc": "Catches shrimp in open water.",
+      "id": "small_net",
+      "name": "Small Fishing Net",
+      "stack": false,
+      "tool": {
+        "skill": "fishing",
+        "speedPct": 0,
+        "tier": 1
+      },
+      "type": "TOOL",
+      "value": 1
+    },
+    "steel_axe": {
+      "desc": "Bites deep — swift and true.",
+      "id": "steel_axe",
+      "name": "Steel Axe",
+      "stack": false,
+      "tool": {
+        "skill": "woodcutting",
+        "speedPct": 30,
+        "tier": 3
+      },
+      "type": "TOOL",
+      "value": 90
+    },
+    "steel_bar": {
+      "desc": "Iron forged with coal. The good stuff.",
+      "id": "steel_bar",
+      "levelReq": {
+        "smithing": 30
+      },
+      "name": "Steel Bar",
+      "stack": true,
+      "type": "BAR",
+      "value": 90,
+      "xp": {
+        "smithing": 100
+      }
+    },
+    "steel_pickaxe": {
+      "desc": "The miner's best friend.",
+      "id": "steel_pickaxe",
+      "name": "Steel Pickaxe",
+      "stack": false,
+      "tool": {
+        "skill": "mining",
+        "speedPct": 30,
+        "tier": 3
+      },
+      "type": "TOOL",
+      "value": 90
+    },
+    "steel_sword": {
+      "desc": "Forged from steel — the finest blade a settlement smith can make.",
+      "equip": {
+        "slot": "weapon",
+        "tier": 3
+      },
+      "id": "steel_sword",
+      "name": "Steel Sword",
+      "stack": false,
+      "type": "TOOL",
+      "value": 140
+    },
+    "tin_ore": {
+      "desc": "Bright silver ore.",
+      "id": "tin_ore",
+      "name": "Tin Ore",
+      "stack": true,
+      "type": "ORE",
+      "value": 5,
+      "xp": {
+        "mining": 17.5
+      }
+    },
+    "wayfarers_lantern": {
+      "desc": "Clue reward. Steadies the hand and the nerve.",
+      "equip": {
+        "bonus": {
+          "defense": 3,
+          "maxHp": 4
+        },
+        "slot": "offhand",
+        "tier": 1
+      },
+      "id": "wayfarers_lantern",
+      "name": "Wayfarer's Lantern",
+      "stack": false,
+      "type": "TOOL",
+      "value": 320
+    },
+    "willow_log": {
+      "desc": "Flexible willow, prized by carpenters.",
+      "id": "willow_log",
+      "levelReq": {
+        "woodcutting": 30
+      },
+      "name": "Willow Logs",
+      "stack": true,
+      "type": "LOG",
+      "value": 20,
+      "xp": {
+        "woodcutting": 67.5
+      }
+    },
+    "zombie_flesh": {
+      "desc": "Moves slightly on its own.",
+      "id": "zombie_flesh",
+      "name": "Zombie Flesh",
+      "stack": true,
+      "type": "MISC",
+      "value": 3
+    }
+  },
+  "ITEM_ICONS": {
+    "baked_potato": "🥔",
+    "bones": "🦴",
+    "bronze_2h": "⚔️",
+    "bronze_axe": "🪓",
+    "bronze_bar": "🟤",
+    "bronze_dagger": "🗡️",
+    "bronze_helm": "⛑️",
+    "bronze_legs": "🦵",
+    "bronze_pickaxe": "⛏️",
+    "bronze_plate": "🛡️",
+    "bronze_sword": "⚔️",
+    "cabbage": "🥬",
+    "cabbage_seed": "🌱",
+    "cabbage_stew": "🍲",
+    "cartographers_tome": "📖",
+    "clue_hard": "📜",
+    "clue_simple": "📜",
+    "coal": "⚫",
+    "coins": "🪙",
+    "combat_potion": "🧪",
+    "cooked_rat_meat": "🍗",
+    "cooked_shrimp": "🍤",
+    "cooked_trout": "🍣",
+    "copper_ore": "🟠",
+    "dungeon_key": "🗝️",
+    "fly_rod": "🎣",
+    "goblin_key": "🗝️",
+    "iron_axe": "🪓",
+    "iron_bar": "🔩",
+    "iron_helm": "⛑️",
+    "iron_legs": "🦵",
+    "iron_ore": "⚙️",
+    "iron_pickaxe": "⛏️",
+    "iron_plate": "🛡️",
+    "iron_sword": "⚔️",
+    "loop_half_key": "🗝️",
+    "normal_log": "🪵",
+    "oak_log": "🌳",
+    "pet_goblin": "👹",
+    "pet_rat": "🐀",
+    "pet_skeleton": "💀",
+    "pet_zombie": "🧟",
+    "plank": "🪵",
+    "potato": "🥔",
+    "potato_seed": "🌰",
+    "rat_bone": "🦴",
+    "raw_rat_meat": "🍖",
+    "raw_shrimp": "🦐",
+    "raw_trout": "🐟",
+    "redberry": "🍒",
+    "redberry_seed": "🫘",
+    "shortbow": "🏹",
+    "shrimp_food": "🍤",
+    "small_net": "🥅",
+    "steel_axe": "🪓",
+    "steel_bar": "⛓️",
+    "steel_pickaxe": "⛏️",
+    "steel_sword": "⚔️",
+    "tin_ore": "⚪",
+    "wayfarers_lantern": "🏮",
+    "willow_log": "🌿",
+    "zombie_flesh": "🧟"
+  },
+  "ITEM_ICON_IMAGE_IDS": {}
+}

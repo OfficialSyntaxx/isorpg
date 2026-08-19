@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node scripts/verify-rig.cjs && node .qc-emit/tests/qc.test.js && node scripts/gen-wiki.cjs",
+    "test": "rm -rf .qc-emit && tsc -p tests/tsconfig.json && echo '{\"type\":\"commonjs\"}' > .qc-emit/package.json && node scripts/audit-ui.cjs && node scripts/verify-rig.cjs && node .qc-emit/tests/qc.test.js && node scripts/gen-wiki.cjs && npm run export:content",
     "preview": "vite preview --port 4173",
     "test:smoke": "npm run build && node scripts/smoke.cjs && node scripts/visual-regress.cjs",
     "models:manifest": "node scripts/gen-model-manifest.cjs",
@@ -25,7 +25,8 @@
     "verify:unity": "node scripts/verify-pwa-template.cjs && node scripts/verify-core-tests.cjs && node scripts/verify-json-parity.cjs && node scripts/verify-core-parity.cjs && node scripts/verify-sanitizer-parity.cjs",
     "verify:json": "node scripts/verify-json-parity.cjs",
     "verify:sanitizer": "node scripts/verify-sanitizer-parity.cjs",
-    "verify:scene": "node scripts/verify-scene-materials.cjs"
+    "verify:scene": "node scripts/verify-scene-materials.cjs",
+    "export:content": "node scripts/export-content.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

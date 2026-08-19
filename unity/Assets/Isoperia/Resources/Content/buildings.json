@@ -1,0 +1,171 @@
+{
+  "BUILDINGS": {
+    "CAMPFIRE": {
+      "baseCost": [
+        {
+          "itemId": "normal_log",
+          "qty": 6
+        }
+      ],
+      "buildXp": 20,
+      "desc": "A crackling fire where villagers gather and food cooks faster.",
+      "effect": "Cooking 25% faster · villagers gather here",
+      "icon": "🔥",
+      "levelReq": 0,
+      "maxCount": 3,
+      "name": "Campfire",
+      "type": "CAMPFIRE"
+    },
+    "FARM_PLOT": {
+      "baseCost": [
+        {
+          "itemId": "plank",
+          "qty": 6
+        },
+        {
+          "itemId": "normal_log",
+          "qty": 8
+        }
+      ],
+      "buildXp": 120,
+      "desc": "Tilled beds for sowing seeds. Crops ripen on real time, so a plot sown before you leave is ready when you return.",
+      "effect": "+1 planting bed per level (see Village → Farm)",
+      "icon": "🌱",
+      "levelReq": 3,
+      "maxCount": 3,
+      "name": "Farm Plot",
+      "type": "FARM_PLOT"
+    },
+    "GRANARY": {
+      "baseCost": [
+        {
+          "itemId": "coins",
+          "qty": 100
+        },
+        {
+          "itemId": "plank",
+          "qty": 8
+        }
+      ],
+      "buildXp": 160,
+      "desc": "Boosts food production and town growth with a slow trickle of raw provisions.",
+      "effect": "Passively produces 1 raw shrimp per cycle, per level",
+      "icon": "🌾",
+      "levelReq": 8,
+      "maxCount": 2,
+      "name": "Granary",
+      "type": "GRANARY"
+    },
+    "SAWMILL": {
+      "baseCost": [
+        {
+          "itemId": "coins",
+          "qty": 120
+        },
+        {
+          "itemId": "normal_log",
+          "qty": 15
+        }
+      ],
+      "buildXp": 180,
+      "desc": "Automatically saws stray logs into construction planks over time.",
+      "effect": "Passively converts 1 log → 1 plank per cycle, per level",
+      "icon": "🪵",
+      "levelReq": 5,
+      "maxCount": 2,
+      "name": "Sawmill",
+      "type": "SAWMILL"
+    },
+    "SMELTER": {
+      "baseCost": [
+        {
+          "itemId": "coins",
+          "qty": 150
+        },
+        {
+          "itemId": "copper_ore",
+          "qty": 10
+        },
+        {
+          "itemId": "tin_ore",
+          "qty": 10
+        }
+      ],
+      "buildXp": 220,
+      "desc": "A standing furnace. Required to actively smith bars, and passively smelts spare ore.",
+      "effect": "Unlocks Smithing recipes; passively converts ore → bars per cycle, per level",
+      "icon": "🔥",
+      "levelReq": 10,
+      "maxCount": 2,
+      "name": "Smelter",
+      "type": "SMELTER"
+    },
+    "STORAGE_BIN": {
+      "baseCost": [
+        {
+          "itemId": "normal_log",
+          "qty": 5
+        }
+      ],
+      "buildXp": 25,
+      "desc": "A humble wooden crate for extra resources — perfect for new settlers.",
+      "effect": "+50 inventory storage cap per level",
+      "icon": "📦",
+      "levelReq": 0,
+      "maxCount": 5,
+      "name": "Storage Bin",
+      "type": "STORAGE_BIN"
+    },
+    "STOREHOUSE": {
+      "baseCost": [
+        {
+          "itemId": "coins",
+          "qty": 150
+        },
+        {
+          "itemId": "plank",
+          "qty": 20
+        }
+      ],
+      "buildXp": 150,
+      "desc": "Expands bulk resource storage so gathering runs don't cap out early.",
+      "effect": "+250 inventory storage cap per level",
+      "icon": "🏚️",
+      "levelReq": 1,
+      "maxCount": 3,
+      "name": "Storehouse",
+      "type": "STOREHOUSE"
+    },
+    "TOWN_HALL": {
+      "baseCost": [
+        {
+          "itemId": "coins",
+          "qty": 200
+        },
+        {
+          "itemId": "plank",
+          "qty": 10
+        }
+      ],
+      "buildXp": 300,
+      "desc": "Seat of the settlement. Taxes citizens and extends how long the town can run while you're away.",
+      "effect": "+4h max offline idle capacity, +2 coins/tick passive tax",
+      "icon": "🏛️",
+      "levelReq": 1,
+      "maxCount": 1,
+      "name": "Town Hall",
+      "type": "TOWN_HALL"
+    }
+  },
+  "BUILDING_TYPES": [
+    "STORAGE_BIN",
+    "CAMPFIRE",
+    "TOWN_HALL",
+    "STOREHOUSE",
+    "SAWMILL",
+    "SMELTER",
+    "GRANARY",
+    "FARM_PLOT"
+  ],
+  "MAX_BUILD_LEVEL": 3
+}

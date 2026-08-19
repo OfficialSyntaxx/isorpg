@@ -1,0 +1,609 @@
+{
+  "RECIPES": [
+    {
+      "burnable": true,
+      "id": "cook_shrimp",
+      "inputs": [
+        {
+          "itemId": "raw_shrimp",
+          "qty": 1
+        }
+      ],
+      "levelReq": 1,
+      "name": "Cook Shrimp",
+      "output": {
+        "itemId": "cooked_shrimp",
+        "qty": 1
+      },
+      "skill": "cooking",
+      "ticks": 2,
+      "xp": 30
+    },
+    {
+      "burnable": true,
+      "id": "cook_rat_meat",
+      "inputs": [
+        {
+          "itemId": "raw_rat_meat",
+          "qty": 1
+        }
+      ],
+      "levelReq": 5,
+      "name": "Cook Rat Meat",
+      "output": {
+        "itemId": "cooked_rat_meat",
+        "qty": 1
+      },
+      "skill": "cooking",
+      "ticks": 2,
+      "xp": 40
+    },
+    {
+      "burnable": true,
+      "id": "cook_trout",
+      "inputs": [
+        {
+          "itemId": "raw_trout",
+          "qty": 1
+        }
+      ],
+      "levelReq": 20,
+      "name": "Cook Trout",
+      "output": {
+        "itemId": "cooked_trout",
+        "qty": 1
+      },
+      "skill": "cooking",
+      "ticks": 3,
+      "xp": 70
+    },
+    {
+      "burnable": true,
+      "id": "cook_potato",
+      "inputs": [
+        {
+          "itemId": "potato",
+          "qty": 1
+        }
+      ],
+      "levelReq": 8,
+      "name": "Bake Potato",
+      "output": {
+        "itemId": "baked_potato",
+        "qty": 1
+      },
+      "skill": "cooking",
+      "ticks": 2,
+      "xp": 45
+    },
+    {
+      "burnable": true,
+      "id": "cook_stew",
+      "inputs": [
+        {
+          "itemId": "cabbage",
+          "qty": 2
+        },
+        {
+          "itemId": "potato",
+          "qty": 1
+        }
+      ],
+      "levelReq": 25,
+      "name": "Simmer Cabbage Stew",
+      "output": {
+        "itemId": "cabbage_stew",
+        "qty": 1
+      },
+      "skill": "cooking",
+      "ticks": 4,
+      "xp": 110
+    },
+    {
+      "id": "brew_tonic",
+      "inputs": [
+        {
+          "itemId": "redberry",
+          "qty": 4
+        }
+      ],
+      "levelReq": 35,
+      "name": "Brew Combat Tonic",
+      "output": {
+        "itemId": "combat_potion",
+        "qty": 1
+      },
+      "requiresBuilding": "CAMPFIRE",
+      "skill": "cooking",
+      "ticks": 5,
+      "xp": 190
+    },
+    {
+      "id": "smelt_bronze",
+      "inputs": [
+        {
+          "itemId": "copper_ore",
+          "qty": 1
+        },
+        {
+          "itemId": "tin_ore",
+          "qty": 1
+        }
+      ],
+      "levelReq": 1,
+      "name": "Smelt Bronze Bar",
+      "output": {
+        "itemId": "bronze_bar",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 3,
+      "xp": 30
+    },
+    {
+      "id": "smelt_iron",
+      "inputs": [
+        {
+          "itemId": "iron_ore",
+          "qty": 2
+        }
+      ],
+      "levelReq": 20,
+      "name": "Smelt Iron Bar",
+      "output": {
+        "itemId": "iron_bar",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 4,
+      "xp": 60
+    },
+    {
+      "id": "smelt_steel",
+      "inputs": [
+        {
+          "itemId": "iron_bar",
+          "qty": 1
+        },
+        {
+          "itemId": "coal",
+          "qty": 1
+        }
+      ],
+      "levelReq": 30,
+      "name": "Smelt Steel Bar",
+      "output": {
+        "itemId": "steel_bar",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 5,
+      "xp": 100
+    },
+    {
+      "id": "smith_bronze_axe",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 1,
+      "name": "Forge Bronze Axe",
+      "output": {
+        "itemId": "bronze_axe",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 4,
+      "xp": 40
+    },
+    {
+      "id": "smith_bronze_pick",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 1,
+      "name": "Forge Bronze Pickaxe",
+      "output": {
+        "itemId": "bronze_pickaxe",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 4,
+      "xp": 40
+    },
+    {
+      "id": "smith_iron_axe",
+      "inputs": [
+        {
+          "itemId": "iron_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 20,
+      "name": "Forge Iron Axe",
+      "output": {
+        "itemId": "iron_axe",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 5,
+      "xp": 70
+    },
+    {
+      "id": "smith_iron_pick",
+      "inputs": [
+        {
+          "itemId": "iron_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 20,
+      "name": "Forge Iron Pickaxe",
+      "output": {
+        "itemId": "iron_pickaxe",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 5,
+      "xp": 70
+    },
+    {
+      "id": "smith_steel_axe",
+      "inputs": [
+        {
+          "itemId": "steel_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 35,
+      "name": "Forge Steel Axe",
+      "output": {
+        "itemId": "steel_axe",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 6,
+      "xp": 110
+    },
+    {
+      "id": "smith_steel_pick",
+      "inputs": [
+        {
+          "itemId": "steel_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 35,
+      "name": "Forge Steel Pickaxe",
+      "output": {
+        "itemId": "steel_pickaxe",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 6,
+      "xp": 110
+    },
+    {
+      "id": "smith_bronze_dagger",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 1
+        }
+      ],
+      "levelReq": 2,
+      "name": "Forge Bronze Dagger",
+      "output": {
+        "itemId": "bronze_dagger",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 3,
+      "xp": 25
+    },
+    {
+      "id": "smith_bronze_sword",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 2
+        }
+      ],
+      "levelReq": 6,
+      "name": "Forge Bronze Sword",
+      "output": {
+        "itemId": "bronze_sword",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 4,
+      "xp": 45
+    },
+    {
+      "id": "smith_bronze_2h",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 10,
+      "name": "Forge Bronze 2H Sword",
+      "output": {
+        "itemId": "bronze_2h",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 5,
+      "xp": 70
+    },
+    {
+      "id": "smith_iron_sword",
+      "inputs": [
+        {
+          "itemId": "iron_bar",
+          "qty": 2
+        }
+      ],
+      "levelReq": 26,
+      "name": "Forge Iron Sword",
+      "output": {
+        "itemId": "iron_sword",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 5,
+      "xp": 95
+    },
+    {
+      "id": "smith_steel_sword",
+      "inputs": [
+        {
+          "itemId": "steel_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 40,
+      "name": "Forge Steel Sword",
+      "output": {
+        "itemId": "steel_sword",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 6,
+      "xp": 150
+    },
+    {
+      "id": "smith_bronze_helm",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 2
+        }
+      ],
+      "levelReq": 3,
+      "name": "Forge Bronze Helm",
+      "output": {
+        "itemId": "bronze_helm",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 3,
+      "xp": 30
+    },
+    {
+      "id": "smith_bronze_plate",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 5,
+      "name": "Forge Bronze Platebody",
+      "output": {
+        "itemId": "bronze_plate",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 4,
+      "xp": 45
+    },
+    {
+      "id": "smith_bronze_legs",
+      "inputs": [
+        {
+          "itemId": "bronze_bar",
+          "qty": 2
+        }
+      ],
+      "levelReq": 4,
+      "name": "Forge Bronze Platelegs",
+      "output": {
+        "itemId": "bronze_legs",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 3,
+      "xp": 35
+    },
+    {
+      "id": "smith_iron_helm",
+      "inputs": [
+        {
+          "itemId": "iron_bar",
+          "qty": 2
+        }
+      ],
+      "levelReq": 22,
+      "name": "Forge Iron Helm",
+      "output": {
+        "itemId": "iron_helm",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 4,
+      "xp": 65
+    },
+    {
+      "id": "smith_iron_plate",
+      "inputs": [
+        {
+          "itemId": "iron_bar",
+          "qty": 3
+        }
+      ],
+      "levelReq": 24,
+      "name": "Forge Iron Platebody",
+      "output": {
+        "itemId": "iron_plate",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 5,
+      "xp": 85
+    },
+    {
+      "id": "smith_iron_legs",
+      "inputs": [
+        {
+          "itemId": "iron_bar",
+          "qty": 2
+        }
+      ],
+      "levelReq": 23,
+      "name": "Forge Iron Platelegs",
+      "output": {
+        "itemId": "iron_legs",
+        "qty": 1
+      },
+      "requiresBuilding": "SMELTER",
+      "skill": "smithing",
+      "ticks": 4,
+      "xp": 70
+    },
+    {
+      "id": "plank_normal",
+      "inputs": [
+        {
+          "itemId": "normal_log",
+          "qty": 1
+        }
+      ],
+      "levelReq": 1,
+      "name": "Saw Plank (Normal)",
+      "output": {
+        "itemId": "plank",
+        "qty": 1
+      },
+      "requiresBuilding": "SAWMILL",
+      "skill": "carpentry",
+      "ticks": 2,
+      "xp": 20
+    },
+    {
+      "id": "plank_oak",
+      "inputs": [
+        {
+          "itemId": "oak_log",
+          "qty": 1
+        }
+      ],
+      "levelReq": 15,
+      "name": "Saw Plank (Oak)",
+      "output": {
+        "itemId": "plank",
+        "qty": 2
+      },
+      "requiresBuilding": "SAWMILL",
+      "skill": "carpentry",
+      "ticks": 3,
+      "xp": 45
+    },
+    {
+      "id": "plank_willow",
+      "inputs": [
+        {
+          "itemId": "willow_log",
+          "qty": 1
+        }
+      ],
+      "levelReq": 30,
+      "name": "Saw Plank (Willow)",
+      "output": {
+        "itemId": "plank",
+        "qty": 3
+      },
+      "requiresBuilding": "SAWMILL",
+      "skill": "carpentry",
+      "ticks": 4,
+      "xp": 80
+    },
+    {
+      "id": "craft_shortbow",
+      "inputs": [
+        {
+          "itemId": "plank",
+          "qty": 2
+        }
+      ],
+      "levelReq": 12,
+      "name": "Carve Shortbow",
+      "output": {
+        "itemId": "shortbow",
+        "qty": 1
+      },
+      "requiresBuilding": "SAWMILL",
+      "skill": "carpentry",
+      "ticks": 4,
+      "xp": 60
+    },
+    {
+      "id": "craft_fly_rod",
+      "inputs": [
+        {
+          "itemId": "plank",
+          "qty": 2
+        },
+        {
+          "itemId": "bronze_bar",
+          "qty": 1
+        }
+      ],
+      "levelReq": 10,
+      "name": "Carve Fly Rod",
+      "output": {
+        "itemId": "fly_rod",
+        "qty": 1
+      },
+      "requiresBuilding": "SAWMILL",
+      "skill": "carpentry",
+      "ticks": 4,
+      "xp": 55
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "CRITTERS": [
+    {
+      "home": {
+        "x": 8,
+        "y": 9
+      },
+      "id": "rabbit_a",
+      "kind": "critter",
+      "lines": {
+        "nearCampfire": [],
+        "nearStorage": [],
+        "onPlaced": {},
+        "town": []
+      },
+      "name": "Rabbit",
+      "radius": 4,
+      "talk": [
+        "It hops off before you can grab it!"
+      ],
+      "title": ""
+    },
+    {
+      "home": {
+        "x": 12,
+        "y": 12
+      },
+      "id": "rabbit_b",
+      "kind": "critter",
+      "lines": {
+        "nearCampfire": [],
+        "nearStorage": [],
+        "onPlaced": {},
+        "town": []
+      },
+      "name": "Rabbit",
+      "radius": 4,
+      "talk": [
+        "It twitches its nose and scampers away."
+      ],
+      "title": ""
+    }
+  ],
+  "VETERAN_TIERS": [
+    [
+      0,
+      "New hand",
+      1
+    ],
+    [
+      7200000,
+      "Veteran",
+      2
+    ],
+    [
+      28800000,
+      "Reliable",
+      3
+    ],
+    [
+      72000000,
+      "Master",
+      4
+    ]
+  ],
+  "VILLAGERS": [
+    {
+      "home": {
+        "x": 9,
+        "y": 11
+      },
+      "id": "bram",
+      "kind": "villager",
+      "lines": {
+        "nearCampfire": [
+          "\"Nothing beats a fire after a day at the water.\"",
+          "\"The fire keeps the chill off my bones.\""
+        ],
+        "nearStorage": [
+          "\"A full storehouse is a happy storehouse.\"",
+          "\"Stash the catch before it goes off!\""
+        ],
+        "onPlaced": {
+          "CAMPFIRE": [
+            "\"Now we can roast the day's catch!\""
+          ],
+          "STORAGE_BIN": [
+            "\"A handy little crate. The fish won't mind.\""
+          ],
+          "STOREHOUSE": [
+            "\"Room for my trout, at last.\""
+          ],
+          "default": [
+            "\"The settlement grows. The waters are pleased.\""
+          ]
+        },
+        "town": [
+          "\"The settlement feeds more mouths each day.\"",
+          "\"The water still holds secrets.\""
+        ]
+      },
+      "name": "Bram",
+      "radius": 3,
+      "talk": [
+        "\"The shrimp are biting today. The trout are deeper.\"",
+        "\"Build a Smelter near the water if you fancy roasted fish.\"",
+        "\"The pond freezes over at night — come back at dawn.\""
+      ],
+      "title": "the Fisher"
+    },
+    {
+      "home": {
+        "x": 11,
+        "y": 9
+      },
+      "id": "wren",
+      "kind": "villager",
+      "lines": {
+        "nearCampfire": [
+          "\"The fire's good for drying timber.\"",
+          "\"Don't stand too close with that axe.\""
+        ],
+        "nearStorage": [
+          "\"Logs, safe and sound.\"",
+          "\"Keep the wood dry, keep it warm.\""
+        ],
+        "onPlaced": {
+          "CAMPFIRE": [
+            "\"That fire will warm the whole yard.\""
+          ],
+          "SAWMILL": [
+            "\"Now I can saw in comfort.\""
+          ],
+          "STORAGE_BIN": [
+            "\"A dry place for my lumber.\""
+          ],
+          "default": [
+            "\"Another building up. Good work.\""
+          ]
+        },
+        "town": [
+          "\"The forest gives, the town holds.\"",
+          "\"These trees will fall for a good cause.\""
+        ]
+      },
+      "name": "Wren",
+      "radius": 3,
+      "talk": [
+        "\"These oaks need a sharper axe than my old bronze.\"",
+        "\"Planks come from logs, and logs come from work.\"",
+        "\"Mind the goblins past the treeline.\""
+      ],
+      "title": "the Woodcutter"
+    },
+    {
+      "home": {
+        "x": 10,
+        "y": 10
+      },
+      "id": "tobias",
+      "kind": "villager",
+      "lines": {
+        "nearCampfire": [
+          "\"Where there's fire, there's folk.\"",
+          "\"The town is alive at night around the fire.\""
+        ],
+        "nearStorage": [
+          "\"A town that stores well, lasts well.\"",
+          "\"Tidy stores, tidy minds.\""
+        ],
+        "onPlaced": {
+          "CAMPFIRE": [
+            "\"The heart of the town — the fire.\""
+          ],
+          "STOREHOUSE": [
+            "\"Our larder grows. The winter fears us now.\""
+          ],
+          "TOWN_HALL": [
+            "\"The seat of the settlement stands at last.\""
+          ],
+          "default": [
+            "\"A fine addition to the town.\""
+          ]
+        },
+        "town": [
+          "\"One day this will be a city.\"",
+          "\"The town remembers every helping hand.\""
+        ]
+      },
+      "name": "Old Tobias",
+      "radius": 2,
+      "talk": [
+        "\"The settlement grows with every log you haul home.\"",
+        "\"A Storage Bin is cheap — build one before your pouch bursts.\"",
+        "\"Bury the bones. It's only proper.\""
+      ],
+      "title": "Town Elder"
+    }
+  ],
+  "VILLAGER_SPECS": {
+    "bram": {
+      "icon": "🎣",
+      "item": "raw_shrimp",
+      "perkName": "Fresh Catch",
+      "role": "Fisher"
+    },
+    "tobias": {
+      "coins": 1,
+      "icon": "🏛️",
+      "perkName": "Elder's Due",
+      "role": "Elder"
+    },
+    "wren": {
+      "icon": "🪓",
+      "item": "oak_log",
+      "perkName": "Fine Timber",
+      "role": "Woodcutter"
+    }
+  }
+}

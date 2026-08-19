@@ -1,0 +1,986 @@
+{
+  "AFFIXES": {
+    "hardened": {
+      "description": "+50% HP, +30% max hit, +30% defense",
+      "id": "hardened",
+      "label": "Hardened",
+      "tint": "#ff5a3a"
+    },
+    "rich": {
+      "description": "Double coin drops, doubled tertiary chance",
+      "id": "rich",
+      "label": "Rich",
+      "tint": "#ffd75a"
+    },
+    "swift": {
+      "description": "~40% faster attacks, wider aggro range",
+      "id": "swift",
+      "label": "Swift",
+      "tint": "#55d6ff"
+    }
+  },
+  "AFFIX_CHANCE": 0.12,
+  "ATTACK_STYLES": {
+    "accurate": {
+      "accuracyBonus": 3,
+      "defenseBonus": 0,
+      "description": "+3 accuracy · trains Attack",
+      "id": "accurate",
+      "maxHitBonus": 0,
+      "name": "Accurate",
+      "trains": "attack"
+    },
+    "aggressive": {
+      "accuracyBonus": 0,
+      "defenseBonus": 0,
+      "description": "+3 max hit · trains Strength",
+      "id": "aggressive",
+      "maxHitBonus": 3,
+      "name": "Aggressive",
+      "trains": "strength"
+    },
+    "defensive": {
+      "accuracyBonus": 0,
+      "defenseBonus": 3,
+      "description": "+3 defense · trains Defense",
+      "id": "defensive",
+      "maxHitBonus": 0,
+      "name": "Defensive",
+      "trains": "defense"
+    }
+  },
+  "BUFFS": {
+    "power": {
+      "accuracyBonus": 0,
+      "costPerTick": 2,
+      "defenseBonus": 0,
+      "description": "+4 max hit while active",
+      "id": "power",
+      "maxHitBonus": 4,
+      "name": "Power"
+    },
+    "precision": {
+      "accuracyBonus": 6,
+      "costPerTick": 2,
+      "defenseBonus": 0,
+      "description": "+6 accuracy while active",
+      "id": "precision",
+      "maxHitBonus": 0,
+      "name": "Precision"
+    },
+    "warden": {
+      "accuracyBonus": 0,
+      "costPerTick": 2,
+      "defenseBonus": 6,
+      "description": "+6 defense while active",
+      "id": "warden",
+      "maxHitBonus": 0,
+      "name": "Warden"
+    }
+  },
+  "DEFAULT_ATTACK_STYLE": "accurate",
+  "FOODS": {
+    "baked_potato": {
+      "heal": 9,
+      "tier": 2
+    },
+    "cabbage_stew": {
+      "heal": 20,
+      "tier": 3
+    },
+    "combat_potion": {
+      "heal": 30,
+      "tier": 4
+    },
+    "cooked_rat_meat": {
+      "heal": 4,
+      "tier": 1
+    },
+    "cooked_shrimp": {
+      "heal": 6,
+      "tier": 2
+    },
+    "cooked_trout": {
+      "heal": 14,
+      "tier": 3
+    },
+    "raw_rat_meat": {
+      "heal": 3,
+      "tier": 1
+    },
+    "shrimp_food": {
+      "heal": 6,
+      "tier": 2
+    }
+  },
+  "MONSTERS": {
+    "bog_husk": {
+      "aggroRange": 6,
+      "attackRoll": 15,
+      "attackTick": 5,
+      "defenseRoll": 14,
+      "hp": 44,
+      "id": "bog_husk",
+      "level": 10,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 16,
+          "min": 4,
+          "weight": 60
+        },
+        {
+          "itemId": "bones",
+          "max": 1,
+          "min": 1,
+          "weight": 60
+        },
+        {
+          "itemId": "raw_rat_meat",
+          "max": 1,
+          "min": 1,
+          "weight": 40
+        }
+      ],
+      "maxHit": 5,
+      "name": "Bog Husk",
+      "petTable": [
+        {
+          "chance": 0.004,
+          "itemId": "pet_goblin"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 30000,
+      "tertiary": [
+        {
+          "chance": 0.08,
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 10,
+        "defense": 10,
+        "hitpoints": 2,
+        "strength": 10
+      }
+    },
+    "cave_bat": {
+      "aggroRange": 5,
+      "attackRoll": 9,
+      "attackTick": 3,
+      "defenseRoll": 5,
+      "hp": 14,
+      "id": "cave_bat",
+      "level": 6,
+      "main": [
+        {
+          "itemId": "bones",
+          "max": 1,
+          "min": 1,
+          "weight": 60
+        },
+        {
+          "itemId": "coins",
+          "max": 5,
+          "min": 1,
+          "weight": 100
+        }
+      ],
+      "maxHit": 3,
+      "name": "Cave Bat",
+      "petTable": [
+        {
+          "chance": 0.003,
+          "itemId": "pet_rat"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 20000,
+      "xp": {
+        "attack": 8,
+        "defense": 5,
+        "hitpoints": 1,
+        "strength": 5
+      }
+    },
+    "cave_brute": {
+      "aggroRange": 6,
+      "attackRoll": 22,
+      "attackTick": 5,
+      "boss": true,
+      "defenseRoll": 16,
+      "hp": 90,
+      "id": "cave_brute",
+      "level": 15,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 120,
+          "min": 30,
+          "weight": 60
+        },
+        {
+          "itemId": "cooked_trout",
+          "max": 2,
+          "min": 1,
+          "weight": 30
+        },
+        {
+          "itemId": "iron_ore",
+          "max": 6,
+          "min": 2,
+          "weight": 40
+        },
+        {
+          "itemId": "bronze_2h",
+          "max": 1,
+          "min": 1,
+          "weight": 8
+        },
+        {
+          "itemId": "iron_sword",
+          "max": 1,
+          "min": 1,
+          "weight": 10
+        }
+      ],
+      "maxHit": 9,
+      "name": "Cave Brute",
+      "petTable": [
+        {
+          "chance": 0.01,
+          "itemId": "pet_goblin"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 3600000,
+      "slamChance": 0.08,
+      "slamDmg": 14,
+      "tertiary": [
+        {
+          "chance": 0.25,
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 40,
+        "defense": 26,
+        "hitpoints": 7,
+        "strength": 26
+      }
+    },
+    "cave_slasher": {
+      "aggroRange": 6,
+      "attackRoll": 18,
+      "attackTick": 4,
+      "defenseRoll": 13,
+      "hp": 52,
+      "id": "cave_slasher",
+      "level": 12,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 30,
+          "min": 8,
+          "weight": 130
+        },
+        {
+          "itemId": "bronze_sword",
+          "max": 1,
+          "min": 1,
+          "weight": 8
+        },
+        {
+          "itemId": "bronze_2h",
+          "max": 1,
+          "min": 1,
+          "weight": 4
+        },
+        {
+          "itemId": "cooked_trout",
+          "max": 1,
+          "min": 1,
+          "weight": 18
+        }
+      ],
+      "maxHit": 8,
+      "name": "Cave Slasher",
+      "petTable": [
+        {
+          "chance": 0.001,
+          "itemId": "pet_goblin"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 45000,
+      "tertiary": [
+        {
+          "chance": 0.1,
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 26,
+        "defense": 14,
+        "hitpoints": 4,
+        "strength": 16
+      }
+    },
+    "dire_wolf": {
+      "aggroRange": 5,
+      "attackRoll": 10,
+      "attackTick": 3,
+      "defenseRoll": 6,
+      "hp": 22,
+      "id": "dire_wolf",
+      "level": 5,
+      "main": [
+        {
+          "itemId": "raw_rat_meat",
+          "max": 1,
+          "min": 1,
+          "weight": 45
+        },
+        {
+          "itemId": "coins",
+          "max": 8,
+          "min": 2,
+          "weight": 140
+        },
+        {
+          "itemId": "bones",
+          "max": 2,
+          "min": 1,
+          "weight": 55
+        }
+      ],
+      "maxHit": 4,
+      "name": "Dire Wolf",
+      "petTable": [
+        {
+          "chance": 0.0008,
+          "itemId": "pet_rat"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 25000,
+      "tertiary": [
+        {
+          "chance": 0.004,
+          "itemId": "pet_rat",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 10,
+        "defense": 6,
+        "hitpoints": 2,
+        "strength": 8
+      }
+    },
+    "forest_ogre": {
+      "aggroRange": 5,
+      "attackRoll": 24,
+      "attackTick": 5,
+      "boss": true,
+      "defenseRoll": 20,
+      "hp": 110,
+      "id": "forest_ogre",
+      "level": 18,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 80,
+          "min": 25,
+          "weight": 60
+        },
+        {
+          "itemId": "cooked_trout",
+          "max": 3,
+          "min": 1,
+          "weight": 25
+        },
+        {
+          "itemId": "iron_ore",
+          "max": 5,
+          "min": 2,
+          "weight": 40
+        },
+        {
+          "itemId": "bronze_2h",
+          "max": 1,
+          "min": 1,
+          "weight": 10
+        },
+        {
+          "itemId": "iron_sword",
+          "max": 1,
+          "min": 1,
+          "weight": 6
+        }
+      ],
+      "maxHit": 10,
+      "name": "Forest Ogre",
+      "petTable": [
+        {
+          "chance": 0.02,
+          "itemId": "pet_skeleton"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 120000,
+      "tertiary": [
+        {
+          "chance": 0.2,
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 42,
+        "defense": 28,
+        "hitpoints": 8,
+        "strength": 28
+      }
+    },
+    "frost_imp": {
+      "aggroRange": 6,
+      "attackRoll": 20,
+      "attackTick": 4,
+      "defenseRoll": 15,
+      "hp": 38,
+      "id": "frost_imp",
+      "level": 14,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 20,
+          "min": 6,
+          "weight": 60
+        },
+        {
+          "itemId": "bones",
+          "max": 1,
+          "min": 1,
+          "weight": 50
+        },
+        {
+          "itemId": "raw_rat_meat",
+          "max": 2,
+          "min": 1,
+          "weight": 30
+        }
+      ],
+      "maxHit": 4,
+      "name": "Frost Imp",
+      "petTable": [
+        {
+          "chance": 0.005,
+          "itemId": "pet_rat"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 30000,
+      "tertiary": [
+        {
+          "chance": 0.04,
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 16,
+        "defense": 18,
+        "hitpoints": 3,
+        "strength": 15
+      }
+    },
+    "giant_rat": {
+      "aggroRange": 3,
+      "attackRoll": 4,
+      "attackTick": 4,
+      "defenseRoll": 2,
+      "hp": 8,
+      "id": "giant_rat",
+      "level": 1,
+      "main": [
+        {
+          "itemId": "raw_rat_meat",
+          "max": 1,
+          "min": 1,
+          "weight": 50
+        },
+        {
+          "itemId": "coins",
+          "max": 6,
+          "min": 1,
+          "weight": 180
+        },
+        {
+          "itemId": "bones",
+          "max": 1,
+          "min": 1,
+          "weight": 60
+        }
+      ],
+      "maxHit": 1,
+      "name": "Giant Rat",
+      "petTable": [
+        {
+          "chance": 0.0004,
+          "itemId": "pet_rat"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 20000,
+      "tertiary": [
+        {
+          "chance": 0.02,
+          "itemId": "rat_bone",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 4,
+        "defense": 2,
+        "hitpoints": 1,
+        "strength": 2
+      }
+    },
+    "goblin": {
+      "aggroRange": 4,
+      "attackRoll": 6,
+      "attackTick": 4,
+      "defenseRoll": 4,
+      "hp": 14,
+      "id": "goblin",
+      "level": 2,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 10,
+          "min": 2,
+          "weight": 200
+        },
+        {
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1,
+          "weight": 10
+        },
+        {
+          "itemId": "raw_rat_meat",
+          "max": 1,
+          "min": 1,
+          "weight": 30
+        }
+      ],
+      "maxHit": 3,
+      "name": "Goblin",
+      "petTable": [
+        {
+          "chance": 0.0003,
+          "itemId": "pet_goblin"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 30000,
+      "tertiary": [
+        {
+          "chance": 0.05,
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1
+        },
+        {
+          "chance": 0.012,
+          "itemId": "clue_simple",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 6,
+        "defense": 3,
+        "hitpoints": 1,
+        "strength": 3
+      }
+    },
+    "goblin_archer": {
+      "aggroRange": 6,
+      "attackRoll": 14,
+      "attackTick": 4,
+      "defenseRoll": 7,
+      "hp": 18,
+      "id": "goblin_archer",
+      "level": 7,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 12,
+          "min": 3,
+          "weight": 160
+        },
+        {
+          "itemId": "shortbow",
+          "max": 1,
+          "min": 1,
+          "weight": 2
+        },
+        {
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1,
+          "weight": 12
+        },
+        {
+          "itemId": "raw_rat_meat",
+          "max": 1,
+          "min": 1,
+          "weight": 30
+        }
+      ],
+      "maxHit": 5,
+      "name": "Goblin Archer",
+      "petTable": [
+        {
+          "chance": 0.0006,
+          "itemId": "pet_goblin"
+        }
+      ],
+      "ranged": true,
+      "respawnMs": 30000,
+      "tertiary": [
+        {
+          "chance": 0.06,
+          "itemId": "goblin_key",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 14,
+        "defense": 8,
+        "hitpoints": 2,
+        "strength": 6
+      }
+    },
+    "skeleton": {
+      "aggroRange": 4,
+      "attackRoll": 12,
+      "attackTick": 4,
+      "defenseRoll": 10,
+      "hp": 26,
+      "id": "skeleton",
+      "level": 8,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 20,
+          "min": 5,
+          "weight": 120
+        },
+        {
+          "itemId": "bones",
+          "max": 1,
+          "min": 1,
+          "weight": 120
+        },
+        {
+          "itemId": "bronze_sword",
+          "max": 1,
+          "min": 1,
+          "weight": 4
+        },
+        {
+          "itemId": "shrimp_food",
+          "max": 1,
+          "min": 1,
+          "weight": 15
+        }
+      ],
+      "maxHit": 5,
+      "name": "Skeleton",
+      "petTable": [
+        {
+          "chance": 0.00025,
+          "itemId": "pet_skeleton"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 40000,
+      "tertiary": [
+        {
+          "chance": 0.04,
+          "itemId": "loop_half_key",
+          "max": 1,
+          "min": 1
+        },
+        {
+          "chance": 0.008,
+          "itemId": "clue_hard",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 14,
+        "defense": 8,
+        "hitpoints": 2,
+        "strength": 8
+      }
+    },
+    "zombie": {
+      "aggroRange": 5,
+      "attackRoll": 16,
+      "attackTick": 5,
+      "defenseRoll": 14,
+      "hp": 40,
+      "id": "zombie",
+      "level": 13,
+      "main": [
+        {
+          "itemId": "coins",
+          "max": 40,
+          "min": 10,
+          "weight": 100
+        },
+        {
+          "itemId": "bronze_2h",
+          "max": 1,
+          "min": 1,
+          "weight": 3
+        },
+        {
+          "itemId": "iron_ore",
+          "max": 2,
+          "min": 1,
+          "weight": 30
+        },
+        {
+          "itemId": "cooked_shrimp",
+          "max": 2,
+          "min": 1,
+          "weight": 20
+        }
+      ],
+      "maxHit": 7,
+      "name": "Zombie",
+      "petTable": [
+        {
+          "chance": 0.0002,
+          "itemId": "pet_zombie"
+        }
+      ],
+      "ranged": false,
+      "respawnMs": 50000,
+      "tertiary": [
+        {
+          "chance": 0.06,
+          "itemId": "zombie_flesh",
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "xp": {
+        "attack": 20,
+        "defense": 12,
+        "hitpoints": 3,
+        "strength": 12
+      }
+    }
+  },
+  "MONSTER_STYLES": {
+    "bog_husk": {
+      "accent": "#7a5828",
+      "body": "#4d5f3c",
+      "ears": true
+    },
+    "cave_bat": {
+      "accent": "#c98f4a",
+      "body": "#4a4450",
+      "ears": true
+    },
+    "cave_brute": {
+      "accent": "#a32a3a",
+      "body": "#6b7280",
+      "ears": true
+    },
+    "cave_slasher": {
+      "accent": "#c0392b",
+      "body": "#5f6a6e",
+      "ears": true
+    },
+    "dire_wolf": {
+      "accent": "#3c3f4a",
+      "body": "#6b6f7d",
+      "ears": true
+    },
+    "forest_ogre": {
+      "accent": "#c98f4a",
+      "body": "#5f4e3c",
+      "ears": true
+    },
+    "frost_imp": {
+      "accent": "#3f6f96",
+      "body": "#a9cfe0",
+      "ears": true
+    },
+    "giant_rat": {
+      "accent": "#d98fb0",
+      "body": "#9a8a6f",
+      "ears": true
+    },
+    "goblin": {
+      "accent": "#c0392b",
+      "body": "#6fae55",
+      "ears": true
+    },
+    "goblin_archer": {
+      "accent": "#4a3a26",
+      "body": "#7a9a5a",
+      "ears": true
+    },
+    "skeleton": {
+      "accent": "#8e8468",
+      "body": "#d8ceb8"
+    },
+    "zombie": {
+      "accent": "#4a6a54",
+      "body": "#7c9a6a"
+    }
+  },
+  "RESOLVE_MAX": 100,
+  "RESOLVE_REGEN_PER_TICK": 3,
+  "RESOLVE_REGEN_RANGE": 2,
+  "SPECIAL_MAX": 100,
+  "SPECIAL_REGEN_PER_TICK": 1,
+  "WEAPONS": {
+    "dagger": {
+      "accuracy": 8,
+      "id": "dagger",
+      "itemId": "bronze_dagger",
+      "kind": "melee",
+      "maxHit": 4,
+      "name": "Bronze Dagger",
+      "requiredAttack": 1,
+      "ticks": 3
+    },
+    "fists": {
+      "accuracy": 2,
+      "id": "fists",
+      "itemId": null,
+      "kind": "melee",
+      "maxHit": 1,
+      "name": "Fists",
+      "requiredAttack": 0,
+      "ticks": 2
+    },
+    "iron_sword": {
+      "accuracy": 20,
+      "id": "iron_sword",
+      "itemId": "iron_sword",
+      "kind": "melee",
+      "maxHit": 9,
+      "name": "Iron Sword",
+      "requiredAttack": 10,
+      "ticks": 4
+    },
+    "shortbow": {
+      "accuracy": 14,
+      "id": "shortbow",
+      "itemId": "shortbow",
+      "kind": "ranged",
+      "maxHit": 5,
+      "name": "Shortbow",
+      "requiredAttack": 1,
+      "ticks": 3
+    },
+    "steel_sword": {
+      "accuracy": 28,
+      "id": "steel_sword",
+      "itemId": "steel_sword",
+      "kind": "melee",
+      "maxHit": 13,
+      "name": "Steel Sword",
+      "requiredAttack": 20,
+      "ticks": 4
+    },
+    "sword": {
+      "accuracy": 12,
+      "id": "sword",
+      "itemId": "bronze_sword",
+      "kind": "melee",
+      "maxHit": 6,
+      "name": "Bronze Sword",
+      "requiredAttack": 1,
+      "ticks": 4
+    },
+    "sword2h": {
+      "accuracy": 16,
+      "id": "sword2h",
+      "itemId": "bronze_2h",
+      "kind": "melee",
+      "maxHit": 10,
+      "name": "Bronze 2H Sword",
+      "requiredAttack": 5,
+      "ticks": 6
+    }
+  },
+  "WEAPON_SPECIALS": {
+    "dagger": {
+      "cost": 25,
+      "damageMult": 1.2,
+      "description": "Always hits · 1.2× damage · 25% bar",
+      "guaranteedHit": true,
+      "name": "Puncture"
+    },
+    "iron_sword": {
+      "cost": 60,
+      "damageMult": 1.2,
+      "description": "1.2× damage (2.2× under 25% HP) · 60% bar",
+      "executeMult": 2.2,
+      "guaranteedHit": false,
+      "name": "Execute"
+    },
+    "shortbow": {
+      "cost": 50,
+      "damageMult": 1.4,
+      "description": "Always hits · 1.4× damage · 50% bar",
+      "guaranteedHit": true,
+      "name": "Piercing Shot"
+    },
+    "steel_sword": {
+      "cost": 80,
+      "damageMult": 1.9,
+      "description": "1.9× damage · 80% bar",
+      "guaranteedHit": false,
+      "name": "Onslaught"
+    },
+    "sword": {
+      "cost": 40,
+      "damageMult": 1.3,
+      "description": "1.3× damage · 40% bar",
+      "guaranteedHit": false,
+      "name": "Riposte"
+    },
+    "sword2h": {
+      "cost": 100,
+      "damageMult": 1.8,
+      "description": "1.8× damage · 100% bar",
+      "guaranteedHit": false,
+      "name": "Cleave"
+    }
+  }
+}

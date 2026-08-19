@@ -1,0 +1,49 @@
+{
+  "files": {
+    "achievements.json": {
+      "bytes": 2186,
+      "sha256": "f56a820048d54bac9451d619ae9d6a5d0bc7a6749d55c70aecf5f8657f1e70bb"
+    },
+    "buildings.json": {
+      "bytes": 4135,
+      "sha256": "c246e3babc0b75f3da37a649c03a0b85bd68bdbaa760c770b570a77d577c25b5"
+    },
+    "clues.json": {
+      "bytes": 2333,
+      "sha256": "6cf584c42eb1758ac42412948b158d53577325e4d7bb449635f56e31ec5b1b29"
+    },
+    "combat.json": {
+      "bytes": 19619,
+      "sha256": "b0ac420a2f6814a11609dc6101a99248d23beb786e7aba446e3401305196d0f7"
+    },
+    "farming.json": {
+      "bytes": 914,
+      "sha256": "605b050716f101b58fc9e46e389346031352c4d758010ae2d64a647f24b82cfe"
+    },
+    "items.json": {
+      "bytes": 17315,
+      "sha256": "fa71febf1cb51d422624e6b9f6b3bd7fc7c04559dc1978b8730a68edafd1e118"
+    },
+    "npcs.json": {
+      "bytes": 5150,
+      "sha256": "02da6813b898537b4323b3258714e45e492d175339cb6fd417547ceb9614a13e"
+    },
+    "quests.json": {
+      "bytes": 1663,
+      "sha256": "8305cf2060c356d6f015e8ec006e272256bc173dbb539c9c9c5f8b556bf2a2f0"
+    },
+    "recipes.json": {
+      "bytes": 11749,
+      "sha256": "3457f0838e6f946887eafce906f5d9d7ab02fd80ea5179889e752e18aa09cf22"
+    },
+    "skills.json": {
+      "bytes": 5524,
+      "sha256": "7fc41a14b6dc3bb79ba778880240855ba078203adfd6cacefe5fe682195e20ef"
+    },
+    "xp.json": {
+      "bytes": 1159,
+      "sha256": "858b707b2d0ee85486990cb4c64d529423be80c7ab5a673260a5e2be3a580778"
+    }
+  },
+  "generated_by": "scripts/export-content.cjs"
+}
