@@ -4,6 +4,7 @@ using UnityEditor.Build;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using Isoperia.Unity;
 
 namespace Isoperia.EditorTools
@@ -36,6 +37,11 @@ namespace Isoperia.EditorTools
         /// </summary>
         private static readonly Vector3 WorldCentre = new Vector3(21f, 0f, 21f);
         private const string BuildOutput = "WebGLBuild";
+        private const string SettingsDir = "Assets/Isoperia/Settings";
+        private const string MaterialsDir = "Assets/Isoperia/Materials";
+        private const string PipelineAsset = SettingsDir + "/IsoperiaURP.asset";
+        private const string RendererData = SettingsDir + "/IsoperiaURP_Renderer.asset";
+        private const string UrpLitShader = "Universal Render Pipeline/Lit";
         private const string TemplateName = "PROJECT:IsoperiaPWA";
 
         [MenuItem("Isoperia/Configure WebGL settings")]
@@ -68,6 +74,11 @@ namespace Isoperia.EditorTools
             PlayerSettings.stripEngineCode = true;
 
             // --- Rendering -----------------------------------------------------
+            // Must come before anything reads GraphicsSettings: the project ships
+            // no pipeline asset of its own, and without one every URP material in
+            // the scene renders magenta.
+            ConfigureRenderPipeline();
+
             PlayerSettings.colorSpace = ColorSpace.Linear;
 
             // WebGL 2.0 only. A WebGL 1 fallback costs shader variants we never
@@ -90,7 +101,7 @@ namespace Isoperia.EditorTools
 
             Debug.Log(
                 "[Isoperia] WebGL configured: Brotli, exceptions=None, stripping=High, " +
-                "heap=320MB, Linear, WebGL2 (GLES3), ASTC, template=" + TemplateName);
+                "heap=320MB, Linear, WebGL2 (GLES3), ASTC, URP, template=" + TemplateName);
         }
 
         /// <summary>
@@ -152,7 +163,7 @@ namespace Isoperia.EditorTools
             ground.name = "Ground (placeholder)";
             ground.transform.localScale = new Vector3(4.2f, 1f, 4.2f);  // Plane is 10 units
             ground.transform.position = WorldCentre;
-            Paint(ground, new Color(0.31f, 0.35f, 0.24f));   // muted meadow, not Unity white
+            Paint(ground, "Ground", new Color(0.31f, 0.35f, 0.24f));   // muted meadow, not Unity white
 
             // Reference cubes.
             //
@@ -171,9 +182,10 @@ namespace Isoperia.EditorTools
                 var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 cube.name = $"Reference cube ({t},{t})";
                 cube.transform.position = new Vector3(t + 0.5f, 0.5f, t + 0.5f);
-                Paint(cube, i == 2
-                    ? new Color(0.79f, 0.64f, 0.15f)    // the centre one, in the accent gold
-                    : new Color(0.62f, 0.60f, 0.55f));
+                Paint(cube, i == 2 ? "ReferenceAccent" : "ReferenceStone",
+                      i == 2
+                          ? new Color(0.79f, 0.64f, 0.15f)    // the centre one, in the accent gold
+                          : new Color(0.62f, 0.60f, 0.55f));
             }
 
             // One tall marker at the player's spawn tile, so the default start
@@ -181,7 +193,7 @@ namespace Isoperia.EditorTools
             var spawn = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             spawn.name = "Spawn marker (placeholder)";
             spawn.transform.position = new Vector3(10.5f, 1f, 10.5f);
-            Paint(spawn, new Color(0.91f, 0.86f, 0.78f));
+            Paint(spawn, "SpawnMarker", new Color(0.91f, 0.86f, 0.78f));
 
             Directory.CreateDirectory(Path.GetDirectoryName(BootstrapScene));
             EditorSceneManager.SaveScene(scene, BootstrapScene);
@@ -193,21 +205,160 @@ namespace Isoperia.EditorTools
         }
 
         /// <summary>
-        /// Gives a primitive a flat colour.
+        /// Gives a primitive a flat colour, using a real material ASSET.
         ///
-        /// Unity's default material is pure white, which under a bright
-        /// directional light blows out to a featureless sheet — the first device
-        /// load was mostly an unreadable white wedge partly because of this.
-        /// Uses URP's shader when it is the active pipeline and falls back to the
-        /// built-in one, so this works whichever the project is on.
+        /// Two things here are load-bearing and both were learned the hard way.
+        ///
+        /// FIRST: the shader must match the ACTIVE render pipeline, and
+        /// Shader.Find does not tell you what that is. The URP package being
+        /// installed makes "Universal Render Pipeline/Lit" findable whether or
+        /// not URP is actually driving rendering — so the previous
+        ///     Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")
+        /// always took the first branch, and the project had no pipeline asset
+        /// assigned, so every URP shader rendered as Unity's magenta error
+        /// colour. On device that was a giant pink shape filling the screen and
+        /// it looked like a broken build. Ask GraphicsSettings which pipeline is
+        /// live; do not infer it from a shader existing.
+        ///
+        /// SECOND: these are saved as .mat assets rather than materials
+        /// constructed at runtime. An asset carries a tracked dependency on its
+        /// shader, which is what keeps the shader out of the WebGL build's
+        /// stripping pass.
+        ///
+        /// If no usable shader is found this THROWS. A silent return here ships
+        /// a magenta build, and a build that fails loudly in CI is cheaper than
+        /// one that fails quietly on somebody's phone.
         /// </summary>
-        private static void Paint(GameObject go, Color colour)
+        private static void Paint(GameObject go, string materialName, Color colour)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            if (shader == null) return;
+            bool scriptable = GraphicsSettings.currentRenderPipeline != null ||
+                              GraphicsSettings.defaultRenderPipeline != null;
 
-            var mat = new Material(shader) { color = colour };
-            go.GetComponent<Renderer>().sharedMaterial = mat;
+            string shaderName = scriptable ? UrpLitShader : "Standard";
+            Shader shader = Shader.Find(shaderName);
+
+            if (shader == null)
+            {
+                throw new BuildFailedException(
+                    $"[Isoperia] shader \"{shaderName}\" not found. The active render pipeline is " +
+                    (scriptable ? "scriptable (URP)" : "built-in") +
+                    ". Refusing to build a scene that would render magenta.");
+            }
+
+            Directory.CreateDirectory(MaterialsDir);
+            string path = $"{MaterialsDir}/{materialName}.mat";
+
+            var mat = new Material(shader);
+            mat.color = colour;    // maps to _BaseColor on URP/Lit, _Color on Standard
+
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(mat, path);
+
+            go.GetComponent<Renderer>().sharedMaterial =
+                AssetDatabase.LoadAssetAtPath<Material>(path);
+        }
+
+        /// <summary>
+        /// Creates and assigns a URP pipeline asset if the project has none.
+        ///
+        /// The project was scaffolded from Unity's plain 3D template with the URP
+        /// package added but never configured: ProjectSettings/GraphicsSettings
+        /// had m_CustomRenderPipeline: {fileID: 0} and every quality level had
+        /// customRenderPipeline: {fileID: 0}. Having the package is not the same
+        /// as having the pipeline, and nothing warns you — URP materials simply
+        /// render magenta, in the Editor and on device alike.
+        ///
+        /// Everything from Phase 4 onward (the art bible's single URP material
+        /// family, ASTC textures, baked lighting) assumes URP, so the fix is to
+        /// assign the pipeline rather than to retreat to the built-in shaders.
+        /// </summary>
+        [MenuItem("Isoperia/Configure render pipeline")]
+        public static void ConfigureRenderPipeline()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelineAsset);
+            UniversalRenderPipelineAsset urp = existing;
+
+            if (urp == null)
+            {
+                Directory.CreateDirectory(SettingsDir);
+
+                var rendererData = ScriptableObject.CreateInstance<UniversalRendererData>();
+                AssetDatabase.CreateAsset(rendererData, RendererData);
+
+                urp = UniversalRenderPipelineAsset.Create(rendererData);
+                AssetDatabase.CreateAsset(urp, PipelineAsset);
+            }
+
+            // WebGL budget. These are the expensive knobs on a mobile browser and
+            // are pinned by docs/UNITY_MIGRATION.md's perf constraints rather
+            // than chosen for looks.
+            urp.msaaSampleCount = 1;                     // off; fill-rate is the scarce thing
+            urp.supportsHDR = false;                     // no HDR framebuffer on this budget
+            urp.shadowDistance = 40f;                    // the iso frustum sees ~30 units
+            urp.shadowCascadeCount = 1;
+            urp.supportsCameraDepthTexture = false;
+            urp.supportsCameraOpaqueTexture = false;
+
+            EditorUtility.SetDirty(urp);
+
+            GraphicsSettings.defaultRenderPipeline = urp;
+
+            // QualitySettings.renderPipeline only touches the CURRENT level, and
+            // a level left null silently falls back to the built-in pipeline —
+            // i.e. magenta again, but only for whoever lands on that level.
+            int previous = QualitySettings.GetQualityLevel();
+            try
+            {
+                for (int i = 0; i < QualitySettings.names.Length; i++)
+                {
+                    QualitySettings.SetQualityLevel(i, applyExpensiveChanges: false);
+                    QualitySettings.renderPipeline = urp;
+                }
+            }
+            finally
+            {
+                QualitySettings.SetQualityLevel(previous, applyExpensiveChanges: false);
+            }
+
+            AssetDatabase.SaveAssets();
+
+            Debug.Log($"[Isoperia] render pipeline: {(existing == null ? "created" : "reused")} " +
+                      $"{PipelineAsset}, assigned to graphics defaults and all " +
+                      $"{QualitySettings.names.Length} quality levels.");
+        }
+
+        /// <summary>
+        /// Refuses to build if the scene would render magenta.
+        ///
+        /// The whole class of failure this guards is invisible from a build log:
+        /// the build succeeds, the deploy succeeds, the headers check out, and
+        /// the game is a pink shape. So check the two conditions that produce it
+        /// — a URP material with no pipeline assigned, or a built-in material
+        /// under URP — and fail the build instead.
+        /// </summary>
+        private static void AssertRenderPipelineMatchesMaterials()
+        {
+            bool scriptable = GraphicsSettings.currentRenderPipeline != null ||
+                              GraphicsSettings.defaultRenderPipeline != null;
+
+            foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { MaterialsDir }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (mat == null || mat.shader == null) continue;
+
+                bool matIsUrp = mat.shader.name.StartsWith("Universal Render Pipeline/",
+                                                           System.StringComparison.Ordinal);
+
+                if (matIsUrp != scriptable)
+                {
+                    throw new BuildFailedException(
+                        $"[Isoperia] {path} uses shader \"{mat.shader.name}\" but the active " +
+                        $"render pipeline is {(scriptable ? "scriptable (URP)" : "built-in")}. " +
+                        "This renders magenta. Run Isoperia/Configure render pipeline, then " +
+                        "Isoperia/Create bootstrap scene.");
+                }
+            }
         }
 
         [MenuItem("Isoperia/Build WebGL")]
@@ -216,6 +367,8 @@ namespace Isoperia.EditorTools
             ConfigureWebGL();
 
             if (!File.Exists(BootstrapScene)) CreateBootstrapScene();
+
+            AssertRenderPipelineMatchesMaterials();
 
             var options = new BuildPlayerOptions
             {

@@ -91,10 +91,25 @@ Then open the project once so Unity resolves packages and generates `.meta` file
   -logFile -
 ```
 
-Expect in the log:
+Expect in the log, both lines:
 ```
-[Isoperia] WebGL configured: Brotli, exceptions=None, stripping=High, heap=320MB, Linear, WebGL2 (GLES3), ASTC, template=PROJECT:IsoperiaPWA
+[Isoperia] render pipeline: created Assets/Isoperia/Settings/IsoperiaURP.asset, assigned to graphics defaults and all N quality levels.
+[Isoperia] WebGL configured: Brotli, exceptions=None, stripping=High, heap=320MB, Linear, WebGL2 (GLES3), ASTC, URP, template=PROJECT:IsoperiaPWA
 ```
+
+> **The render pipeline line is new and it matters.** The project was scaffolded
+> from the plain 3D template with the URP *package* installed but no URP *asset*
+> assigned — `ProjectSettings/GraphicsSettings.asset` had
+> `m_CustomRenderPipeline: {fileID: 0}` and so did every quality level. Having the
+> package is not the same as having the pipeline, and nothing warns you: URP
+> materials just render in Unity's magenta error colour. That is what the giant
+> pink shape on the third device load was. `ConfigureWebGL` now creates and
+> assigns the pipeline asset before anything else, and `BuildWebGL` refuses to
+> build if a material's shader and the active pipeline disagree.
+>
+> **`ConfigureRenderPipeline` is not enough on its own** — the scene stores the
+> materials, so you must re-run Step 4 after it, or you rebuild the same magenta
+> scene. Steps 2 → 4 → 5, in that order, every time.
 
 > **Texture compression does not persist.** `EditorUserBuildSettings.webGLBuildSubtarget`
 > lives in `Library/`, which is not version-controlled, so ASTC survives only in the
@@ -150,6 +165,12 @@ problem.
 > every session's progress lost silently, with no error. Re-running fixes it.
 > Verify afterwards that the scene contains **four** objects: `Main Camera`,
 > `Sun`, `GameLoop`, and `SaveDriver`.
+
+> **Re-run this if your project predates the URP fix.** The placeholder colours
+> now come from real `.mat` assets under `Assets/Isoperia/Materials/`, written by
+> this step. Confirm four of them exist afterwards — `Ground`, `ReferenceStone`,
+> `ReferenceAccent`, `SpawnMarker` — and that each one's shader reads
+> `Universal Render Pipeline/Lit`, not `Standard` and not `Hidden/InternalErrorShader`.
 
 
 ```bash
@@ -242,9 +263,11 @@ Post the following, which is what the next phase depends on:
 6. Build size: `du -sh unity/WebGLBuild` and the compressed `Build/` total.
 7. The `curl -I` output from Step 6.
 
-Commit `unity/ProjectSettings/` and all generated `.meta` files to the branch —
+Commit `unity/ProjectSettings/`, `unity/Assets/Isoperia/Settings/`,
+`unity/Assets/Isoperia/Materials/` and all generated `.meta` files to the branch —
+the URP asset and the materials are project state, not build output. Without them
 without the `.meta` files, every other clone re-imports with different GUIDs and
-the scene loses its component references.
+the scene loses its component references and its materials.
 
 ```bash
 git add unity/ProjectSettings unity/Assets
@@ -265,6 +288,8 @@ git push -u origin claude/unity-engine-migration-roadmap-fz9w8y
 - [ ] Airplane mode → relaunch from the icon still boots
 - [ ] The scene shows a muted green ground with **five reference cubes** running
       diagonally (the middle one gold) and a pale capsule at the spawn tile
+- [ ] **Nothing on screen is magenta.** Magenta anywhere means the render pipeline
+      is not assigned — go back to Step 2, then Step 4, then rebuild
 
 **How to actually judge the isometric angle:** look at a cube's top face. Under a
 true 2:1 isometric view it is a diamond exactly **twice as wide as it is tall**,
