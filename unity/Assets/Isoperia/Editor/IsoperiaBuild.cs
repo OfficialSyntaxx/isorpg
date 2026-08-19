@@ -86,6 +86,15 @@ namespace Isoperia.EditorTools
             PlayerSettings.companyName = "Isoperia";
             PlayerSettings.productName = "Isoperia";
 
+            // The PWA service worker cache-busts on this string (see
+            // ServiceWorker.js: CACHE_VERSION = "isoperia-v{{ PRODUCT_VERSION }}").
+            // If it never changes, the worker's own script is byte-identical build
+            // to build, the browser's SW update check never fires, and a client who
+            // has ever loaded the game keeps serving its first-visit Build/ payload
+            // forever -- no amount of redeploying is visible to them. Stamping it
+            // with the build time keeps every build unique.
+            PlayerSettings.bundleVersion = System.DateTime.UtcNow.ToString("yyyy.MM.dd.HHmm");
+
             AssetDatabase.SaveAssets();
 
             Debug.Log(
