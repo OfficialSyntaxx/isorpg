@@ -1,0 +1,62 @@
+name: Unity activation file
+
+# ONE-TIME SETUP. Run this manually, once, to obtain the UNITY_LICENSE secret
+# that the Unity WebGL workflow needs. It is not part of any build.
+#
+# WHY THIS IS NEEDED AT ALL:
+# game-ci/unity-builder runs Unity in a container, and Unity refuses to run in
+# batch mode without an activated licence. On a developer's own machine that
+# activation lives in a local .ulf file which can simply be pasted into a
+# secret — but a newer per-seat/cloud licence writes no .ulf anywhere on disk,
+# so there is nothing local to copy. This workflow asks Unity for a fresh
+# activation REQUEST (.alf), which the account owner exchanges for a licence
+# (.ulf) on Unity's website.
+#
+# The exchange step needs a human logged into the Unity account. That is not an
+# oversight in the automation; it is the point of the licence.
+#
+# See docs/CI_DEPLOY.md for the four manual steps that follow this run.
+on:
+  workflow_dispatch:
+
+jobs:
+  activation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # The Unity version must match the one unity-webgl.yml builds with and the
+      # one in unity/ProjectSettings/ProjectVersion.txt. An activation obtained
+      # for a different major version will not satisfy the builder.
+      - name: Request activation file
+        id: request
+        uses: game-ci/unity-request-activation-file@v2
+        with:
+          unityVersion: 6000.5.8f1
+
+      - name: Upload the .alf
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-activation-file
+          path: ${{ steps.request.outputs.filePath }}
+          # Short: this is a request file, not a credential, but there is no
+          # reason for it to linger after the exchange.
+          retention-days: 3
+
+      - name: What to do next
+        run: |
+          {
+            echo "## Next steps — these need you, not CI"
+            echo
+            echo "1. Download the **unity-activation-file** artifact from this run and unzip it."
+            echo "2. Go to <https://license.unity3d.com/manual> and sign in."
+            echo "3. Upload the \`.alf\`. Choose **Unity Personal** and a non-commercial option"
+            echo "   unless you hold a paid seat. You get a \`.ulf\` back."
+            echo "4. Set the secret from the file — do not open, paste or print its contents:"
+            echo
+            echo '   ```'
+            echo '   gh secret set UNITY_LICENSE --repo OfficialSyntaxx/isorpg < Unity_v6000.x.ulf'
+            echo '   ```'
+            echo
+            echo "Then run the **Unity WebGL** workflow. A \`.ulf\` is a credential:"
+            echo "keep it out of the repo and out of any chat transcript."
+          } >> "$GITHUB_STEP_SUMMARY"

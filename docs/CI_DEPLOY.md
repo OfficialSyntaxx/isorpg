@@ -41,13 +41,44 @@ these, and they are the only manual setup.
 | `NETLIFY_AUTH_TOKEN` | Netlify → User settings → Applications → New access token |
 | `NETLIFY_SITE_ID` | Netlify → Site configuration → Site ID |
 
-Unity **Personal** is fine and free. To get the `.ulf`: run GameCI's
-[activation workflow](https://game.ci/docs/github/activation), which produces a
-`.alf` file, upload it at <https://license.unity3d.com/manual>, and paste the
-returned `.ulf` contents into `UNITY_LICENSE`.
-
 A Personal licence is single-seat, which is why the Unity work is one job rather
 than a build and a test job running in parallel.
+
+### Getting `UNITY_LICENSE`
+
+Unity refuses to run in batch mode unattended without an activated licence, and
+the container has none.
+
+On an older setup the activation sits in a local file — macOS
+`/Library/Application Support/Unity/Unity_lic.ulf` — which can be piped straight
+into the secret. **Check for that first; if it exists, you are done in one
+command.** A newer per-seat/cloud licence writes no `.ulf` anywhere on disk, so
+there is nothing local to copy and you need the exchange below. That is the case
+on this project's machine.
+
+1. Run the **Unity activation file** workflow (Actions → run workflow). It asks
+   Unity for an activation *request* and uploads it as the
+   `unity-activation-file` artifact.
+2. Download and unzip that artifact.
+3. Sign in at <https://license.unity3d.com/manual> and upload the `.alf`. Pick
+   **Unity Personal** and a non-commercial option unless you hold a paid seat.
+   You get a `.ulf` back.
+4. Set the secret straight from the file:
+   ```bash
+   gh secret set UNITY_LICENSE --repo OfficialSyntaxx/isorpg < Unity_v6000.x.ulf
+   ```
+
+Step 3 needs a human signed into the Unity account. That is not a gap in the
+automation — it is what a licence is.
+
+**A `.ulf` is a credential.** Keep it out of the repo, out of chat, and delete
+the local copy once the secret is set. The `.alf` is only a request and is
+harmless, but the workflow expires it after three days anyway.
+
+The activation is tied to the Unity version it was requested for, so
+`unity-activation.yml`, `unity-webgl.yml` and
+`unity/ProjectSettings/ProjectVersion.txt` must name the same version. They all
+say `6000.5.8f1` today; changing one means redoing this.
 
 ## What it will not catch
 
