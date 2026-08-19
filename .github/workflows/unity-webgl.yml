@@ -69,6 +69,7 @@ jobs:
           npm run verify:parity
           npm run verify:json
           npm run verify:sanitizer
+          npm run verify:content
 
   build:
     needs: preflight

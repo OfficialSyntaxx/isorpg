@@ -57,6 +57,7 @@ jobs:
           npm run verify:parity
           npm run verify:json
           npm run verify:sanitizer
+          npm run verify:content
           npm run verify:pwa
 
       # The generated files must match what is committed, or the wiki and the

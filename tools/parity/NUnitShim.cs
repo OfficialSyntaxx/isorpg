@@ -15,6 +15,10 @@ using System.Reflection;
 namespace NUnit.Framework
 {
     [AttributeUsage(AttributeTargets.Method)] public sealed class TestAttribute : Attribute { }
+    // Discovery here is by [Test] on methods, so this is accepted and ignored —
+    // but the tests are written against real NUnit and must not be reworded to
+    // suit the shim.
+    [AttributeUsage(AttributeTargets.Class)] public sealed class TestFixtureAttribute : Attribute { }
     [AttributeUsage(AttributeTargets.Method)] public sealed class SetUpAttribute : Attribute { }
     [AttributeUsage(AttributeTargets.Method)] public sealed class TearDownAttribute : Attribute { }
 
@@ -23,8 +27,73 @@ namespace NUnit.Framework
         public AssertionException(string m) : base(m) { }
     }
 
+    /// <summary>
+    /// String-specific assertions. Real NUnit ships these; the shim grows to
+    /// match rather than the tests being rewritten around it — a test that has
+    /// to be reworded to run outside Unity is no longer the same test.
+    /// </summary>
+    public static class StringAssert
+    {
+        public static void Contains(string expected, string actual)
+        {
+            if (actual != null && expected != null && actual.Contains(expected)) return;
+            throw new AssertionException(
+                $"Expected string containing:\n  \"{expected}\"\nBut was:\n  \"{actual}\"");
+        }
+
+        public static void StartsWith(string expected, string actual)
+        {
+            if (actual != null && expected != null && actual.StartsWith(expected, StringComparison.Ordinal)) return;
+            throw new AssertionException(
+                $"Expected string starting with:\n  \"{expected}\"\nBut was:\n  \"{actual}\"");
+        }
+    }
+
     public static class Assert
     {
+        /// <summary>
+        /// Asserts that <paramref name="code"/> throws exactly TException (or a
+        /// subclass) and returns it, so the caller can assert on its message.
+        ///
+        /// Returning the exception matters here: most of the content loader's
+        /// value is in WHICH thing it names as missing, and a test that only
+        /// checks "something threw" would pass against an unhelpful message.
+        /// </summary>
+        public static TException Throws<TException>(Action code) where TException : Exception
+        {
+            if (code == null) throw new ArgumentNullException(nameof(code));
+
+            try
+            {
+                code();
+            }
+            catch (TException ex)
+            {
+                return ex;
+            }
+            catch (Exception other)
+            {
+                throw new AssertionException(
+                    $"Expected {typeof(TException).Name} but got {other.GetType().Name}: {other.Message}");
+            }
+
+            throw new AssertionException($"Expected {typeof(TException).Name} but nothing was thrown.");
+        }
+
+        public static void DoesNotThrow(Action code)
+        {
+            if (code == null) throw new ArgumentNullException(nameof(code));
+
+            try
+            {
+                code();
+            }
+            catch (Exception ex)
+            {
+                throw new AssertionException($"Expected no exception but got {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
         private static string Msg(string message, object[] args)
         {
             if (string.IsNullOrEmpty(message)) return "";
