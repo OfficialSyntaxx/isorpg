@@ -441,6 +441,40 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
 - **Phase 1 (code lane) — done** (commit `5ab974a`). PWA WebGL template, service
   worker, icons, Netlify/Vercel headers, and `npm run verify:pwa` (18 assertions).
 
+- **Phase 1 — three deploys to get one visible, correct frame.** The first
+  device load showed a white wedge, the second a magenta octagon, and each
+  looked like the same broken build. They were three different faults, and
+  none was in the ported code:
+
+  1. **The camera framed the map's corner.** `IsometricCamera.Target` defaults
+     to `Vector3.zero`, but world coordinates are tile coordinates, so the
+     origin is the corner of a 42x42 map. Now pinned to `(21, 0, 21)`.
+  2. **The service worker served the first build forever.** The cache was keyed
+     on the Unity product version, which nobody ever bumped, so the worker
+     file's bytes never changed, so no new worker was ever installed, so the
+     old one kept serving `Build/*` from its original cache. Every deploy after
+     the first was invisible on any device that had loaded the site once — with
+     no error and no clue. `BuildWebGL` now stamps a unique `BUILD_ID`.
+  3. **URP was installed but never assigned.** `m_CustomRenderPipeline` was
+     `{fileID: 0}` and so was every quality level, while the bootstrap scene
+     painted everything with `Universal Render Pipeline/Lit`. Having the
+     package is not having the pipeline, and the difference is invisible until
+     it renders magenta. `Shader.Find` was being used to decide which pipeline
+     was active, which it cannot tell you.
+
+  The common thread is worth keeping: **every one of these passed the build,
+  the deploy and the header checks**, and was only visible on a phone. So the
+  guards added matter as much as the fixes — `BuildWebGL` now refuses to build
+  when a material's shader and the active pipeline disagree, errors loudly if
+  the `__BUILD_ID__` placeholder is missing, and flags a texture subtarget that
+  did not stick. Evidence stays committed as `build-report.txt` and
+  `deploy-report.txt`.
+
+  **Known and deliberately not yet fixed:** `texture_subtarget` reports
+  `Generic` rather than `ASTC` despite being assigned. Harmless while the build
+  has no textures; a memory-budget problem the moment Phase 5 art lands. It now
+  warns instead of passing silently.
+
 - **Phase 1 — built and deployed.** First WebGL build shipped to
   `inspiring-tarsier-8973d6.netlify.app`. Both header checks pass
   (`application/wasm` and `application/octet-stream`, brotli), all five PWA
