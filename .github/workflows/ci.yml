@@ -46,6 +46,19 @@ jobs:
       - name: Test
         run: npm test
 
+      # The Unity side, checked without Unity. Isoperia.Core is declared
+      # noEngineReferences and the scene check reads the scene FILE, so all of
+      # this runs here with no Editor and no licence — on every branch, not
+      # just the ones that trigger a build.
+      - name: Verify the Unity port
+        run: |
+          npm run verify:scene
+          npm run verify:core
+          npm run verify:parity
+          npm run verify:json
+          npm run verify:sanitizer
+          npm run verify:pwa
+
       # The generated files must match what is committed, or the wiki and the
       # manifest silently drift from the data they claim to describe.
       - name: Check generated files are up to date

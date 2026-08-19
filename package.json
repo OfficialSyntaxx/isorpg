@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "2.5D isometric hybrid RPG & settlement builder — mobile-first, zero-asset procedural Three.js",
+  "description": "2.5D isometric hybrid RPG & settlement builder \u2014 mobile-first, zero-asset procedural Three.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -24,7 +24,8 @@
     "verify:parity": "node scripts/verify-core-parity.cjs",
     "verify:unity": "node scripts/verify-pwa-template.cjs && node scripts/verify-core-tests.cjs && node scripts/verify-json-parity.cjs && node scripts/verify-core-parity.cjs && node scripts/verify-sanitizer-parity.cjs",
     "verify:json": "node scripts/verify-json-parity.cjs",
-    "verify:sanitizer": "node scripts/verify-sanitizer-parity.cjs"
+    "verify:sanitizer": "node scripts/verify-sanitizer-parity.cjs",
+    "verify:scene": "node scripts/verify-scene-materials.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"
