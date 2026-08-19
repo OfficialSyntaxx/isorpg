@@ -137,6 +137,13 @@ problem.
 
 ## Step 4 — Create the bootstrap scene
 
+> **This step is not optional and is not implied by a rebuild.** `BuildWebGL`
+> uses the *committed* `Bootstrap.unity`; changing `IsoperiaBuild.cs` does not
+> change the scene file. If you build without re-running this, you ship the old
+> scene and nothing on screen changes — which has already happened once and
+> looked like the fix failing.
+
+
 > **Re-run this if your project predates commit `10ca527`.** The first version of
 > `CreateBootstrapScene` omitted the `SaveDriver` object, so nothing loaded on
 > startup, nothing autosaved, and the WebGL IndexedDB flush was never installed —
@@ -185,6 +192,19 @@ Unity fell back to its default template: confirm
 ---
 
 ## Step 6 — Deploy
+
+> **Every build gets a new cache id, automatically.** `BuildWebGL` stamps
+> `ServiceWorker.js` with a unique `BUILD_ID`, which is what makes a redeploy
+> visible to a browser that has been here before. A browser only installs a new
+> service worker when the worker file's bytes change; the cache used to be keyed
+> on the Unity product version, which stayed at 1.0 forever, so several correct
+> deploys were invisible on devices that had already loaded the site. Check
+> `build_id` and `service worker stamped: yes` in `unity/build-report.txt`.
+>
+> **If you are testing a device that loaded an older build,** the new worker takes
+> over on the *second* load — the first request still comes from the old one. Load
+> twice, or use a private tab, before concluding anything is wrong.
+
 
 ```bash
 npx netlify-cli deploy --dir unity/WebGLBuild --prod

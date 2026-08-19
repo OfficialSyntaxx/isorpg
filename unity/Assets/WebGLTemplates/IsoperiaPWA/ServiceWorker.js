@@ -15,12 +15,25 @@
  *     that can time out or fail on mobile data, and would download the payload
  *     twice on the very first visit.
  *
- * Cache busting is by CACHE_VERSION, which is stamped from the Unity product
- * version at build time. If you ship a new build and clients keep the old one,
- * that number did not change — bump Player Settings → Version.
+ * CACHE BUSTING — read this before changing it.
+ *
+ * BUILD_ID below is replaced with a fresh value by IsoperiaBuild.BuildWebGL on
+ * every single build. That is not decoration; it is the only thing that makes a
+ * redeploy visible to a browser that has already been here.
+ *
+ * The mechanism is subtle and it bit us once. A browser only installs a new
+ * service worker when the SW FILE'S BYTES differ from the one it has. This file
+ * previously keyed its cache on the Unity product version, which nobody ever
+ * bumped — so the bytes never changed, no new worker was ever installed, and the
+ * old worker went on serving Build/* cache-first from its original cache. Every
+ * deploy after the first was invisible on any device that had loaded the site
+ * once, with no error and no clue. The build looked broken; it was stale.
+ *
+ * So: never key this on something a human has to remember to increment. If you
+ * change how BUILD_ID is produced, make sure it still changes on every build.
  */
 
-const CACHE_VERSION = "isoperia-v{{{ PRODUCT_VERSION }}}";
+const CACHE_VERSION = "isoperia-__BUILD_ID__";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const BUILD_CACHE = `${CACHE_VERSION}-build`;
 
