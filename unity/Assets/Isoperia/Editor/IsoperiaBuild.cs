@@ -28,6 +28,13 @@ namespace Isoperia.EditorTools
     public static class IsoperiaBuild
     {
         private const string BootstrapScene = "Assets/Isoperia/Scenes/Bootstrap.unity";
+
+        /// <summary>
+        /// Middle of the 42x42 map. World coordinates are tile coordinates, so
+        /// the origin is the map's CORNER, not its centre — a camera left looking
+        /// at Vector3.zero frames the edge of the world.
+        /// </summary>
+        private static readonly Vector3 WorldCentre = new Vector3(21f, 0f, 21f);
         private const string BuildOutput = "WebGLBuild";
         private const string TemplateName = "PROJECT:IsoperiaPWA";
 
@@ -107,7 +114,16 @@ namespace Isoperia.EditorTools
             cam.farClipPlane = 1000f;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.10f, 0.086f, 0.063f); // matches the PWA shell
-            camGo.AddComponent<IsometricCamera>();
+            // Point it at the middle of the world.
+            //
+            // IsometricCamera defaults its Target to Vector3.zero, and world
+            // coordinates are tile coordinates, so origin is the CORNER of a
+            // 42x42 map rather than anywhere useful. Leaving it there framed the
+            // corner of the ground plane and nothing else — the first device load
+            // showed a white wedge on a brown field and looked like a broken
+            // build when in fact everything was rendering correctly.
+            var isoCam = camGo.AddComponent<IsometricCamera>();
+            isoCam.Target = WorldCentre;
 
             // Sun, angled to read against the fixed camera rather than to be
             // physically plausible.
@@ -130,16 +146,42 @@ namespace Isoperia.EditorTools
             var saveGo = new GameObject(SaveDriver.GameObjectName);
             saveGo.AddComponent<SaveDriver>();
 
-            // A grey ground plane, so the first build renders something and the
-            // camera angle is visually checkable.
+            // Ground: 42x42 tiles, corner at the origin so world coordinates and
+            // tile coordinates are the same thing.
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground (placeholder)";
-            ground.transform.localScale = new Vector3(4.2f, 1f, 4.2f); // 42x42 tiles
-            ground.transform.position = new Vector3(21f, 0f, 21f);
+            ground.transform.localScale = new Vector3(4.2f, 1f, 4.2f);  // Plane is 10 units
+            ground.transform.position = WorldCentre;
+            Paint(ground, new Color(0.31f, 0.35f, 0.24f));   // muted meadow, not Unity white
 
-            var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            marker.name = "Origin marker (placeholder)";
-            marker.transform.position = new Vector3(21f, 0.5f, 21f);
+            // Reference cubes.
+            //
+            // A flat plane cannot show whether the projection is right — it looks
+            // the same at any pitch. A UNIT CUBE can: under a true 2:1 isometric
+            // view its top face projects to a diamond exactly twice as wide as it
+            // is tall, and its two visible side faces are mirror images. That is
+            // the check `docs/EDITOR_LANE.md` asks for, and it is not verifiable
+            // without something three-dimensional on screen.
+            //
+            // Placed on a known diagonal so the tile grid's orientation is legible
+            // too: the row should recede toward the top-right of the screen.
+            for (int i = 0; i < 5; i++)
+            {
+                int t = 17 + i * 2;
+                var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                cube.name = $"Reference cube ({t},{t})";
+                cube.transform.position = new Vector3(t + 0.5f, 0.5f, t + 0.5f);
+                Paint(cube, i == 2
+                    ? new Color(0.79f, 0.64f, 0.15f)    // the centre one, in the accent gold
+                    : new Color(0.62f, 0.60f, 0.55f));
+            }
+
+            // One tall marker at the player's spawn tile, so the default start
+            // position is obvious on screen.
+            var spawn = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            spawn.name = "Spawn marker (placeholder)";
+            spawn.transform.position = new Vector3(10.5f, 1f, 10.5f);
+            Paint(spawn, new Color(0.91f, 0.86f, 0.78f));
 
             Directory.CreateDirectory(Path.GetDirectoryName(BootstrapScene));
             EditorSceneManager.SaveScene(scene, BootstrapScene);
@@ -148,6 +190,24 @@ namespace Isoperia.EditorTools
             AssetDatabase.SaveAssets();
 
             Debug.Log("[Isoperia] Bootstrap scene written to " + BootstrapScene);
+        }
+
+        /// <summary>
+        /// Gives a primitive a flat colour.
+        ///
+        /// Unity's default material is pure white, which under a bright
+        /// directional light blows out to a featureless sheet — the first device
+        /// load was mostly an unreadable white wedge partly because of this.
+        /// Uses URP's shader when it is the active pipeline and falls back to the
+        /// built-in one, so this works whichever the project is on.
+        /// </summary>
+        private static void Paint(GameObject go, Color colour)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            if (shader == null) return;
+
+            var mat = new Material(shader) { color = colour };
+            go.GetComponent<Renderer>().sharedMaterial = mat;
         }
 
         [MenuItem("Isoperia/Build WebGL")]

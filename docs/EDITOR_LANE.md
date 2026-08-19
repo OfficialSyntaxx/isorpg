@@ -243,7 +243,14 @@ git push -u origin claude/unity-engine-migration-roadmap-fz9w8y
 - [ ] "Tap to play" appears, and **sound works after that tap** on iOS
 - [ ] Nothing clipped by the notch or the home indicator
 - [ ] Airplane mode → relaunch from the icon still boots
-- [ ] The grey placeholder ground renders at a true 2:1 isometric angle
+- [ ] The scene shows a muted green ground with **five reference cubes** running
+      diagonally (the middle one gold) and a pale capsule at the spawn tile
+
+**How to actually judge the isometric angle:** look at a cube's top face. Under a
+true 2:1 isometric view it is a diamond exactly **twice as wide as it is tall**,
+and the two visible side faces are mirror images of each other. A flat plane
+cannot tell you this — it looks identical at any pitch, which is why the cubes
+are there.
 
 **Save durability — the one thing that cannot be verified without a device.**
 Everything else in the port is proven by the suites that run outside Unity, but
