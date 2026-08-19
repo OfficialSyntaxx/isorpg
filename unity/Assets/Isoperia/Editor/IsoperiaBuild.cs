@@ -253,7 +253,7 @@ namespace Isoperia.EditorTools
                     sb.AppendLine($"{required,-24} {(present ? "yes" : "NO -- default template was used")}");
                 }
 
-                File.WriteAllText(Path.Combine("unity", "build-report.txt"), sb.ToString());
+                File.WriteAllText("build-report.txt", sb.ToString());
                 Debug.Log("[Isoperia] build report written to unity/build-report.txt");
             }
             catch (System.Exception e)

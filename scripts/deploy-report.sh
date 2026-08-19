@@ -31,7 +31,7 @@ fi
 
 if [ -z "$SITE" ]; then
   echo "==> deploying $BUILD_DIR"
-  DEPLOY_LOG=$(npx netlify-cli deploy --dir "$BUILD_DIR" --prod 2>&1)
+  DEPLOY_LOG=$(npx netlify-cli deploy --dir "$BUILD_DIR" --prod --no-build 2>&1)
   echo "$DEPLOY_LOG"
 
   # Netlify prints the live URL on a line containing "Website URL" or similar.
