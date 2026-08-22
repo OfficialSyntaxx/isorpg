@@ -590,9 +590,13 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
   Not ported here, and deliberately: chase AI, actor animation, callbacks and
   respawn scheduling. Those are coupled to the world and to presentation.
 
-**Next: Phase 1 (Editor lane), then Phase 2d** — Unity project skeleton and the WebGL/PWA delivery pipeline proven end
-to end. Creating the project is Editor-lane (yours); the WebGL template, manifest, service
-worker, loading screen, audio unlock, and Netlify/Vercel headers are code-lane and can be
-written ahead of time so they are waiting when you open the Editor.
+**Current Unity status:** Phase 1's device/deploy exit remains outstanding, while the
+Unity project skeleton and Phase 2a–2d Core port are present on `main`. The Bootstrap
+environment prototype now includes the existing imported GLB actors, a Core-driven
+terrain mesh, and the first Phase 3 input slice: tap-to-move through Core A*, drag-pan,
+pinch-zoom, and mouse-wheel zoom. The next implementation slice is the UI Toolkit
+shell and panel migration, followed by the remaining Phase 4–7 art, animation, audio,
+and polish work. Runtime Play Mode/device validation still requires a responsive Unity
+Editor connection and a target-device pass.
 
 Nothing is deleted or replaced until Phase 9.

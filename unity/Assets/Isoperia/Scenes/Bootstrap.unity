@@ -317,6 +317,7 @@ GameObject:
   - component: {fileID: 283806369}
   - component: {fileID: 283806368}
   - component: {fileID: 283806367}
+  - component: {fileID: 283806370}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -406,6 +407,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &283806370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 283806366}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4c6e8f1b3d4f5a9c7e2d1b6a8f0c3e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Isoperia.Unity::Isoperia.Unity.IsometricCameraInput
+  worldCamera: {fileID: 0}
+  worldBounds: {x: 42, y: 42}
+  pinchSensitivity: 0.004
 --- !u!1 &307673209
 GameObject:
   m_ObjectHideFlags: 0
@@ -1687,6 +1703,7 @@ GameObject:
   - component: {fileID: 1779996143}
   - component: {fileID: 1779996142}
   - component: {fileID: 1779996141}
+  - component: {fileID: 1779996144}
   m_Layer: 0
   m_Name: Environment_Prototype
   m_TagString: Untagged
@@ -1786,6 +1803,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1779996139}
   m_Mesh: {fileID: 0}
+--- !u!114 &1779996144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1779996139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d7c27a5e0c94b9b9b77d8f5a6b3c1e2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Isoperia.Unity::Isoperia.Unity.WorldPlayerController
+  player: {fileID: 0}
+  worldCamera: {fileID: 0}
+  tapMoveThreshold: 12
 --- !u!1 &2085780887
 GameObject:
   m_ObjectHideFlags: 0

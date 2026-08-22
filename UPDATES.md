@@ -8,6 +8,12 @@ grass, water, rock, dirt, sand, and road. Existing imported actors remain in
 the scene as prototype content, and generated mesh/material instances are
 cleaned up safely across editor and play-mode lifecycle changes.
 
+The Bootstrap prototype also now accepts desktop mouse and mobile touch input:
+tap-to-move uses the Core A* pathfinder and `MovementSystem`, while the
+isometric camera supports drag-pan, pinch-zoom, and mouse-wheel zoom. The
+imported hero is the controlled actor; input remains a Unity presentation bridge
+and does not duplicate Core movement authority.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).
