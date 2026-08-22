@@ -1,5 +1,13 @@
 # Isoperia — Update Log
 
+## 2026-08 · Unity environment integration
+
+The Unity Bootstrap scene now renders the deterministic Core `Grid` as one
+runtime terrain mesh with six terrain submeshes and color-coded materials for
+grass, water, rock, dirt, sand, and road. Existing imported actors remain in
+the scene as prototype content, and generated mesh/material instances are
+cleaned up safely across editor and play-mode lifecycle changes.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).
