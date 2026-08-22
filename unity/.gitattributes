@@ -43,3 +43,7 @@
 # TEXT in place of PNG bytes — the PWA install would then fail with a broken
 # icon and no obvious cause. Keep them as ordinary files.
 Assets/WebGLTemplates/**/*.png -filter -diff -merge text=auto
+
+# The prototype environment models are kept in the Unity project as ordinary
+# repository assets so the playable Bootstrap scene works in a fresh checkout.
+Assets/Isoperia/Art/Models/**/*.glb -filter -diff -merge text=auto
