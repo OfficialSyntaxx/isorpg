@@ -12,6 +12,15 @@ const W = 17; // dungeon width
 const H = 20; // dungeon height
 export const DUNGEON_ORIGIN = { x: 1000, z: 1000 };
 
+/** Optional run mutators. `none` preserves the shipped baseline run. */
+export type DungeonModifier = "none" | "horde" | "scarcity";
+
+export const DUNGEON_MODIFIERS: Readonly<Record<DungeonModifier, { name: string; description: string }>> = {
+  none: { name: "Unaltered", description: "The dungeon behaves normally." },
+  horde: { name: "Horde", description: "More monsters spawn, but the run is more dangerous." },
+  scarcity: { name: "Scarcity", description: "Chest rewards are reduced in exchange for a cleaner challenge." },
+};
+
 const FLOOR = ".";
 const WALL = "#";
 
@@ -46,6 +55,8 @@ export class DungeonSystem {
 
   active = false;
   openedChest = false;
+  /** The selected run mutator. Kept public so the HUD/quest layer can expose it. */
+  activeModifier: DungeonModifier = "none";
 
   private scene: THREE.Scene;
   private combat: CombatSystem;
@@ -168,6 +179,14 @@ export class DungeonSystem {
   get height() { return H; }
   /** The scene group monsters/hero are parented into while inside. */
   get worldGroup() { return this.group; }
+
+  setModifier(modifier: DungeonModifier): void {
+    this.activeModifier = modifier;
+  }
+
+  modifierInfo(): { name: string; description: string } {
+    return DUNGEON_MODIFIERS[this.activeModifier];
+  }
 
   // ---- enter / exit —---
   buildMeshes(): void {
@@ -354,9 +373,10 @@ export class DungeonSystem {
       }
     }
     const idx = (n: number) => spots[Math.floor((n * 7919) % spots.length)];
+    const multiplier = this.activeModifier === "horde" ? 1.5 : 1;
     let n = 1;
     for (const [type, count] of layout) {
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < Math.ceil(count * multiplier); i++) {
         const s = idx(n++);
         if (!s) continue;
         const m = spawnMonster(type, MONSTERS[type], s.x, s.y);
@@ -404,6 +424,11 @@ export class DungeonSystem {
           ];
     if (Math.random() < (f3 ? 0.35 : f2 ? 0.25 : 0.12)) drops.push({ itemId: "iron_sword", qty: 1 });
     else if (Math.random() < (f3 ? 0.2 : f2 ? 0.15 : 0.08)) drops.push({ itemId: "shortbow", qty: 1 });
+    if (this.activeModifier === "scarcity") {
+      return drops
+        .map((drop) => ({ ...drop, qty: Math.max(1, Math.floor(drop.qty * 0.6)) }))
+        .filter((drop) => drop.qty > 0);
+    }
     return drops;
   }
 }
