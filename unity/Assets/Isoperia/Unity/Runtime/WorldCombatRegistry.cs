@@ -38,9 +38,18 @@ namespace Isoperia.Unity
             this.state = state ?? throw new ArgumentNullException(nameof(state));
             if (content == null) throw new ArgumentNullException(nameof(content));
             random = new Mulberry32Random(seed);
-            Add(grid, content, "giant_rat", 8, 8);
-            Add(grid, content, "goblin", 14, 10);
-            Add(grid, content, "dire_wolf", 20, 12);
+            // A first mainland encounter pass: one approachable clearing on the
+            // east road, then escalating clusters in each authored district.
+            AddNear(grid, content, "giant_rat", 78, 65);
+            AddNear(grid, content, "giant_rat", 35, 36);
+            AddNear(grid, content, "goblin", 40, 31);
+            AddNear(grid, content, "dire_wolf", 46, 42);
+            AddNear(grid, content, "goblin", 92, 34);
+            AddNear(grid, content, "dire_wolf", 101, 28);
+            AddNear(grid, content, "giant_rat", 31, 91);
+            AddNear(grid, content, "goblin", 38, 102);
+            AddNear(grid, content, "dire_wolf", 103, 67);
+            AddNear(grid, content, "goblin", 109, 73);
         }
 
         public WorldEnemyNode EnemyAt(int x, int y)
@@ -106,7 +115,7 @@ namespace Isoperia.Unity
             }
 
             health.Hp = health.MaxHp;
-            state.Player.Pos.Gx = state.Player.Pos.Gy = 12;
+            state.Player.Pos.Gx = state.Player.Pos.Gy = CoreGrid.TownCenter;
             state.Player.Pos.Wx = state.Player.Pos.Gx;
             state.Player.Pos.Wz = state.Player.Pos.Gy;
             StatusChanged?.Invoke("You were defeated · returned safely to settlement");
@@ -141,8 +150,11 @@ namespace Isoperia.Unity
             }
         }
 
-        private void Add(CoreGrid grid, ContentDatabase content, string id, int x, int y)
+        private void AddNear(CoreGrid grid, ContentDatabase content, string id, int wantedX, int wantedY)
         {
+            int x = wantedX;
+            int y = wantedY;
+            if (!FindWalkableTile(grid, wantedX, wantedY, out x, out y)) return;
             Tile tile = grid.At(x, y);
             if (tile == null || !tile.Walkable || tile.Occupant != Occupant.None) return;
             JsonValue data = content.Monsters[id];
@@ -163,6 +175,24 @@ namespace Isoperia.Unity
             var enemy = new WorldEnemyNode(id, def.Name, x, y, def, coins, xp);
             enemies.Add(enemy);
             byTile[Key(x, y)] = enemy;
+        }
+
+        private static bool FindWalkableTile(CoreGrid grid, int wantedX, int wantedY, out int x, out int y)
+        {
+            for (int radius = 0; radius <= 8; radius++)
+            for (int dy = -radius; dy <= radius; dy++)
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != radius) continue;
+                Tile candidate = grid.At(wantedX + dx, wantedY + dy);
+                if (candidate == null || !candidate.Walkable || candidate.Occupant != Occupant.None) continue;
+                x = candidate.X;
+                y = candidate.Y;
+                return true;
+            }
+
+            x = y = 0;
+            return false;
         }
 
         private static long Key(int x, int y) => ((long)x << 32) ^ (uint)y;
