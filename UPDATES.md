@@ -1,5 +1,24 @@
 # Isoperia — Update Log
 
+## 2026-08 · Phase 1 — Combat expedition vertical slice
+
+The Bootstrap world now has three early-route enemy encounters (Giant Rat,
+Goblin, and Dire Wolf) rendered as clear low-poly silhouettes while the imported
+creatures remain in their later animation pass. Tap/clicking an enemy paths the
+player into range and targets it; the shared 600 ms Core combat cadence resolves
+player and monster attacks, damage, defeat, coin rewards, combat XP, kill tracking,
+and timed enemy respawns.
+
+The first safe death rule is live: a defeated player is restored to full health and
+returned to settlement rather than being left in an invalid world state. The combat
+registry keeps mutable encounter state at the Unity world boundary; all player
+health, inventory, skills, and kill records remain in the Core game state and save
+normally.
+
+Validation: direct Unity runtime compilation (no errors), no Unity Console errors
+in Play Mode, and an in-editor end-to-end Giant Rat fight that awarded coins and
+incremented the persisted kill counter.
+
 ## 2026-08 · Phase 0 — Clean playable-world baseline
 
 The Bootstrap scene no longer ships the oversized legacy GLB prototypes that

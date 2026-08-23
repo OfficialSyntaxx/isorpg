@@ -36,6 +36,7 @@ namespace Isoperia.Unity
         public WorldResourceRegistry Resources { get; private set; }
         public SkillSystem Gathering { get; private set; }
         public CraftingSystem Crafting { get; private set; }
+        public WorldCombatRegistry Combat { get; private set; }
         public BuildingSystem Buildings { get; private set; }
         public string PendingBuildingType { get; private set; }
         public string GatheringStatus { get; private set; }
@@ -83,6 +84,8 @@ namespace Isoperia.Unity
             Crafting.Started += OnCraftingStarted;
             Crafting.Crafted += OnCrafted;
             Crafting.Ended += OnCraftingEnded;
+            Combat = new WorldCombatRegistry(WorldRuntime.Instance.Grid, State, unchecked((int)(NowMs() ^ 0x2c91)));
+            Combat.StatusChanged += OnCombatStatus;
             Debug.Log($"[Isoperia] save loaded from: {result.RecoveredFrom}");
 
             if (result.Summary != null && result.Summary.AwaySeconds > 0)
@@ -138,6 +141,7 @@ namespace Isoperia.Unity
             GameLoop.Instance.Tick.OnTick(Resources.Tick);
             GameLoop.Instance.Tick.OnTick(TickGathering);
             GameLoop.Instance.Tick.OnTick(TickCrafting);
+            GameLoop.Instance.Tick.OnTick(Combat.Tick);
             GameLoop.Instance.Tick.OnTick(Save.OnTick);
         }
 
@@ -149,6 +153,11 @@ namespace Isoperia.Unity
         private void TickCrafting(long _)
         {
             Crafting?.Tick(TickRunner.TickMs);
+        }
+
+        private void OnCombatStatus(string status)
+        {
+            GatheringStatus = status;
         }
 
         private bool HasBuilding(string type)
@@ -263,6 +272,7 @@ namespace Isoperia.Unity
                 GameLoop.Instance.Tick.RemoveHandler(Resources.Tick);
                 GameLoop.Instance.Tick.RemoveHandler(TickGathering);
                 GameLoop.Instance.Tick.RemoveHandler(TickCrafting);
+                if (Combat != null) GameLoop.Instance.Tick.RemoveHandler(Combat.Tick);
                 GameLoop.Instance.Tick.RemoveHandler(Save.OnTick);
             }
 
@@ -279,6 +289,8 @@ namespace Isoperia.Unity
                 Crafting.Crafted -= OnCrafted;
                 Crafting.Ended -= OnCraftingEnded;
             }
+
+            if (Combat != null) Combat.StatusChanged -= OnCombatStatus;
 
             if (Instance == this) Instance = null;
         }

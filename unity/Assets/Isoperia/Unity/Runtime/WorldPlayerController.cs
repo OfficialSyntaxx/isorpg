@@ -23,6 +23,7 @@ namespace Isoperia.Unity
         private PositionComponent position;
         private MovementSystem movement;
         private WorldResourceNode pendingNode;
+        private WorldEnemyNode pendingEnemy;
         private Vector2 pointerDown;
 
         private void Awake()
@@ -129,6 +130,25 @@ namespace Isoperia.Unity
             }
 
             SaveDriver.Instance?.Gathering?.Interrupt();
+            WorldEnemyNode enemy = SaveDriver.Instance?.Combat?.EnemyAt(goalX, goalY);
+            if (enemy != null)
+            {
+                pendingNode = null;
+                pendingEnemy = enemy;
+                int enemyDistance = Mathf.Max(Mathf.Abs(position.Gx - goalX), Mathf.Abs(position.Gy - goalY));
+                if (enemyDistance <= 1)
+                {
+                    SaveDriver.Instance.Combat.TryTarget(enemy, position);
+                    pendingEnemy = null;
+                    return;
+                }
+
+                var enemyPath = AStar.FindPath(grid, position.Gx, position.Gy, goalX, goalY, true);
+                if (enemyPath != null) movement.SetPath(enemyPath);
+                else pendingEnemy = null;
+                return;
+            }
+
             pendingNode = SaveDriver.Instance?.Resources?.NodeAt(goalX, goalY);
             if (pendingNode != null && !pendingNode.Depleted)
             {
@@ -165,6 +185,14 @@ namespace Isoperia.Unity
 
         private void OnArrived(int x, int y)
         {
+            if (pendingEnemy != null)
+            {
+                WorldEnemyNode enemy = pendingEnemy;
+                pendingEnemy = null;
+                if (enemy.Alive) SaveDriver.Instance?.Combat?.TryTarget(enemy, position);
+                return;
+            }
+
             if (pendingNode == null) return;
 
             WorldResourceNode node = pendingNode;
