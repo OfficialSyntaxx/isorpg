@@ -3,18 +3,20 @@ using UnityEngine;
 namespace Isoperia.Unity
 {
     /// <summary>
-    /// Small built-in avatar used while the imported hero GLB is prepared for the
-    /// Humanoid animation pass. It keeps player movement legible without letting
-    /// malformed imported geometry obscure the fixed isometric world.
+    /// Presents the owned hero model while keeping the controller and Core state
+    /// authoritative. A compact primitive avatar remains available if an asset is
+    /// missing from a constrained build.
     /// </summary>
     public sealed class WorldPlayerAvatarView : MonoBehaviour
     {
         public const string AvatarName = "PlayerAvatar";
+        private const string HeroAsset = "Art/OwnedModels/hero_rigged";
 
         private Material tunic;
         private Material skin;
         private Transform tunicTransform;
         private Transform headTransform;
+        private Transform heroTransform;
         private OpenWorldPlayerController playerController;
 
         public static Transform Create()
@@ -26,14 +28,25 @@ namespace Isoperia.Unity
 
         private void Awake()
         {
+            playerController = GetComponent<OpenWorldPlayerController>();
+            GameObject heroPrefab = Resources.Load<GameObject>(HeroAsset);
+            if (heroPrefab != null)
+            {
+                GameObject hero = Instantiate(heroPrefab, transform);
+                hero.name = "HeroModel";
+                hero.transform.localPosition = Vector3.zero;
+                hero.transform.localRotation = Quaternion.identity;
+                hero.transform.localScale = Vector3.one * .82f;
+                heroTransform = hero.transform;
+                return;
+            }
+
             tunic = CreateMaterial(new Color(.18f, .33f, .58f, 1f));
             skin = CreateMaterial(new Color(.78f, .52f, .36f, 1f));
-
             tunicTransform = CreatePart(PrimitiveType.Capsule, "Tunic", new Vector3(0f, .47f, 0f),
                 new Vector3(.28f, .45f, .28f), tunic);
             headTransform = CreatePart(PrimitiveType.Sphere, "Head", new Vector3(0f, .97f, 0f),
                 new Vector3(.30f, .30f, .30f), skin);
-            playerController = GetComponent<OpenWorldPlayerController>();
         }
 
         private void Update()
@@ -42,6 +55,12 @@ namespace Isoperia.Unity
             bool moving = playerController != null && playerController.IsMoving;
             float cycle = Time.time * (moving ? 11f : 2f);
             float bob = Mathf.Sin(cycle) * (moving ? .035f : .006f);
+            if (heroTransform != null)
+            {
+                heroTransform.localPosition = new Vector3(0f, bob, 0f);
+                heroTransform.localRotation = Quaternion.Euler(moving ? Mathf.Sin(cycle) * 2.5f : 0f, 0f, 0f);
+                return;
+            }
             if (tunicTransform != null)
             {
                 tunicTransform.localPosition = new Vector3(0f, .47f + bob, 0f);

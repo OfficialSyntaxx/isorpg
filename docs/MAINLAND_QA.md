@@ -15,7 +15,7 @@
 | --- | --- | --- |
 | Mainland save migration | Pass | Grid/sanitizer EditMode suite previously passed 206/206; a pre-mainland save was observed to migrate and spawn at `(63,63)` without losing state. |
 | Runtime mainland traversal | Pass | Play Mode verified player/Core position stay synchronized at the Hearthvale mainland spawn; settlements, discovery, combat clearings, Cinder route and light pools instantiate. |
-| Character fallback | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the interaction capsule fallback remains in code. |
+| Character fallback | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the player instantiates `hero_rigged` from the same reviewed path; compact primitive fallbacks remain in code. |
 | WebGL compilation/build | Pass | Headless `Isoperia.EditorTools.IsoperiaBuild.BuildWebGL` completed with exit code 0 and emitted loader, data, framework and wasm artifacts. |
 | First-tap audio | Code reviewed | `OpenWorldExperience` supplies the listener; must be confirmed in a hosted browser with a real user gesture. |
 
@@ -40,3 +40,10 @@ directional desktop Editor measurement, not a mobile performance claim.
 
 Physical-device testing and public hosting are intentionally not marked as
 passed here: neither can be truthfully performed from this workspace alone.
+
+## Follow-up build
+
+On 2026-08-23 the hero-inclusive candidate completed the same headless WebGL
+build path with exit code 0. Visual Play Mode confirmation is pending only on
+the currently locked local Mac session; this is not a substitute for the
+physical-device sweep above.
