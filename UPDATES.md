@@ -1,5 +1,18 @@
 # Isoperia — Update Log
 
+## 2026-08 · 3D Phase I — owned SFX and release hardening
+
+Seven compact, already-owned interaction clips are now imported into Unity:
+chop, mine, fish, hit, UI click, route acceptance, and quest completion. A
+single cached `AudioSource` plays them after successful world interactions or
+task completion; missing clips simply stay silent and never affect game rules. The WebGL PWA's
+existing first-tap AudioContext unlock remains the iOS/browser authority.
+
+Validation: Play Mode loaded the audio bridge and owned clip, created its shared
+source, and completed a safe NPC interaction. The actual Unity Test Runner wrote
+a fresh **205/205** passing result; its MCP job wrapper timed out only while
+reconnecting its port after the run.
+
 ## 2026-08 · 3D Phase H — guided Cinder Hollow journey
 
 Wayfinder Nahl now starts **Lantern Road**, a persisted town-to-Cinder Hollow

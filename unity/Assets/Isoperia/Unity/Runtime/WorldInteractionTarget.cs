@@ -23,6 +23,8 @@ namespace Isoperia.Unity
         public bool IsResource => resource != null;
         public bool IsEnemy => enemy != null;
         public bool IsNpc => !string.IsNullOrEmpty(npcName);
+        public bool IsJourney => !string.IsNullOrEmpty(journeyId);
+        public string ResourceType => resource?.Type;
 
         public bool TryInteract(PositionComponent player)
         {

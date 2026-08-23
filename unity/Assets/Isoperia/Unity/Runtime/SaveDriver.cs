@@ -42,6 +42,7 @@ namespace Isoperia.Unity
         public BuildingSystem Buildings { get; private set; }
         public string PendingBuildingType { get; private set; }
         public string GatheringStatus { get; private set; }
+        public event Action TaskCompleted;
 
         /// <summary>Shows presentation-only world feedback without altering Core game state.</summary>
         public void ShowStatus(string status)
@@ -177,6 +178,7 @@ namespace Isoperia.Unity
         private void OnTaskCompleted(string title)
         {
             GatheringStatus = "Task complete · " + title;
+            TaskCompleted?.Invoke();
         }
 
         private bool HasBuilding(string type)
