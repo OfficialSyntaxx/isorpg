@@ -20,6 +20,16 @@ namespace Isoperia.EditorTools
             AssetDatabase.Refresh();
         }
 
+        public static void SyncEncounterActors()
+        {
+            EnsureFolder("Assets/Isoperia/Resources", "Art");
+            EnsureFolder("Assets/Isoperia/Resources/Art", "OwnedModels");
+            CopyIfMissing("forest_ogre.glb");
+            CopyIfMissing("dire_wolf.glb");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         private static void CopyIfMissing(string fileName)
         {
             string destination = RuntimeRoot + fileName;

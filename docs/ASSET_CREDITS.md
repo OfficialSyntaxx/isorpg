@@ -9,6 +9,8 @@ there is a row here with a clear owner/source and license status.
 | Kenney Fantasy Town Kit 2.0 subset | Hearthvale roads, buildings, market and props | Kenney / curated project subset | CC0; bundled `LICENSE.txt` retained beside the asset | FBX imports, URP Lit materials, static use only |
 | `villager.glb` | Hearthvale service NPCs | Isoperia owned model bundle | Owned project asset; no third-party purchase or attribution requirement recorded | glTFast import verified; child-renderer model, root interaction capsule, WebGL build validation pending M6 |
 | `hero_rigged.glb` | Player avatar | Isoperia owned model bundle | Owned project asset; no third-party purchase or attribution requirement recorded | glTFast import verified; runtime presentation bridge and WebGL build validation pending M6; source GLB has rig data but no baked clips |
+| `forest_ogre.glb` | Mainland goblin combat silhouette | Isoperia owned model bundle | Owned project asset; no third-party purchase or attribution requirement recorded | glTFast import verified; root interaction capsule; WebGL build validation pending M6 |
+| `dire_wolf.glb` | Mainland dire-wolf combat silhouette | Isoperia owned model bundle | Owned project asset; no third-party purchase or attribution requirement recorded | glTFast import verified; root interaction capsule; WebGL build validation pending M6 |
 
 ## Intake checklist
 
