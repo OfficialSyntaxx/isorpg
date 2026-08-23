@@ -23,6 +23,10 @@ pass is built.
 Validation: Unity Play Mode loaded the mainland terrain and player at
 **(63.5, 63.5)** with no Console errors.
 
+Follow-up baseline: streamed resource presentation reduced the live mainland
+scene from **1,563 to 402 renderers** and **1,395 to 234 colliders**; Core still
+retains every resource node and the visible set refreshes by travel distance.
+
 ## 2026-08 · 3D Phase I — owned SFX and release hardening
 
 Seven compact, already-owned interaction clips are now imported into Unity:

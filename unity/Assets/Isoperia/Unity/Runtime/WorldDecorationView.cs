@@ -14,9 +14,14 @@ namespace Isoperia.Unity
     public sealed class WorldDecorationView : MonoBehaviour
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
+        private const float VisibleRadius = 28f;
+        private const int RebuildDistance = 10;
         private readonly System.Collections.Generic.List<GameObject> instances =
             new System.Collections.Generic.List<GameObject>();
         private Material waterMarkerMaterial;
+        private Transform player;
+        private int lastAnchorX = int.MinValue;
+        private int lastAnchorZ = int.MinValue;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateDecorationView()
@@ -34,18 +39,39 @@ namespace Isoperia.Unity
                 SaveDriver.Instance.Resources.NodeChanged += OnNodeChanged;
         }
 
+        private void Update()
+        {
+            if (player == null)
+                player = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
+            if (player == null) return;
+
+            int x = Mathf.FloorToInt(player.position.x);
+            int z = Mathf.FloorToInt(player.position.z);
+            if (Mathf.Abs(x - lastAnchorX) < RebuildDistance && Mathf.Abs(z - lastAnchorZ) < RebuildDistance) return;
+            Rebuild();
+        }
+
         public void Rebuild()
         {
             DestroyRuntimeAssets();
 
             CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
             WorldResourceRegistry resources = SaveDriver.Instance?.Resources;
+            if (player == null)
+                player = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
+            int anchorX = player == null ? grid.Width / 2 : Mathf.FloorToInt(player.position.x);
+            int anchorZ = player == null ? grid.Height / 2 : Mathf.FloorToInt(player.position.z);
+            lastAnchorX = anchorX;
+            lastAnchorZ = anchorZ;
             if (resources != null)
             {
                 for (int i = 0; i < resources.Nodes.Count; i++)
                 {
                     WorldResourceNode node = resources.Nodes[i];
                     if (node.Depleted) continue;
+                    float dx = node.X - anchorX;
+                    float dz = node.Y - anchorZ;
+                    if (dx * dx + dz * dz > VisibleRadius * VisibleRadius) continue;
 
                     Tile tile = grid.At(node.X, node.Y);
                     float ground = tile.TerrainType == TerrainType.Water
