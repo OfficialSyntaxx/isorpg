@@ -4,14 +4,9 @@ using Isoperia.Core.World;
 namespace Isoperia.Core.Tests
 {
     /// <summary>
-    /// World-generation fidelity. Every expected number here was measured on the
-    /// TypeScript build at tag <c>web-final</c>, so a failure means the port
-    /// drifted, not that the world "changed".
-    ///
-    /// The exhaustive tile-by-tile comparison lives outside Unity in
-    /// <c>scripts/verify-core-parity.cjs</c>, which diffs all 1,764 tiles against
-    /// a dump from the original. These tests cover the same ground at a
-    /// granularity that is readable when something breaks.
+    /// Mainland generation invariants. The prototype-island parity fixture no
+    /// longer applies after the approved 126×126 conversion; these tests protect
+    /// deterministic generation, region topology, and safe world boundaries.
     /// </summary>
     public class GridGenerationTests
     {
@@ -23,14 +18,14 @@ namespace Isoperia.Core.Tests
         [Test]
         public void HasProductionDimensions()
         {
-            Assert.AreEqual(42, _grid.Width);
-            Assert.AreEqual(42, _grid.Height);
-            Assert.AreEqual(42, Grid.WorldSize);
-            Assert.AreEqual(6, Grid.GridChunk);
+            Assert.AreEqual(126, _grid.Width);
+            Assert.AreEqual(126, _grid.Height);
+            Assert.AreEqual(126, Grid.WorldSize);
+            Assert.AreEqual(18, Grid.GridChunk);
         }
 
         [Test]
-        public void TerrainDistributionMatchesTypeScript()
+        public void TerrainDistributionContainsEveryMainlandSurface()
         {
             var counts = new System.Collections.Generic.Dictionary<TerrainType, int>();
             for (int y = 0; y < _grid.Height; y++)
@@ -41,22 +36,22 @@ namespace Isoperia.Core.Tests
                     counts[t] = n + 1;
                 }
 
-            Assert.AreEqual(1201, counts[TerrainType.Grass], "grass tiles");
-            Assert.AreEqual(210, counts[TerrainType.Water], "water tiles");
-            Assert.AreEqual(189, counts[TerrainType.Dirt], "dirt tiles");
-            Assert.AreEqual(84, counts[TerrainType.Sand], "sand tiles");
-            Assert.AreEqual(80, counts[TerrainType.Rock], "rock tiles");
+            Assert.Greater(counts[TerrainType.Grass], 0, "grass tiles");
+            Assert.Greater(counts[TerrainType.Water], 0, "water tiles");
+            Assert.Greater(counts[TerrainType.Dirt], 0, "dirt tiles");
+            Assert.Greater(counts[TerrainType.Sand], 0, "sand tiles");
+            Assert.Greater(counts[TerrainType.Rock], 0, "rock tiles");
         }
 
         [Test]
-        public void WalkableTileCountMatchesTypeScript()
+        public void MainlandHasSubstantialWalkableTravelSpace()
         {
             int walkable = 0;
             for (int y = 0; y < _grid.Height; y++)
                 for (int x = 0; x < _grid.Width; x++)
                     if (_grid.At(x, y).Walkable) walkable++;
 
-            Assert.AreEqual(1474, walkable);
+            Assert.Greater(walkable, Grid.WorldSize * Grid.WorldSize / 2);
         }
 
         [Test]
@@ -71,11 +66,11 @@ namespace Isoperia.Core.Tests
                     counts[z] = n + 1;
                 }
 
-            // One 6x6 centre chunk, then concentric rings.
-            Assert.AreEqual(36, counts[ZoneIds.TownCenter]);
-            Assert.AreEqual(288, counts[ZoneIds.Settlement]);
-            Assert.AreEqual(576, counts[ZoneIds.WildernessLvl1]);
-            Assert.AreEqual(864, counts[ZoneIds.WildernessLvl2]);
+            // One 18x18 centre chunk, then concentric seven-by-seven rings.
+            Assert.AreEqual(324, counts[ZoneIds.TownCenter]);
+            Assert.AreEqual(2592, counts[ZoneIds.Settlement]);
+            Assert.AreEqual(5184, counts[ZoneIds.WildernessLvl1]);
+            Assert.AreEqual(7776, counts[ZoneIds.WildernessLvl2]);
         }
 
         [Test]
@@ -90,10 +85,10 @@ namespace Isoperia.Core.Tests
                     counts[b] = n + 1;
                 }
 
-            Assert.AreEqual(324, counts[Biome.Meadow]);
-            Assert.AreEqual(720, counts[Biome.Forest]);
-            Assert.AreEqual(360, counts[Biome.Snow]);
-            Assert.AreEqual(360, counts[Biome.Swamp]);
+            Assert.AreEqual(2916, counts[Biome.Meadow]);
+            Assert.AreEqual(6480, counts[Biome.Forest]);
+            Assert.AreEqual(3240, counts[Biome.Snow]);
+            Assert.AreEqual(3240, counts[Biome.Swamp]);
         }
 
         /// <summary>
@@ -132,19 +127,16 @@ namespace Isoperia.Core.Tests
         }
 
         /// <summary>
-        /// These exact values are what catch the draw-order trap: the decoration
-        /// seed is the SECOND draw for interior tiles and the FIRST for edge and
-        /// coast tiles, because RollTerrain returns early for those. Removing the
-        /// "unused" draw in RollTerrain leaves terrain identical and changes every
-        /// one of these.
+        /// Seed selection is stable for the same mainland coordinate and differs
+        /// between edge and interior draw paths.
         /// </summary>
         [Test]
-        public void DecorationSeedsMatchTypeScript()
+        public void DecorationSeedsAreStableAtRepresentativeCoordinates()
         {
             Assert.AreEqual(184411, _grid.At(0, 0).Seed, "edge tile: first draw");
             Assert.AreEqual(336863, _grid.At(1, 1).Seed, "coast tile: first draw");
-            Assert.AreEqual(170488, _grid.At(20, 20).Seed, "interior tile: second draw");
-            Assert.AreEqual(916681, _grid.At(41, 41).Seed, "far corner");
+            Assert.AreNotEqual(_grid.At(20, 20).Seed, _grid.At(20, 21).Seed, "interior seeds vary by coordinate");
+            Assert.AreEqual(_grid.At(125, 125).Seed, new Grid().At(125, 125).Seed, "far corner is deterministic");
         }
 
         [Test]
@@ -187,7 +179,7 @@ namespace Isoperia.Core.Tests
                     if (_grid.RegionUnlocked[r][c]) unlocked++;
 
             Assert.AreEqual(1, unlocked);
-            Assert.IsTrue(_grid.RegionUnlocked[3][3], "centre chunk of a 7x7 layout");
+            Assert.IsTrue(_grid.RegionUnlocked[3][3], "centre chunk of a 7x7 mainland layout");
         }
 
         [Test]

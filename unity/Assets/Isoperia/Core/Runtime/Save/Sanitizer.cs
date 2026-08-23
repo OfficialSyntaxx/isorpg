@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Isoperia.Core.Components;
 using Isoperia.Core.State;
+using Isoperia.Core.World;
 
 namespace Isoperia.Core.Save
 {
@@ -48,14 +49,22 @@ namespace Isoperia.Core.Save
         public static string[] KnownAttackStyles = { "accurate", "aggressive", "defensive" };
         public static string[] KnownBuffs = { "precision", "power", "warden" };
 
-        private const int WorldSize = 42;
+        private const int WorldSize = Grid.WorldSize;
+        private const int LegacyWorldCenter = Grid.LegacyWorldSize / 2;
         private const int MaxFarmPlots = 32;
         private const int MaxClueSites = 8;
         private const int MaxNameLength = 24;
-        private const int MaxResourceNodes = 200;
+        private const int MaxResourceNodes = 1000;
 
         /// <summary>True when a save predates the mastery curve change.</summary>
         public static bool NeedsMasteryRescale(string version) => OlderThan(version, "1.1.0");
+
+        /// <summary>
+        /// World-bound positions and node ids from the prototype island cannot be
+        /// safely interpreted on the mainland. Progress is retained, but those
+        /// coordinates are relocated or regenerated during the 2.0 migration.
+        /// </summary>
+        public static bool NeedsMainlandMigration(string version) => OlderThan(version, "2.0.0");
 
         /// <summary>Dotted version compare; true when <paramref name="a"/> is older.</summary>
         internal static bool OlderThan(string a, string b)
@@ -164,6 +173,12 @@ namespace Isoperia.Core.Save
                    x >= 0 && x < WorldSize && y >= 0 && y < WorldSize;
         }
 
+        private static int MainlandTownCoordinate(long legacyCoordinate)
+        {
+            long offset = legacyCoordinate - LegacyWorldCenter;
+            return (int)Math.Max(Grid.TownCenter - 8, Math.Min(Grid.TownCenter + 8, Grid.TownCenter + offset));
+        }
+
         /// <summary>
         /// Validate and coerce save JSON into a safe shape. Unrecognised fields
         /// are dropped.
@@ -179,13 +194,24 @@ namespace Isoperia.Core.Save
                 return SanitizeResult.Fail("Not an object");
 
             string version = raw["version"].AsString() ?? "1.0.0";
+            bool mainlandMigration = NeedsMainlandMigration(version);
             long timestamp = ClampNonNeg(raw["timestamp"], nowMs);
 
             JsonValue p = raw["player"];
             if (p.Kind != JsonKind.Object) return SanitizeResult.Fail("Invalid player");
 
-            long gx = ClampNonNeg(p["position"]["x"], 10);
-            long gy = ClampNonNeg(p["position"]["y"], 10);
+            long gx = ClampNonNeg(p["position"]["x"], Grid.TownCenter);
+            long gy = ClampNonNeg(p["position"]["y"], Grid.TownCenter);
+            if (mainlandMigration)
+            {
+                gx = Grid.TownCenter;
+                gy = Grid.TownCenter;
+            }
+            else
+            {
+                gx = Math.Min(WorldSize - 1, gx);
+                gy = Math.Min(WorldSize - 1, gy);
+            }
 
             long maxHp = ClampNonNeg(p["stats"]["maxHp"], 100);
             long hp = ClampNonNeg(p["stats"]["hp"], maxHp);
@@ -254,7 +280,12 @@ namespace Isoperia.Core.Save
 
                 long bx = ClampNonNeg(b["x"], 0);
                 long by = ClampNonNeg(b["y"], 0);
-                if (bx >= 200 || by >= 200) continue;
+                if (mainlandMigration)
+                {
+                    bx = MainlandTownCoordinate(bx);
+                    by = MainlandTownCoordinate(by);
+                }
+                else if (bx >= WorldSize || by >= WorldSize) continue;
 
                 // A missing id is replaced deterministically. The TS used
                 // Math.random(), which meant re-loading the same corrupt save
@@ -278,7 +309,7 @@ namespace Isoperia.Core.Save
             JsonValue clue = JsonValue.Null;
             string tier = rawClue["tier"].AsString();
 
-            if ((tier == "simple" || tier == "hard") && rawClue["sites"].Kind == JsonKind.Array)
+            if (!mainlandMigration && (tier == "simple" || tier == "hard") && rawClue["sites"].Kind == JsonKind.Array)
             {
                 var sites = JsonValue.Array();
                 foreach (var s in rawClue["sites"].Items)
@@ -399,13 +430,13 @@ namespace Isoperia.Core.Save
             outSettings.Set("attackStyle", JsonValue.String(CoerceAttackStyle(raw["settings"]["attackStyle"])));
 
             var outMap = JsonValue.Object();
-            outMap.Set("discovered", ToStrArray(StrList(raw["map"]["discovered"])));
-            outMap.Set("fastTravel", JsonValue.Bool(raw["map"]["fastTravel"].AsBool()));
-            outMap.Set("explored", ToNumArray(NumList(raw["map"]["explored"])));
+            outMap.Set("discovered", mainlandMigration ? JsonValue.Array() : ToStrArray(StrList(raw["map"]["discovered"])));
+            outMap.Set("fastTravel", JsonValue.Bool(!mainlandMigration && raw["map"]["fastTravel"].AsBool()));
+            outMap.Set("explored", mainlandMigration ? JsonValue.Array() : ToNumArray(NumList(raw["map"]["explored"])));
 
             var resources = JsonValue.Array();
             var seenResourceIds = new HashSet<string>();
-            foreach (JsonValue node in raw["resources"].Items)
+            foreach (JsonValue node in mainlandMigration ? JsonValue.Array().Items : raw["resources"].Items)
             {
                 if (resources.Count >= MaxResourceNodes) break;
                 string id = node["id"].AsString();

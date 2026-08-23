@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Isoperia.Core.Components;
+using Isoperia.Core.World;
 
 namespace Isoperia.Core.State
 {
@@ -127,8 +128,9 @@ namespace Isoperia.Core.State
         ///
         /// 1.1.0 — mastery XP moved off the OSRS skill curve onto its own
         ///         triangular curve at 1 XP per unit (was 4).
+        /// 2.0.0 — the 42x42 prototype island became the 126x126 mainland.
         /// </summary>
-        public const string SaveVersion = "1.1.0";
+        public const string SaveVersion = "2.0.0";
 
         /// <summary>
         /// A new hero opens in clear mid-morning light. The day curve ramps
@@ -182,8 +184,8 @@ namespace Isoperia.Core.State
 
         public static GameState CreateFresh(
             string name = DefaultHeroName,
-            int startX = 10,
-            int startY = 10,
+            int startX = Grid.TownCenter,
+            int startY = Grid.TownCenter,
             IItemCatalog catalog = null,
             long nowMs = 0)
         {

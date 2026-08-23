@@ -14,12 +14,16 @@ namespace Isoperia.Core.World
     /// </summary>
     public sealed class Grid : IGridLike
     {
-        /// <summary>Chunk edge length. A 42x42 map yields 7x7 chunks, i.e. four
-        /// concentric bands: town, settlement, wilderness, deep wilds.</summary>
-        public const int GridChunk = 6;
+        /// <summary>
+        /// Mainland region edge. A 126x126 world keeps the established 7x7
+        /// region topology while giving every district 18x18 tiles to breathe.
+        /// </summary>
+        public const int GridChunk = 18;
 
-        /// <summary>Production world size.</summary>
-        public const int WorldSize = 42;
+        /// <summary>Authoritative mainland dimension.</summary>
+        public const int WorldSize = 126;
+        public const int LegacyWorldSize = 42;
+        public const int TownCenter = WorldSize / 2;
 
         public int Width { get; }
         public int Height { get; }

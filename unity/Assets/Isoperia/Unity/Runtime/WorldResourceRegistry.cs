@@ -116,9 +116,11 @@ namespace Isoperia.Unity
             Shuffle(rocks, 5279);
             Shuffle(fish, 6173);
 
-            AddCandidates(trees, 85, "TREE");
-            AddCandidates(rocks, 55, "ROCK");
-            AddCandidates(fish, 14, "WATER");
+            // Preserve the prototype's rough node density across the nine-times
+            // larger mainland without allocating one node per tile.
+            AddCandidates(trees, 765, "TREE");
+            AddCandidates(rocks, 495, "ROCK");
+            AddCandidates(fish, 126, "WATER");
         }
 
         private void AddCandidates(List<Candidate> candidates, int cap, string type)

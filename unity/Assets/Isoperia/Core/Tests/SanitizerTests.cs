@@ -23,8 +23,15 @@ namespace Isoperia.Core.Tests
     {
         private const long Now = 1_787_000_000_000;
 
-        private static SanitizeResult San(string json) =>
-            Sanitizer.Sanitize(JsonValue.Parse(json), Now);
+        private static SanitizeResult San(string json)
+        {
+            JsonValue raw = JsonValue.Parse(json);
+            // Most sanitizer cases describe the current save schema. Explicitly
+            // versioned fixtures exercise migrations independently.
+            if (raw.Kind == JsonKind.Object && raw["version"].IsNull)
+                raw.Set("version", JsonValue.String(GameState.SaveVersion));
+            return Sanitizer.Sanitize(raw, Now);
+        }
 
         // ---- rejection -------------------------------------------------------
 
@@ -57,8 +64,8 @@ namespace Isoperia.Core.Tests
 
             Assert.IsTrue(r.Ok, "a save with an empty player object should still load");
             Assert.AreEqual(GameState.DefaultHeroName, r.State["player"]["name"].AsString());
-            Assert.AreEqual(10, r.State["player"]["position"]["x"].AsNumber(), "default spawn x");
-            Assert.AreEqual(10, r.State["player"]["position"]["y"].AsNumber(), "default spawn y");
+            Assert.AreEqual(63, r.State["player"]["position"]["x"].AsNumber(), "default spawn x");
+            Assert.AreEqual(63, r.State["player"]["position"]["y"].AsNumber(), "default spawn y");
             Assert.AreEqual(100, r.State["player"]["stats"]["maxHp"].AsNumber());
             Assert.AreEqual(100, r.State["player"]["stats"]["hp"].AsNumber());
             Assert.AreEqual(GameState.ResolveMax, r.State["player"]["resolve"].AsNumber());
@@ -88,6 +95,31 @@ namespace Isoperia.Core.Tests
             Assert.IsTrue(Sanitizer.NeedsMasteryRescale("1.0.0"));
             Assert.IsFalse(Sanitizer.NeedsMasteryRescale("1.1.0"));
             Assert.IsFalse(Sanitizer.NeedsMasteryRescale("1.2.0"));
+        }
+
+        [Test]
+        public void PrototypeIslandSaveMigratesProgressToSafeMainlandState()
+        {
+            SanitizeResult r = San(
+                "{\"version\":\"1.1.0\",\"player\":{\"name\":\"Wren\",\"position\":{\"x\":41,\"y\":0}," +
+                "\"inventory\":[{\"id\":\"coins\",\"amount\":55}],\"journal\":[\"q_intro\"]," +
+                "\"clue\":{\"tier\":\"simple\",\"sites\":[{\"x\":4,\"y\":4}]}} ," +
+                "\"town\":{\"buildings\":[{\"id\":\"camp\",\"type\":\"CAMPFIRE\",\"x\":20,\"y\":22}]}," +
+                "\"resources\":[{\"id\":\"TREE_20_21\",\"remaining\":0,\"respawnAt\":99}]," +
+                "\"map\":{\"discovered\":[\"old_poi\"],\"fastTravel\":true,\"explored\":[1]}}");
+
+            Assert.IsTrue(r.Ok);
+            Assert.AreEqual(GameState.SaveVersion, r.State["version"].AsString());
+            Assert.AreEqual(63, r.State["player"]["position"]["x"].AsNumber());
+            Assert.AreEqual(63, r.State["player"]["position"]["y"].AsNumber());
+            Assert.AreEqual(55, r.State["player"]["inventory"][0]["amount"].AsNumber());
+            Assert.AreEqual("q_intro", r.State["player"]["journal"][0].AsString());
+            Assert.IsTrue(r.State["player"]["clue"].IsNull, "old clue coordinates are regenerated");
+            Assert.AreEqual(1, r.State["town"]["buildings"].Count);
+            Assert.GreaterOrEqual(r.State["town"]["buildings"][0]["x"].AsNumber(), 55);
+            Assert.AreEqual(0, r.State["resources"].Count, "old node ids are regenerated");
+            Assert.AreEqual(0, r.State["map"]["discovered"].Count);
+            Assert.IsFalse(r.State["map"]["fastTravel"].AsBool());
         }
 
         /// <summary>
@@ -243,7 +275,7 @@ namespace Isoperia.Core.Tests
         {
             SanitizeResult r = San(
                 "{\"player\":{\"clue\":{\"tier\":\"hard\",\"seed\":1,\"step\":0," +
-                "\"sites\":[{\"x\":1,\"y\":1},{\"x\":99,\"y\":5},{\"x\":5,\"y\":99}]}}}");
+                "\"sites\":[{\"x\":1,\"y\":1},{\"x\":126,\"y\":5},{\"x\":5,\"y\":126}]}}}");
 
             Assert.AreEqual(1, r.State["player"]["clue"]["sites"].Count);
         }
@@ -253,7 +285,7 @@ namespace Isoperia.Core.Tests
         {
             SanitizeResult r = San(
                 "{\"player\":{\"clue\":{\"tier\":\"simple\",\"seed\":1,\"step\":0," +
-                "\"sites\":[{\"x\":99,\"y\":99}]}}}");
+                "\"sites\":[{\"x\":126,\"y\":126}]}}}");
 
             Assert.IsTrue(r.State["player"]["clue"].IsNull, "an unfinishable hunt must be cleared");
         }
@@ -350,7 +382,7 @@ namespace Isoperia.Core.Tests
             SanitizeResult r = San(
                 "{\"player\":{},\"resources\":[" +
                 "{\"id\":\"TREE_3_4\",\"remaining\":2,\"respawnAt\":1234}," +
-                "{\"id\":\"TREE_99_4\",\"remaining\":2,\"respawnAt\":1234}," +
+                "{\"id\":\"TREE_126_4\",\"remaining\":2,\"respawnAt\":1234}," +
                 "{\"id\":\"MONSTER_3_4\",\"remaining\":2,\"respawnAt\":1234}," +
                 "{\"id\":\"TREE_3_4\",\"remaining\":9,\"respawnAt\":1234}]}");
 

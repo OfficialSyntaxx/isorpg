@@ -1,5 +1,16 @@
 # Isoperia — Update Log
 
+## 2026-08 · Mainland M0 — 126×126 authoritative world migration
+
+The prototype island is now an authoritative 126×126 mainland with 18×18
+regions in the established seven-by-seven topology. Save schema 2.0 preserves
+hero progression, inventory, journal and settings while migrating old players
+to Hearthvale, remapping town buildings into its safe build area, and
+regenerating incompatible old resource, clue, and map-discovery coordinates.
+
+Validation: Unity EditMode Test Runner **206/206 passed**, including the new
+prototype-island migration fixture and mainland generation invariants.
+
 ## 2026-08 · 3D Phase I — owned SFX and release hardening
 
 Seven compact, already-owned interaction clips are now imported into Unity:
