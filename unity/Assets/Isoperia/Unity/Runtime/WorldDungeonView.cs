@@ -33,6 +33,7 @@ namespace Isoperia.Unity
 
         private void CreatePool(Vector3 point)
         {
+            point = Grounded(point);
             GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             ring.name = "CinderHollow_LanternPool";
             ring.transform.SetParent(transform, false);
@@ -52,7 +53,7 @@ namespace Isoperia.Unity
 
         private void CreateEntrance()
         {
-            Vector3 entrance = new Vector3(113.5f, .9f, 69.5f);
+            Vector3 entrance = Grounded(new Vector3(113.5f, 0f, 69.5f));
             CreateRock("CinderHollow_EntranceLeft", entrance + Vector3.left * 1.2f, new Vector3(.9f, 1.5f, .7f));
             CreateRock("CinderHollow_EntranceRight", entrance + Vector3.right * 1.2f, new Vector3(.9f, 1.5f, .7f));
             GameObject lintel = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -67,7 +68,15 @@ namespace Isoperia.Unity
         private void CreateRouteMarkers()
         {
             Vector3[] rocks = { new Vector3(76.4f, .45f, 58.2f), new Vector3(85.8f, .45f, 58.6f), new Vector3(94.1f, .45f, 62.4f), new Vector3(103.1f, .45f, 66.0f), new Vector3(111.6f, .45f, 70.8f) };
-            for (int i = 0; i < rocks.Length; i++) CreateRock("CinderHollow_Basalt_" + i, rocks[i], new Vector3(.75f, .9f + (i % 2) * .25f, .62f));
+            for (int i = 0; i < rocks.Length; i++) CreateRock("CinderHollow_Basalt_" + i, Grounded(rocks[i]), new Vector3(.75f, .9f + (i % 2) * .25f, .62f));
+        }
+
+        private static Vector3 Grounded(Vector3 point)
+        {
+            var grid = WorldRuntime.Instance == null ? new Isoperia.Core.World.Grid() : WorldRuntime.Instance.Grid;
+            var tile = grid.At(Mathf.FloorToInt(point.x), Mathf.FloorToInt(point.z));
+            point.y = OpenWorldTerrainView.SurfaceHeight(tile, point.x, point.z);
+            return point;
         }
 
         private void CreateRock(string name, Vector3 position, Vector3 scale)

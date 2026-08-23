@@ -74,9 +74,7 @@ namespace Isoperia.Unity
                     if (dx * dx + dz * dz > VisibleRadius * VisibleRadius) continue;
 
                     Tile tile = grid.At(node.X, node.Y);
-                    float ground = tile.TerrainType == TerrainType.Water
-                        ? 0.02f
-                        : 0.04f + (float)tile.Elevation;
+                    float ground = OpenWorldTerrainView.SurfaceHeight(tile, node.X + .5f, node.Y + .5f);
                     float offsetX = 0.3f + ((tile.Seed % 31) / 100f);
                     float offsetZ = 0.3f + (((tile.Seed / 31) % 31) / 100f);
                     var basePosition = new Vector3(tile.X + offsetX, ground, tile.Y + offsetZ);

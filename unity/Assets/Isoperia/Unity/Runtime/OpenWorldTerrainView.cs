@@ -23,7 +23,7 @@ namespace Isoperia.Unity
             for (int x = 0; x <= width; x++)
             {
                 Tile tile = grid.At(Mathf.Min(x, width - 1), Mathf.Min(z, height - 1));
-                float heightValue = tile.TerrainType == TerrainType.Water ? -.12f : .04f + (float)tile.Elevation;
+                float heightValue = SurfaceHeight(tile, x, z);
                 vertices.Add(new Vector3(x, heightValue, z));
                 colors.Add(ColorFor(tile.Biome, tile.TerrainType));
             }
@@ -67,6 +67,49 @@ namespace Isoperia.Unity
             if (biome == Biome.Snow) return 2;
             if (biome == Biome.Swamp) return 3;
             return 0;
+        }
+
+        /// <summary>
+        /// Presentation terrain is deliberately broader than the Core tile
+        /// elevation. It gives the mainland readable ridges and basins while
+        /// keeping Core movement, resources and save coordinates tile-based.
+        /// All visible world objects sample this surface at their placement.
+        /// </summary>
+        public static float SurfaceHeight(Tile tile, float worldX, float worldZ)
+        {
+            if (tile == null || tile.TerrainType == TerrainType.Water) return -.12f;
+
+            float baseHeight = .04f + (float)tile.Elevation;
+            float meadow = SmoothPlateau(worldX, 48f, 78f, 4f) * SmoothPlateau(worldZ, 48f, 78f, 4f);
+            float rolling = Mathf.Sin(worldX * .105f + worldZ * .035f) * .075f
+                          + Mathf.Cos(worldZ * .12f - worldX * .025f) * .05f;
+
+            float height = baseHeight + rolling;
+            if (tile.Biome == Biome.Forest)
+                height += .10f + Mathf.Sin(worldX * .18f) * Mathf.Cos(worldZ * .14f) * .09f;
+            else if (tile.Biome == Biome.Snow)
+            {
+                float highland = SmoothBand(worldX, 72f, 106f) * SmoothBand(54f - worldZ, 0f, 24f);
+                height += .14f + highland * (.62f + Mathf.Sin(worldX * .16f) * .10f);
+            }
+            else if (tile.Biome == Biome.Swamp)
+                height -= .035f;
+
+            // The settlement remains level enough for authored streets,
+            // building colliders and a dependable spawn/return point.
+            return Mathf.Lerp(height, .18f, meadow);
+        }
+
+        private static float SmoothBand(float value, float min, float max)
+        {
+            return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(min, max, value));
+        }
+
+        private static float SmoothPlateau(float value, float min, float max, float feather)
+        {
+            float enter = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(min, min + feather, value));
+            float leave = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(max - feather, max, value));
+            return enter * leave;
         }
 
         private void OnDestroy()

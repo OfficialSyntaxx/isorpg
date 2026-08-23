@@ -57,7 +57,7 @@ namespace Isoperia.Unity
         {
             CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
             var tile = grid.At(x, z);
-            float ground = tile == null ? .04f : .04f + (float)tile.Elevation;
+            float ground = OpenWorldTerrainView.SurfaceHeight(tile, x + .5f, z + .5f);
             return new Vector3(x + .5f, ground, z + .5f);
         }
 

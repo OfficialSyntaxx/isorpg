@@ -41,7 +41,7 @@ namespace Isoperia.Unity
         private void Create(WorldEnemyNode enemy)
         {
             Tile tile = WorldRuntime.Instance.Grid.At(enemy.X, enemy.Y);
-            float ground = .04f + (float)tile.Elevation;
+            float ground = OpenWorldTerrainView.SurfaceHeight(tile, enemy.X + .5f, enemy.Y + .5f);
             GameObject root = CreateBody(enemy);
             root.name = "Enemy_" + enemy.Name.Replace(" ", "");
             root.transform.SetParent(transform, false);

@@ -43,8 +43,8 @@ passed here: neither can be truthfully performed from this workspace alone.
 
 ## Follow-up build
 
-On 2026-08-23 the hero, wolf and ogre-inclusive candidate completed the same
-headless WebGL build path with exit code 0. Its recorded output is 60.77 MB
-with a 320 MB initial WebGL memory setting. Visual Play Mode confirmation is
-pending only on the currently locked local Mac session; this is not a
-substitute for the physical-device sweep above.
+On 2026-08-23 the terrain-relief, hero, wolf and ogre-inclusive candidate
+completed the same headless WebGL build path with exit code 0. Its recorded
+output is 68.39 MB with a 320 MB initial WebGL memory setting. Visual Play Mode
+confirmation is pending only on the currently locked local Mac session; this is
+not a substitute for the physical-device sweep above.

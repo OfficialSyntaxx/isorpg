@@ -175,7 +175,7 @@ namespace Isoperia.Unity
             if (player == null || position == null) return;
 
             Tile tile = grid.At(position.Gx, position.Gy);
-            float elevation = tile == null ? 0.04f : (float)tile.Elevation + 0.04f;
+            float elevation = OpenWorldTerrainView.SurfaceHeight(tile, (float)position.Wx + .5f, (float)position.Wz + .5f);
             player.position = new Vector3((float)position.Wx + 0.5f, elevation, (float)position.Wz + 0.5f);
             if (movement != null && movement.IsMoving)
             {
