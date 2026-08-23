@@ -20,6 +20,7 @@ namespace Isoperia.Unity
         private const string HudName = "IsoperiaHUD";
         private const string DocumentResource = "UI/IsoperiaHUD";
         private const string StyleResource = "UI/IsoperiaHUD";
+        private const string ThemeResource = "UI/IsoperiaRuntimeTheme";
 
         private UIDocument document;
         private PanelSettings panelSettings;
@@ -58,6 +59,13 @@ namespace Isoperia.Unity
             panelSettings.referenceResolution = new Vector2Int(1080, 1920);
             panelSettings.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
             panelSettings.match = 0.5f;
+            panelSettings.themeStyleSheet = Resources.Load<ThemeStyleSheet>(ThemeResource);
+            if (panelSettings.themeStyleSheet == null)
+            {
+                Debug.LogError(
+                    "Isoperia HUD cannot find its runtime UI theme. " +
+                    "Run Isoperia/Create runtime UI theme before entering Play Mode.", this);
+            }
             document.panelSettings = panelSettings;
         }
 

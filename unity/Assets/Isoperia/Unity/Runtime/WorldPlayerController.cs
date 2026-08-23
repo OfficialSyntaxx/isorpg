@@ -181,7 +181,10 @@ namespace Isoperia.Unity
         private Transform FindPlayer()
         {
             Transform child = transform.Find("Hero_Prototype");
-            return child != null ? child : GameObject.Find("Hero_Prototype")?.transform;
+            if (child != null && child.gameObject.activeInHierarchy) return child;
+
+            GameObject existing = GameObject.Find(WorldPlayerAvatarView.AvatarName);
+            return existing != null ? existing.transform : WorldPlayerAvatarView.Create();
         }
 
         private void OnDestroy()

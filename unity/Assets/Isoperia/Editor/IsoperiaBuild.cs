@@ -41,6 +41,7 @@ namespace Isoperia.EditorTools
         private const string MaterialsDir = "Assets/Isoperia/Materials";
         private const string PipelineAsset = SettingsDir + "/IsoperiaURP.asset";
         private const string RendererData = SettingsDir + "/IsoperiaURP_Renderer.asset";
+        private const string RuntimeThemeAsset = "Assets/Isoperia/Resources/UI/IsoperiaRuntimeTheme.asset";
         private const string UrpLitShader = "Universal Render Pipeline/Lit";
         private const string TemplateName = "PROJECT:IsoperiaPWA";
 
@@ -121,6 +122,24 @@ namespace Isoperia.EditorTools
             Debug.Log(
                 "[Isoperia] WebGL configured: Brotli, exceptions=None, stripping=High, " +
                 "heap=320MB, Linear, WebGL2 (GLES3), ASTC, URP, template=" + TemplateName);
+        }
+
+        /// <summary>
+        /// Creates the minimal UI Toolkit theme required by the runtime-created
+        /// HUD PanelSettings. The HUD's authored USS supplies the visual language;
+        /// this asset supplies the non-null theme contract Unity requires before
+        /// it will render a panel reliably on device.
+        /// </summary>
+        [MenuItem("Isoperia/Create runtime UI theme")]
+        public static void EnsureRuntimeUiTheme()
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.ThemeStyleSheet>(RuntimeThemeAsset);
+            if (theme != null) return;
+
+            theme = ScriptableObject.CreateInstance<UnityEngine.UIElements.ThemeStyleSheet>();
+            AssetDatabase.CreateAsset(theme, RuntimeThemeAsset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Isoperia] runtime UI theme created at " + RuntimeThemeAsset);
         }
 
         /// <summary>
@@ -467,6 +486,7 @@ namespace Isoperia.EditorTools
         public static void BuildWebGL()
         {
             ConfigureWebGL();
+            EnsureRuntimeUiTheme();
 
             if (!File.Exists(BootstrapScene)) CreateBootstrapScene();
 

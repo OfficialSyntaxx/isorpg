@@ -183,6 +183,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Frost_Imp_Prototype
       objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 1d777c697adf74e21a546d1f512f261d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -822,6 +826,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Villager_Prototype
       objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 50415184884424abdb7db9fd8443585e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1008,6 +1016,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Forest_Ogre_Prototype
       objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 8ee359dc2f4a840acab1629c42ef3896, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1029,6 +1041,10 @@ PrefabInstance:
     - target: {fileID: -8098169881513260187, guid: 7edf0f4dd1d124bf7b02a8da39b0c565, type: 3}
       propertyPath: m_Name
       value: Dire_Wolf_Prototype
+      objectReference: {fileID: 0}
+    - target: {fileID: -8098169881513260187, guid: 7edf0f4dd1d124bf7b02a8da39b0c565, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3447742079981357586, guid: 7edf0f4dd1d124bf7b02a8da39b0c565, type: 3}
       propertyPath: m_LocalScale.x
@@ -1636,6 +1652,10 @@ PrefabInstance:
     - target: {fileID: 6635245195314443262, guid: e958f887477064c62866f6c2ebe630be, type: 3}
       propertyPath: m_Name
       value: Hero_Prototype
+      objectReference: {fileID: 0}
+    - target: {fileID: 6635245195314443262, guid: e958f887477064c62866f6c2ebe630be, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

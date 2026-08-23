@@ -1,5 +1,24 @@
 # Isoperia — Update Log
 
+## 2026-08 · Phase 0 — Clean playable-world baseline
+
+The Bootstrap scene no longer ships the oversized legacy GLB prototypes that
+obscured the isometric world in Play Mode. The imported hero GLB is also held
+out of runtime until its Humanoid import/animation pass; a small code-owned
+low-poly avatar now carries the Core player transform, so tap-to-move remains
+functional while the world stays readable.
+
+The runtime HUD now loads a project-owned UI Toolkit theme asset. This removes
+the `PanelSettings` theme error and restores the full status/navigation shell
+reliably in the Editor and WebGL player. The build pipeline creates the theme
+asset on a clean clone before it builds, so it is not an editor-only setup step.
+
+Validation: visual Play Mode smoke test with the full town/resource world and
+HUD visible, direct runtime C# compilation without errors (only the known stale
+response-file duplicate-source warnings), and Unity EditMode suite **205/205
+passing**. The next increment is the combat-expedition loop: enemy placement,
+targeting, tick-driven attacks, drops, and death/return flow.
+
 ## 2026-08 · Playable settlement vertical slice
 
 The Unity build now has a complete early-game test loop rather than disconnected
