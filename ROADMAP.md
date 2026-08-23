@@ -1,6 +1,35 @@
 # Isoperia — Roadmap
 
-## Unity roadmap — active
+## 3D open-world roadmap — active
+
+> **Direction change (2026-08-23):** the fixed isometric tile view was a
+> functional prototype only. Isoperia is now targeting an immersive 3D open world
+> with a hybrid third-person/orbit camera, comparable in travel feel to Wizard101
+> and RuneScape. Existing Core rules and saves remain valuable; their tile-bound
+> presentation is being replaced.
+
+### Phase A — 3D traversal foundation
+
+1. Perspective third-person camera with drag/right-stick orbit and scroll/pinch zoom.
+2. Player locomotion, collision, gravity, and camera-relative movement.
+3. Raycast interaction contract for future resource, NPC, enemy, and door targets.
+4. A terrain-scale playable test zone that demonstrates travel rather than tile tapping.
+
+### Phase B — 3D world migration
+
+1. Recompose the settlement, terrain, routes, and landmarks as 3D spaces.
+2. Rebind existing gathering/combat/task state to world-space interactables.
+3. Preserve Core save ownership while removing player-facing grid assumptions.
+
+### Phase C — Open-world content and release
+
+1. Connected biomes and Cinder Hollow as a real traversable 3D dungeon.
+2. Free/licensed environment assets, character animation, lighting, audio, LODs.
+3. WebGL/device validation, onboarding, save recovery, and tester release package.
+
+---
+
+## Legacy Unity roadmap — superseded
 
 > **Current baseline (2026-08-23):** Unity 6 URP has a clean playable isometric
 > settlement with mouse/touch movement, gathering, a town, resource routes, HUD,

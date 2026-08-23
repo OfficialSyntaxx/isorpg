@@ -1,0 +1,35 @@
+using UnityEngine;
+
+namespace Isoperia.Unity
+{
+    /// <summary>Bootstraps the perspective 3D prototype without rewriting the Bootstrap scene.</summary>
+    [DefaultExecutionOrder(-900)]
+    public sealed class OpenWorldExperience : MonoBehaviour
+    {
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void Create()
+        {
+            if (Object.FindAnyObjectByType<OpenWorldExperience>() != null) return;
+            new GameObject(nameof(OpenWorldExperience)).AddComponent<OpenWorldExperience>();
+        }
+
+        private void Awake()
+        {
+            Camera camera = Camera.main;
+            if (camera == null) return;
+            var iso = camera.GetComponent<IsometricCamera>();
+            if (iso != null) iso.enabled = false;
+            var isoInput = camera.GetComponent<IsometricCameraInput>();
+            if (isoInput != null) isoInput.enabled = false;
+
+            WorldPlayerController gridController = Object.FindAnyObjectByType<WorldPlayerController>();
+            if (gridController != null) gridController.enabled = false;
+
+            GameObject player = GameObject.Find(WorldPlayerAvatarView.AvatarName);
+            if (player == null) player = WorldPlayerAvatarView.Create().gameObject;
+            if (player.GetComponent<CharacterController>() == null) player.AddComponent<CharacterController>();
+            if (player.GetComponent<OpenWorldPlayerController>() == null) player.AddComponent<OpenWorldPlayerController>();
+            if (camera.GetComponent<OpenWorldCameraController>() == null) camera.gameObject.AddComponent<OpenWorldCameraController>();
+        }
+    }
+}
