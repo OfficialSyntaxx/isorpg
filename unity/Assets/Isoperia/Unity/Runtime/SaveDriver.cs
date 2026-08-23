@@ -43,6 +43,12 @@ namespace Isoperia.Unity
         public string PendingBuildingType { get; private set; }
         public string GatheringStatus { get; private set; }
 
+        /// <summary>Shows presentation-only world feedback without altering Core game state.</summary>
+        public void ShowStatus(string status)
+        {
+            GatheringStatus = status;
+        }
+
 #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")]
         private static extern void IsoperiaInstallLifecycleHooks(string goName, string method);

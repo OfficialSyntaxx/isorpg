@@ -1,5 +1,18 @@
 # Isoperia — Update Log
 
+## 2026-08 · 3D Phase C.2 — settlement task contacts
+
+The settlement now has three readable 3D quest contacts: Forester Elowen at the
+plaza for logging, Cook Bram at the market for cooking, and Scout Tamsin by the
+farm route for the Giant Rat hunt. Each is a collider-backed world interaction
+target and gives task-specific feedback through the existing HUD status channel;
+the Core task journal, rewards, and save state remain authoritative.
+
+Validation: all three NPCs spawned with colliders, an interaction displayed Cook
+Bram's cooking guidance, Unity Console reported zero errors, EditMode tests
+passed **205/205**, and WebGL build `20260823-123711-584fa552` succeeded
+(59.38 MB).
+
 ## 2026-08 · 3D Phase C.1 — direct world interactions
 
 Visible 3D resource models and enemy silhouettes are now real click targets in

@@ -8,9 +8,12 @@ namespace Isoperia.Unity
     {
         private WorldResourceNode resource;
         private WorldEnemyNode enemy;
+        private string npcName;
+        private string npcHint;
 
         public void SetResource(WorldResourceNode node) => resource = node;
         public void SetEnemy(WorldEnemyNode node) => enemy = node;
+        public void SetNpc(string name, string hint) { npcName = name; npcHint = hint; }
 
         public bool TryInteract(PositionComponent player)
         {
@@ -28,6 +31,12 @@ namespace Isoperia.Unity
                 if (!InRange(player, enemy.X, enemy.Y)) return false;
                 SaveDriver.Instance?.Gathering?.Interrupt();
                 SaveDriver.Instance?.Combat?.TryTarget(enemy, player);
+                return true;
+            }
+
+            if (!string.IsNullOrEmpty(npcName))
+            {
+                SaveDriver.Instance?.ShowStatus(npcName + " · " + npcHint);
                 return true;
             }
 
