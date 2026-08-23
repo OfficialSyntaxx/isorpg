@@ -40,6 +40,12 @@ tile's existing seed. The scatter is packed into one combined mesh with three
 shared materials, and `docs/ART_BIBLE.md` records the mobile/WebGL palette,
 material, triangle, and asset-pipeline rules for replacing prototype geometry.
 
+The Bootstrap Sun, sky color, and ambient light now follow the saved Core game
+clock. Unity advances that clock on the existing simulation tick and ports the
+web dawn/day/dusk curve (06:30–19:30), so the environment's lighting is
+deterministic, persists with the save, and does not introduce a second time
+authority.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).

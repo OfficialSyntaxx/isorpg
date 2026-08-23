@@ -95,14 +95,9 @@ namespace Isoperia.Unity
 
         private void Start()
         {
-            // Autosave rides the simulation tick rather than a wall-clock timer,
-            // so it cannot fire while the game is paused mid-tick.
-            //
-            // Loudly, not with a null-conditional. A missing GameLoop means
-            // autosave never registers and the only saves that ever happen are
-            // the ones on page-hide — which looks like the game working right up
-            // until a session ends in a way that does not fire those, and then
-            // silently loses hours. There is no safe way to fail quietly here.
+            // Both clock advancement and autosave ride the simulation tick rather
+            // than a wall-clock timer. Register the clock first so a save made on
+            // this tick contains the newly advanced in-game minute.
             if (GameLoop.Instance == null)
             {
                 Debug.LogError(
@@ -112,7 +107,17 @@ namespace Isoperia.Unity
                 return;
             }
 
+            GameLoop.Instance.Tick.OnTick(AdvanceClock);
             GameLoop.Instance.Tick.OnTick(Save.OnTick);
+        }
+
+        private void AdvanceClock(long _)
+        {
+            State.ClockMinute++;
+            if (State.ClockMinute < 1440) return;
+
+            State.ClockMinute = 0;
+            State.ClockDay++;
         }
 
         /// <summary>Epoch milliseconds. The single source of "now" for saves.</summary>
@@ -145,6 +150,12 @@ namespace Isoperia.Unity
 
         private void OnDestroy()
         {
+            if (GameLoop.Instance != null && GameLoop.Instance.Tick != null)
+            {
+                GameLoop.Instance.Tick.RemoveHandler(AdvanceClock);
+                GameLoop.Instance.Tick.RemoveHandler(Save.OnTick);
+            }
+
             if (Instance == this) Instance = null;
         }
     }

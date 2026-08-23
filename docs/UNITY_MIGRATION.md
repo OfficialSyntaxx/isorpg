@@ -597,10 +597,11 @@ terrain mesh, and the first Phase 3 input slice: tap-to-move through Core A*, dr
 pinch-zoom, and mouse-wheel zoom. The first UI Toolkit shell is now present with
 status, movement guidance, and navigation buttons. Inventory, Map, Quests, and
 Settings are now Core-backed; Map, terrain rendering, and movement share one runtime
-world-state bridge. Deterministic combined-mesh tree/rock scatter and the initial
-art bible are now present; the next implementation slice is the remaining gameplay
-panels, then Phase 5–7 art replacement, animation, audio, and polish work. Runtime
-Play Mode/device
+world-state bridge. Deterministic combined-mesh tree/rock scatter, the initial
+art bible, and a Core-clock-driven Sun/sky/ambient-light day-night presentation
+are now present. The next implementation slice is actual world props with harvest
+state, then the remaining gameplay panels and Phase 5–7 art replacement,
+animation, audio, and polish work. Runtime Play Mode/device
 validation still requires a responsive Unity Editor connection and a target-device pass.
 
 Nothing is deleted or replaced until Phase 9.
