@@ -122,6 +122,12 @@ namespace Isoperia.Unity
             int goalY = Mathf.FloorToInt(world.z);
             if (goalX < 0 || goalY < 0 || goalX >= grid.Width || goalY >= grid.Height) return;
 
+            if (SaveDriver.Instance != null && !string.IsNullOrEmpty(SaveDriver.Instance.PendingBuildingType))
+            {
+                SaveDriver.Instance.TryPlaceBuilding(goalX, goalY);
+                return;
+            }
+
             SaveDriver.Instance?.Gathering?.Interrupt();
             pendingNode = SaveDriver.Instance?.Resources?.NodeAt(goalX, goalY);
             if (pendingNode != null && !pendingNode.Depleted)

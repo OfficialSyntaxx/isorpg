@@ -36,6 +36,8 @@ namespace Isoperia.Unity
         public WorldResourceRegistry Resources { get; private set; }
         public SkillSystem Gathering { get; private set; }
         public CraftingSystem Crafting { get; private set; }
+        public BuildingSystem Buildings { get; private set; }
+        public string PendingBuildingType { get; private set; }
         public string GatheringStatus { get; private set; }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -66,6 +68,8 @@ namespace Isoperia.Unity
             LoadResult result = Save.Load();
             State.Player.Inventory.SetCatalog(catalog);
             GrantStarterItems(result.RecoveredFrom);
+            Buildings = new BuildingSystem(WorldRuntime.Instance.Grid, State, Content);
+            Buildings.Rehydrate();
             Resources = new WorldResourceRegistry(WorldRuntime.Instance.Grid, State, Content, NowMs);
             Gathering = new SkillSystem(
                 State,
@@ -145,6 +149,25 @@ namespace Isoperia.Unity
             foreach (TownBuilding building in State.Town.Buildings)
                 if (building.Type == type) return true;
             return false;
+        }
+
+        public BuildDenyReason BeginBuildingPlacement(string type)
+        {
+            BuildDenyReason reason = Buildings.CanPlace(type, -1, -1);
+            // Tile validation is intentionally deferred until the world tap; all
+            // other gates are checked here so the UI can reject impossible modes.
+            if (reason == BuildDenyReason.TileInvalid) reason = BuildDenyReason.None;
+            PendingBuildingType = reason == BuildDenyReason.None ? type : null;
+            return reason;
+        }
+
+        public bool TryPlaceBuilding(int x, int y)
+        {
+            if (string.IsNullOrEmpty(PendingBuildingType)) return false;
+            bool placed = Buildings.TryPlace(PendingBuildingType, x, y, out _, out BuildDenyReason reason);
+            GatheringStatus = placed ? "Building placed" : "Build: " + reason;
+            if (placed || reason != BuildDenyReason.TileInvalid) PendingBuildingType = null;
+            return true;
         }
 
         private void OnGatheringStarted(IResourceNode node)

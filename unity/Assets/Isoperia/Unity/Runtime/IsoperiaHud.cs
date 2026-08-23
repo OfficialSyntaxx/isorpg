@@ -30,6 +30,7 @@ namespace Isoperia.Unity
         private Button inventoryButton;
         private Button skillsButton;
         private Button craftButton;
+        private Button buildButton;
         private Button mapButton;
         private Button questButton;
         private Button settingsButton;
@@ -79,6 +80,7 @@ namespace Isoperia.Unity
             inventoryButton = root.Q<Button>("inventory-button");
             skillsButton = root.Q<Button>("skills-button");
             craftButton = root.Q<Button>("craft-button");
+            buildButton = root.Q<Button>("build-button");
             mapButton = root.Q<Button>("map-button");
             questButton = root.Q<Button>("quest-button");
             settingsButton = root.Q<Button>("settings-button");
@@ -89,6 +91,7 @@ namespace Isoperia.Unity
             inventoryButton.clicked += OpenInventory;
             skillsButton.clicked += OpenSkills;
             craftButton.clicked += OpenCraft;
+            buildButton.clicked += OpenBuild;
             mapButton.clicked += OpenMap;
             questButton.clicked += OpenQuests;
             settingsButton.clicked += OpenSettings;
@@ -223,6 +226,24 @@ namespace Isoperia.Unity
                 string label = recipe["name"].AsString("Recipe") + " → " + output;
                 if (reason.HasValue) label += " · " + reason.Value;
                 AddSettingButton(label, () => { save.Gathering?.Interrupt(); save.Crafting.Start(recipe); OpenCraft(); });
+            }
+        }
+
+        private void OpenBuild()
+        {
+            OpenPanel("Build");
+            SaveDriver save = SaveDriver.Instance;
+            if (save == null || save.Buildings == null) { AddPanelMessage("Building is loading."); return; }
+            AddPanelMessage("Choose a structure, then tap an open town or settlement tile.");
+            foreach (var pair in save.Content.Buildings.Members)
+            {
+                string type = pair.Key;
+                JsonValue def = pair.Value;
+                BuildDenyReason reason = save.Buildings.CanPlace(type, -1, -1);
+                if (reason == BuildDenyReason.TileInvalid) reason = BuildDenyReason.None;
+                string label = def["icon"].AsString("▣") + " " + def["name"].AsString(type);
+                if (reason != BuildDenyReason.None) label += " · " + reason;
+                AddSettingButton(label, () => { save.BeginBuildingPlacement(type); ClosePanel(); });
             }
         }
 
@@ -371,6 +392,7 @@ namespace Isoperia.Unity
             if (inventoryButton != null) inventoryButton.clicked -= OpenInventory;
             if (skillsButton != null) skillsButton.clicked -= OpenSkills;
             if (craftButton != null) craftButton.clicked -= OpenCraft;
+            if (buildButton != null) buildButton.clicked -= OpenBuild;
             if (mapButton != null) mapButton.clicked -= OpenMap;
             if (questButton != null) questButton.clicked -= OpenQuests;
             if (settingsButton != null) settingsButton.clicked -= OpenSettings;
