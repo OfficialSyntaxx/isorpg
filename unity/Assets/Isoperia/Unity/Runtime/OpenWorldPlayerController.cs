@@ -11,6 +11,8 @@ namespace Isoperia.Unity
         private Transform cameraTransform;
         private float verticalSpeed;
 
+        public bool IsMoving { get; private set; }
+
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
@@ -31,7 +33,8 @@ namespace Isoperia.Unity
             Vector3 forward = Vector3.ProjectOnPlane(cameraTransform.forward, Vector3.up).normalized;
             Vector3 right = Vector3.ProjectOnPlane(cameraTransform.right, Vector3.up).normalized;
             Vector3 move = (forward * input.y + right * input.x) * 5f;
-            if (move.sqrMagnitude > .01f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), 14f * Time.deltaTime);
+            IsMoving = move.sqrMagnitude > .01f;
+            if (IsMoving) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), 14f * Time.deltaTime);
             verticalSpeed = controller.isGrounded ? -.5f : verticalSpeed + Physics.gravity.y * Time.deltaTime;
             controller.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
             if (SaveDriver.Instance?.State?.Player?.Pos != null)
@@ -41,6 +44,11 @@ namespace Isoperia.Unity
                 pos.Gy = Mathf.Clamp(Mathf.FloorToInt(transform.position.z), 0, 41);
                 pos.Wx = transform.position.x; pos.Wz = transform.position.z;
             }
+        }
+
+        private void OnDisable()
+        {
+            IsMoving = false;
         }
     }
 }

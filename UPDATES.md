@@ -1,5 +1,19 @@
 # Isoperia — Update Log
 
+## 2026-08 · 3D Phase G — action readability foundation
+
+The playable fallback avatar now has a restrained locomotion bob/tilt driven by
+the existing third-person controller. Successful resource, enemy, and NPC
+interactions now trigger a short world-space confirmation ring: green for
+gathering, red for combat, and gold for NPC contact. This is presentation only:
+the existing Core gathering, combat, task, and save paths remain the sole
+authorities for outcomes.
+
+Validation: a Play Mode smoke invoked an NPC through `WorldInteractionTarget`,
+confirmed the existing interaction returned success, and confirmed the feedback
+view appeared; EditMode tests passed **205/205**. Missing or disabled imported
+models continue to fall back safely to the code-owned avatar.
+
 ## 2026-08 · 3D Phase F — world readability pass
 
 The hybrid 3D world now has a matching placement contract rather than carrying

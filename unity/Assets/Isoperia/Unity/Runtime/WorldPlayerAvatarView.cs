@@ -13,6 +13,9 @@ namespace Isoperia.Unity
 
         private Material tunic;
         private Material skin;
+        private Transform tunicTransform;
+        private Transform headTransform;
+        private OpenWorldPlayerController playerController;
 
         public static Transform Create()
         {
@@ -26,13 +29,28 @@ namespace Isoperia.Unity
             tunic = CreateMaterial(new Color(.18f, .33f, .58f, 1f));
             skin = CreateMaterial(new Color(.78f, .52f, .36f, 1f));
 
-            CreatePart(PrimitiveType.Capsule, "Tunic", new Vector3(0f, .47f, 0f),
+            tunicTransform = CreatePart(PrimitiveType.Capsule, "Tunic", new Vector3(0f, .47f, 0f),
                 new Vector3(.28f, .45f, .28f), tunic);
-            CreatePart(PrimitiveType.Sphere, "Head", new Vector3(0f, .97f, 0f),
+            headTransform = CreatePart(PrimitiveType.Sphere, "Head", new Vector3(0f, .97f, 0f),
                 new Vector3(.30f, .30f, .30f), skin);
+            playerController = GetComponent<OpenWorldPlayerController>();
         }
 
-        private void CreatePart(PrimitiveType type, string partName, Vector3 localPosition,
+        private void Update()
+        {
+            if (playerController == null) playerController = GetComponent<OpenWorldPlayerController>();
+            bool moving = playerController != null && playerController.IsMoving;
+            float cycle = Time.time * (moving ? 11f : 2f);
+            float bob = Mathf.Sin(cycle) * (moving ? .035f : .006f);
+            if (tunicTransform != null)
+            {
+                tunicTransform.localPosition = new Vector3(0f, .47f + bob, 0f);
+                tunicTransform.localRotation = Quaternion.Euler(moving ? Mathf.Sin(cycle) * 5f : 0f, 0f, 0f);
+            }
+            if (headTransform != null) headTransform.localPosition = new Vector3(0f, .97f + bob, 0f);
+        }
+
+        private Transform CreatePart(PrimitiveType type, string partName, Vector3 localPosition,
             Vector3 localScale, Material material)
         {
             GameObject part = GameObject.CreatePrimitive(type);
@@ -42,6 +60,7 @@ namespace Isoperia.Unity
             part.transform.localScale = localScale;
             part.GetComponent<Renderer>().sharedMaterial = material;
             Destroy(part.GetComponent<Collider>());
+            return part.transform;
         }
 
         private static Material CreateMaterial(Color color)
