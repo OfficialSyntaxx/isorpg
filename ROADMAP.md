@@ -27,6 +27,121 @@
 2. Free/licensed environment assets, character animation, lighting, audio, LODs.
 3. WebGL/device validation, onboarding, save recovery, and tester release package.
 
+### Completed checkpoints
+
+- **A — traversal:** perspective third-person/orbit camera, CharacterController
+  movement, and direct 3D raycast interaction are live.
+- **B — terrain:** the Core grid is rendered as one continuous, collidable 3D
+  biome surface while Core remains the authority for terrain and saves.
+- **C.1 — playable route:** settlement NPC contacts, resource/enemy interaction,
+  connected biome landmarks, and the Cinder Hollow light-pool expedition are
+  playable in Bootstrap.
+- **C.2 / E baseline:** a clean-session, development-only five-second diagnostic
+  measured 17.89 ms average / 55.9 FPS with 239 renderers, four lights, and 169
+  colliders. The latest WebGL build succeeded and the EditMode suite passed
+  205/205. This is a baseline, not a performance claim or a substitute for
+  device profiling.
+
+### Phase F — 3D visual identity and world readability
+
+**Goal:** make the existing world look intentionally authored from the hybrid
+camera before expanding its content.
+
+1. Update the art contract from fixed-isometric to hybrid third-person/orbit;
+   define scale, pivot, collider, material, silhouette, and distance rules for
+   every new asset.
+2. Use the already imported CC0 Kenney town kit to replace the most conspicuous
+   primitive settlement/route placeholders with coherent building, road, tree,
+   rock, bridge, and landmark compositions. Keep one visual language across all
+   four biomes; do not bulk-import unreviewed packs.
+3. Give each biome a readable arrival composition and a clear return route:
+   meadow/town warmth, forest canopy/ruin, highland/mining crag, mire/water
+   crossing, and the Cinder Hollow approach. Buildings and functional props
+   must be clustered according to `docs/WORLD_LAYOUT.md`, not scattered merely
+   to fill space.
+4. Record every external asset and license before use. Free/CC0/compatible
+   assets only; prototype geometry stays as a fallback until its replacement
+   passes visual and gameplay review.
+
+**Exit gate:** three representative screenshots (settlement, route, expedition)
+at travel zoom show no floating, intersecting, opaque-path-blocking, or visually
+ambiguous functional object; interaction colliders match visible models; Console
+has zero errors; a five-minute traversal/interact smoke pass, 205/205 EditMode
+tests, a WebGL build, and a diagnostics comparison all pass.
+
+### Phase G — Character motion and action readability
+
+**Goal:** make travel, gathering, combat, and NPC contact feel like actions in a
+3D world rather than state changes with static placeholders.
+
+1. Audit the owned hero, NPC, and enemy models for Unity 6/URP import quality,
+   Humanoid compatibility, triangle/texture budget, and license record. Start
+   with one hero and one shared NPC/enemy path; retain the code avatar fallback.
+2. Add a presentation-only animation state bridge for idle, locomotion, gather,
+   attack, hurt, and defeat. It reads existing Core/Unity state and never decides
+   a combat hit, resource reward, movement result, or save value.
+3. Add restrained, pooled action feedback: selection highlight, gather swing,
+   hit flash/damage cue, defeat/respawn cue, and an interaction prompt that
+   remains readable with orbit/zoom input.
+4. Test interrupted actions, target changes, death/return, reload, and missing
+   asset fallback so the presentation can never strand or desynchronise a player.
+
+**Exit gate:** a fresh save can walk, gather, defeat an early enemy, complete an
+NPC task contact, die/return, reload, and repeat without a visual/state mismatch;
+the fallback avatar works when a model is disabled; Console zero errors; tests,
+WebGL build, screenshots, and diagnostics gate pass.
+
+### Phase H — Cinder Hollow expedition and first guided journey
+
+**Goal:** turn the current readable dungeon approach into a complete,
+returnable early-game trip with a clear reason to travel through the world.
+
+1. Add an explicit town-to-Cinder objective using the existing task/contact
+   authority: accept, travel via visible landmarks, survive the light-pool rule,
+   resolve a compact objective, collect a reward, and return to town.
+2. Make the expedition spatially coherent: visible entry/exit, safe-pool
+   spacing, a combat clearing, resource/landmark placement, and no invisible
+   progression blocker. The hazard remains readable even when the camera orbits.
+3. Add save/reload and safe-failure coverage at every stage of the trip. No new
+   independent dungeon, combat, task, or inventory state may be introduced.
+4. Balance the fresh-save path around a short tester session, documenting the
+   expected route, reward, and recovery behavior.
+
+**Exit gate:** a new tester can complete the journey and return without a guide;
+intentional failure returns safely; reload works in town, on route, and in the
+expedition; screenshots and a recorded smoke script prove the route; Console,
+tests, WebGL, and diagnostics are clean.
+
+### Phase I — sound, device hardening, and external-test readiness
+
+**Goal:** prepare the first genuinely useful external testing build without
+trading stability for polish.
+
+1. Import only owned or clearly licensed free audio. Route music/SFX through an
+   AudioMixer with volume controls and the existing first-tap WebGL unlock; music
+   streams and remains outside the critical first load where practical.
+2. Add low-cost environmental feedback (weather/ambient particles only when
+   measured safe), onboarding/input hints, build ID, feedback instructions, and
+   an accessible pause/settings path.
+3. Profile representative device/browser sessions rather than relying on Editor
+   numbers: cold load, memory, FPS, save flush after tab close/background, and a
+   20-minute stability check. Establish a documented device budget and a 30 FPS
+   option if required.
+4. Publish a test checklist and release notes only after owner review; deployment
+   remains an explicit approval step.
+
+**Exit gate:** supported-browser/device matrix is documented with results; no
+save loss in deliberate close/background tests; new tester completes the Phase H
+journey and reports a build ID; all automated/runtime/release checks pass.
+
+### Non-negotiable phase gate
+
+Before moving to a subsequent phase, review the actual implementation and
+screenshots against its exit gate, check the Unity Console for errors, run the
+relevant Play Mode smoke pass and full EditMode suite, produce a fresh WebGL
+build, compare the performance probe with its baseline, inspect the diff, and
+leave `main` clean and pushed. A green compile alone is never enough.
+
 ---
 
 ## Legacy Unity roadmap — superseded
