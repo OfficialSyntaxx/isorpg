@@ -281,6 +281,16 @@ namespace Isoperia.Core.Save
             map.Set("fastTravel", JsonValue.Bool(p.MapFastTravel));
             map.Set("explored", NumArray(p.MapExplored));
 
+            var resources = JsonValue.Array();
+            foreach (var pair in _state.ResourceNodes)
+            {
+                var node = JsonValue.Object();
+                node.Set("id", JsonValue.String(pair.Key));
+                node.Set("remaining", JsonValue.Number(pair.Value.Remaining));
+                node.Set("respawnAt", JsonValue.Number(pair.Value.RespawnAt));
+                resources.Add(node);
+            }
+
             var root = JsonValue.Object();
             root.Set("version", JsonValue.String(_state.Version));
             root.Set("timestamp", JsonValue.Number(_now()));
@@ -290,6 +300,7 @@ namespace Isoperia.Core.Save
             root.Set("settings", settings);
             root.Set("clock", clock);
             root.Set("map", map);
+            root.Set("resources", resources);
 
             return root;
         }
@@ -409,6 +420,16 @@ namespace Isoperia.Core.Save
             p.MapDiscovered = ReadStrList(s["map"]["discovered"]);
             p.MapFastTravel = s["map"]["fastTravel"].AsBool();
             p.MapExplored = ReadNumList(s["map"]["explored"]);
+
+            _state.ResourceNodes = new Dictionary<string, ResourceNodeState>();
+            foreach (JsonValue node in s["resources"].Items)
+            {
+                _state.ResourceNodes[node["id"].AsString()] = new ResourceNodeState
+                {
+                    Remaining = (int)node["remaining"].AsNumber(),
+                    RespawnAt = (long)node["respawnAt"].AsNumber(),
+                };
+            }
 
             return true;
         }

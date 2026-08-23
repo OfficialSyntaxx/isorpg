@@ -103,6 +103,13 @@ namespace Isoperia.Core.State
         public string AttackStyle = GameState.DefaultAttackStyle;
     }
 
+    /// <summary>Mutable state for one deterministic resource-node id.</summary>
+    public sealed class ResourceNodeState
+    {
+        public int Remaining;
+        public long RespawnAt;
+    }
+
     /// <summary>
     /// The central mutable state. Components carry data; systems read and write
     /// it. Port of <c>src/state/GameState.ts</c>.
@@ -163,6 +170,13 @@ namespace Isoperia.Core.State
         /// <summary>In-game clock. Persisted so time of day survives a reload.</summary>
         public int ClockMinute = DayStartMinute;
         public int ClockDay = 1;
+
+        /// <summary>
+        /// Only changed node state is stored. Node placement and definitions are
+        /// regenerated from the Core grid and content tables on every load.
+        /// </summary>
+        public Dictionary<string, ResourceNodeState> ResourceNodes =
+            new Dictionary<string, ResourceNodeState>();
 
         public HashSet<string> CollectionLog = new HashSet<string>();
 

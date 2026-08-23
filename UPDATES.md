@@ -53,7 +53,9 @@ the 600 ms simulation tick. Trees and rocks deplete, disappear from the
 combined prop mesh, and respawn after the existing 30-second cadence; fishing
 spots remain active. The HUD mirrors gathering rewards and gate/full-inventory
 feedback. Node depletion is currently session-scoped; save-schema persistence
-is intentionally the next state-migration slice.
+is now part of the Core save schema: only mutable node id/use/respawn state is
+serialized, then safely reattached to deterministic placement on load. Older or
+malformed saves default to fresh nodes; stale depleted nodes respawn immediately.
 
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at

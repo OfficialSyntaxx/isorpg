@@ -345,6 +345,21 @@ namespace Isoperia.Core.Tests
         }
 
         [Test]
+        public void ResourceNodeStateIsBoundedAndOnlyAcceptsGridIds()
+        {
+            SanitizeResult r = San(
+                "{\"player\":{},\"resources\":[" +
+                "{\"id\":\"TREE_3_4\",\"remaining\":2,\"respawnAt\":1234}," +
+                "{\"id\":\"TREE_99_4\",\"remaining\":2,\"respawnAt\":1234}," +
+                "{\"id\":\"MONSTER_3_4\",\"remaining\":2,\"respawnAt\":1234}," +
+                "{\"id\":\"TREE_3_4\",\"remaining\":9,\"respawnAt\":1234}]}");
+
+            Assert.AreEqual(1, r.State["resources"].Count);
+            Assert.AreEqual("TREE_3_4", r.State["resources"][0]["id"].AsString());
+            Assert.AreEqual(2, r.State["resources"][0]["remaining"].AsNumber());
+        }
+
+        [Test]
         public void ALongNameIsTruncated()
         {
             SanitizeResult r = San("{\"player\":{\"name\":\"" + new string('x', 200) + "\"}}");

@@ -4,6 +4,7 @@ using Isoperia.Core.Content;
 using Isoperia.Core.Save;
 using Isoperia.Core.Sim;
 using Isoperia.Core.Systems;
+using Isoperia.Core.State;
 using Isoperia.Core.World;
 
 namespace Isoperia.Unity
@@ -19,16 +20,20 @@ namespace Isoperia.Unity
 
         private readonly Grid grid;
         private readonly ContentDatabase content;
+        private readonly GameState state;
+        private readonly Func<long> nowMs;
         private readonly List<WorldResourceNode> nodes = new List<WorldResourceNode>();
         private readonly Dictionary<long, WorldResourceNode> byTile = new Dictionary<long, WorldResourceNode>();
 
         public event Action<WorldResourceNode> NodeChanged;
         public IReadOnlyList<WorldResourceNode> Nodes => nodes;
 
-        public WorldResourceRegistry(Grid grid, ContentDatabase content)
+        public WorldResourceRegistry(Grid grid, GameState state, ContentDatabase content, Func<long> nowMs)
         {
             this.grid = grid ?? throw new ArgumentNullException(nameof(grid));
+            this.state = state ?? throw new ArgumentNullException(nameof(state));
             this.content = content ?? throw new ArgumentNullException(nameof(content));
+            this.nowMs = nowMs ?? throw new ArgumentNullException(nameof(nowMs));
             Populate();
         }
 
@@ -47,25 +52,34 @@ namespace Isoperia.Unity
             node.Remaining = Math.Max(0, node.Remaining - 1);
             if (node.Remaining == 0)
             {
-                long tick = GameLoop.Instance?.Tick?.TickIndex ?? 0;
                 node.Depleted = true;
-                node.RespawnAtTick = tick + RespawnTicks;
+                node.RespawnAt = nowMs() + RespawnTicks * (long)TickRunner.TickMs;
+                state.ResourceNodes[node.Id] = new ResourceNodeState
+                {
+                    Remaining = node.Remaining,
+                    RespawnAt = node.RespawnAt,
+                };
             }
+
+            if (!node.Depleted)
+                state.ResourceNodes[node.Id] = new ResourceNodeState { Remaining = node.Remaining, RespawnAt = 0 };
 
             NodeChanged?.Invoke(node);
             return node.Remaining;
         }
 
-        public void Tick(long tick)
+        public void Tick(long _)
         {
+            long now = nowMs();
             for (int i = 0; i < nodes.Count; i++)
             {
                 WorldResourceNode node = nodes[i];
-                if (!node.Depleted || tick < node.RespawnAtTick) continue;
+                if (!node.Depleted || now < node.RespawnAt) continue;
 
                 node.Depleted = false;
                 node.Remaining = node.MaxUses;
-                node.RespawnAtTick = 0;
+                node.RespawnAt = 0;
+                state.ResourceNodes.Remove(node.Id);
                 NodeChanged?.Invoke(node);
             }
         }
@@ -123,10 +137,30 @@ namespace Isoperia.Unity
                 if (def.IsNull) throw new ContentException("Missing resource definition: " + id);
 
                 var node = new WorldResourceNode(type, candidate.X, candidate.Y, def);
+                Restore(node);
                 nodes.Add(node);
                 byTile[Key(candidate.X, candidate.Y)] = node;
                 tile.Occupant = Occupant.ResourceNode;
                 tile.OccupantId = node.Id;
+            }
+        }
+
+        private void Restore(WorldResourceNode node)
+        {
+            if (!state.ResourceNodes.TryGetValue(node.Id, out ResourceNodeState saved)) return;
+            if (!node.Depletes)
+            {
+                state.ResourceNodes.Remove(node.Id);
+                return;
+            }
+
+            node.Remaining = Math.Max(0, Math.Min(node.MaxUses, saved.Remaining));
+            node.RespawnAt = Math.Max(0, saved.RespawnAt);
+            node.Depleted = node.Remaining == 0 && node.RespawnAt > nowMs();
+            if (!node.Depleted && node.Remaining == 0)
+            {
+                node.Remaining = node.MaxUses;
+                state.ResourceNodes.Remove(node.Id);
             }
         }
 
@@ -191,7 +225,7 @@ namespace Isoperia.Unity
         public int MaxUses { get; }
         public int Remaining { get; set; }
         public bool Depleted { get; set; }
-        public long RespawnAtTick { get; set; }
+        public long RespawnAt { get; set; }
         public bool Depletes => Def["depletes"].AsBool(false);
 
         public WorldResourceNode(string type, int x, int y, JsonValue def)

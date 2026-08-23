@@ -65,7 +65,7 @@ namespace Isoperia.Unity
             LoadResult result = Save.Load();
             State.Player.Inventory.SetCatalog(catalog);
             GrantStarterItems(result.RecoveredFrom);
-            Resources = new WorldResourceRegistry(WorldRuntime.Instance.Grid, Content);
+            Resources = new WorldResourceRegistry(WorldRuntime.Instance.Grid, State, Content, NowMs);
             Gathering = new SkillSystem(
                 State,
                 Content,

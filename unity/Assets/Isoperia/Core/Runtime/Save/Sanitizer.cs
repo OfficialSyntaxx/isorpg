@@ -52,6 +52,7 @@ namespace Isoperia.Core.Save
         private const int MaxFarmPlots = 32;
         private const int MaxClueSites = 8;
         private const int MaxNameLength = 24;
+        private const int MaxResourceNodes = 200;
 
         /// <summary>True when a save predates the mastery curve change.</summary>
         public static bool NeedsMasteryRescale(string version) => OlderThan(version, "1.1.0");
@@ -152,6 +153,15 @@ namespace Isoperia.Core.Save
             if (!v.IsFiniteNumber) return fallback;
             long r = (long)Math.Round(v.AsNumber(), MidpointRounding.AwayFromZero);
             return (int)Math.Max(0, Math.Min(max, r));
+        }
+
+        private static bool IsResourceNodeId(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return false;
+            string[] parts = id.Split('_');
+            if (parts.Length != 3 || (parts[0] != "TREE" && parts[0] != "ROCK" && parts[0] != "WATER")) return false;
+            return int.TryParse(parts[1], out int x) && int.TryParse(parts[2], out int y) &&
+                   x >= 0 && x < WorldSize && y >= 0 && y < WorldSize;
         }
 
         /// <summary>
@@ -393,6 +403,23 @@ namespace Isoperia.Core.Save
             outMap.Set("fastTravel", JsonValue.Bool(raw["map"]["fastTravel"].AsBool()));
             outMap.Set("explored", ToNumArray(NumList(raw["map"]["explored"])));
 
+            var resources = JsonValue.Array();
+            var seenResourceIds = new HashSet<string>();
+            foreach (JsonValue node in raw["resources"].Items)
+            {
+                if (resources.Count >= MaxResourceNodes) break;
+                string id = node["id"].AsString();
+                if (!IsResourceNodeId(id) || !seenResourceIds.Add(id)) continue;
+
+                long remaining = ClampNonNeg(node["remaining"], 0);
+                long respawnAt = ClampNonNeg(node["respawnAt"], 0);
+                var clean = JsonValue.Object();
+                clean.Set("id", JsonValue.String(id));
+                clean.Set("remaining", JsonValue.Number(Math.Min(99, remaining)));
+                clean.Set("respawnAt", JsonValue.Number(respawnAt));
+                resources.Add(clean);
+            }
+
             var outClock = JsonValue.Object();
             outClock.Set("minute", JsonValue.Number(Math.Min(1439, ClampNonNeg(raw["clock"]["minute"], GameState.DayStartMinute))));
             outClock.Set("day", JsonValue.Number(Math.Max(1, ClampNonNeg(raw["clock"]["day"], 1))));
@@ -409,6 +436,7 @@ namespace Isoperia.Core.Save
             state.Set("settings", outSettings);
             state.Set("map", outMap);
             state.Set("clock", outClock);
+            state.Set("resources", resources);
 
             return new SanitizeResult { Ok = true, State = state };
         }
