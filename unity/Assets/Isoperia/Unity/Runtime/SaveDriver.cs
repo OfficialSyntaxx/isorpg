@@ -84,7 +84,7 @@ namespace Isoperia.Unity
             Crafting.Started += OnCraftingStarted;
             Crafting.Crafted += OnCrafted;
             Crafting.Ended += OnCraftingEnded;
-            Combat = new WorldCombatRegistry(WorldRuntime.Instance.Grid, State, unchecked((int)(NowMs() ^ 0x2c91)));
+            Combat = new WorldCombatRegistry(WorldRuntime.Instance.Grid, State, Content, unchecked((int)(NowMs() ^ 0x2c91)));
             Combat.StatusChanged += OnCombatStatus;
             Debug.Log($"[Isoperia] save loaded from: {result.RecoveredFrom}");
 

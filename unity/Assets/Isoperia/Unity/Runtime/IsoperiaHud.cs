@@ -36,6 +36,7 @@ namespace Isoperia.Unity
         private Button questButton;
         private Button settingsButton;
         private Label worldStatus;
+        private Label combatStatus;
         private Label hintBody;
         private string displayedGatheringStatus;
 
@@ -93,6 +94,7 @@ namespace Isoperia.Unity
             questButton = root.Q<Button>("quest-button");
             settingsButton = root.Q<Button>("settings-button");
             worldStatus = root.Q<Label>("world-status");
+            combatStatus = root.Q<Label>("combat-status");
             hintBody = root.Q<Label>("hint-body");
 
             closePanel.clicked += ClosePanel;
@@ -107,12 +109,24 @@ namespace Isoperia.Unity
 
         private void Update()
         {
+            UpdateCombatStatus();
             string status = SaveDriver.Instance?.GatheringStatus;
             if (string.IsNullOrEmpty(status) || status == displayedGatheringStatus) return;
 
             displayedGatheringStatus = status;
             if (worldStatus != null) worldStatus.text = status.ToUpperInvariant();
             if (hintBody != null) hintBody.text = status;
+        }
+
+        private void UpdateCombatStatus()
+        {
+            if (combatStatus == null) return;
+            var player = SaveDriver.Instance?.State?.Player;
+            if (player == null || player.Health == null) return;
+            WorldEnemyNode target = SaveDriver.Instance?.Combat?.Target;
+            combatStatus.text = target == null
+                ? "HP " + player.Health.Hp + "/" + player.Health.MaxHp + " · No target"
+                : "HP " + player.Health.Hp + "/" + player.Health.MaxHp + " · " + target.Name + " " + target.Hp + "/" + target.Definition.Hp;
         }
 
         private void OpenInventory()

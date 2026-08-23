@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Isoperia.Core.Combat;
 using Isoperia.Core.Components;
+using Isoperia.Core.Content;
 using Isoperia.Core.Data;
+using Isoperia.Core.Save;
 using Isoperia.Core.Sim;
 using Isoperia.Core.State;
 using Isoperia.Core.World;
@@ -31,13 +33,14 @@ namespace Isoperia.Unity
         public IReadOnlyList<WorldEnemyNode> Enemies => enemies;
         public WorldEnemyNode Target => target;
 
-        public WorldCombatRegistry(CoreGrid grid, GameState state, int seed)
+        public WorldCombatRegistry(CoreGrid grid, GameState state, ContentDatabase content, int seed)
         {
             this.state = state ?? throw new ArgumentNullException(nameof(state));
+            if (content == null) throw new ArgumentNullException(nameof(content));
             random = new Mulberry32Random(seed);
-            Add(grid, "giant_rat", "Giant Rat", 8, 4, 2, 4, 3, 8, 8);
-            Add(grid, "goblin", "Goblin", 14, 6, 4, 4, 4, 14, 10, 7);
-            Add(grid, "dire_wolf", "Dire Wolf", 22, 10, 6, 3, 5, 20, 12, 6);
+            Add(grid, content, "giant_rat", 8, 8);
+            Add(grid, content, "goblin", 14, 10);
+            Add(grid, content, "dire_wolf", 20, 12);
         }
 
         public WorldEnemyNode EnemyAt(int x, int y)
@@ -138,12 +141,26 @@ namespace Isoperia.Unity
             }
         }
 
-        private void Add(CoreGrid grid, string id, string name, int hp, int attackRoll, int defenseRoll, int attackTick, int aggroRange, int x, int y, int coins = 3)
+        private void Add(CoreGrid grid, ContentDatabase content, string id, int x, int y)
         {
             Tile tile = grid.At(x, y);
             if (tile == null || !tile.Walkable || tile.Occupant != Occupant.None) return;
-            var def = new MonsterDef { Id = id, Name = name, Hp = hp, MaxHit = 2, AttackRoll = attackRoll, DefenseRoll = defenseRoll, AttackTick = attackTick, AggroRange = aggroRange };
-            var enemy = new WorldEnemyNode(id, name, x, y, def, coins, 4);
+            JsonValue data = content.Monsters[id];
+            if (data.IsNull) throw new ContentException("Missing monster definition: " + id);
+            var def = new MonsterDef
+            {
+                Id = id,
+                Name = data["name"].AsString(id),
+                Hp = (int)data["hp"].AsNumber(1),
+                MaxHit = (int)data["maxHit"].AsNumber(1),
+                AttackRoll = (int)data["attackRoll"].AsNumber(1),
+                DefenseRoll = (int)data["defenseRoll"].AsNumber(1),
+                AttackTick = Math.Max(1, (int)data["attackTick"].AsNumber(1)),
+                AggroRange = (int)data["aggroRange"].AsNumber(0)
+            };
+            int coins = id == "giant_rat" ? 3 : id == "goblin" ? 7 : 8;
+            int xp = Math.Max(1, (int)data["xp"]["attack"].AsNumber(4));
+            var enemy = new WorldEnemyNode(id, def.Name, x, y, def, coins, xp);
             enemies.Add(enemy);
             byTile[Key(x, y)] = enemy;
         }

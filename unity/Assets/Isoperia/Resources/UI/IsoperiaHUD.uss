@@ -32,6 +32,13 @@
     font-size: 11px;
 }
 
+.combat-status {
+    color: #f8d789;
+    font-size: 12px;
+    -unity-text-align: middle-right;
+    flex-grow: 1;
+}
+
 .hint-card {
     align-self: center;
     margin-top: 12px;

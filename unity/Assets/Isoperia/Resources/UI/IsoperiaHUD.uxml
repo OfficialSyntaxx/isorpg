@@ -3,6 +3,7 @@
         <ui:VisualElement name="top-bar" class="top-bar">
             <ui:Label name="game-title" text="ISOPERIA" class="game-title" />
             <ui:Label name="world-status" text="CORE ONLINE · 42 × 42 WORLD" class="world-status" />
+            <ui:Label name="combat-status" text="HP 100/100 · No target" class="combat-status" />
         </ui:VisualElement>
 
         <ui:VisualElement name="hint-card" class="hint-card">
