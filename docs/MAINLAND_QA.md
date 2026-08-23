@@ -41,6 +41,19 @@ directional desktop Editor measurement, not a mobile performance claim.
 Physical-device testing is intentionally not marked as passed here. Hosted
 browser testing is recorded separately after the candidate is deployed.
 
+## Hosted browser check
+
+- URL: `https://radiant-taiyaki-275365.netlify.app/`
+- Host: Netlify Drop (public production site)
+- Tested: 2026-08-23, desktop Chrome on the build Mac
+- Result: Pass — the hosted Brotli build completed its loader after the required
+  first tap, entered the 3D Hearthvale scene, and displayed the town, normalized
+  tree/rock resources, distant terrain, player, and NPC presentation without
+  the previous camera-blocking geometry. The browser surfaced the PWA install
+  affordance.
+- Still required: a real touch-device traversal, orbit/zoom, background/resume,
+  audio, persistence, and long-session sweep.
+
 ## Follow-up build
 
 On 2026-08-23 the terrain-relief, hero, wolf and ogre-inclusive candidate
