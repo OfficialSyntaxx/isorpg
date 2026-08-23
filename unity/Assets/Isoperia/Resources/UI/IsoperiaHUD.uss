@@ -133,6 +133,38 @@
     -unity-font-style: bold;
 }
 
+.quest-row {
+    margin-top: 7px;
+    padding: 8px;
+    background-color: rgba(70, 54, 38, 0.55);
+}
+
+.quest-title {
+    color: rgb(245, 197, 92);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.quest-complete {
+    color: rgb(157, 204, 125);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.quest-summary {
+    margin-top: 4px;
+    color: rgb(214, 204, 184);
+    font-size: 12px;
+    white-space: normal;
+}
+
+.setting-button {
+    min-height: 38px;
+    margin-top: 6px;
+    color: rgb(244, 235, 211);
+    background-color: rgba(87, 64, 43, 0.92);
+}
+
 .bottom-bar {
     flex-direction: row;
     align-items: center;

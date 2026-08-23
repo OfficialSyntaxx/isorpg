@@ -26,6 +26,10 @@ uses that same catalog for storage rules, gives fresh profiles the existing web
 starter stash/tools, and the HUD renders the live item rows with the exported
 emoji icons and storage-cap total.
 
+Quests and Settings are now live too: the quest panel reads the exported quest
+definitions and the saved completion journal, while Settings cycles the existing
+auto-eat threshold and combat style values and immediately persists the change.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).

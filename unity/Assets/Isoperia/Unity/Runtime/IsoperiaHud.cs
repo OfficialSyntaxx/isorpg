@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using Isoperia.Core.Components;
+using Isoperia.Core.Data;
 using Isoperia.Core.Save;
+using Isoperia.Core.State;
 
 namespace Isoperia.Unity
 {
@@ -65,7 +67,7 @@ namespace Isoperia.Unity
 
             panel = root.Q<VisualElement>("panel");
             panelTitle = root.Q<Label>("panel-title");
-            panelBody = root.Q<Label>("panel-body");
+            panelBody = root.Q<VisualElement>("panel-body");
             closePanel = root.Q<Button>("close-panel");
             inventoryButton = root.Q<Button>("inventory-button");
             mapButton = root.Q<Button>("map-button");
@@ -110,13 +112,44 @@ namespace Isoperia.Unity
         private void OpenQuests()
         {
             OpenPanel("Quests");
-            AddPanelMessage("Quest data is ready in the Core content database.");
+
+            SaveDriver saveDriver = SaveDriver.Instance;
+            if (saveDriver == null || saveDriver.State == null || saveDriver.Content == null)
+            {
+                AddPanelMessage("Quest journal is loading.");
+                return;
+            }
+
+            foreach (JsonValue quest in saveDriver.Content.Quests.Items)
+            {
+                string id = quest["id"].AsString("");
+                bool completed = saveDriver.State.Player.Journal.Contains(id);
+                string title = quest["title"].AsString(id);
+                string summary = completed
+                    ? quest["doneText"].AsString("Completed")
+                    : quest["summary"].AsString("No summary available.");
+                AddQuestRow(title, summary, completed);
+            }
         }
 
         private void OpenSettings()
         {
             OpenPanel("Settings");
+
+            SaveDriver saveDriver = SaveDriver.Instance;
+            if (saveDriver == null || saveDriver.State == null)
+            {
+                AddPanelMessage("Settings are loading.");
+                return;
+            }
+
             AddPanelMessage("Input: tap-to-move · drag-pan · pinch/wheel zoom.");
+            AddSettingButton(
+                "Auto-eat: " + FormatAutoEat(saveDriver.State.Settings.AutoEatPct),
+                CycleAutoEat);
+            AddSettingButton(
+                "Fight style: " + CombatRules.Style(saveDriver.State.Settings.AttackStyle).Name,
+                CycleAttackStyle);
         }
 
         private void OpenPanel(string title)
@@ -149,6 +182,62 @@ namespace Isoperia.Unity
             row.Add(count);
             panelBody.Add(row);
         }
+
+        private void AddQuestRow(string title, string summary, bool completed)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("quest-row");
+
+            var titleLabel = new Label((completed ? "✓ " : "○ ") + title);
+            titleLabel.AddToClassList(completed ? "quest-complete" : "quest-title");
+            var summaryLabel = new Label(summary);
+            summaryLabel.AddToClassList("quest-summary");
+
+            row.Add(titleLabel);
+            row.Add(summaryLabel);
+            panelBody.Add(row);
+        }
+
+        private void AddSettingButton(string text, System.Action action)
+        {
+            var button = new Button(action) { text = text };
+            button.AddToClassList("setting-button");
+            panelBody.Add(button);
+        }
+
+        private void CycleAutoEat()
+        {
+            SaveDriver saveDriver = SaveDriver.Instance;
+            if (saveDriver == null) return;
+
+            int[] steps = GameState.AutoEatSteps;
+            int currentIndex = System.Array.IndexOf(steps, saveDriver.State.Settings.AutoEatPct);
+            int nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % steps.Length;
+            saveDriver.State.Settings.AutoEatPct = steps[nextIndex];
+            saveDriver.Save.ForceSave();
+            OpenSettings();
+        }
+
+        private void CycleAttackStyle()
+        {
+            SaveDriver saveDriver = SaveDriver.Instance;
+            if (saveDriver == null) return;
+
+            string[] styles =
+            {
+                CombatRules.StyleAccurate,
+                CombatRules.StyleAggressive,
+                CombatRules.StyleDefensive,
+            };
+            int currentIndex = System.Array.IndexOf(styles, saveDriver.State.Settings.AttackStyle);
+            int nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % styles.Length;
+            saveDriver.State.Settings.AttackStyle = styles[nextIndex];
+            saveDriver.Save.ForceSave();
+            OpenSettings();
+        }
+
+        private static string FormatAutoEat(int percent) =>
+            percent <= 0 ? "Off" : percent + "% HP";
 
         private void ClosePanel()
         {
