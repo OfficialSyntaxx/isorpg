@@ -596,7 +596,8 @@ environment prototype now includes the existing imported GLB actors, a Core-driv
 terrain mesh, and the first Phase 3 input slice: tap-to-move through Core A*, drag-pan,
 pinch-zoom, and mouse-wheel zoom. The first UI Toolkit shell is now present with
 status, movement guidance, and navigation buttons; the next implementation slice is
-the Core-backed inventory/map/quest/settings panel migration, followed by the
+the Core-backed map/quest/settings panel migration (Inventory is now backed by the
+live save state and exported content), followed by the
 remaining Phase 4–7 art, animation, audio, and polish work. Runtime Play Mode/device
 validation still requires a responsive Unity Editor connection and a target-device pass.
 

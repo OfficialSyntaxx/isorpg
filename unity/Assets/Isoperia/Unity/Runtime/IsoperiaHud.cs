@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Isoperia.Core.Components;
+using Isoperia.Core.Save;
 
 namespace Isoperia.Unity
 {
@@ -19,7 +21,7 @@ namespace Isoperia.Unity
         private PanelSettings panelSettings;
         private VisualElement panel;
         private Label panelTitle;
-        private Label panelBody;
+        private VisualElement panelBody;
         private Button closePanel;
         private Button inventoryButton;
         private Button mapButton;
@@ -77,21 +79,75 @@ namespace Isoperia.Unity
             settingsButton.clicked += OpenSettings;
         }
 
-        private void OpenInventory() => OpenPanel("Inventory", "The Core inventory panel is next in the Phase 3 migration.");
+        private void OpenInventory()
+        {
+            OpenPanel("Inventory");
 
-        private void OpenMap() => OpenPanel("Map", "42 × 42 world · four biome bands · deterministic terrain.");
+            SaveDriver saveDriver = SaveDriver.Instance;
+            if (saveDriver == null || saveDriver.State == null || saveDriver.Content == null)
+            {
+                AddPanelMessage("Inventory is loading.");
+                return;
+            }
 
-        private void OpenQuests() => OpenPanel("Quests", "Quest data is already available through the Core content database.");
+            InventoryComponent inventory = saveDriver.State.Player.Inventory;
+            AddPanelMessage($"Stored {inventory.StoredAmount():N0} / {inventory.StorageCap:N0}");
 
-        private void OpenSettings() => OpenPanel("Settings", "Input: tap-to-move · drag-pan · pinch/wheel zoom.");
+            foreach (ItemStack stack in inventory.Items)
+            {
+                string icon = saveDriver.Content.File("items")["ITEM_ICONS"][stack.Id].AsString("•");
+                string itemName = saveDriver.Content.ItemName(stack.Id);
+                AddInventoryRow(icon, itemName, stack.Amount);
+            }
+        }
 
-        private void OpenPanel(string title, string body)
+        private void OpenMap()
+        {
+            OpenPanel("Map");
+            AddPanelMessage("42 × 42 world · four biome bands · deterministic terrain.");
+        }
+
+        private void OpenQuests()
+        {
+            OpenPanel("Quests");
+            AddPanelMessage("Quest data is ready in the Core content database.");
+        }
+
+        private void OpenSettings()
+        {
+            OpenPanel("Settings");
+            AddPanelMessage("Input: tap-to-move · drag-pan · pinch/wheel zoom.");
+        }
+
+        private void OpenPanel(string title)
         {
             if (panel == null) return;
 
             panelTitle.text = title;
-            panelBody.text = body;
+            panelBody.Clear();
             panel.style.display = DisplayStyle.Flex;
+        }
+
+        private void AddPanelMessage(string message)
+        {
+            var label = new Label(message);
+            label.AddToClassList("panel-message");
+            panelBody.Add(label);
+        }
+
+        private void AddInventoryRow(string icon, string itemName, int amount)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("inventory-row");
+
+            var item = new Label(icon + "  " + itemName);
+            item.AddToClassList("inventory-item");
+            var count = new Label("×" + amount.ToString("N0"));
+            count.AddToClassList("inventory-count");
+
+            row.Add(item);
+            row.Add(count);
+            panelBody.Add(row);
         }
 
         private void ClosePanel()

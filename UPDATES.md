@@ -20,6 +20,12 @@ loaded from `Resources/UI`, uses runtime panel settings for mobile scaling, and
 keeps full data panels as the next incremental migration rather than inventing
 a second gameplay state model.
 
+The Inventory panel is now the first data-backed UI Toolkit panel. Unity loads
+the exported JSON content through a narrow `Resources` adapter; `SaveDriver`
+uses that same catalog for storage rules, gives fresh profiles the existing web
+starter stash/tools, and the HUD renders the live item rows with the exported
+emoji icons and storage-cap total.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).

@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using Isoperia.Core.Components;
+using Isoperia.Core.Content;
 using Isoperia.Core.Save;
 using Isoperia.Core.State;
 
@@ -24,8 +26,11 @@ namespace Isoperia.Unity
 
         private const string LifecycleMethod = nameof(OnPageHiding);
 
+        public static SaveDriver Instance { get; private set; }
+
         public SaveSystem Save { get; private set; }
         public GameState State { get; private set; }
+        public ContentDatabase Content { get; private set; }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")]
@@ -34,14 +39,27 @@ namespace Isoperia.Unity
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+
             // The JS bridge sends messages to this object by name.
             if (gameObject.name != GameObjectName) gameObject.name = GameObjectName;
             DontDestroyOnLoad(gameObject);
 
-            State = GameState.CreateFresh(nowMs: NowMs());
+            Content = UnityContentDatabase.Load();
+            var catalog = new ContentItemCatalog(Content);
+            State = GameState.CreateFresh(catalog: catalog, nowMs: NowMs());
             Save = new SaveSystem(State, new FileSaveStore(), NowMs);
+            Save.Content = Content;
 
             LoadResult result = Save.Load();
+            State.Player.Inventory.SetCatalog(catalog);
+            GrantStarterItems(result.RecoveredFrom);
             Debug.Log($"[Isoperia] save loaded from: {result.RecoveredFrom}");
 
             if (result.Summary != null && result.Summary.AwaySeconds > 0)
@@ -53,6 +71,26 @@ namespace Isoperia.Unity
 #if UNITY_WEBGL && !UNITY_EDITOR
             IsoperiaInstallLifecycleHooks(GameObjectName, LifecycleMethod);
 #endif
+        }
+
+        private void GrantStarterItems(LoadOutcome outcome)
+        {
+            InventoryComponent inventory = State.Player.Inventory;
+            if (outcome == LoadOutcome.Fresh)
+            {
+                inventory.Add("normal_log", 5);
+                inventory.Add("raw_shrimp", 2);
+                inventory.Add("coins", 5);
+            }
+
+            GrantToolIfMissing(inventory, "woodcutting", "bronze_axe");
+            GrantToolIfMissing(inventory, "mining", "bronze_pickaxe");
+            GrantToolIfMissing(inventory, "fishing", "small_net");
+        }
+
+        private void GrantToolIfMissing(InventoryComponent inventory, string skill, string itemId)
+        {
+            if (!ItemTools.TryGetBest(Content, inventory, skill, out _, out _)) inventory.Add(itemId, 1);
         }
 
         private void Start()
@@ -103,6 +141,11 @@ namespace Isoperia.Unity
         private void OnApplicationQuit()
         {
             Save?.ForceSave();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
     }
 }

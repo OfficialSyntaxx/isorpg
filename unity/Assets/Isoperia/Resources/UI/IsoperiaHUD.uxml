@@ -15,7 +15,7 @@
                 <ui:Label name="panel-title" text="Inventory" class="panel-title" />
                 <ui:Button name="close-panel" text="×" class="close-button" />
             </ui:VisualElement>
-            <ui:Label name="panel-body" text="Panel content will appear here." class="panel-body" />
+            <ui:VisualElement name="panel-body" class="panel-body" />
         </ui:VisualElement>
 
         <ui:VisualElement name="bottom-bar" class="bottom-bar">

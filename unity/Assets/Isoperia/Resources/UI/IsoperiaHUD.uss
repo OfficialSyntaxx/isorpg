@@ -103,7 +103,34 @@
     margin-top: 14px;
     color: rgb(214, 204, 184);
     font-size: 13px;
-    white-space: normal;
+}
+
+.panel-message {
+    margin-bottom: 8px;
+    color: rgb(214, 204, 184);
+    font-size: 13px;
+}
+
+.inventory-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 28px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-top: 3px;
+    background-color: rgba(70, 54, 38, 0.55);
+}
+
+.inventory-item {
+    color: rgb(244, 235, 211);
+    font-size: 13px;
+}
+
+.inventory-count {
+    color: rgb(245, 197, 92);
+    font-size: 13px;
+    -unity-font-style: bold;
 }
 
 .bottom-bar {
