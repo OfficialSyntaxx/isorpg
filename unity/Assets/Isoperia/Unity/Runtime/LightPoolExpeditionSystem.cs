@@ -1,5 +1,6 @@
 using System;
 using Isoperia.Core.State;
+using Isoperia.Core.World;
 
 namespace Isoperia.Unity
 {
@@ -9,7 +10,7 @@ namespace Isoperia.Unity
         public const string AcceptedJournalId = "cinder_hollow_accepted";
         public const string ReachedJournalId = "cinder_hollow_reached";
         public const string ReturnedJournalId = "cinder_hollow_returned";
-        private static readonly int[,] Pools = { { 30, 20 }, { 34, 20 }, { 36, 24 } };
+        private static readonly int[,] Pools = { { 82, 62 }, { 94, 62 }, { 105, 68 } };
         private readonly GameState state;
         public event Action<string> StatusChanged;
 
@@ -30,7 +31,7 @@ namespace Isoperia.Unity
                 return;
             }
 
-            if (p.Gx < 28 || p.Gy < 16 || p.Gy > 26) return;
+            if (p.Gx < 78 || p.Gy < 54 || p.Gy > 75) return;
             if (AtEntrance(p.Gx, p.Gy) && !state.Player.Journal.Contains(ReachedJournalId))
             {
                 state.Player.Journal.Add(ReachedJournalId);
@@ -50,7 +51,7 @@ namespace Isoperia.Unity
             }
 
             state.Player.Health.Hp = state.Player.Health.MaxHp;
-            p.Gx = p.Gy = 21;
+            p.Gx = p.Gy = Grid.TownCenter;
             p.Wx = p.Gx;
             p.Wz = p.Gy;
             StatusChanged?.Invoke("Darkness overcame you · returned to settlement");
@@ -63,7 +64,7 @@ namespace Isoperia.Unity
             return false;
         }
 
-        private static bool AtEntrance(int x, int y) => x >= 38 && y >= 22 && y <= 26;
-        private static bool InSettlement(int x, int y) => x >= 17 && x <= 25 && y >= 17 && y <= 25;
+        private static bool AtEntrance(int x, int y) => x >= 112 && y >= 66 && y <= 72;
+        private static bool InSettlement(int x, int y) => x >= 54 && x <= 72 && y >= 54 && y <= 72;
     }
 }

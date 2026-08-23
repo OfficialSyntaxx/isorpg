@@ -6,7 +6,7 @@ namespace Isoperia.Unity
     public sealed class WorldDungeonView : MonoBehaviour
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
-        private readonly Vector3[] pools = { new Vector3(30.5f, .22f, 20.5f), new Vector3(34.5f, .22f, 20.5f), new Vector3(36.5f, .22f, 24.5f) };
+        private readonly Vector3[] pools = { new Vector3(82.5f, .22f, 62.5f), new Vector3(94.5f, .22f, 62.5f), new Vector3(105.5f, .22f, 68.5f) };
         private Material glow;
         private Material basalt;
         private Material ash;
@@ -52,7 +52,7 @@ namespace Isoperia.Unity
 
         private void CreateEntrance()
         {
-            Vector3 entrance = new Vector3(38.5f, .9f, 24.5f);
+            Vector3 entrance = new Vector3(113.5f, .9f, 69.5f);
             CreateRock("CinderHollow_EntranceLeft", entrance + Vector3.left * 1.2f, new Vector3(.9f, 1.5f, .7f));
             CreateRock("CinderHollow_EntranceRight", entrance + Vector3.right * 1.2f, new Vector3(.9f, 1.5f, .7f));
             GameObject lintel = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -66,7 +66,7 @@ namespace Isoperia.Unity
 
         private void CreateRouteMarkers()
         {
-            Vector3[] rocks = { new Vector3(28.4f, .45f, 18.2f), new Vector3(31.8f, .45f, 17.6f), new Vector3(33.1f, .45f, 22.4f), new Vector3(35.1f, .45f, 23.0f), new Vector3(37.6f, .45f, 25.8f) };
+            Vector3[] rocks = { new Vector3(76.4f, .45f, 58.2f), new Vector3(85.8f, .45f, 58.6f), new Vector3(94.1f, .45f, 62.4f), new Vector3(103.1f, .45f, 66.0f), new Vector3(111.6f, .45f, 70.8f) };
             for (int i = 0; i < rocks.Length; i++) CreateRock("CinderHollow_Basalt_" + i, rocks[i], new Vector3(.75f, .9f + (i % 2) * .25f, .62f));
         }
 

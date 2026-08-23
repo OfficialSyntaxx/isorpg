@@ -28,7 +28,7 @@ namespace Isoperia.Unity
 
         private void BuildFrostwatch()
         {
-            Vector3 origin = Grounded(32, 8);
+            Vector3 origin = Grounded(96, 28);
             Place("rock-large", "BiomeLandmark_Frostwatch_Crag", origin, new Vector3(2.15f, 2.7f, 1.75f), 14f);
             Place("rock-small", "BiomeLandmark_Frostwatch_StoneA", origin + new Vector3(-1.8f, 0f, .9f), Vector3.one * 1.15f, -28f);
             Place("rock-small", "BiomeLandmark_Frostwatch_StoneB", origin + new Vector3(1.6f, 0f, -.7f), Vector3.one * 1.05f, 42f);
@@ -37,7 +37,7 @@ namespace Isoperia.Unity
 
         private void BuildMiregate()
         {
-            Vector3 origin = Grounded(8, 33);
+            Vector3 origin = Grounded(28, 98);
             Place("watermill", "BiomeLandmark_Miregate_Mill", origin, new Vector3(1.25f, 1.25f, 1.25f), 90f);
             Place("fence", "BiomeLandmark_Miregate_FenceA", origin + new Vector3(-2.0f, 0f, 1.5f), Vector3.one * 1.3f, 35f);
             Place("fence", "BiomeLandmark_Miregate_FenceB", origin + new Vector3(1.8f, 0f, 1.3f), Vector3.one * 1.3f, -38f);
@@ -46,7 +46,7 @@ namespace Isoperia.Unity
 
         private void BuildWildwood()
         {
-            Vector3 origin = Grounded(8, 10);
+            Vector3 origin = Grounded(28, 32);
             Place("tree-high", "BiomeLandmark_Wildwood_Ancient", origin, Vector3.one * 2.3f, 8f);
             Place("tree", "BiomeLandmark_Wildwood_TreeA", origin + new Vector3(-1.9f, 0f, 1.1f), Vector3.one * 1.45f, -25f);
             Place("tree", "BiomeLandmark_Wildwood_TreeB", origin + new Vector3(1.7f, 0f, .9f), Vector3.one * 1.35f, 32f);
