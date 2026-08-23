@@ -14,6 +14,12 @@ isometric camera supports drag-pan, pinch-zoom, and mouse-wheel zoom. The
 imported hero is the controlled actor; input remains a Unity presentation bridge
 and does not duplicate Core movement authority.
 
+The first **UI Toolkit shell** is now available at runtime: status bar, movement
+hint, panel overlay, and Inventory/Map/Quests/Settings navigation buttons. It is
+loaded from `Resources/UI`, uses runtime panel settings for mobile scaling, and
+keeps full data panels as the next incremental migration rather than inventing
+a second gameplay state model.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).

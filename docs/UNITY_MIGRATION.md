@@ -594,9 +594,10 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
 Unity project skeleton and Phase 2a–2d Core port are present on `main`. The Bootstrap
 environment prototype now includes the existing imported GLB actors, a Core-driven
 terrain mesh, and the first Phase 3 input slice: tap-to-move through Core A*, drag-pan,
-pinch-zoom, and mouse-wheel zoom. The next implementation slice is the UI Toolkit
-shell and panel migration, followed by the remaining Phase 4–7 art, animation, audio,
-and polish work. Runtime Play Mode/device validation still requires a responsive Unity
-Editor connection and a target-device pass.
+pinch-zoom, and mouse-wheel zoom. The first UI Toolkit shell is now present with
+status, movement guidance, and navigation buttons; the next implementation slice is
+the Core-backed inventory/map/quest/settings panel migration, followed by the
+remaining Phase 4–7 art, animation, audio, and polish work. Runtime Play Mode/device
+validation still requires a responsive Unity Editor connection and a target-device pass.
 
 Nothing is deleted or replaced until Phase 9.

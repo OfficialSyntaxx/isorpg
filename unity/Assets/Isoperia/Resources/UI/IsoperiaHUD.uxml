@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="hud-root" class="hud-root">
+        <ui:VisualElement name="top-bar" class="top-bar">
+            <ui:Label name="game-title" text="ISOPERIA" class="game-title" />
+            <ui:Label name="world-status" text="CORE ONLINE · 42 × 42 WORLD" class="world-status" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="hint-card" class="hint-card">
+            <ui:Label name="hint-title" text="Environment prototype" class="hint-title" />
+            <ui:Label name="hint-body" text="Tap a tile to move · Drag to pan · Pinch to zoom" class="hint-body" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="panel" class="panel" style="display:none;">
+            <ui:VisualElement name="panel-header" class="panel-header">
+                <ui:Label name="panel-title" text="Inventory" class="panel-title" />
+                <ui:Button name="close-panel" text="×" class="close-button" />
+            </ui:VisualElement>
+            <ui:Label name="panel-body" text="Panel content will appear here." class="panel-body" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="bottom-bar" class="bottom-bar">
+            <ui:Button name="inventory-button" text="Inventory" class="nav-button" />
+            <ui:Button name="map-button" text="Map" class="nav-button" />
+            <ui:Button name="quest-button" text="Quests" class="nav-button" />
+            <ui:Button name="settings-button" text="Settings" class="nav-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
