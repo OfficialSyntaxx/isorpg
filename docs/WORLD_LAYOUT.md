@@ -51,3 +51,21 @@ file in `docs/THIRD_PARTY_ASSETS/` before import.
    URP/Unity 6 compatibility and retaining its license information.
 
 Do not download/import paid, attribution-unclear, or incompatible packages.
+
+## Imported town foundation (2026-08-22)
+
+The first imported building kit is **Kenney Fantasy Town Kit 2.0**, mirrored by
+OpenGameArt under **CC0**. The Unity project contains a deliberately small,
+curated subset in `Assets/Isoperia/Resources/Art/KenneyFantasyTown/` rather than
+the entire archive: modular house pieces, roads, market stalls, lanterns,
+fountain, fences, trees, rocks, windmill, watermill, and its shared colour atlas.
+
+`WorldTownView` composes these into a fixed central settlement: a crossroad plaza
+and fountain, market stalls along its paths, four homes around the civic core,
+and farm/production space at the south-east/west edges. This is presentation
+only—the Core building system remains the owner of player-placed buildings.
+
+The next environment import remains Polytope Studio's **Low Poly Environment –
+Nature Free** from the Unity Asset Store. It is free and URP-compatible, but
+requires adding it to the project's Unity Asset Library before it can be brought
+into the editor.
