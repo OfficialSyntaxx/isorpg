@@ -1,4 +1,5 @@
 using UnityEngine;
+using CoreGrid = Isoperia.Core.World.Grid;
 
 namespace Isoperia.Unity
 {
@@ -20,17 +21,20 @@ namespace Isoperia.Unity
             snow = new Material(shader) { color = new Color(.68f, .78f, .82f) };
             swamp = new Material(shader) { color = new Color(.20f, .29f, .16f) };
             forest = new Material(shader) { color = new Color(.12f, .28f, .14f) };
-            Landmark("Frostwatch", new Vector3(32.5f, 1.5f, 8.5f), new Vector3(1.2f, 3f, 1.2f), snow);
-            Landmark("Miregate", new Vector3(8.5f, 1.1f, 33.5f), new Vector3(1.6f, 2.2f, 1.6f), swamp);
-            Landmark("Wildwood", new Vector3(8.5f, 2f, 10.5f), new Vector3(2f, 4f, 2f), forest);
+            Landmark("Frostwatch", PrimitiveType.Capsule, 32, 8, new Vector3(.75f, 1.9f, .75f), snow);
+            Landmark("Miregate", PrimitiveType.Cylinder, 8, 33, new Vector3(1.05f, 1.1f, 1.05f), swamp);
+            Landmark("Wildwood", PrimitiveType.Cylinder, 8, 10, new Vector3(1.1f, 2.4f, 1.1f), forest);
         }
 
-        private void Landmark(string name, Vector3 position, Vector3 scale, Material material)
+        private void Landmark(string name, PrimitiveType shape, int x, int z, Vector3 scale, Material material)
         {
-            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
+            var tile = grid.At(x, z);
+            float ground = tile == null ? .04f : .04f + (float)tile.Elevation;
+            GameObject marker = GameObject.CreatePrimitive(shape);
             marker.name = "BiomeLandmark_" + name;
             marker.transform.SetParent(transform, false);
-            marker.transform.position = position;
+            marker.transform.position = new Vector3(x + .5f, ground + scale.y, z + .5f);
             marker.transform.localScale = scale;
             marker.GetComponent<Renderer>().sharedMaterial = material;
             Destroy(marker.GetComponent<Collider>());
