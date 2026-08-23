@@ -65,6 +65,8 @@ and fountain, market stalls along its paths, four homes around the civic core,
 and farm/production space at the south-east/west edges. This is presentation
 only—the Core building system remains the owner of player-placed buildings.
 
+![Unity runtime capture: town district](screenshots/unity-town-runtime-2026-08-23.jpg)
+
 The next environment import remains Polytope Studio's **Low Poly Environment –
 Nature Free** from the Unity Asset Store. It is free and URP-compatible, but
 requires adding it to the project's Unity Asset Library before it can be brought
