@@ -35,6 +35,7 @@ namespace Isoperia.Unity
         public ContentDatabase Content { get; private set; }
         public WorldResourceRegistry Resources { get; private set; }
         public SkillSystem Gathering { get; private set; }
+        public CraftingSystem Crafting { get; private set; }
         public string GatheringStatus { get; private set; }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -74,6 +75,7 @@ namespace Isoperia.Unity
             Gathering.ActionStarted += OnGatheringStarted;
             Gathering.Gathered += OnGathered;
             Gathering.ActionEnded += OnGatheringEnded;
+            Crafting = new CraftingSystem(State, Content, new Mulberry32Random(unchecked((int)(NowMs() ^ 0x51f15e))), HasBuilding);
             Debug.Log($"[Isoperia] save loaded from: {result.RecoveredFrom}");
 
             if (result.Summary != null && result.Summary.AwaySeconds > 0)
@@ -124,12 +126,25 @@ namespace Isoperia.Unity
             GameLoop.Instance.Tick.OnTick(AdvanceClock);
             GameLoop.Instance.Tick.OnTick(Resources.Tick);
             GameLoop.Instance.Tick.OnTick(TickGathering);
+            GameLoop.Instance.Tick.OnTick(TickCrafting);
             GameLoop.Instance.Tick.OnTick(Save.OnTick);
         }
 
         private void TickGathering(long _)
         {
             Gathering?.Tick(TickRunner.TickMs);
+        }
+
+        private void TickCrafting(long _)
+        {
+            Crafting?.Tick(TickRunner.TickMs);
+        }
+
+        private bool HasBuilding(string type)
+        {
+            foreach (TownBuilding building in State.Town.Buildings)
+                if (building.Type == type) return true;
+            return false;
         }
 
         private void OnGatheringStarted(IResourceNode node)
@@ -195,6 +210,7 @@ namespace Isoperia.Unity
                 GameLoop.Instance.Tick.RemoveHandler(AdvanceClock);
                 GameLoop.Instance.Tick.RemoveHandler(Resources.Tick);
                 GameLoop.Instance.Tick.RemoveHandler(TickGathering);
+                GameLoop.Instance.Tick.RemoveHandler(TickCrafting);
                 GameLoop.Instance.Tick.RemoveHandler(Save.OnTick);
             }
 

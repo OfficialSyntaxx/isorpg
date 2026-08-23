@@ -4,6 +4,7 @@ using Isoperia.Core.Components;
 using Isoperia.Core.Data;
 using Isoperia.Core.Save;
 using Isoperia.Core.State;
+using Isoperia.Core.Systems;
 using Isoperia.Core.World;
 
 namespace Isoperia.Unity
@@ -28,6 +29,7 @@ namespace Isoperia.Unity
         private Button closePanel;
         private Button inventoryButton;
         private Button skillsButton;
+        private Button craftButton;
         private Button mapButton;
         private Button questButton;
         private Button settingsButton;
@@ -76,6 +78,7 @@ namespace Isoperia.Unity
             closePanel = root.Q<Button>("close-panel");
             inventoryButton = root.Q<Button>("inventory-button");
             skillsButton = root.Q<Button>("skills-button");
+            craftButton = root.Q<Button>("craft-button");
             mapButton = root.Q<Button>("map-button");
             questButton = root.Q<Button>("quest-button");
             settingsButton = root.Q<Button>("settings-button");
@@ -85,6 +88,7 @@ namespace Isoperia.Unity
             closePanel.clicked += ClosePanel;
             inventoryButton.clicked += OpenInventory;
             skillsButton.clicked += OpenSkills;
+            craftButton.clicked += OpenCraft;
             mapButton.clicked += OpenMap;
             questButton.clicked += OpenQuests;
             settingsButton.clicked += OpenSettings;
@@ -204,6 +208,21 @@ namespace Isoperia.Unity
                     ? quest["doneText"].AsString("Completed")
                     : quest["summary"].AsString("No summary available.");
                 AddQuestRow(title, summary, completed);
+            }
+        }
+
+        private void OpenCraft()
+        {
+            OpenPanel("Craft");
+            SaveDriver save = SaveDriver.Instance;
+            if (save == null || save.Crafting == null) { AddPanelMessage("Crafting is loading."); return; }
+            foreach (JsonValue recipe in save.Content.Recipes.Items)
+            {
+                CraftEndReason? reason = save.Crafting.CanStart(recipe);
+                string output = save.Content.ItemName(recipe["output"]["itemId"].AsString());
+                string label = recipe["name"].AsString("Recipe") + " → " + output;
+                if (reason.HasValue) label += " · " + reason.Value;
+                AddSettingButton(label, () => { save.Gathering?.Interrupt(); save.Crafting.Start(recipe); OpenCraft(); });
             }
         }
 
@@ -351,6 +370,7 @@ namespace Isoperia.Unity
             if (closePanel != null) closePanel.clicked -= ClosePanel;
             if (inventoryButton != null) inventoryButton.clicked -= OpenInventory;
             if (skillsButton != null) skillsButton.clicked -= OpenSkills;
+            if (craftButton != null) craftButton.clicked -= OpenCraft;
             if (mapButton != null) mapButton.clicked -= OpenMap;
             if (questButton != null) questButton.clicked -= OpenQuests;
             if (settingsButton != null) settingsButton.clicked -= OpenSettings;

@@ -62,6 +62,10 @@ component and exported skill definitions. It displays all twelve skill levels,
 XP-to-next-level progress, and the count of tracked mastery entries, including
 live gains from Unity gathering.
 
+The Craft panel now runs Core recipes on the simulation tick. It lists every
+exported recipe, surfaces its live level/material/building gate, and routes
+eligible presses through the Core crafting loop rather than a UI-only action.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).

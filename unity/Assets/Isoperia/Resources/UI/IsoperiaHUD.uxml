@@ -21,6 +21,7 @@
         <ui:VisualElement name="bottom-bar" class="bottom-bar">
             <ui:Button name="inventory-button" text="Inventory" class="nav-button" />
             <ui:Button name="skills-button" text="Skills" class="nav-button" />
+            <ui:Button name="craft-button" text="Craft" class="nav-button" />
             <ui:Button name="map-button" text="Map" class="nav-button" />
             <ui:Button name="quest-button" text="Quests" class="nav-button" />
             <ui:Button name="settings-button" text="Settings" class="nav-button" />
