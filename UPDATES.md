@@ -1352,5 +1352,13 @@ Also fixed in the same sweep:
 
 > Play it: https://isoperia-rpg.higgsfield.app
 
+## 2026-08 · Mainland M4 — character asset bridge
+
+- Hearthvale's four service NPCs now instantiate the owned `villager.glb`
+  model through the Unity Resources bridge, with a root interaction capsule and
+  a capsule fallback if an import is unavailable in a stripped build.
+- Added `docs/ASSET_CREDITS.md` as the ship-list license and technical-review
+  record. The existing Kenney CC0 license remains alongside its curated kit.
+
 *Phase 8 asset passes draw on the subscription credit pool (SFX, music, and
 rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*

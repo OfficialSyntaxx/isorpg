@@ -12,6 +12,7 @@ namespace Isoperia.Unity
     public sealed class WorldTownView : MonoBehaviour
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
+        private const string VillagerAsset = "Art/OwnedModels/villager";
         private readonly List<GameObject> instances = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
 
@@ -136,34 +137,50 @@ namespace Isoperia.Unity
 
         private void CreateNpc(string name, string hint, Vector3 position, Color color)
         {
-            GameObject npc = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            npc.name = "NPC_" + name.Replace(" ", string.Empty);
-            npc.transform.SetParent(transform, false);
-            npc.transform.position = position;
-            npc.transform.localScale = new Vector3(.34f, .65f, .34f);
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            Material material = new Material(shader) { color = color };
-            runtimeMaterials.Add(material);
-            npc.GetComponent<Renderer>().sharedMaterial = material;
+            GameObject npc = CreateNpcBody(name, position, color);
             npc.AddComponent<WorldInteractionTarget>().SetNpc(name, hint);
             instances.Add(npc);
         }
 
         private void CreateJourneyNpc(string name, string hint, Vector3 position, Color color)
         {
-            GameObject npc = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            npc.name = "NPC_" + name.Replace(" ", string.Empty);
-            npc.transform.SetParent(transform, false);
-            npc.transform.position = position;
-            npc.transform.localScale = new Vector3(.36f, .70f, .36f);
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            Material material = new Material(shader) { color = color };
-            runtimeMaterials.Add(material);
-            npc.GetComponent<Renderer>().sharedMaterial = material;
+            GameObject npc = CreateNpcBody(name, position, color);
             WorldInteractionTarget target = npc.AddComponent<WorldInteractionTarget>();
             target.SetNpc(name, hint);
             target.SetJourney(LightPoolExpeditionSystem.AcceptedJournalId);
             instances.Add(npc);
+        }
+
+        private GameObject CreateNpcBody(string name, Vector3 position, Color fallbackColor)
+        {
+            GameObject prefab = Resources.Load<GameObject>(VillagerAsset);
+            if (prefab != null)
+            {
+                GameObject npc = Instantiate(prefab, position, Quaternion.identity, transform);
+                npc.name = "NPC_" + name.Replace(" ", string.Empty);
+                npc.transform.localScale = Vector3.one * .62f;
+                if (npc.GetComponent<Collider>() == null)
+                {
+                    var collider = npc.AddComponent<CapsuleCollider>();
+                    collider.radius = .36f;
+                    collider.height = 1.35f;
+                    collider.center = new Vector3(0f, .67f, 0f);
+                }
+                return npc;
+            }
+
+            // Keep a robust fallback for a failed import or an intentionally
+            // stripped mobile build; gameplay interaction stays available.
+            GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            fallback.name = "NPC_" + name.Replace(" ", string.Empty);
+            fallback.transform.SetParent(transform, false);
+            fallback.transform.position = position;
+            fallback.transform.localScale = new Vector3(.34f, .65f, .34f);
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Material material = new Material(shader) { color = fallbackColor };
+            runtimeMaterials.Add(material);
+            fallback.GetComponent<Renderer>().sharedMaterial = material;
+            return fallback;
         }
 
         private void Place(string assetName, Vector3 position, Vector3 scale, float yaw = 0f)
