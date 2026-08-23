@@ -1,5 +1,21 @@
 # Isoperia — Update Log
 
+## 2026-08 · 3D Phase B — continuous biome terrain
+
+The hybrid 3D world now replaces the old isometric tile presentation at runtime
+with one collidable, continuous low-poly terrain mesh. The Core grid remains the
+single source of terrain, elevation, and biome data; Unity builds four contiguous
+material regions for meadow, forest, snow highland, and swamp without creating a
+second world model. The authored settlement, roads, landmarks, and props remain
+on top, giving the player a readable town-to-wilderness transition while keeping
+the existing save and simulation systems intact.
+
+Validation: Unity Console reported zero errors after reimport; Play Mode verified
+a perspective camera, CharacterController player, terrain MeshCollider, and four
+terrain submeshes/materials. Unity EditMode tests passed **205/205**, and a fresh
+WebGL build succeeded in 52.6 seconds (build id `20260823-120818-2a8750bc`,
+59.31 MB).
+
 ## 2026-08 · Phase 3 — Cinder Hollow light-pool expedition
 
 The eastern route now leads into Cinder Hollow, a compact first dungeon approach

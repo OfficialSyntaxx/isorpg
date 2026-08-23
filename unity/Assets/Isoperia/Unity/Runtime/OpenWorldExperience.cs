@@ -21,6 +21,10 @@ namespace Isoperia.Unity
             if (iso != null) iso.enabled = false;
             var isoInput = camera.GetComponent<IsometricCameraInput>();
             if (isoInput != null) isoInput.enabled = false;
+            WorldEnvironmentView tileTerrain = Object.FindAnyObjectByType<WorldEnvironmentView>();
+            if (tileTerrain != null) tileTerrain.gameObject.SetActive(false);
+            if (Object.FindAnyObjectByType<OpenWorldTerrainView>() == null)
+                new GameObject(nameof(OpenWorldTerrainView)).AddComponent<OpenWorldTerrainView>();
 
             WorldPlayerController gridController = Object.FindAnyObjectByType<WorldPlayerController>();
             if (gridController != null) gridController.enabled = false;
