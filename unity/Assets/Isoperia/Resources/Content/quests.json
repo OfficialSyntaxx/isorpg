@@ -1,6 +1,36 @@
 {
   "QUESTS": [
     {
+      "id": "starter_gather",
+      "title": "Stock the Camp",
+      "summary": "Gather 15 normal logs for the settlement stockpile.",
+      "doneText": "The camp has enough timber for its first improvements.",
+      "starterType": "inventory",
+      "target": "normal_log",
+      "count": 15,
+      "rewards": [{ "itemId": "coins", "qty": 12 }]
+    },
+    {
+      "id": "starter_craft",
+      "title": "A Warm Meal",
+      "summary": "Cook one shrimp using the Craft panel.",
+      "doneText": "A warm meal makes the first expedition safer.",
+      "starterType": "inventory",
+      "target": "cooked_shrimp",
+      "count": 1,
+      "rewards": [{ "itemId": "bronze_sword", "qty": 1 }]
+    },
+    {
+      "id": "starter_combat",
+      "title": "Clear the Road",
+      "summary": "Defeat one Giant Rat on the outer route.",
+      "doneText": "The route is safer for the settlement's gatherers.",
+      "starterType": "kills",
+      "target": "giant_rat",
+      "count": 1,
+      "rewards": [{ "itemId": "coins", "qty": 20 }]
+    },
+    {
       "doneText": "The treasure of the Caves is claimed.",
       "givenBy": "Eldric the Cartographer",
       "id": "caves",

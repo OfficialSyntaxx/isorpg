@@ -1,5 +1,13 @@
 # Isoperia — Update Log
 
+## 2026-08 · Phase 2 — Starter task progression
+
+Three data-driven starter tasks now turn the existing systems into a guided first
+loop: stock 15 logs, cook a shrimp, and defeat a Giant Rat. Each checks already
+persisted authoritative state (inventory or kill records), completes once into the
+existing journal, and grants a concrete reward; cooking grants the first Bronze
+Sword unlock. Tasks are surfaced through the existing Quests panel and status HUD.
+
 ## 2026-08 · Phase 1 — Combat expedition vertical slice
 
 The Bootstrap world now has three early-route enemy encounters (Giant Rat,
