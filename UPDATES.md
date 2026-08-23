@@ -1,5 +1,20 @@
 # Isoperia — Update Log
 
+## 2026-08 · Phase E — repeatable Play Mode performance baseline
+
+Phase E now has a profiler-independent diagnostics route. Development and Editor
+sessions create a temporary probe after Bootstrap loads, warm up for one second,
+then record a five-second frame-time baseline plus renderer, light, and collider
+counts before removing themselves. This gives the team a repeatable check on a
+test machine even when the Unity Profiler window or MCP rendering-stat endpoint
+is unavailable; release builds are unaffected.
+
+Initial clean-session measurement: **17.89 ms average / 55.9 FPS**, 359.99 ms
+worst frame, 239 renderers, 4 lights, and 169 colliders. The isolated worst
+frame is retained as an Editor baseline rather than presented as steady-state
+gameplay cost. Next Phase E work will use this measure to make one visual or
+scene-complexity change at a time and compare the result.
+
 ## 2026-08 · 3D Phase C.2 — settlement task contacts
 
 The settlement now has three readable 3D quest contacts: Forester Elowen at the
