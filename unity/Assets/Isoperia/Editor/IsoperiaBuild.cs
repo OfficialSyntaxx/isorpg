@@ -324,6 +324,15 @@ namespace Isoperia.EditorTools
             {
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(includeInactive: true))
                 {
+                    // These views deliberately create their meshes and materials
+                    // after the deterministic Core world exists at runtime. Their
+                    // scene MeshRenderer is only a host component, so requiring
+                    // an authored material here would turn a valid WebGL build
+                    // into a false magenta warning.
+                    if (renderer.GetComponent<Isoperia.Unity.WorldEnvironmentView>() != null ||
+                        renderer.GetComponent<Isoperia.Unity.WorldDecorationView>() != null)
+                        continue;
+
                     checkedCount++;
 
                     var materials = renderer.sharedMaterials;

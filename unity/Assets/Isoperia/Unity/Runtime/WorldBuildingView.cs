@@ -4,9 +4,10 @@ using UnityEngine;
 
 namespace Isoperia.Unity
 {
-    /// <summary>Low-poly presentation for Core town buildings until authored meshes arrive.</summary>
+    /// <summary>Presentation for player-built Core structures using the CC0 town kit.</summary>
     public sealed class WorldBuildingView : MonoBehaviour
     {
+        private const string AssetRoot = "Art/KenneyFantasyTown/";
         private readonly List<GameObject> instances = new List<GameObject>();
         private int renderedCount = -1;
         private Material wood;
@@ -51,18 +52,68 @@ namespace Isoperia.Unity
             root.transform.SetParent(transform, false);
             root.transform.position = new Vector3(building.X + .5f, elevation, building.Y + .5f);
             instances.Add(root);
-            bool furnace = building.Type == "SMELTER";
-            bool campfire = building.Type == "CAMPFIRE";
-            AddCube(root.transform, new Vector3(0, .25f, 0), campfire ? new Vector3(.65f, .18f, .65f) : new Vector3(.76f, .5f, .76f), furnace ? stone : wood);
-            if (campfire) AddCube(root.transform, new Vector3(0, .53f, 0), new Vector3(.22f, .42f, .22f), fire);
-            else AddCube(root.transform, new Vector3(0, .67f, 0), new Vector3(.86f, .34f, .86f), furnace ? stone : wood);
+            switch (building.Type)
+            {
+                case "CAMPFIRE":
+                    CreateCampfire(root.transform);
+                    break;
+                case "SMELTER":
+                    Place(root.transform, "rock-large", new Vector3(0f, .1f, 0f), .65f, 25f);
+                    AddCube(root.transform, new Vector3(0, .62f, 0), new Vector3(.23f, .45f, .23f), fire);
+                    break;
+                case "SAWMILL":
+                    Place(root.transform, "windmill", Vector3.zero, .72f, 0f);
+                    break;
+                case "FARM_PLOT":
+                    CreateFarmPlot(root.transform);
+                    break;
+                case "STORAGE_BIN":
+                    CreateStorehouse(root.transform, .5f);
+                    break;
+                default:
+                    CreateStorehouse(root.transform, .72f);
+                    break;
+            }
         }
 
-        private static void AddCube(Transform parent, Vector3 localPosition, Vector3 scale, Material material)
+        private void CreateCampfire(Transform parent)
+        {
+            AddCube(parent, new Vector3(-.18f, .12f, 0f), new Vector3(.68f, .12f, .16f), wood, 35f);
+            AddCube(parent, new Vector3(.18f, .12f, 0f), new Vector3(.68f, .12f, .16f), wood, -35f);
+            AddCube(parent, new Vector3(0f, .34f, 0f), new Vector3(.22f, .42f, .22f), fire);
+        }
+
+        private void CreateFarmPlot(Transform parent)
+        {
+            for (int i = -1; i <= 1; i++)
+                Place(parent, "fence", new Vector3(i * .32f, 0f, .34f), .45f, 0f);
+            Place(parent, "fence", new Vector3(-.48f, 0f, 0f), .45f, 90f);
+            Place(parent, "fence", new Vector3(.48f, 0f, 0f), .45f, 90f);
+        }
+
+        private void CreateStorehouse(Transform parent, float scale)
+        {
+            Place(parent, "wall-wood-door", Vector3.zero, scale, 0f);
+            Place(parent, "roof-gable", new Vector3(0f, scale * .8f, 0f), scale * 1.08f, 0f);
+        }
+
+        private void Place(Transform parent, string assetName, Vector3 localPosition, float scale, float yaw)
+        {
+            GameObject prefab = Resources.Load<GameObject>(AssetRoot + assetName);
+            if (prefab == null) return;
+            GameObject instance = Instantiate(prefab, parent);
+            instance.name = "BuildingModel_" + assetName;
+            instance.transform.localPosition = localPosition;
+            instance.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            instance.transform.localScale = Vector3.one * scale;
+        }
+
+        private static void AddCube(Transform parent, Vector3 localPosition, Vector3 scale, Material material, float yaw = 0f)
         {
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.transform.SetParent(parent, false);
             cube.transform.localPosition = localPosition;
+            cube.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             cube.transform.localScale = scale;
             cube.GetComponent<Renderer>().sharedMaterial = material;
             Object.Destroy(cube.GetComponent<Collider>());

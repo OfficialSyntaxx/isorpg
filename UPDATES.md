@@ -1,5 +1,34 @@
 # Isoperia — Update Log
 
+## 2026-08 · Playable settlement vertical slice
+
+The Unity build now has a complete early-game test loop rather than disconnected
+prototype screens: fresh profiles receive enough logs to place both a Campfire
+and Storage Bin, can cook the starter shrimp, gather trees/ore/fishing spots,
+and receive live completion/gate feedback for crafting as well as gathering.
+Progress remains owned by the existing Core save systems and is flushed through
+the WebGL lifecycle bridge.
+
+World resource nodes now use the imported CC0 Kenney Fantasy Town tree and rock
+models instead of combined box geometry; fishing spots are a distinct water
+marker. Player-built structures likewise use the same kit: stores render as
+small timber buildings, sawmills as windmills, plots as fenced beds, and
+smelters/campfires retain a lightweight procedural fire treatment where the
+free kit has no equivalent mesh. These are presentation-only changes: Core
+pathfinding, resource depletion, build validation, inventory, crafting, and
+save state remain authoritative.
+
+Tester path: cook shrimp from **Craft**, choose **Build** and place a Campfire
+or Storage Bin on an open settlement tile, then tap a tree/rock/fishing spot to
+walk over and gather. The status bar reports each outcome and Inventory shows
+the persistent result. The release build is made with `IsoperiaBuild.BuildWebGL`;
+the generated package stays ignored under `unity/WebGLBuild/`, while its
+committed `build-report.txt` is the reviewable record.
+
+Validation: direct Unity C# compile (no errors; only stale response-file
+duplicate-source warnings), Unity EditMode suite **205/205 passing**, and a
+production WebGL build succeeded in 4m 05s (build id `20260823-094100-443aa01b`).
+
 ## 2026-08 · Unity environment integration
 
 The Unity Bootstrap scene now renders the deterministic Core `Grid` as one

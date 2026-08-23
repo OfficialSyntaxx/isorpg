@@ -1,36 +1,22 @@
-using System.Collections.Generic;
 using Isoperia.Core.World;
 using UnityEngine;
-using UnityEngine.Rendering;
 using CoreGrid = Isoperia.Core.World.Grid;
 
 namespace Isoperia.Unity
 {
     /// <summary>
-    /// Combined low-poly presentation for the Core resource registry. Nodes are
-    /// still selected and depleted by gameplay code; this view only rebuilds the
-    /// three shared submeshes when a node changes, avoiding GameObjects per prop.
+    /// Presentation for Core resource nodes. Gameplay still selects and depletes
+    /// the registry nodes; this view turns them into the imported CC0 town-kit
+    /// models so the playable world does not read as a field of debug cubes.
     /// </summary>
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
     public sealed class WorldDecorationView : MonoBehaviour
     {
-        private const int FoliageMaterial = 0;
-        private const int TrunkMaterial = 1;
-        private const int RockMaterial = 2;
-        private const int MaterialCount = 3;
-        private static readonly int[] BoxFaces =
-        {
-            0, 2, 1, 0, 3, 2,
-            4, 5, 6, 4, 6, 7,
-            0, 1, 5, 0, 5, 4,
-            1, 2, 6, 1, 6, 5,
-            2, 3, 7, 2, 7, 6,
-            3, 0, 4, 3, 4, 7,
-        };
-
-        private Mesh runtimeMesh;
-        private Material[] runtimeMaterials;
+        private const string AssetRoot = "Art/KenneyFantasyTown/";
+        private readonly System.Collections.Generic.List<GameObject> instances =
+            new System.Collections.Generic.List<GameObject>();
+        private Material waterMarkerMaterial;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateDecorationView()
@@ -54,10 +40,6 @@ namespace Isoperia.Unity
 
             CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
             WorldResourceRegistry resources = SaveDriver.Instance?.Resources;
-            var vertices = new List<Vector3>(512);
-            var triangles = new List<int>[MaterialCount];
-            for (int i = 0; i < MaterialCount; i++) triangles[i] = new List<int>(512);
-
             if (resources != null)
             {
                 for (int i = 0; i < resources.Nodes.Count; i++)
@@ -69,80 +51,57 @@ namespace Isoperia.Unity
                     float ground = tile.TerrainType == TerrainType.Water
                         ? 0.02f
                         : 0.04f + (float)tile.Elevation;
-                    float offsetX = 0.25f + ((tile.Seed % 37) / 100f);
-                    float offsetZ = 0.25f + (((tile.Seed / 37) % 37) / 100f);
+                    float offsetX = 0.3f + ((tile.Seed % 31) / 100f);
+                    float offsetZ = 0.3f + (((tile.Seed / 31) % 31) / 100f);
                     var basePosition = new Vector3(tile.X + offsetX, ground, tile.Y + offsetZ);
+                    float yaw = (tile.Seed % 8) * 45f;
 
                     if (node.Type == "TREE")
                     {
-                        AddBox(vertices, triangles, basePosition + new Vector3(0f, 0.42f, 0f), new Vector3(0.14f, 0.84f, 0.14f), TrunkMaterial);
-                        AddBox(vertices, triangles, basePosition + new Vector3(0f, 1.03f, 0f), new Vector3(0.68f, 0.58f, 0.68f), FoliageMaterial);
+                        Place(tile.Seed % 3 == 0 ? "tree-high" : "tree", basePosition, .72f, yaw);
                     }
                     else if (node.Type == "ROCK")
                     {
-                        float scale = 0.22f + ((tile.Seed % 13) / 100f);
-                        AddBox(vertices, triangles, basePosition + new Vector3(0f, scale * 0.55f, 0f), new Vector3(scale, scale * 1.1f, scale * 0.8f), RockMaterial);
+                        Place(tile.Seed % 2 == 0 ? "rock-large" : "rock-small", basePosition, .75f, yaw);
                     }
                     else
                     {
-                        AddBox(vertices, triangles, basePosition + new Vector3(0f, 0.15f, 0f), new Vector3(0.42f, 0.12f, 0.42f), FoliageMaterial);
+                        CreateWaterMarker(basePosition, yaw);
                     }
                 }
             }
-
-            runtimeMesh = new Mesh
-            {
-                name = "WorldDecorationView_RuntimeMesh",
-                indexFormat = IndexFormat.UInt32,
-                subMeshCount = MaterialCount,
-            };
-            runtimeMesh.SetVertices(vertices);
-            for (int i = 0; i < MaterialCount; i++) runtimeMesh.SetTriangles(triangles[i], i, false);
-            runtimeMesh.RecalculateNormals();
-            runtimeMesh.RecalculateBounds();
-            runtimeMesh.UploadMeshData(false);
-
-            runtimeMaterials = CreateMaterials();
-            GetComponent<MeshFilter>().sharedMesh = runtimeMesh;
-            GetComponent<MeshRenderer>().sharedMaterials = runtimeMaterials;
         }
 
-        private static void AddBox(List<Vector3> vertices, List<int>[] triangles, Vector3 center, Vector3 size, int material)
+        private void Place(string assetName, Vector3 position, float scale, float yaw)
         {
-            int start = vertices.Count;
-            Vector3 half = size * 0.5f;
-            vertices.Add(center + new Vector3(-half.x, -half.y, -half.z));
-            vertices.Add(center + new Vector3( half.x, -half.y, -half.z));
-            vertices.Add(center + new Vector3( half.x, -half.y,  half.z));
-            vertices.Add(center + new Vector3(-half.x, -half.y,  half.z));
-            vertices.Add(center + new Vector3(-half.x,  half.y, -half.z));
-            vertices.Add(center + new Vector3( half.x,  half.y, -half.z));
-            vertices.Add(center + new Vector3( half.x,  half.y,  half.z));
-            vertices.Add(center + new Vector3(-half.x,  half.y,  half.z));
+            GameObject prefab = Resources.Load<GameObject>(AssetRoot + assetName);
+            if (prefab == null) return;
 
-            for (int i = 0; i < BoxFaces.Length; i++) triangles[material].Add(start + BoxFaces[i]);
+            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = "Resource_" + assetName;
+            instance.transform.localScale = Vector3.one * scale;
+            instances.Add(instance);
         }
 
-        private static Material[] CreateMaterials()
+        private void CreateWaterMarker(Vector3 position, float yaw)
         {
+            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            marker.name = "Resource_FishingSpot";
+            marker.transform.SetParent(transform, false);
+            marker.transform.position = position + new Vector3(0f, .05f, 0f);
+            marker.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            marker.transform.localScale = new Vector3(.26f, .04f, .26f);
+            marker.GetComponent<Renderer>().sharedMaterial = WaterMarkerMaterial();
+            Destroy(marker.GetComponent<Collider>());
+            instances.Add(marker);
+        }
+
+        private Material WaterMarkerMaterial()
+        {
+            if (waterMarkerMaterial != null) return waterMarkerMaterial;
             Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            Color[] colors =
-            {
-                new Color(0.18f, 0.38f, 0.17f, 1f),
-                new Color(0.27f, 0.16f, 0.08f, 1f),
-                new Color(0.36f, 0.37f, 0.38f, 1f),
-            };
-            var materials = new Material[MaterialCount];
-            for (int i = 0; i < MaterialCount; i++)
-            {
-                materials[i] = new Material(shader)
-                {
-                    name = "WorldDecorationView_RuntimeMaterial_" + i,
-                    color = colors[i],
-                };
-            }
-
-            return materials;
+            waterMarkerMaterial = new Material(shader) { color = new Color(.18f, .63f, .78f, 1f) };
+            return waterMarkerMaterial;
         }
 
         private void OnDestroy()
@@ -159,22 +118,11 @@ namespace Isoperia.Unity
 
         private void DestroyRuntimeAssets()
         {
-            if (runtimeMesh != null)
-            {
-                if (Application.isPlaying) Destroy(runtimeMesh);
-                else DestroyImmediate(runtimeMesh);
-                runtimeMesh = null;
-            }
-
-            if (runtimeMaterials == null) return;
-            for (int i = 0; i < runtimeMaterials.Length; i++)
-            {
-                if (runtimeMaterials[i] == null) continue;
-                if (Application.isPlaying) Destroy(runtimeMaterials[i]);
-                else DestroyImmediate(runtimeMaterials[i]);
-            }
-
-            runtimeMaterials = null;
+            for (int i = 0; i < instances.Count; i++)
+                if (instances[i] != null) Destroy(instances[i]);
+            instances.Clear();
+            if (waterMarkerMaterial != null) Destroy(waterMarkerMaterial);
+            waterMarkerMaterial = null;
         }
     }
 }

@@ -80,6 +80,9 @@ namespace Isoperia.Unity
             Gathering.Gathered += OnGathered;
             Gathering.ActionEnded += OnGatheringEnded;
             Crafting = new CraftingSystem(State, Content, new Mulberry32Random(unchecked((int)(NowMs() ^ 0x51f15e))), HasBuilding);
+            Crafting.Started += OnCraftingStarted;
+            Crafting.Crafted += OnCrafted;
+            Crafting.Ended += OnCraftingEnded;
             Debug.Log($"[Isoperia] save loaded from: {result.RecoveredFrom}");
 
             if (result.Summary != null && result.Summary.AwaySeconds > 0)
@@ -98,7 +101,11 @@ namespace Isoperia.Unity
             InventoryComponent inventory = State.Player.Inventory;
             if (outcome == LoadOutcome.Fresh)
             {
-                inventory.Add("normal_log", 5);
+                // A new session can immediately try the loop rather than being
+                // forced to discover a tree before it can place either starter
+                // settlement structure. Gathering remains necessary for all
+                // subsequent construction.
+                inventory.Add("normal_log", 12);
                 inventory.Add("raw_shrimp", 2);
                 inventory.Add("coins", 5);
             }
@@ -189,6 +196,28 @@ namespace Isoperia.Unity
             else if (reason == ActionEndReason.ToolShortfall) GatheringStatus = "Required gathering tool missing";
         }
 
+        private void OnCraftingStarted(JsonValue recipe)
+        {
+            GatheringStatus = "Crafting " + recipe["name"].AsString("item") + "…";
+        }
+
+        private void OnCrafted(CraftEvent crafted)
+        {
+            string itemId = crafted.Recipe["output"]["itemId"].AsString("item");
+            GatheringStatus = "+" + crafted.Amount + " " + Content.ItemName(itemId) +
+                              " · " + crafted.XpGained + " XP";
+        }
+
+        private void OnCraftingEnded(JsonValue recipe, CraftEndReason reason)
+        {
+            if (reason == CraftEndReason.MissingMaterials)
+                GatheringStatus = "Crafting stopped · gather more materials";
+            else if (reason == CraftEndReason.MissingBuilding)
+                GatheringStatus = "Crafting needs " + recipe["requiresBuilding"].AsString("a workshop");
+            else if (reason == CraftEndReason.InventoryFull)
+                GatheringStatus = "Inventory full";
+        }
+
         private void AdvanceClock(long _)
         {
             State.ClockMinute++;
@@ -242,6 +271,13 @@ namespace Isoperia.Unity
                 Gathering.ActionStarted -= OnGatheringStarted;
                 Gathering.Gathered -= OnGathered;
                 Gathering.ActionEnded -= OnGatheringEnded;
+            }
+
+            if (Crafting != null)
+            {
+                Crafting.Started -= OnCraftingStarted;
+                Crafting.Crafted -= OnCrafted;
+                Crafting.Ended -= OnCraftingEnded;
             }
 
             if (Instance == this) Instance = null;
