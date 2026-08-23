@@ -1,5 +1,9 @@
 # Isoperia World Layout — v1
 
+> **Superseded for implementation by the [126×126 Mainland World Plan](MAINLAND_WORLD_PLAN.md).**
+> This document remains the compact-prototype layout reference until M0 migration
+> is complete; its fixed 42×42 coordinates must not be copied into mainland code.
+
 ![Top-down overworld concept](concepts/isoperia-overworld-layout-v1.png)
 
 The Unity world should read as one place from the camera: a safe settlement at
