@@ -35,6 +35,11 @@ the player position highlighted. Terrain rendering, tap-to-move, camera framing,
 and the map now share one Unity `WorldRuntime` grid rather than generating private
 copies of the same world.
 
+The environment now adds deterministic low-poly trees and rocks from each
+tile's existing seed. The scatter is packed into one combined mesh with three
+shared materials, and `docs/ART_BIBLE.md` records the mobile/WebGL palette,
+material, triangle, and asset-pipeline rules for replacing prototype geometry.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).
