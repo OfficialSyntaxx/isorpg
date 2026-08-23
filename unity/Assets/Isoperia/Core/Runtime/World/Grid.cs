@@ -212,6 +212,27 @@ namespace Isoperia.Core.World
             return Tiles[y][x];
         }
 
+        /// <summary>Whether the tile's six-by-six exploration region is open.</summary>
+        public bool IsRegionUnlocked(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= Width || y >= Height) return false;
+            return RegionUnlocked[y / GridChunk][x / GridChunk];
+        }
+
+        /// <summary>
+        /// Applies the authoritative occupant for an in-bounds tile. Systems use
+        /// this rather than mutating fields independently so pathing always sees
+        /// the same occupancy that a save/renderer describes.
+        /// </summary>
+        public bool SetOccupant(int x, int y, Occupant occupant, string occupantId)
+        {
+            Tile tile = At(x, y);
+            if (tile == null) return false;
+            tile.Occupant = occupant;
+            tile.OccupantId = occupant == Occupant.None ? null : occupantId;
+            return true;
+        }
+
         /// <summary>
         /// Note that resource nodes block movement: the player paths to an
         /// adjacent tile and then harvests, which is what
