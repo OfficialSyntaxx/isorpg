@@ -5,6 +5,8 @@ using Isoperia.Core.Components;
 using Isoperia.Core.Content;
 using Isoperia.Core.Save;
 using Isoperia.Core.State;
+using Isoperia.Core.Sim;
+using Isoperia.Core.Systems;
 
 namespace Isoperia.Unity
 {
@@ -31,6 +33,9 @@ namespace Isoperia.Unity
         public SaveSystem Save { get; private set; }
         public GameState State { get; private set; }
         public ContentDatabase Content { get; private set; }
+        public WorldResourceRegistry Resources { get; private set; }
+        public SkillSystem Gathering { get; private set; }
+        public string GatheringStatus { get; private set; }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")]
@@ -60,6 +65,15 @@ namespace Isoperia.Unity
             LoadResult result = Save.Load();
             State.Player.Inventory.SetCatalog(catalog);
             GrantStarterItems(result.RecoveredFrom);
+            Resources = new WorldResourceRegistry(WorldRuntime.Instance.Grid, Content);
+            Gathering = new SkillSystem(
+                State,
+                Content,
+                new Mulberry32Random(unchecked((int)NowMs())),
+                Resources.Consume);
+            Gathering.ActionStarted += OnGatheringStarted;
+            Gathering.Gathered += OnGathered;
+            Gathering.ActionEnded += OnGatheringEnded;
             Debug.Log($"[Isoperia] save loaded from: {result.RecoveredFrom}");
 
             if (result.Summary != null && result.Summary.AwaySeconds > 0)
@@ -108,7 +122,33 @@ namespace Isoperia.Unity
             }
 
             GameLoop.Instance.Tick.OnTick(AdvanceClock);
+            GameLoop.Instance.Tick.OnTick(Resources.Tick);
+            GameLoop.Instance.Tick.OnTick(TickGathering);
             GameLoop.Instance.Tick.OnTick(Save.OnTick);
+        }
+
+        private void TickGathering(long _)
+        {
+            Gathering?.Tick(TickRunner.TickMs);
+        }
+
+        private void OnGatheringStarted(IResourceNode node)
+        {
+            GatheringStatus = "Gathering " + node.Def["masteryKey"].AsString("resource") + "…";
+        }
+
+        private void OnGathered(GatherEvent gathered)
+        {
+            GatheringStatus = "+" + gathered.Amount + " " + Content.ItemName(gathered.ItemId) +
+                              " · " + gathered.XpGained + " XP";
+        }
+
+        private void OnGatheringEnded(IResourceNode node, ActionEndReason reason)
+        {
+            if (reason == ActionEndReason.Done) GatheringStatus = "Resource depleted · respawning soon";
+            else if (reason == ActionEndReason.InventoryFull) GatheringStatus = "Inventory full";
+            else if (reason == ActionEndReason.LevelShortfall) GatheringStatus = "Level requirement not met";
+            else if (reason == ActionEndReason.ToolShortfall) GatheringStatus = "Required gathering tool missing";
         }
 
         private void AdvanceClock(long _)
@@ -153,7 +193,16 @@ namespace Isoperia.Unity
             if (GameLoop.Instance != null && GameLoop.Instance.Tick != null)
             {
                 GameLoop.Instance.Tick.RemoveHandler(AdvanceClock);
+                GameLoop.Instance.Tick.RemoveHandler(Resources.Tick);
+                GameLoop.Instance.Tick.RemoveHandler(TickGathering);
                 GameLoop.Instance.Tick.RemoveHandler(Save.OnTick);
+            }
+
+            if (Gathering != null)
+            {
+                Gathering.ActionStarted -= OnGatheringStarted;
+                Gathering.Gathered -= OnGathered;
+                Gathering.ActionEnded -= OnGatheringEnded;
             }
 
             if (Instance == this) Instance = null;

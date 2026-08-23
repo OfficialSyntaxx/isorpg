@@ -7,9 +7,9 @@ using CoreGrid = Isoperia.Core.World.Grid;
 namespace Isoperia.Unity
 {
     /// <summary>
-    /// Deterministic low-poly scatter for the prototype world. It turns each
-    /// tile's existing Core seed into a stable tree or rock decision and packs
-    /// the result into one mesh, avoiding a GameObject/draw-call per decoration.
+    /// Combined low-poly presentation for the Core resource registry. Nodes are
+    /// still selected and depleted by gameplay code; this view only rebuilds the
+    /// three shared submeshes when a node changes, avoiding GameObjects per prop.
     /// </summary>
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
@@ -41,9 +41,11 @@ namespace Isoperia.Unity
             root.AddComponent<WorldDecorationView>();
         }
 
-        private void Awake()
+        private void Start()
         {
             Rebuild();
+            if (SaveDriver.Instance?.Resources != null)
+                SaveDriver.Instance.Resources.NodeChanged += OnNodeChanged;
         }
 
         public void Rebuild()
@@ -51,15 +53,19 @@ namespace Isoperia.Unity
             DestroyRuntimeAssets();
 
             CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
+            WorldResourceRegistry resources = SaveDriver.Instance?.Resources;
             var vertices = new List<Vector3>(512);
             var triangles = new List<int>[MaterialCount];
             for (int i = 0; i < MaterialCount; i++) triangles[i] = new List<int>(512);
 
-            for (int y = 0; y < grid.Height; y++)
+            if (resources != null)
             {
-                for (int x = 0; x < grid.Width; x++)
+                for (int i = 0; i < resources.Nodes.Count; i++)
                 {
-                    Tile tile = grid.Tiles[y][x];
+                    WorldResourceNode node = resources.Nodes[i];
+                    if (node.Depleted) continue;
+
+                    Tile tile = grid.At(node.X, node.Y);
                     float ground = tile.TerrainType == TerrainType.Water
                         ? 0.02f
                         : 0.04f + (float)tile.Elevation;
@@ -67,15 +73,19 @@ namespace Isoperia.Unity
                     float offsetZ = 0.25f + (((tile.Seed / 37) % 37) / 100f);
                     var basePosition = new Vector3(tile.X + offsetX, ground, tile.Y + offsetZ);
 
-                    if (tile.TerrainType == TerrainType.Grass && tile.ZoneId != ZoneIds.TownCenter && tile.Seed % 100 < 10)
+                    if (node.Type == "TREE")
                     {
                         AddBox(vertices, triangles, basePosition + new Vector3(0f, 0.42f, 0f), new Vector3(0.14f, 0.84f, 0.14f), TrunkMaterial);
                         AddBox(vertices, triangles, basePosition + new Vector3(0f, 1.03f, 0f), new Vector3(0.68f, 0.58f, 0.68f), FoliageMaterial);
                     }
-                    else if ((tile.TerrainType == TerrainType.Rock || tile.TerrainType == TerrainType.Dirt) && tile.Seed % 100 < 24)
+                    else if (node.Type == "ROCK")
                     {
                         float scale = 0.22f + ((tile.Seed % 13) / 100f);
                         AddBox(vertices, triangles, basePosition + new Vector3(0f, scale * 0.55f, 0f), new Vector3(scale, scale * 1.1f, scale * 0.8f), RockMaterial);
+                    }
+                    else
+                    {
+                        AddBox(vertices, triangles, basePosition + new Vector3(0f, 0.15f, 0f), new Vector3(0.42f, 0.12f, 0.42f), FoliageMaterial);
                     }
                 }
             }
@@ -137,7 +147,14 @@ namespace Isoperia.Unity
 
         private void OnDestroy()
         {
+            if (SaveDriver.Instance?.Resources != null)
+                SaveDriver.Instance.Resources.NodeChanged -= OnNodeChanged;
             DestroyRuntimeAssets();
+        }
+
+        private void OnNodeChanged(WorldResourceNode _)
+        {
+            Rebuild();
         }
 
         private void DestroyRuntimeAssets()

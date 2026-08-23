@@ -46,6 +46,15 @@ web dawn/day/dusk curve (06:30–19:30), so the environment's lighting is
 deterministic, persists with the save, and does not introduce a second time
 authority.
 
+Trees, ore rocks, and fishing spots are now deterministic **Core resource
+nodes**, rather than decoration-only scatter. Tapping a node routes the hero to
+an adjacent tile through Core A*, then runs the existing Core `SkillSystem` on
+the 600 ms simulation tick. Trees and rocks deplete, disappear from the
+combined prop mesh, and respawn after the existing 30-second cadence; fishing
+spots remain active. The HUD mirrors gathering rewards and gate/full-inventory
+feedback. Node depletion is currently session-scoped; save-schema persistence
+is intentionally the next state-migration slice.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).

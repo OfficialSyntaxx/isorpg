@@ -599,9 +599,12 @@ status, movement guidance, and navigation buttons. Inventory, Map, Quests, and
 Settings are now Core-backed; Map, terrain rendering, and movement share one runtime
 world-state bridge. Deterministic combined-mesh tree/rock scatter, the initial
 art bible, and a Core-clock-driven Sun/sky/ambient-light day-night presentation
-are now present. The next implementation slice is actual world props with harvest
-state, then the remaining gameplay panels and Phase 5–7 art replacement,
-animation, audio, and polish work. Runtime Play Mode/device
+are now present. Trees, rocks, and fishing spots are also now Core resource
+nodes: deterministic web-parity placement, adjacent A* routing, SkillSystem
+gather ticks, mesh-backed depletion/respawn, and HUD feedback are connected.
+Node depletion is session-scoped until the next save-schema migration slice.
+That persistence work, the remaining gameplay panels, and Phase 5–7 art
+replacement, animation, audio, and polish work remain. Runtime Play Mode/device
 validation still requires a responsive Unity Editor connection and a target-device pass.
 
 Nothing is deleted or replaced until Phase 9.

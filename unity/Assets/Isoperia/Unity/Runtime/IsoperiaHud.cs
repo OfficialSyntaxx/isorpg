@@ -30,6 +30,9 @@ namespace Isoperia.Unity
         private Button mapButton;
         private Button questButton;
         private Button settingsButton;
+        private Label worldStatus;
+        private Label hintBody;
+        private string displayedGatheringStatus;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateBootstrapHud()
@@ -74,12 +77,24 @@ namespace Isoperia.Unity
             mapButton = root.Q<Button>("map-button");
             questButton = root.Q<Button>("quest-button");
             settingsButton = root.Q<Button>("settings-button");
+            worldStatus = root.Q<Label>("world-status");
+            hintBody = root.Q<Label>("hint-body");
 
             closePanel.clicked += ClosePanel;
             inventoryButton.clicked += OpenInventory;
             mapButton.clicked += OpenMap;
             questButton.clicked += OpenQuests;
             settingsButton.clicked += OpenSettings;
+        }
+
+        private void Update()
+        {
+            string status = SaveDriver.Instance?.GatheringStatus;
+            if (string.IsNullOrEmpty(status) || status == displayedGatheringStatus) return;
+
+            displayedGatheringStatus = status;
+            if (worldStatus != null) worldStatus.text = status.ToUpperInvariant();
+            if (hintBody != null) hintBody.text = status;
         }
 
         private void OpenInventory()

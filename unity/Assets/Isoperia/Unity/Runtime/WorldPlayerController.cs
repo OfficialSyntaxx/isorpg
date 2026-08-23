@@ -22,6 +22,7 @@ namespace Isoperia.Unity
         private CoreGrid grid;
         private PositionComponent position;
         private MovementSystem movement;
+        private WorldResourceNode pendingNode;
         private Vector2 pointerDown;
 
         private void Awake()
@@ -121,6 +122,24 @@ namespace Isoperia.Unity
             int goalY = Mathf.FloorToInt(world.z);
             if (goalX < 0 || goalY < 0 || goalX >= grid.Width || goalY >= grid.Height) return;
 
+            SaveDriver.Instance?.Gathering?.Interrupt();
+            pendingNode = SaveDriver.Instance?.Resources?.NodeAt(goalX, goalY);
+            if (pendingNode != null && !pendingNode.Depleted)
+            {
+                int distance = Mathf.Max(Mathf.Abs(position.Gx - goalX), Mathf.Abs(position.Gy - goalY));
+                if (distance <= 1)
+                {
+                    BeginGathering(pendingNode);
+                    return;
+                }
+
+                var nodePath = AStar.FindPath(grid, position.Gx, position.Gy, goalX, goalY, true);
+                if (nodePath != null) movement.SetPath(nodePath);
+                else pendingNode = null;
+                return;
+            }
+
+            pendingNode = null;
             var path = AStar.FindPath(grid, position.Gx, position.Gy, goalX, goalY);
             if (path != null) movement.SetPath(path);
         }
@@ -140,8 +159,17 @@ namespace Isoperia.Unity
 
         private void OnArrived(int x, int y)
         {
-            // Keep the camera framing stable for now; the Phase 3 pan gesture
-            // will make camera-follow behavior an explicit player choice.
+            if (pendingNode == null) return;
+
+            WorldResourceNode node = pendingNode;
+            pendingNode = null;
+            if (!node.Depleted) BeginGathering(node);
+        }
+
+        private void BeginGathering(WorldResourceNode node)
+        {
+            pendingNode = null;
+            SaveDriver.Instance?.Gathering?.StartGathering(node);
         }
 
         private Transform FindPlayer()
