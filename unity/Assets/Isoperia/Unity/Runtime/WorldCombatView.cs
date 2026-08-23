@@ -62,21 +62,24 @@ namespace Isoperia.Unity
         {
             string asset = enemy.Id == "dire_wolf" ? WolfAsset : enemy.Id == "goblin" ? OgreAsset : null;
             GameObject prefab = asset == null ? null : Resources.Load<GameObject>(asset);
+            GameObject root = new GameObject();
             if (prefab != null)
             {
-                GameObject model = Instantiate(prefab);
+                GameObject model = Instantiate(prefab, root.transform);
                 model.transform.localScale = enemy.Id == "dire_wolf"
                     ? new Vector3(.52f, .36f, .62f)
                     : Vector3.one * .58f;
-                return model;
+                return root;
             }
 
             GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            fallback.transform.SetParent(root.transform, false);
             fallback.transform.localScale = enemy.Id == "dire_wolf"
                 ? new Vector3(.42f, .30f, .65f)
                 : new Vector3(.30f, .38f, .30f);
             fallback.GetComponent<Renderer>().sharedMaterial = MaterialFor(enemy.Id);
-            return fallback;
+            Destroy(fallback.GetComponent<Collider>());
+            return root;
         }
 
         private Material MaterialFor(string id)
