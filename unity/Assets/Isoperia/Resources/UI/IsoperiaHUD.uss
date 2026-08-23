@@ -158,6 +158,24 @@
     white-space: normal;
 }
 
+.skill-row {
+    margin-top: 5px;
+    padding: 8px;
+    background-color: rgba(70, 54, 38, 0.55);
+}
+
+.skill-title {
+    color: rgb(245, 197, 92);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.skill-details {
+    margin-top: 3px;
+    color: rgb(214, 204, 184);
+    font-size: 11px;
+}
+
 .setting-button {
     min-height: 38px;
     margin-top: 6px;

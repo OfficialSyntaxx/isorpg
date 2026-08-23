@@ -27,6 +27,7 @@ namespace Isoperia.Unity
         private VisualElement panelBody;
         private Button closePanel;
         private Button inventoryButton;
+        private Button skillsButton;
         private Button mapButton;
         private Button questButton;
         private Button settingsButton;
@@ -74,6 +75,7 @@ namespace Isoperia.Unity
             panelBody = root.Q<VisualElement>("panel-body");
             closePanel = root.Q<Button>("close-panel");
             inventoryButton = root.Q<Button>("inventory-button");
+            skillsButton = root.Q<Button>("skills-button");
             mapButton = root.Q<Button>("map-button");
             questButton = root.Q<Button>("quest-button");
             settingsButton = root.Q<Button>("settings-button");
@@ -82,6 +84,7 @@ namespace Isoperia.Unity
 
             closePanel.clicked += ClosePanel;
             inventoryButton.clicked += OpenInventory;
+            skillsButton.clicked += OpenSkills;
             mapButton.clicked += OpenMap;
             questButton.clicked += OpenQuests;
             settingsButton.clicked += OpenSettings;
@@ -157,6 +160,28 @@ namespace Isoperia.Unity
             }
 
             panelBody.Add(map);
+        }
+
+        private void OpenSkills()
+        {
+            OpenPanel("Skills");
+
+            SaveDriver saveDriver = SaveDriver.Instance;
+            if (saveDriver == null || saveDriver.State == null || saveDriver.Content == null)
+            {
+                AddPanelMessage("Skills are loading.");
+                return;
+            }
+
+            foreach (string id in Skills.All)
+            {
+                SkillState skill = saveDriver.State.Player.Skills.Get(id);
+                int level;
+                double progress;
+                XpTable.LevelProgress(skill.Xp, out level, out progress);
+                string name = saveDriver.Content.Skills[id]["name"].AsString(id);
+                AddSkillRow(name, level, skill.Xp, progress, skill.Mastery.Count);
+            }
         }
 
         private void OpenQuests()
@@ -248,6 +273,20 @@ namespace Isoperia.Unity
             panelBody.Add(row);
         }
 
+        private void AddSkillRow(string name, int level, double xp, double progress, int masteryCount)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("skill-row");
+
+            var title = new Label(name + "  ·  Lv " + level);
+            title.AddToClassList("skill-title");
+            var details = new Label(string.Format("{0:N0} XP  ·  {1:P0} to next  ·  {2} mastery", xp, progress, masteryCount));
+            details.AddToClassList("skill-details");
+            row.Add(title);
+            row.Add(details);
+            panelBody.Add(row);
+        }
+
         private void AddSettingButton(string text, System.Action action)
         {
             var button = new Button(action) { text = text };
@@ -311,6 +350,7 @@ namespace Isoperia.Unity
         {
             if (closePanel != null) closePanel.clicked -= ClosePanel;
             if (inventoryButton != null) inventoryButton.clicked -= OpenInventory;
+            if (skillsButton != null) skillsButton.clicked -= OpenSkills;
             if (mapButton != null) mapButton.clicked -= OpenMap;
             if (questButton != null) questButton.clicked -= OpenQuests;
             if (settingsButton != null) settingsButton.clicked -= OpenSettings;

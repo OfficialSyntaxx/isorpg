@@ -604,8 +604,9 @@ nodes: deterministic web-parity placement, adjacent A* routing, SkillSystem
 gather ticks, mesh-backed depletion/respawn, and HUD feedback are connected.
 Only the mutable use/respawn state is persisted through the Core save schema;
 placement and definitions continue to regenerate from the grid/content source.
-The remaining gameplay panels and Phase 5–7 art replacement, animation, audio,
-and polish work remain. Runtime Play Mode/device
+The Skills panel now exposes the twelve Core skill levels, XP progress, and
+mastery counts. The remaining crafting/building gameplay panels and Phase 5–7
+art replacement, animation, audio, and polish work remain. Runtime Play Mode/device
 validation still requires a responsive Unity Editor connection and a target-device pass.
 
 Nothing is deleted or replaced until Phase 9.

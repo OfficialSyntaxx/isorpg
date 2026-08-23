@@ -57,6 +57,11 @@ is now part of the Core save schema: only mutable node id/use/respawn state is
 serialized, then safely reattached to deterministic placement on load. Older or
 malformed saves default to fresh nodes; stale depleted nodes respawn immediately.
 
+The UI Toolkit shell now also has a **Skills** panel backed by the Core skill
+component and exported skill definitions. It displays all twelve skill levels,
+XP-to-next-level progress, and the count of tracked mastery entries, including
+live gains from Unity gathering.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).
