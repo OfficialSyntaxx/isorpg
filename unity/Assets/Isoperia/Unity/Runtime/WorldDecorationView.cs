@@ -58,21 +58,21 @@ namespace Isoperia.Unity
 
                     if (node.Type == "TREE")
                     {
-                        Place(tile.Seed % 3 == 0 ? "tree-high" : "tree", basePosition, .72f, yaw);
+                        Place(tile.Seed % 3 == 0 ? "tree-high" : "tree", basePosition, .72f, yaw, node);
                     }
                     else if (node.Type == "ROCK")
                     {
-                        Place(tile.Seed % 2 == 0 ? "rock-large" : "rock-small", basePosition, .75f, yaw);
+                        Place(tile.Seed % 2 == 0 ? "rock-large" : "rock-small", basePosition, .75f, yaw, node);
                     }
                     else
                     {
-                        CreateWaterMarker(basePosition, yaw);
+                        CreateWaterMarker(basePosition, yaw, node);
                     }
                 }
             }
         }
 
-        private void Place(string assetName, Vector3 position, float scale, float yaw)
+        private void Place(string assetName, Vector3 position, float scale, float yaw, WorldResourceNode node)
         {
             GameObject prefab = Resources.Load<GameObject>(AssetRoot + assetName);
             if (prefab == null) return;
@@ -80,10 +80,12 @@ namespace Isoperia.Unity
             GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
             instance.name = "Resource_" + assetName;
             instance.transform.localScale = Vector3.one * scale;
+            instance.AddComponent<SphereCollider>().radius = .7f;
+            instance.AddComponent<WorldInteractionTarget>().SetResource(node);
             instances.Add(instance);
         }
 
-        private void CreateWaterMarker(Vector3 position, float yaw)
+        private void CreateWaterMarker(Vector3 position, float yaw, WorldResourceNode node)
         {
             GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             marker.name = "Resource_FishingSpot";
@@ -92,7 +94,7 @@ namespace Isoperia.Unity
             marker.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             marker.transform.localScale = new Vector3(.26f, .04f, .26f);
             marker.GetComponent<Renderer>().sharedMaterial = WaterMarkerMaterial();
-            Destroy(marker.GetComponent<Collider>());
+            marker.AddComponent<WorldInteractionTarget>().SetResource(node);
             instances.Add(marker);
         }
 

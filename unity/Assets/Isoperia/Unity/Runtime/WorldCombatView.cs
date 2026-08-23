@@ -46,7 +46,8 @@ namespace Isoperia.Unity
             root.transform.position = new Vector3(enemy.X + .5f, ground + .28f, enemy.Y + .5f);
             root.transform.localScale = enemy.Id == "dire_wolf" ? new Vector3(.42f, .30f, .65f) : new Vector3(.30f, .38f, .30f);
             root.GetComponent<Renderer>().sharedMaterial = MaterialFor(enemy.Id);
-            Destroy(root.GetComponent<Collider>());
+            root.GetComponent<WorldInteractionTarget>()?.SetEnemy(enemy);
+            if (root.GetComponent<WorldInteractionTarget>() == null) root.AddComponent<WorldInteractionTarget>().SetEnemy(enemy);
             views[enemy] = root;
         }
 

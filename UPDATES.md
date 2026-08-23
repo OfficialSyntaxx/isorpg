@@ -1,5 +1,17 @@
 # Isoperia — Update Log
 
+## 2026-08 · 3D Phase C.1 — direct world interactions
+
+Visible 3D resource models and enemy silhouettes are now real click targets in
+the hybrid world. A perspective raycast selects their colliders, applies the
+same range checks used by the Core grid, and hands a valid action to the existing
+gathering or combat system; it does not create a duplicate interaction state.
+
+Validation: all 157 live targets have colliders (154 resources, 3 enemies), a
+resource smoke test entered the Core gathering state, Unity Console had zero
+errors, EditMode tests passed **205/205**, and WebGL build
+`20260823-122047-137bda57` succeeded (59.40 MB).
+
 ## 2026-08 · 3D Phase B — continuous biome terrain
 
 The hybrid 3D world now replaces the old isometric tile presentation at runtime
