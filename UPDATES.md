@@ -1,5 +1,17 @@
 # Isoperia — Update Log
 
+## 2026-08 · Phase 3 — Cinder Hollow light-pool expedition
+
+The eastern route now leads into Cinder Hollow, a compact first dungeon approach
+defined by three visible lantern-safe pools and an entrance landmark. Within the
+expedition corridor, standing outside a pool damages the player on the shared game
+tick and gives a clear HUD warning; reaching a light pool is safe. Darkness defeat
+restores health and returns the player to settlement, so exploratory failure cannot
+strand a test save.
+
+Live validation: HP remained unchanged at a light pool and fell by 3 outside it,
+with the expected safe/danger status messages in Play Mode.
+
 ## 2026-08 · Phase 2 — Starter task progression
 
 Three data-driven starter tasks now turn the existing systems into a guided first

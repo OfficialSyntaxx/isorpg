@@ -38,6 +38,7 @@ namespace Isoperia.Unity
         public CraftingSystem Crafting { get; private set; }
         public WorldCombatRegistry Combat { get; private set; }
         public StarterTaskSystem Tasks { get; private set; }
+        public LightPoolExpeditionSystem Expedition { get; private set; }
         public BuildingSystem Buildings { get; private set; }
         public string PendingBuildingType { get; private set; }
         public string GatheringStatus { get; private set; }
@@ -89,6 +90,8 @@ namespace Isoperia.Unity
             Combat.StatusChanged += OnCombatStatus;
             Tasks = new StarterTaskSystem(State, Content);
             Tasks.Completed += OnTaskCompleted;
+            Expedition = new LightPoolExpeditionSystem(State);
+            Expedition.StatusChanged += OnCombatStatus;
             Debug.Log($"[Isoperia] save loaded from: {result.RecoveredFrom}");
 
             if (result.Summary != null && result.Summary.AwaySeconds > 0)
@@ -146,6 +149,7 @@ namespace Isoperia.Unity
             GameLoop.Instance.Tick.OnTick(TickCrafting);
             GameLoop.Instance.Tick.OnTick(Combat.Tick);
             GameLoop.Instance.Tick.OnTick(Tasks.Tick);
+            GameLoop.Instance.Tick.OnTick(Expedition.Tick);
             GameLoop.Instance.Tick.OnTick(Save.OnTick);
         }
 
@@ -283,6 +287,7 @@ namespace Isoperia.Unity
                 GameLoop.Instance.Tick.RemoveHandler(TickCrafting);
                 if (Combat != null) GameLoop.Instance.Tick.RemoveHandler(Combat.Tick);
                 if (Tasks != null) GameLoop.Instance.Tick.RemoveHandler(Tasks.Tick);
+                if (Expedition != null) GameLoop.Instance.Tick.RemoveHandler(Expedition.Tick);
                 GameLoop.Instance.Tick.RemoveHandler(Save.OnTick);
             }
 
@@ -302,6 +307,7 @@ namespace Isoperia.Unity
 
             if (Combat != null) Combat.StatusChanged -= OnCombatStatus;
             if (Tasks != null) Tasks.Completed -= OnTaskCompleted;
+            if (Expedition != null) Expedition.StatusChanged -= OnCombatStatus;
 
             if (Instance == this) Instance = null;
         }
