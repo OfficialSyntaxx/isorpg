@@ -165,6 +165,33 @@
     background-color: rgba(87, 64, 43, 0.92);
 }
 
+.map-grid {
+    align-self: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 294px;
+    margin-top: 6px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-color: rgb(110, 83, 49);
+    border-right-color: rgb(110, 83, 49);
+    border-top-color: rgb(110, 83, 49);
+    border-bottom-color: rgb(110, 83, 49);
+}
+
+.map-cell {
+    width: 7px;
+    min-width: 7px;
+    height: 7px;
+    min-height: 7px;
+}
+
+.map-player {
+    background-color: rgb(245, 197, 92);
+}
+
 .bottom-bar {
     flex-direction: row;
     align-items: center;

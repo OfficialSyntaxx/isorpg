@@ -28,7 +28,9 @@ namespace Isoperia.Unity
         {
             DestroyRuntimeAssets();
 
-            var grid = new Isoperia.Core.World.Grid();
+            var grid = WorldRuntime.Instance == null
+                ? new Isoperia.Core.World.Grid()
+                : WorldRuntime.Instance.Grid;
             var vertices = new List<Vector3>(grid.Width * grid.Height * 4);
             var submeshTriangles = new List<int>[TerrainCount];
 

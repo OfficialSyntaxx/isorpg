@@ -26,7 +26,9 @@ namespace Isoperia.Unity
 
         private void Awake()
         {
-            grid = new CoreGrid();
+            grid = WorldRuntime.Instance == null
+                ? new CoreGrid()
+                : WorldRuntime.Instance.Grid;
             player = player != null ? player : FindPlayer();
             worldCamera = worldCamera != null ? worldCamera : Camera.main?.GetComponent<IsometricCamera>();
 
@@ -37,17 +39,27 @@ namespace Isoperia.Unity
                 return;
             }
 
-            int startX = Mathf.Clamp(Mathf.RoundToInt(player.position.x), 0, grid.Width - 1);
-            int startY = Mathf.Clamp(Mathf.RoundToInt(player.position.z), 0, grid.Height - 1);
+            PositionComponent savedPosition = SaveDriver.Instance?.State?.Player?.Pos;
+            int startX = savedPosition == null
+                ? Mathf.Clamp(Mathf.FloorToInt(player.position.x), 0, grid.Width - 1)
+                : Mathf.Clamp(savedPosition.Gx, 0, grid.Width - 1);
+            int startY = savedPosition == null
+                ? Mathf.Clamp(Mathf.FloorToInt(player.position.z), 0, grid.Height - 1)
+                : Mathf.Clamp(savedPosition.Gy, 0, grid.Height - 1);
             if (!grid.IsWalkable(startX, startY))
             {
                 startX = grid.Width / 2;
                 startY = grid.Height / 2;
             }
 
-            position = PositionComponent.Create(startX, startY);
+            position = savedPosition ?? PositionComponent.Create(startX, startY);
+            position.Gx = startX;
+            position.Gy = startY;
+            position.Wx = startX;
+            position.Wz = startY;
             movement = new MovementSystem(position);
             movement.Arrived += OnArrived;
+            worldCamera.Target = new Vector3((float)position.Wx + 0.5f, 0f, (float)position.Wz + 0.5f);
             ApplyPlayerTransform();
         }
 

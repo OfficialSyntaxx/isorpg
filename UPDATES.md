@@ -30,6 +30,11 @@ Quests and Settings are now live too: the quest panel reads the exported quest
 definitions and the saved completion journal, while Settings cycles the existing
 auto-eat threshold and combat style values and immediately persists the change.
 
+The Map panel now renders the live deterministic 42 × 42 terrain survey with
+the player position highlighted. Terrain rendering, tap-to-move, camera framing,
+and the map now share one Unity `WorldRuntime` grid rather than generating private
+copies of the same world.
+
 Running changelog of shipped increments. Each entry names the phase, what changed,
 the game-repo commit, and the live build (cache-bust version at
 `isoperia-rpg.higgsfield.app`).

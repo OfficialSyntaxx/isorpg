@@ -4,6 +4,7 @@ using Isoperia.Core.Components;
 using Isoperia.Core.Data;
 using Isoperia.Core.Save;
 using Isoperia.Core.State;
+using Isoperia.Core.World;
 
 namespace Isoperia.Unity
 {
@@ -106,7 +107,41 @@ namespace Isoperia.Unity
         private void OpenMap()
         {
             OpenPanel("Map");
-            AddPanelMessage("42 × 42 world · four biome bands · deterministic terrain.");
+
+            WorldRuntime world = WorldRuntime.Instance;
+            if (world == null || world.Grid == null)
+            {
+                AddPanelMessage("World map is loading.");
+                return;
+            }
+
+            int playerX = SaveDriver.Instance?.State?.Player?.Pos?.Gx ?? -1;
+            int playerY = SaveDriver.Instance?.State?.Player?.Pos?.Gy ?? -1;
+            AddPanelMessage($"{world.Grid.Width} × {world.Grid.Height} deterministic survey · You are the gold tile.");
+
+            var map = new VisualElement();
+            map.AddToClassList("map-grid");
+
+            for (int y = 0; y < world.Grid.Height; y++)
+            {
+                for (int x = 0; x < world.Grid.Width; x++)
+                {
+                    Tile tile = world.Grid.Tiles[y][x];
+                    var cell = new VisualElement();
+                    cell.AddToClassList("map-cell");
+                    cell.style.backgroundColor = TerrainColor(tile.TerrainType);
+
+                    if (tile.X == playerX && tile.Y == playerY)
+                    {
+                        cell.AddToClassList("map-player");
+                        cell.style.backgroundColor = new Color(0.96f, 0.77f, 0.36f, 1f);
+                    }
+
+                    map.Add(cell);
+                }
+            }
+
+            panelBody.Add(map);
         }
 
         private void OpenQuests()
@@ -238,6 +273,19 @@ namespace Isoperia.Unity
 
         private static string FormatAutoEat(int percent) =>
             percent <= 0 ? "Off" : percent + "% HP";
+
+        private static Color TerrainColor(TerrainType terrain)
+        {
+            switch (terrain)
+            {
+                case TerrainType.Water: return new Color(0.13f, 0.33f, 0.45f, 1f);
+                case TerrainType.Rock: return new Color(0.34f, 0.34f, 0.34f, 1f);
+                case TerrainType.Dirt: return new Color(0.40f, 0.26f, 0.16f, 1f);
+                case TerrainType.Sand: return new Color(0.65f, 0.56f, 0.34f, 1f);
+                case TerrainType.Road: return new Color(0.45f, 0.38f, 0.25f, 1f);
+                default: return new Color(0.30f, 0.40f, 0.24f, 1f);
+            }
+        }
 
         private void ClosePanel()
         {
