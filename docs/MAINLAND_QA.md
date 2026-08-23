@@ -7,7 +7,7 @@
 - Target: WebGL
 - Build output: `unity/WebGLBuild/` (git-ignored)
 - Built: 2026-08-23
-- Size: 68.42 MB total output; Unity reported 33.5 MB compressed / 55.3 MB uncompressed.
+- Size: 68.50 MB total output; Unity reported 33.5 MB compressed / 55.3 MB uncompressed.
 
 ## Evidence completed in this workspace
 
@@ -58,6 +58,6 @@ browser testing is recorded separately after the candidate is deployed.
 
 On 2026-08-23 the terrain-relief, hero, wolf and ogre-inclusive candidate
 completed the headless WebGL build path with exit code 0. The current candidate
-is 68.42 MB with a 320 MB initial WebGL memory setting and was visually
+is 68.50 MB with a 320 MB initial WebGL memory setting and was visually
 confirmed in Play Mode after the streamed-decoration scale correction. This is
 not a substitute for the physical-device sweep above.
