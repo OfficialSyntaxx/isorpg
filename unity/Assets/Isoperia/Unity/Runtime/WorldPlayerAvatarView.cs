@@ -1,4 +1,5 @@
 using UnityEngine;
+using Isoperia.Core.Systems;
 
 namespace Isoperia.Unity
 {
@@ -18,6 +19,11 @@ namespace Isoperia.Unity
         private Transform headTransform;
         private Transform heroTransform;
         private OpenWorldPlayerController playerController;
+        private SkillSystem gathering;
+        private WorldCombatRegistry combat;
+        private float harvestUntil;
+        private float attackUntil;
+        private float hitUntil;
 
         public static Transform Create()
         {
@@ -57,8 +63,15 @@ namespace Isoperia.Unity
             float bob = Mathf.Sin(cycle) * (moving ? .035f : .006f);
             if (heroTransform != null)
             {
+                float now = Time.time;
+                float harvest = now < harvestUntil ? Mathf.Sin(now * 20f) * 14f : 0f;
+                float attack = now < attackUntil ? Mathf.Sin(now * 28f) * 18f : 0f;
+                float recoil = now < hitUntil ? Mathf.Sin(now * 24f) * 8f : 0f;
                 heroTransform.localPosition = new Vector3(0f, bob, 0f);
-                heroTransform.localRotation = Quaternion.Euler(moving ? Mathf.Sin(cycle) * 2.5f : 0f, 0f, 0f);
+                heroTransform.localRotation = Quaternion.Euler(
+                    (moving ? Mathf.Sin(cycle) * 2.5f : 0f) + harvest - recoil,
+                    attack,
+                    0f);
                 return;
             }
             if (tunicTransform != null)
@@ -88,8 +101,31 @@ namespace Isoperia.Unity
             return new Material(shader) { color = color };
         }
 
+        private void Start()
+        {
+            SaveDriver driver = SaveDriver.Instance;
+            gathering = driver?.Gathering;
+            combat = driver?.Combat;
+            if (gathering != null) gathering.ActionStarted += OnHarvestStarted;
+            if (combat != null)
+            {
+                combat.PlayerAttacked += OnPlayerAttacked;
+                combat.PlayerHit += OnPlayerHit;
+            }
+        }
+
+        private void OnHarvestStarted(IResourceNode _) => harvestUntil = Time.time + .7f;
+        private void OnPlayerAttacked(WorldEnemyNode _) => attackUntil = Time.time + .24f;
+        private void OnPlayerHit(WorldEnemyNode _) => hitUntil = Time.time + .22f;
+
         private void OnDestroy()
         {
+            if (gathering != null) gathering.ActionStarted -= OnHarvestStarted;
+            if (combat != null)
+            {
+                combat.PlayerAttacked -= OnPlayerAttacked;
+                combat.PlayerHit -= OnPlayerHit;
+            }
             if (tunic != null) Destroy(tunic);
             if (skin != null) Destroy(skin);
         }

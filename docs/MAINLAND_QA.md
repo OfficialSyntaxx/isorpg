@@ -15,7 +15,7 @@
 | --- | --- | --- |
 | Mainland save migration | Pass | Grid/sanitizer EditMode suite previously passed 206/206; a pre-mainland save was observed to migrate and spawn at `(63,63)` without losing state. |
 | Runtime mainland traversal | Pass | Play Mode verified player/Core position stay synchronized at the Hearthvale mainland spawn; settlements, discovery, combat clearings, Cinder route and light pools instantiate. |
-| Character fallback | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the player instantiates `hero_rigged` from the same reviewed path; compact primitive fallbacks remain in code. |
+| Character fallback and motion bridge | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the player instantiates `hero_rigged`; owned wolf/ogre actors cover mainland encounters; compact primitive fallbacks remain. Authoritative harvest and combat events drive hero harvest/swing/recoil and target-hit presentation without owning gameplay state. |
 | WebGL compilation/build | Pass | Headless `Isoperia.EditorTools.IsoperiaBuild.BuildWebGL` completed with exit code 0 and emitted loader, data, framework and wasm artifacts. |
 | First-tap audio | Code reviewed | `OpenWorldExperience` supplies the listener; must be confirmed in a hosted browser with a real user gesture. |
 
@@ -45,6 +45,6 @@ passed here: neither can be truthfully performed from this workspace alone.
 
 On 2026-08-23 the terrain-relief, hero, wolf and ogre-inclusive candidate
 completed the same headless WebGL build path with exit code 0. Its recorded
-output is 68.39 MB with a 320 MB initial WebGL memory setting. Visual Play Mode
+output is 68.35 MB with a 320 MB initial WebGL memory setting. Visual Play Mode
 confirmation is pending only on the currently locked local Mac session; this is
 not a substitute for the physical-device sweep above.

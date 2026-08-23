@@ -29,6 +29,10 @@ namespace Isoperia.Unity
         private int enemyCooldown;
 
         public event Action<WorldEnemyNode> EnemyChanged;
+        /// <summary>Presentation hook fired when the player swings at a live target.</summary>
+        public event Action<WorldEnemyNode> PlayerAttacked;
+        /// <summary>Presentation hook fired when a live target damages the player.</summary>
+        public event Action<WorldEnemyNode> PlayerHit;
         public event Action<string> StatusChanged;
         public IReadOnlyList<WorldEnemyNode> Enemies => enemies;
         public WorldEnemyNode Target => target;
@@ -90,6 +94,7 @@ namespace Isoperia.Unity
                     new GearBonuses(), CombatRules.Style(CombatRules.StyleAccurate), CombatRules.NoBuff,
                     null, target.Definition.DefenseRoll, target.Hp, target.Definition.Hp);
                 playerCooldown = weapon.Ticks - 1;
+                PlayerAttacked?.Invoke(target);
                 if (hit.Hit)
                 {
                     target.Hp = Math.Max(0, target.Hp - hit.Damage);
@@ -108,6 +113,7 @@ namespace Isoperia.Unity
 
             HealthComponent health = state.Player.Health;
             health.Hp = Math.Max(0, health.Hp - strike.Damage);
+            PlayerHit?.Invoke(target);
             if (health.Hp > 0)
             {
                 StatusChanged?.Invoke(target.Name + " hit you for " + strike.Damage + " · " + health.Hp + "/" + health.MaxHp + " HP");

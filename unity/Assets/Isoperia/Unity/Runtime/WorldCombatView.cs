@@ -13,6 +13,8 @@ namespace Isoperia.Unity
         private Material ratMaterial;
         private Material goblinMaterial;
         private Material wolfMaterial;
+        private readonly Dictionary<WorldEnemyNode, float> hitUntil = new Dictionary<WorldEnemyNode, float>();
+        private readonly Dictionary<WorldEnemyNode, Vector3> basePositions = new Dictionary<WorldEnemyNode, Vector3>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateView()
@@ -25,6 +27,7 @@ namespace Isoperia.Unity
         {
             if (SaveDriver.Instance?.Combat == null) return;
             SaveDriver.Instance.Combat.EnemyChanged += OnEnemyChanged;
+            SaveDriver.Instance.Combat.PlayerAttacked += OnPlayerAttacked;
             foreach (WorldEnemyNode enemy in SaveDriver.Instance.Combat.Enemies) Create(enemy);
         }
 
@@ -34,7 +37,15 @@ namespace Isoperia.Unity
             {
                 if (pair.Value == null) continue;
                 pair.Value.SetActive(pair.Key.Alive);
-                if (pair.Key.Alive) pair.Value.transform.localPosition += Vector3.up * (Mathf.Sin(Time.time * 3f + pair.Key.X) * .0008f);
+                if (!pair.Key.Alive) continue;
+                float bob = Mathf.Sin(Time.time * 3f + pair.Key.X) * .012f;
+                float hit = hitUntil.TryGetValue(pair.Key, out float until) && Time.time < until
+                    ? 1f + Mathf.Sin(Time.time * 26f) * .12f
+                    : 1f;
+                if (!basePositions.TryGetValue(pair.Key, out Vector3 basePosition))
+                    basePosition = pair.Value.transform.localPosition;
+                pair.Value.transform.localPosition = basePosition + Vector3.up * bob;
+                pair.Value.transform.localScale = Vector3.one * hit;
             }
         }
 
@@ -56,6 +67,7 @@ namespace Isoperia.Unity
             root.GetComponent<WorldInteractionTarget>()?.SetEnemy(enemy);
             if (root.GetComponent<WorldInteractionTarget>() == null) root.AddComponent<WorldInteractionTarget>().SetEnemy(enemy);
             views[enemy] = root;
+            basePositions[enemy] = root.transform.localPosition;
         }
 
         private GameObject CreateBody(WorldEnemyNode enemy)
@@ -101,9 +113,15 @@ namespace Isoperia.Unity
             else if (view != null) view.SetActive(enemy.Alive);
         }
 
+        private void OnPlayerAttacked(WorldEnemyNode enemy)
+        {
+            if (enemy != null) hitUntil[enemy] = Time.time + .20f;
+        }
+
         private void OnDestroy()
         {
             if (SaveDriver.Instance?.Combat != null) SaveDriver.Instance.Combat.EnemyChanged -= OnEnemyChanged;
+            if (SaveDriver.Instance?.Combat != null) SaveDriver.Instance.Combat.PlayerAttacked -= OnPlayerAttacked;
             if (ratMaterial != null) Destroy(ratMaterial);
             if (goblinMaterial != null) Destroy(goblinMaterial);
             if (wolfMaterial != null) Destroy(wolfMaterial);
