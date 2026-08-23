@@ -56,6 +56,8 @@ namespace Isoperia.Unity
             Place("lantern", center + new Vector3(2.2f, 0f, 2.2f), Vector3.one * 1.1f, 180f);
             CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", center + new Vector3(-2.8f, .7f, 1.2f), new Color(.31f, .55f, .28f));
             CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", center + new Vector3(2.8f, .7f, -1.2f), new Color(.73f, .39f, .22f));
+            CreateJourneyNpc("Wayfinder Nahl", "Lantern Road accepted · follow the eastern lights to Cinder Hollow, then return.",
+                center + new Vector3(6.8f, .7f, .7f), new Color(.82f, .66f, .22f));
 
             CreateHouse(center + new Vector3(-6f, 0f, -5f), 90f, 1.25f);
             CreateHouse(center + new Vector3(6f, 0f, -5f), -90f, 1.25f);
@@ -101,6 +103,23 @@ namespace Isoperia.Unity
             runtimeMaterials.Add(material);
             npc.GetComponent<Renderer>().sharedMaterial = material;
             npc.AddComponent<WorldInteractionTarget>().SetNpc(name, hint);
+            instances.Add(npc);
+        }
+
+        private void CreateJourneyNpc(string name, string hint, Vector3 position, Color color)
+        {
+            GameObject npc = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            npc.name = "NPC_" + name.Replace(" ", string.Empty);
+            npc.transform.SetParent(transform, false);
+            npc.transform.position = position;
+            npc.transform.localScale = new Vector3(.36f, .70f, .36f);
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Material material = new Material(shader) { color = color };
+            runtimeMaterials.Add(material);
+            npc.GetComponent<Renderer>().sharedMaterial = material;
+            WorldInteractionTarget target = npc.AddComponent<WorldInteractionTarget>();
+            target.SetNpc(name, hint);
+            target.SetJourney(LightPoolExpeditionSystem.AcceptedJournalId);
             instances.Add(npc);
         }
 

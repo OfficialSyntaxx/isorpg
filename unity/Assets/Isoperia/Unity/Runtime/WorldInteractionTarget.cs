@@ -13,10 +13,12 @@ namespace Isoperia.Unity
         private WorldEnemyNode enemy;
         private string npcName;
         private string npcHint;
+        private string journeyId;
 
         public void SetResource(WorldResourceNode node) => resource = node;
         public void SetEnemy(WorldEnemyNode node) => enemy = node;
         public void SetNpc(string name, string hint) { npcName = name; npcHint = hint; }
+        public void SetJourney(string journalId) => journeyId = journalId;
 
         public bool IsResource => resource != null;
         public bool IsEnemy => enemy != null;
@@ -45,6 +47,8 @@ namespace Isoperia.Unity
 
             if (!string.IsNullOrEmpty(npcName))
             {
+                if (!string.IsNullOrEmpty(journeyId))
+                    SaveDriver.Instance?.State?.Player?.Journal?.Add(journeyId);
                 SaveDriver.Instance?.ShowStatus(npcName + " · " + npcHint);
                 InteractionStarted?.Invoke(this);
                 return true;

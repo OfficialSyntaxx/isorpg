@@ -1,5 +1,19 @@
 # Isoperia — Update Log
 
+## 2026-08 · 3D Phase H — guided Cinder Hollow journey
+
+Wayfinder Nahl now starts **Lantern Road**, a persisted town-to-Cinder Hollow
+journey. The existing Core journal records accepting the route, reaching the
+survey marker at the lit entrance, and returning to settlement; the existing
+task system then awards 35 coins and two cooked shrimp. The expedition hazard
+only activates after acceptance, so it is a readable optional trip instead of
+an unexplained damage zone. No duplicate dungeon, combat, task, inventory, or
+save state was created.
+
+Validation: an isolated in-memory Play Mode smoke found Nahl, accepted the
+route, recorded arrival/return, and awarded the exact reward; it left the
+loaded player save untouched. EditMode tests passed **205/205**.
+
 ## 2026-08 · 3D Phase G — action readability foundation
 
 The playable fallback avatar now has a restrained locomotion bob/tilt driven by

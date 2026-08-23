@@ -35,6 +35,7 @@ namespace Isoperia.Unity
             int count = (int)task["count"].AsNumber(1);
             if (type == "inventory") return state.Player.Inventory.Count(target) >= count;
             if (type == "kills") { state.Player.MetaKills.TryGetValue(target, out double kills); return kills >= count; }
+            if (type == "journal") return state.Player.Journal.Contains(target);
             return false;
         }
     }

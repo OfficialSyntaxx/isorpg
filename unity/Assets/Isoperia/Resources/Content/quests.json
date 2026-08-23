@@ -31,6 +31,16 @@
       "rewards": [{ "itemId": "coins", "qty": 20 }]
     },
     {
+      "id": "cinder_hollow_route",
+      "title": "Lantern Road",
+      "summary": "Speak with Wayfinder Nahl, reach the Cinder Hollow survey marker by lantern light, then return to settlement.",
+      "doneText": "The Cinder Hollow route has been surveyed and a safe return path recorded.",
+      "starterType": "journal",
+      "target": "cinder_hollow_returned",
+      "count": 1,
+      "rewards": [{ "itemId": "coins", "qty": 35 }, { "itemId": "cooked_shrimp", "qty": 2 }]
+    },
+    {
       "doneText": "The treasure of the Caves is claimed.",
       "givenBy": "Eldric the Cartographer",
       "id": "caves",
