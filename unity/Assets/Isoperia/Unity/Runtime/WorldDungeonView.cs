@@ -5,6 +5,7 @@ namespace Isoperia.Unity
     /// <summary>Visual landmark and safe-light islands for the first eastern dungeon route.</summary>
     public sealed class WorldDungeonView : MonoBehaviour
     {
+        private const string AssetRoot = "Art/KenneyFantasyTown/";
         private readonly Vector3[] pools = { new Vector3(30.5f, .22f, 20.5f), new Vector3(34.5f, .22f, 20.5f), new Vector3(36.5f, .22f, 24.5f) };
         private Material glow;
         private Material basalt;
@@ -40,13 +41,7 @@ namespace Isoperia.Unity
             ring.GetComponent<Renderer>().sharedMaterial = glow;
             Destroy(ring.GetComponent<Collider>());
 
-            GameObject pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            pillar.name = "CinderHollow_LanternPillar";
-            pillar.transform.SetParent(transform, false);
-            pillar.transform.position = point + new Vector3(0f, .9f, 0f);
-            pillar.transform.localScale = new Vector3(.18f, .9f, .18f);
-            pillar.GetComponent<Renderer>().sharedMaterial = basalt;
-            Destroy(pillar.GetComponent<Collider>());
+            PlaceProp("lantern", "CinderHollow_Lantern", point + new Vector3(0f, .03f, 0f), Vector3.one * 1.25f, 0f);
 
             var lightRoot = new GameObject("LanternLight");
             lightRoot.transform.SetParent(transform, false);
@@ -77,13 +72,22 @@ namespace Isoperia.Unity
 
         private void CreateRock(string name, Vector3 position, Vector3 scale)
         {
-            GameObject rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            rock.name = name;
-            rock.transform.SetParent(transform, false);
-            rock.transform.position = position;
-            rock.transform.localScale = scale;
-            rock.GetComponent<Renderer>().sharedMaterial = ash;
-            Destroy(rock.GetComponent<Collider>());
+            string assetName = scale.y > 1.1f ? "rock-large" : "rock-small";
+            PlaceProp(assetName, name, position, scale, 17f);
+        }
+
+        private void PlaceProp(string assetName, string instanceName, Vector3 position, Vector3 scale, float yaw)
+        {
+            GameObject prefab = Resources.Load<GameObject>(AssetRoot + assetName);
+            if (prefab == null)
+            {
+                Debug.LogWarning("[Isoperia] Missing Cinder Hollow asset: " + assetName);
+                return;
+            }
+
+            GameObject prop = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
+            prop.name = instanceName;
+            prop.transform.localScale = scale;
         }
 
         private void OnDestroy()

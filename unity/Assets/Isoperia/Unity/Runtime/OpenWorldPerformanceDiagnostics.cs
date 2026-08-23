@@ -63,9 +63,9 @@ namespace Isoperia.Unity
         {
             float averageMilliseconds = frameCount == 0 ? 0f : accumulatedMilliseconds / frameCount;
             float framesPerSecond = averageMilliseconds <= 0f ? 0f : 1000f / averageMilliseconds;
-            int rendererCount = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None).Length;
-            int lightCount = Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Length;
-            int colliderCount = Object.FindObjectsByType<Collider>(FindObjectsSortMode.None).Length;
+            int rendererCount = Object.FindObjectsByType<Renderer>().Length;
+            int lightCount = Object.FindObjectsByType<Light>().Length;
+            int colliderCount = Object.FindObjectsByType<Collider>().Length;
 
             Debug.Log($"[Isoperia Performance] 5 s baseline: avg {averageMilliseconds:F2} ms " +
                       $"({framesPerSecond:F1} fps), worst {worstMilliseconds:F2} ms, " +

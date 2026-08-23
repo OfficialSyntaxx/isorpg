@@ -2,9 +2,29 @@
 
 ## Visual contract
 
-Isoperia uses a fixed 35.264° isometric camera and a restrained low-poly look:
+Isoperia is an immersive low-poly 3D world viewed through a hybrid
+third-person/orbit camera. It retains readable shapes and restrained colours:
 muted natural terrain, warm settlement accents, simple silhouettes, and one
-directional sun. Art must read at mobile/WebGL scale before it earns detail.
+directional sun. Art must read while the player travels, orbits, and zooms on a
+mobile/WebGL-sized screen before it earns detail.
+
+## Hybrid-camera placement contract
+
+- Functional objects must have a visible silhouette and an interaction collider
+  that agrees with the visible model. Do not make players guess whether a prop
+  is decorative, blocking, or usable.
+- Ground props sit on sampled terrain elevation. No floating, buried, or
+  transform-scaled colliders; keep paths visibly clear around buildings, pools,
+  bridges, and landmark entrances.
+- Place compositions, not isolated props: a route needs a readable arrival
+  landmark, a forward cue, and a visible return direction. Settlement services
+  cluster around their purpose (market/campfire, farm/water, quarry/forge).
+- Use travel-scale landmarks as a hierarchy: broad mass seen at distance,
+  recognizable mid-range silhouette, and only then close-range detail. Do not
+  model invisible backs or interiors.
+- New imported assets require an owner, source, license record, URP material
+  review, scale/pivot check, and a WebGL budget check before replacing a live
+  fallback.
 
 ## Palette and materials
 
@@ -22,8 +42,8 @@ directional sun. Art must read at mobile/WebGL scale before it earns detail.
 - One 1024–2048 atlas per category; ASTC on mobile targets.
 - Combine deterministic decoration into chunk/region meshes. Avoid one
   GameObject, renderer, or material instance per tree/rock.
-- Fixed-camera rule: model visible tops/sides only; omit undersides, backs, and
-  interior detail that the camera can never see.
+- Hybrid-camera rule: model all player-visible sides, but omit interior and
+  underside detail that cannot be reached or seen during normal travel.
 
 ## Current owned inventory
 

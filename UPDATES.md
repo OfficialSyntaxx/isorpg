@@ -1,5 +1,20 @@
 # Isoperia — Update Log
 
+## 2026-08 · 3D Phase F — world readability pass
+
+The hybrid 3D world now has a matching placement contract rather than carrying
+the old fixed-isometric rules forward. The CC0 Kenney kit builds travel-scale
+Frostwatch, Miregate, and Wildwood compositions; Cinder Hollow uses kit rocks
+and lanterns instead of generic route-marker spheres; and the Bootstrap scene's
+old debug cubes, ground plane, and spawn marker are disabled. The Core grid,
+interaction state, saves, and hazards remain unchanged.
+
+Validation: a fresh Play Mode scene reload removed the legacy geometry from the
+settlement view; the runtime baseline measured **18.00 ms / 55.6 FPS**; EditMode
+tests passed **205/205**; and headless WebGL build
+`20260823-150338-cb049b1c` succeeded (59.45 MB). The headless route is now the
+reliable release-validation path when the interactive Unity bridge stalls.
+
 ## 2026-08 · Phase E — repeatable Play Mode performance baseline
 
 Phase E now has a profiler-independent diagnostics route. Development and Editor
