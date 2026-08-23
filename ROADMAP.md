@@ -1,4 +1,93 @@
-# Isoperia — Roadmap (Phases F onward)
+# Isoperia — Roadmap
+
+## Unity roadmap — active
+
+> **Current baseline (2026-08-23):** Unity 6 URP has a clean playable isometric
+> settlement with mouse/touch movement, gathering, a town, resource routes, HUD,
+> Core-driven state, and a cache-busted WebGL PWA export. The imported hero and
+> creature GLBs remain in the project for the Humanoid import pass, but are not
+> live in Bootstrap until their geometry and animations are production-ready.
+
+### Phase 1 — Combat expedition vertical slice
+
+**Goal:** Make the outer routes a risk/reward trip a tester can complete.
+
+1. Define Core combat data for enemy health, damage, attack interval, spawn zones,
+   drops, and respawn.
+2. Add one readable enemy family per early zone using code-owned low-poly views.
+3. Implement tap/click targeting, chase range, tick-driven attacks, damage
+   feedback, death, respawn, and disengage behavior.
+4. Add drops, combat XP, target/health HUD states, and a safe death/return flow.
+5. Test damage, cooldowns, drops, respawn, and save round trips; run Editor and
+   WebGL smoke passes.
+
+**Done when:** a tester can leave town, defeat an enemy, collect a drop, return,
+and retain that result after relaunch.
+
+### Phase 2 — Quest, crafting, and progression loop
+
+**Goal:** Give gathering and combat a clear short-term purpose.
+
+1. Add a data-driven task system with a town NPC and three starter tasks: gather,
+   craft, and defeat.
+2. Connect resources to a compact recipe/upgrade set with clear requirement UI.
+3. Award coins, XP, and one meaningful unlock through task completion.
+4. Add tracker and turn-in feedback, including save/load coverage.
+5. Balance the first 20–30 minutes in a fresh-save WebGL pass.
+
+**Done when:** a player understands the loop: town task → route → reward → unlock.
+
+### Phase 3 — World routes and first dungeon
+
+**Goal:** Make the map a coherent world beyond the central settlement.
+
+1. Implement landmark-led forest/highland routes, visible bridges/gates, resource
+   gradients, combat clearings, and return paths from `docs/WORLD_LAYOUT.md`.
+2. Create a first dungeon approach and compact interior with one readable mechanic.
+3. Add transition/save handling so reloads never strand the player.
+4. Validate layout from the fixed isometric camera with screenshot, mouse, and
+   touch traversal passes.
+
+**Done when:** testers can reach a dangerous destination and return without hidden
+blockers or a guide.
+
+### Phase 4 — Free asset and character integration
+
+**Goal:** Replace temporary presentation while keeping the WebGL build lean.
+
+1. Curate/import a licensed free environment subset and save its license in
+   `docs/THIRD_PARTY_ASSETS/`.
+2. Prepare the existing hero GLB as Humanoid; integrate idle, walk, gather, hit,
+   and death animations while retaining the fallback avatar until device verified.
+3. Establish the scale/material/collider/LOD prefab rule with one enemy and NPC.
+4. Polish lighting, water, fog, particles, and audio only after silhouette clarity.
+5. Check WebGL size and performance before expanding the asset set.
+
+**Done when:** settlement, player, and first expedition read as one deliberate
+low-poly world on a mobile-sized screen.
+
+### Phase 5 — External testing release
+
+**Goal:** Produce a reliable tester build.
+
+1. Add onboarding, input hints, pause/settings, version display, and feedback path.
+2. Harden save recovery across fresh install, upgrade, and interrupted sessions.
+3. Run WebGL browser/device, memory, and load-time coverage using reproducible IDs.
+4. Publish only after owner approval of host and release notes.
+
+**Done when:** testers can finish the Phase 1–2 loop, report a build ID, and update
+without a stale cached client.
+
+### Execution order
+
+`Combat expedition → Progression → World/dungeon → Assets/animation → Test release`
+
+Gameplay loops come before high-volume art work; each phase supplies the acceptance
+criteria for the next.
+
+---
+
+## Historical pre-Unity roadmap
 
 > Phases A–E, the boot refactor, **Phase F (Combat depth), and H.1–H.2 (item
 > icon atlas + sky) are shipped**; `REPAIR_PLAN.md`/`UPDATES.md` hold that
