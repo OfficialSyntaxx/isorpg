@@ -7,14 +7,14 @@
 - Target: WebGL
 - Build output: `unity/WebGLBuild/` (git-ignored)
 - Built: 2026-08-23
-- Size: 28 MB on disk; Unity reported 23.8 MB compressed / 39.7 MB uncompressed.
+- Size: 68.42 MB total output; Unity reported 33.5 MB compressed / 55.3 MB uncompressed.
 
 ## Evidence completed in this workspace
 
 | Check | Result | Evidence |
 | --- | --- | --- |
 | Mainland save migration | Pass | Grid/sanitizer EditMode suite previously passed 206/206; a pre-mainland save was observed to migrate and spawn at `(63,63)` without losing state. |
-| Runtime mainland traversal | Pass | Play Mode verified player/Core position stay synchronized at the Hearthvale mainland spawn; settlements, discovery, combat clearings, Cinder route and light pools instantiate. |
+| Runtime mainland traversal | Pass | Play Mode verified player/Core position stay synchronized at the Hearthvale mainland spawn; settlements, discovery, combat clearings, Cinder route and light pools instantiate. Streamed free-model trees and rocks are normalized from their rendered bounds, preventing oversized asset geometry from blocking the third-person camera. |
 | Character fallback and motion bridge | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the player instantiates `hero_rigged`; owned wolf/ogre actors cover mainland encounters; compact primitive fallbacks remain. Authoritative harvest and combat events drive hero harvest/swing/recoil and target-hit presentation without owning gameplay state. |
 | WebGL compilation/build | Pass | Headless `Isoperia.EditorTools.IsoperiaBuild.BuildWebGL` completed with exit code 0 and emitted loader, data, framework and wasm artifacts. |
 | First-tap audio | Code reviewed | `OpenWorldExperience` supplies the listener; must be confirmed in a hosted browser with a real user gesture. |
@@ -38,13 +38,13 @@ directional desktop Editor measurement, not a mobile performance claim.
 4. Record the hosting URL and test date in this document, plus any device
    limitation that cannot be fixed inside the Unity project.
 
-Physical-device testing and public hosting are intentionally not marked as
-passed here: neither can be truthfully performed from this workspace alone.
+Physical-device testing is intentionally not marked as passed here. Hosted
+browser testing is recorded separately after the candidate is deployed.
 
 ## Follow-up build
 
 On 2026-08-23 the terrain-relief, hero, wolf and ogre-inclusive candidate
-completed the same headless WebGL build path with exit code 0. Its recorded
-output is 68.35 MB with a 320 MB initial WebGL memory setting. Visual Play Mode
-confirmation is pending only on the currently locked local Mac session; this is
+completed the headless WebGL build path with exit code 0. The current candidate
+is 68.42 MB with a 320 MB initial WebGL memory setting and was visually
+confirmed in Play Mode after the streamed-decoration scale correction. This is
 not a substitute for the physical-device sweep above.

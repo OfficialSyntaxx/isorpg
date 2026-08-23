@@ -82,11 +82,11 @@ namespace Isoperia.Unity
 
                     if (node.Type == "TREE")
                     {
-                        Place(tile.Seed % 3 == 0 ? "tree-high" : "tree", basePosition, .72f, yaw, node);
+                        Place(tile.Seed % 3 == 0 ? "tree-high" : "tree", basePosition, 4.35f, yaw, node);
                     }
                     else if (node.Type == "ROCK")
                     {
-                        Place(tile.Seed % 2 == 0 ? "rock-large" : "rock-small", basePosition, .75f, yaw, node);
+                        Place(tile.Seed % 2 == 0 ? "rock-large" : "rock-small", basePosition, 1.05f, yaw, node);
                     }
                     else
                     {
@@ -96,14 +96,16 @@ namespace Isoperia.Unity
             }
         }
 
-        private void Place(string assetName, Vector3 position, float scale, float yaw, WorldResourceNode node)
+        private void Place(string assetName, Vector3 position, float targetHeight, float yaw, WorldResourceNode node)
         {
             GameObject prefab = Resources.Load<GameObject>(AssetRoot + assetName);
             if (prefab == null) return;
 
             GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
             instance.name = "Resource_" + assetName;
-            instance.transform.localScale = Vector3.one * scale;
+            // Community assets use different authoring units. Normalize every
+            // streamed prop by bounds so a tree cannot fill the entire camera.
+            OwnedModelPresentation.FitToHeight(instance, targetHeight);
             instance.AddComponent<SphereCollider>().radius = .7f;
             instance.AddComponent<WorldInteractionTarget>().SetResource(node);
             instances.Add(instance);

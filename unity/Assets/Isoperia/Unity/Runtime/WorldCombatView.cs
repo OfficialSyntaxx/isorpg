@@ -78,9 +78,8 @@ namespace Isoperia.Unity
             if (prefab != null)
             {
                 GameObject model = Instantiate(prefab, root.transform);
-                model.transform.localScale = enemy.Id == "dire_wolf"
-                    ? new Vector3(.52f, .36f, .62f)
-                    : Vector3.one * .58f;
+                model.transform.localScale = Vector3.one;
+                OwnedModelPresentation.FitToHeight(model, enemy.Id == "dire_wolf" ? .95f : 1.75f);
                 return root;
             }
 

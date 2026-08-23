@@ -42,7 +42,8 @@ namespace Isoperia.Unity
                 hero.name = "HeroModel";
                 hero.transform.localPosition = Vector3.zero;
                 hero.transform.localRotation = Quaternion.identity;
-                hero.transform.localScale = Vector3.one * .82f;
+                hero.transform.localScale = Vector3.one;
+                OwnedModelPresentation.FitToHeight(hero, 1.45f);
                 heroTransform = hero.transform;
                 return;
             }

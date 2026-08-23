@@ -10,7 +10,7 @@ namespace Isoperia.Unity
         private Transform target;
         private float yaw = 35f;
         private float pitch = 20f;
-        private float distance = 7f;
+        private float distance = 8.5f;
 
         private void Start()
         {

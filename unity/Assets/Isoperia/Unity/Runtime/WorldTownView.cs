@@ -158,7 +158,8 @@ namespace Isoperia.Unity
             {
                 GameObject npc = Instantiate(prefab, position, Quaternion.identity, transform);
                 npc.name = "NPC_" + name.Replace(" ", string.Empty);
-                npc.transform.localScale = Vector3.one * .62f;
+                npc.transform.localScale = Vector3.one;
+                OwnedModelPresentation.FitToHeight(npc, 1.55f);
                 if (npc.GetComponent<Collider>() == null)
                 {
                     var collider = npc.AddComponent<CapsuleCollider>();
