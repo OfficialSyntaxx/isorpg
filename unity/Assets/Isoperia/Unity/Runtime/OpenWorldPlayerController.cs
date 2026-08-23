@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using CoreGrid = Isoperia.Core.World.Grid;
 
 namespace Isoperia.Unity
 {
@@ -10,6 +11,7 @@ namespace Isoperia.Unity
         private CharacterController controller;
         private Transform cameraTransform;
         private float verticalSpeed;
+        private bool spawned;
 
         public bool IsMoving { get; private set; }
 
@@ -44,6 +46,15 @@ namespace Isoperia.Unity
                 pos.Gy = Mathf.Clamp(Mathf.FloorToInt(transform.position.z), 0, 41);
                 pos.Wx = transform.position.x; pos.Wz = transform.position.z;
             }
+        }
+
+        private void Start()
+        {
+            if (spawned) return;
+            int x = SaveDriver.Instance?.State?.Player?.Pos?.Gx ?? CoreGrid.TownCenter;
+            int z = SaveDriver.Instance?.State?.Player?.Pos?.Gy ?? CoreGrid.TownCenter;
+            transform.position = new Vector3(x + .5f, 1f, z + .5f);
+            spawned = true;
         }
 
         private void OnDisable()

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using CoreGrid = Isoperia.Core.World.Grid;
 
 namespace Isoperia.Unity
 {
@@ -38,15 +39,16 @@ namespace Isoperia.Unity
 
         private void BuildSettlement()
         {
-            // The grid is 42x42. The civic core sits on the central high ground,
-            // leaving the western forest and the south-east farms accessible.
+            // Hearthvale sits in the mainland's central 18x18 district. The
+            // composition is relative to the authoritative center, never a
+            // retired prototype-island coordinate.
             const float ground = .18f;
-            Vector3 center = new Vector3(21.5f, ground, 21.5f);
+            Vector3 center = new Vector3(CoreGrid.TownCenter + .5f, ground, CoreGrid.TownCenter + .5f);
 
             // Main street through the plaza.
-            for (int z = 15; z <= 28; z += 2)
+            for (int z = 10; z <= 33; z += 2)
                 Place("road", center + new Vector3(0f, 0f, z - 21.5f), new Vector3(2f, 1f, 2f));
-            for (int x = 15; x <= 28; x += 2)
+            for (int x = 10; x <= 33; x += 2)
                 Place("road", center + new Vector3(x - 21.5f, .01f, 0f), new Vector3(2f, 1f, 2f), 90f);
 
             Place("fountain-round", center + new Vector3(0f, .02f, 0f), Vector3.one * 1.35f);
@@ -63,6 +65,16 @@ namespace Isoperia.Unity
             CreateHouse(center + new Vector3(6f, 0f, -5f), -90f, 1.25f);
             CreateHouse(center + new Vector3(-6f, 0f, 5f), 90f, 1.1f);
             CreateHouse(center + new Vector3(6f, 0f, 5f), -90f, 1.1f);
+            CreateResidentialLane(center + new Vector3(-10.5f, 0f, -7.8f), 90f, 3);
+            CreateResidentialLane(center + new Vector3(10.5f, 0f, -7.8f), -90f, 3);
+            CreateResidentialLane(center + new Vector3(-10.5f, 0f, 7.8f), 90f, 2);
+            CreateResidentialLane(center + new Vector3(10.5f, 0f, 7.8f), -90f, 2);
+
+            // The north-west yard anchors the forest route with storage and a
+            // working watermill, instead of ending the town in loose props.
+            CreateWorkshop(center + new Vector3(-12f, 0f, -1.5f), 90f);
+            Place("fence", center + new Vector3(-10.5f, 0f, -3.8f), Vector3.one * 1.3f, 90f);
+            Place("fence", center + new Vector3(-13.5f, 0f, .9f), Vector3.one * 1.3f);
 
             // Farms sit to the south-east, outside the market traffic.
             for (int x = 0; x < 4; x++)
@@ -71,6 +83,8 @@ namespace Isoperia.Unity
                 Place("fence", center + new Vector3(8f + x * 1.4f, 0f, 13.3f), Vector3.one * 1.2f, 180f);
             }
             Place("windmill", center + new Vector3(10f, 0f, 11f), Vector3.one * 1.45f, -25f);
+            CreateField(center + new Vector3(8.5f, 0f, 14.5f));
+            CreateField(center + new Vector3(13.2f, 0f, 14.5f));
             CreateNpc("Scout Tamsin", "Defeat a Giant Rat on the eastern route.", center + new Vector3(8f, .7f, 7f), new Color(.28f, .40f, .70f));
             Place("watermill", center + new Vector3(-11f, 0f, 8f), Vector3.one * 1.25f, 90f);
 
@@ -80,6 +94,35 @@ namespace Isoperia.Unity
             Place("tree", center + new Vector3(13f, 0f, -10f), Vector3.one * 1.35f, -20f);
             Place("rock-large", center + new Vector3(-13.5f, 0f, 10f), Vector3.one * 1.3f, 28f);
             Place("rock-small", center + new Vector3(13.5f, 0f, 9f), Vector3.one * 1.2f, -18f);
+        }
+
+        private void CreateResidentialLane(Vector3 origin, float yaw, int homes)
+        {
+            for (int i = 0; i < homes; i++)
+            {
+                float scale = i == 0 ? 1.18f : 1.02f;
+                CreateHouse(origin + new Vector3(0f, 0f, i * 3.7f), yaw, scale);
+                Place("fence", origin + new Vector3(yaw > 0f ? -1.9f : 1.9f, 0f, i * 3.7f + 1.3f),
+                    Vector3.one * 1.1f, yaw);
+            }
+        }
+
+        private void CreateWorkshop(Vector3 origin, float yaw)
+        {
+            CreateHouse(origin, yaw, 1.35f);
+            Place("watermill", origin + new Vector3(-2.2f, 0f, 1.8f), Vector3.one * 1.05f, yaw);
+            Place("fence", origin + new Vector3(1.8f, 0f, 2.2f), Vector3.one * 1.35f, yaw);
+            Place("rock-small", origin + new Vector3(-2.0f, 0f, -1.7f), Vector3.one * .95f, 27f);
+        }
+
+        private void CreateField(Vector3 origin)
+        {
+            for (int z = 0; z < 3; z++)
+            for (int x = 0; x < 3; x++)
+            {
+                Place("fence", origin + new Vector3(x * 1.2f, 0f, z * 1.2f), Vector3.one * .72f,
+                    (x + z) % 2 == 0 ? 0f : 90f);
+            }
         }
 
         private void CreateHouse(Vector3 position, float yaw, float scale)

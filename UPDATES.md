@@ -11,6 +11,18 @@ regenerating incompatible old resource, clue, and map-discovery coordinates.
 Validation: Unity EditMode Test Runner **206/206 passed**, including the new
 prototype-island migration fixture and mainland generation invariants.
 
+## 2026-08 · Mainland M1 — centered 3D traversal bridge
+
+The 3D presentation now reads the mainland coordinate system: Hearthvale is
+centered at (63,63), the player spawns safely there, and the horizon/coast
+surround uses the authoritative 126-tile bounds rather than the retired
+prototype island. The existing town pass was expanded into lanes, work yards
+and fields as a temporary composition layer while the production asset/chunk
+pass is built.
+
+Validation: Unity Play Mode loaded the mainland terrain and player at
+**(63.5, 63.5)** with no Console errors.
+
 ## 2026-08 · 3D Phase I — owned SFX and release hardening
 
 Seven compact, already-owned interaction clips are now imported into Unity:
