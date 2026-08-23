@@ -64,7 +64,7 @@ namespace Isoperia.Core.Save
         /// safely interpreted on the mainland. Progress is retained, but those
         /// coordinates are relocated or regenerated during the 2.0 migration.
         /// </summary>
-        public static bool NeedsMainlandMigration(string version) => OlderThan(version, "2.0.0");
+        public static bool NeedsMainlandMigration(string version) => OlderThan(version, "2.2.0");
 
         /// <summary>Dotted version compare; true when <paramref name="a"/> is older.</summary>
         internal static bool OlderThan(string a, string b)

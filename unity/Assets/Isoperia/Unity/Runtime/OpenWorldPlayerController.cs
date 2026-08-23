@@ -26,6 +26,7 @@ namespace Isoperia.Unity
 
         private void Update()
         {
+            if (cameraTransform == null) cameraTransform = Camera.main != null ? Camera.main.transform : null;
             if (cameraTransform == null) return;
             Vector2 input = Keyboard.current == null ? Vector2.zero : new Vector2(
                 (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0),
@@ -39,22 +40,28 @@ namespace Isoperia.Unity
             if (IsMoving) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), 14f * Time.deltaTime);
             verticalSpeed = controller.isGrounded ? -.5f : verticalSpeed + Physics.gravity.y * Time.deltaTime;
             controller.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
-            if (SaveDriver.Instance?.State?.Player?.Pos != null)
-            {
-                var pos = SaveDriver.Instance.State.Player.Pos;
-                pos.Gx = Mathf.Clamp(Mathf.FloorToInt(transform.position.x), 0, 41);
-                pos.Gy = Mathf.Clamp(Mathf.FloorToInt(transform.position.z), 0, 41);
-                pos.Wx = transform.position.x; pos.Wz = transform.position.z;
-            }
+            SyncStatePosition();
         }
 
         private void Start()
         {
             if (spawned) return;
+            if (cameraTransform == null) cameraTransform = Camera.main != null ? Camera.main.transform : null;
             int x = SaveDriver.Instance?.State?.Player?.Pos?.Gx ?? CoreGrid.TownCenter;
             int z = SaveDriver.Instance?.State?.Player?.Pos?.Gy ?? CoreGrid.TownCenter;
             transform.position = new Vector3(x + .5f, 1f, z + .5f);
+            SyncStatePosition();
             spawned = true;
+        }
+
+        private void SyncStatePosition()
+        {
+            if (SaveDriver.Instance?.State?.Player?.Pos == null) return;
+            var pos = SaveDriver.Instance.State.Player.Pos;
+            pos.Gx = Mathf.Clamp(Mathf.FloorToInt(transform.position.x), 0, CoreGrid.WorldSize - 1);
+            pos.Gy = Mathf.Clamp(Mathf.FloorToInt(transform.position.z), 0, CoreGrid.WorldSize - 1);
+            pos.Wx = transform.position.x;
+            pos.Wz = transform.position.z;
         }
 
         private void OnDisable()

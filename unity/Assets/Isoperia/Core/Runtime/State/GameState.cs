@@ -129,8 +129,10 @@ namespace Isoperia.Core.State
         /// 1.1.0 — mastery XP moved off the OSRS skill curve onto its own
         ///         triangular curve at 1 XP per unit (was 4).
         /// 2.0.0 — the 42x42 prototype island became the 126x126 mainland.
+        /// 2.1.0 — re-runs safe mainland relocation for early 2.0 previews.
+        /// 2.2.0 — applies relocation after the 3D controller coordinate fix.
         /// </summary>
-        public const string SaveVersion = "2.0.0";
+        public const string SaveVersion = "2.2.0";
 
         /// <summary>
         /// A new hero opens in clear mid-morning light. The day curve ramps
