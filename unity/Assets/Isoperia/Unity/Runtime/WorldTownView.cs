@@ -14,6 +14,7 @@ namespace Isoperia.Unity
         private const string AssetRoot = "Art/KenneyFantasyTown/";
         private const string VillagerAsset = "Art/OwnedModels/villager";
         private const string CampfireAsset = "Art/OwnedModels/campfire";
+        private const string ForgeAsset = "Art/OwnedModels/hearthvale_forge";
         private readonly List<GameObject> instances = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
 
@@ -112,10 +113,53 @@ namespace Isoperia.Unity
 
         private void CreateWorkshop(Vector3 origin, float yaw)
         {
-            CreateHouse(origin, yaw, 1.35f);
-            Place("watermill", origin + new Vector3(-2.2f, 0f, 1.8f), Vector3.one * 1.05f, yaw);
+            PlaceForge(origin, yaw);
             Place("fence", origin + new Vector3(1.8f, 0f, 2.2f), Vector3.one * 1.35f, yaw);
             Place("rock-small", origin + new Vector3(-2.0f, 0f, -1.7f), Vector3.one * .95f, 27f);
+        }
+
+        private void PlaceForge(Vector3 position, float yaw)
+        {
+            GameObject prefab = Resources.Load<GameObject>(ForgeAsset);
+            if (prefab == null)
+            {
+                CreateHouse(position, yaw, 1.35f);
+                Place("watermill", position + new Vector3(-2.2f, 0f, 1.8f), Vector3.one * 1.05f, yaw);
+                return;
+            }
+
+            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = "Town_HearthvaleForge";
+            ApplyForgePalette(instance);
+            instances.Add(instance);
+        }
+
+        private void ApplyForgePalette(GameObject instance)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    Color color = name.Contains("Timber") ? new Color(.16f, .065f, .022f) :
+                        name.Contains("Plaster") ? new Color(.56f, .44f, .28f) :
+                        name.Contains("Roof") ? new Color(.12f, .16f, .20f) :
+                        name.Contains("Iron") ? new Color(.12f, .15f, .18f) :
+                        name.Contains("Ember") ? new Color(1f, .20f, .025f) : new Color(.20f, .22f, .25f);
+                    Material material = new Material(shader) { color = color };
+                    if (name.Contains("Ember"))
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        material.SetColor("_EmissionColor", color * 2f);
+                    }
+                    runtimeMaterials.Add(material);
+                    palette[i] = material;
+                }
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void CreateField(Vector3 origin)

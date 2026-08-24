@@ -1,5 +1,19 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Owned Hearthvale forge landmark
+
+`hearthvale_forge.fbx` is a new Isoperia-owned Blender asset for the
+north-west Hearthvale work yard. It has a stone hearth and chimney, anvil,
+workbench, timber frame, and roof canopy; its runtime palette preserves the
+dark iron, warm timber, and ember read in URP. The forge replaces the former
+house-and-watermill stand-in while retaining the same clear approach and all
+existing town gameplay.
+
+**Validation:** the Blender Y-up source preview and a live in-game town review
+were captured. Unity resolved `Town_HearthvaleForge` at the intended workshop
+position with zero Console errors. The source preview helper is committed so
+future original Y-up models can be reviewed consistently before import.
+
 ## 2026-08-24 · CC0 mainland ground-detail pass
 
 The continuous mainland terrain now layers a restrained, world-space 1K ground
