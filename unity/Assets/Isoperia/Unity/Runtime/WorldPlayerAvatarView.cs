@@ -11,7 +11,8 @@ namespace Isoperia.Unity
     public sealed class WorldPlayerAvatarView : MonoBehaviour
     {
         public const string AvatarName = "PlayerAvatar";
-        private const string HeroAsset = "Art/OwnedModels/hero_rigged";
+        private const string HeroAsset = "Art/OwnedModels/hero_animated";
+        private const string HeroControllerAsset = "Art/HeroController";
 
         private Material tunic;
         private Material skin;
@@ -62,8 +63,12 @@ namespace Isoperia.Unity
                 hero.transform.localPosition = Vector3.zero;
                 hero.transform.localRotation = Quaternion.identity;
                 hero.transform.localScale = Vector3.one;
+                Transform helperCube = FindChild(hero.transform, "Cube");
+                if (helperCube != null) Destroy(helperCube.gameObject);
                 OwnedModelPresentation.FitToHeight(hero, 1.45f);
                 Animator animator = hero.GetComponentInChildren<Animator>(true);
+                if (animator != null && animator.runtimeAnimatorController == null)
+                    animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(HeroControllerAsset);
                 if (animator != null && animator.runtimeAnimatorController != null)
                 {
                     heroTransform = hero.transform;
@@ -99,6 +104,17 @@ namespace Isoperia.Unity
                 new Vector3(.12f, .30f, .12f), tunic);
             rightLegTransform = CreatePart(PrimitiveType.Capsule, "RightLeg", new Vector3(.12f, .13f, 0f),
                 new Vector3(.12f, .30f, .12f), tunic);
+        }
+
+        private static Transform FindChild(Transform root, string childName)
+        {
+            foreach (Transform child in root)
+            {
+                if (child.name == childName) return child;
+                Transform match = FindChild(child, childName);
+                if (match != null) return match;
+            }
+            return null;
         }
 
         private void Update()
