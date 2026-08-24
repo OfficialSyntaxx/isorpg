@@ -73,6 +73,7 @@ jobs:
           npm run verify:world
           npm run verify:shaders
           npm run verify:models
+          npm run verify:separators
 
   build:
     needs: preflight

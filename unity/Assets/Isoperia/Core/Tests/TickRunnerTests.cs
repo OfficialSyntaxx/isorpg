@@ -72,7 +72,7 @@ namespace Isoperia.Core.Tests
             int ticks = 0;
             r.OnTick(_ => ticks++);
 
-            int fired = r.Advance(60_000);   // one minute stalled
+            int fired = r.Advance(60000);   // one minute stalled
 
             Assert.AreEqual(TickRunner.MaxCatchUpTicks, fired);
             Assert.AreEqual(TickRunner.MaxCatchUpTicks, ticks);

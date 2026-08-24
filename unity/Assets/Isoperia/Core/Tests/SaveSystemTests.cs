@@ -14,7 +14,7 @@ namespace Isoperia.Core.Tests
     /// </summary>
     public class SaveSystemTests
     {
-        private const long T0 = 1_787_000_000_000;
+        private const long T0 = 1787000000000;
 
         private long _now;
         private GameState _state;
@@ -55,7 +55,7 @@ namespace Isoperia.Core.Tests
             _state.ClockMinute = 733;
             _state.ClockDay = 5;
             _state.ResourceNodes["TREE_12_13"] = new ResourceNodeState { Remaining = 2, RespawnAt = 0 };
-            _state.ResourceNodes["ROCK_20_21"] = new ResourceNodeState { Remaining = 0, RespawnAt = T0 + 30_000 };
+            _state.ResourceNodes["ROCK_20_21"] = new ResourceNodeState { Remaining = 0, RespawnAt = T0 + 30000 };
             _state.Settings.AutoEatPct = 60;
             _state.Settings.AttackStyle = "aggressive";
             _state.CollectionLog.Add("logs");
@@ -86,7 +86,7 @@ namespace Isoperia.Core.Tests
             Assert.AreEqual(733, loadedState.ClockMinute);
             Assert.AreEqual(5, loadedState.ClockDay);
             Assert.AreEqual(2, loadedState.ResourceNodes["TREE_12_13"].Remaining);
-            Assert.AreEqual(T0 + 30_000, loadedState.ResourceNodes["ROCK_20_21"].RespawnAt);
+            Assert.AreEqual(T0 + 30000, loadedState.ResourceNodes["ROCK_20_21"].RespawnAt);
             Assert.AreEqual(60, loadedState.Settings.AutoEatPct);
             Assert.AreEqual("aggressive", loadedState.Settings.AttackStyle);
             Assert.IsTrue(loadedState.CollectionLog.Contains("logs"));

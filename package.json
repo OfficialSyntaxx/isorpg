@@ -30,7 +30,8 @@
     "verify:content": "node scripts/verify-content-parity.cjs",
     "verify:world": "node scripts/verify-world-golden.cjs",
     "verify:shaders": "node scripts/verify-always-included-shaders.cjs",
-    "verify:models": "node scripts/verify-model-budget.cjs"
+    "verify:models": "node scripts/verify-model-budget.cjs",
+    "verify:separators": "node scripts/verify-no-digit-separators.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

@@ -20,48 +20,10 @@ namespace Isoperia.Core.Tests
     [TestFixture]
     public class OfflineGatheringTests
     {
-        private const long T0 = 1_787_000_000_000;
+        private const long T0 = 1787000000000;
 
-        /// <summary>
-        /// Loads the real exported content.
-        ///
-        /// Deliberately THROWS when it cannot be found rather than skipping.
-        /// A test that quietly passes when its subject is missing is worse than
-        /// no test: it would report green in CI while proving nothing, which is
-        /// the failure mode this whole migration keeps running into.
-        /// </summary>
-        private static ContentDatabase RealContent()
-        {
-            // Runs from the repo root outside Unity and from the Unity project
-            // root inside it, so try both shapes while walking upward.
-            string dir = System.IO.Directory.GetCurrentDirectory();
-
-            for (int i = 0; i < 8 && dir != null; i++)
-            {
-                foreach (string rel in new[]
-                {
-                    "unity/Assets/Isoperia/Resources/Content",
-                    "Assets/Isoperia/Resources/Content",
-                })
-                {
-                    string candidate = System.IO.Path.Combine(dir, rel);
-                    if (!System.IO.Directory.Exists(candidate)) continue;
-
-                    return ContentDatabase.Load(name =>
-                    {
-                        string p = System.IO.Path.Combine(candidate, name + ".json");
-                        return System.IO.File.Exists(p) ? System.IO.File.ReadAllText(p) : null;
-                    });
-                }
-
-                dir = System.IO.Path.GetDirectoryName(dir);
-            }
-
-            throw new ContentException(
-                "could not find Assets/Isoperia/Resources/Content from " +
-                System.IO.Directory.GetCurrentDirectory() +
-                ". Run `npm run export:content`.");
-        }
+        /// <summary>Shared with the other suites — see TestContent.</summary>
+        private static ContentDatabase RealContent() => TestContent.Real();
 
         private static SaveSystem Make(out GameState state, long now, ContentDatabase content)
         {
@@ -126,7 +88,7 @@ namespace Isoperia.Core.Tests
             // the default 500 woodcutting fills the bag and mining stores
             // nothing — a correct outcome that would make this test pass or fail
             // for reasons unrelated to the copper/tin tie.
-            st.Player.Inventory.StorageCap = 1_000_000;
+            st.Player.Inventory.StorageCap = 1000000;
 
             save.ComputeOffline();
 

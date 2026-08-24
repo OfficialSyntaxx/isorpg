@@ -534,6 +534,16 @@ namespace Isoperia.Core.Save
             // should not out-earn playing.
             AccrueOfflineGathering(capS, summary);
 
+            // Assigned villagers kept producing into the village stock while the
+            // player was away. This was missing entirely until Phase D: labour
+            // state was saved and restored, so nothing looked broken, but the
+            // villagers simply stopped the moment the tab closed.
+            if (Content != null)
+            {
+                foreach (string line in Systems.Labour.AccrueOffline(_state, Content, awayMs, capS * 1000.0))
+                    summary.Lines.Add(line);
+            }
+
             // The Town Hall keeps taxing while you are away.
             int hallLevel = 0;
             foreach (TownBuilding b in _state.Town.Buildings)

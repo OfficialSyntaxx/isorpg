@@ -21,7 +21,7 @@ namespace Isoperia.Core.Tests
     /// </summary>
     public class SanitizerTests
     {
-        private const long Now = 1_787_000_000_000;
+        private const long Now = 1787000000000;
 
         private static SanitizeResult San(string json)
         {
@@ -308,7 +308,7 @@ namespace Isoperia.Core.Tests
         {
             SanitizeResult r = San(
                 "{\"player\":{},\"town\":{\"farm\":{\"plots\":[" +
-                "{\"seedId\":\"potato_seed\",\"plantedAt\":" + (Now + 999_999_999L) + "}]}}}");
+                "{\"seedId\":\"potato_seed\",\"plantedAt\":" + (Now + 999999999L) + "}]}}}");
 
             Assert.AreEqual(Now, r.State["town"]["farm"]["plots"][0]["plantedAt"].AsNumber());
         }
