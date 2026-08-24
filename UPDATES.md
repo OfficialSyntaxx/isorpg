@@ -1,5 +1,19 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Mainland coast and horizon correction
+
+The open-world surround now places the ocean at the same surface height as the
+authoritative coastal water, then begins distant irregular shorelines after a
+wide water buffer. The prior surround sat substantially below the playable
+terrain and began its green coast immediately at the edge, which made high
+views read as a small floating island. The revised ocean extends farther,
+uses a restrained reflective material, and keeps the distant land inside the
+existing fog envelope. This is presentation only: the mainland grid, walkable
+area, collision, navigation, combat, and saves are unchanged.
+
+**Validation:** a fresh Unity Play Mode run produced a coastline screenshot
+with continuous water around the mainland and reported **zero Console errors**.
+
 ## 2026-08-24 · Mainland travel-route foundation
 
 `WorldTravelRouteView` now draws grounded, presentation-only road ribbons

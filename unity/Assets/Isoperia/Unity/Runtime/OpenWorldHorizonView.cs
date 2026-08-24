@@ -5,15 +5,17 @@ using CoreGrid = Isoperia.Core.World.Grid;
 namespace Isoperia.Unity
 {
     /// <summary>
-    /// Presentation-only coastal surround for the deterministic 42x42 gameplay
-    /// grid. It gives the playable slice a mainland horizon without changing
+    /// Presentation-only coastal surround for the deterministic mainland grid.
+    /// It gives the playable slice an ocean buffer and distant mainland horizon without changing
     /// navigation, saves, or the Core world's fixed generation contract.
     /// </summary>
     public sealed class OpenWorldHorizonView : MonoBehaviour
     {
         private const float WorldMin = 0f;
-        private const float HorizonExtent = 150f;
-        private const float CoastDepth = 18f;
+        private const float HorizonExtent = 220f;
+        private const float CoastStart = 22f;
+        private const float CoastDepth = 44f;
+        private const float OceanHeight = -.14f;
         private readonly List<Material> materials = new List<Material>();
         private Mesh oceanMesh;
         private Mesh coastMesh;
@@ -57,15 +59,15 @@ namespace Isoperia.Unity
             float e = HorizonExtent;
             oceanMesh.vertices = new[]
             {
-                new Vector3(-e, -.68f, -e), new Vector3(e, -.68f, -e),
-                new Vector3(-e, -.68f, e), new Vector3(e, -.68f, e)
+                new Vector3(-e, OceanHeight, -e), new Vector3(e, OceanHeight, -e),
+                new Vector3(-e, OceanHeight, e), new Vector3(e, OceanHeight, e)
             };
             oceanMesh.triangles = new[] { 0, 2, 1, 1, 2, 3 };
             oceanMesh.uv = new[] { Vector2.zero, Vector2.right * 80f, Vector2.up * 80f, Vector2.one * 80f };
             oceanMesh.RecalculateNormals();
             oceanMesh.RecalculateBounds();
             filter.sharedMesh = oceanMesh;
-            renderer.sharedMaterial = CreateMaterial(new Color(.035f, .13f, .18f), .32f, .72f);
+            renderer.sharedMaterial = CreateMaterial(new Color(.025f, .115f, .17f), .24f, .82f);
         }
 
         private void CreateCoast()
@@ -81,8 +83,9 @@ namespace Isoperia.Unity
 
         private static Mesh BuildCoastMesh()
         {
-            // Four continuous strips meet just outside the playable coastline.
-            // Their irregular outer edge avoids a visible rectangular world cap.
+            // Four distant shore strips leave a broad water buffer around the
+            // playable coast. This avoids a sheer island edge while retaining
+            // an irregular, finite backdrop that fog can soften at distance.
             const int segments = 30;
             var vertices = new List<Vector3>((segments + 1) * 8);
             var triangles = new List<int>(segments * 24);
@@ -104,12 +107,12 @@ namespace Isoperia.Unity
             for (int i = 0; i <= segments; i++)
             {
                 float t = i / (float)segments;
-                float along = Mathf.Lerp(WorldMin - CoastDepth, WorldMax + CoastDepth, t);
+                float along = Mathf.Lerp(WorldMin - CoastStart - CoastDepth, WorldMax + CoastStart + CoastDepth, t);
                 float jitter = Mathf.Sin(i * 1.73f) * 2.1f + Mathf.Sin(i * .47f) * 3.2f;
-                float inner = farSide ? WorldMax + .25f : WorldMin - .25f;
-                float outer = farSide ? WorldMax + CoastDepth + jitter : WorldMin - CoastDepth - jitter;
-                float innerHeight = -.22f;
-                float outerHeight = -.32f + Mathf.Max(0f, Mathf.Sin(i * .79f)) * .85f;
+                float inner = farSide ? WorldMax + CoastStart : WorldMin - CoastStart;
+                float outer = farSide ? WorldMax + CoastStart + CoastDepth + jitter : WorldMin - CoastStart - CoastDepth - jitter;
+                float innerHeight = OceanHeight + .01f;
+                float outerHeight = OceanHeight + .12f + Mathf.Max(0f, Mathf.Sin(i * .79f)) * .85f;
                 vertices.Add(horizontal ? new Vector3(along, innerHeight, inner) : new Vector3(inner, innerHeight, along));
                 vertices.Add(horizontal ? new Vector3(along, outerHeight, outer) : new Vector3(outer, outerHeight, along));
             }
