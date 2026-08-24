@@ -1,5 +1,20 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Continuous mainland terrain shading
+
+The open-world terrain no longer renders as four hard biome-colour submeshes.
+It now uses the owned `Isoperia/Terrain Vertex Color` URP shader and a single
+mesh surface, blending per-vertex terrain colours across grass, dirt, rock,
+sand, water, and biome tint. This makes regional transitions feel like a
+continuous landscape from the third-person camera while preserving the exact
+Core terrain types, grid dimensions, terrain collider, heights, and all
+gameplay state.
+
+**Validation:** Unity imported the new URP shader and rebuilt the terrain in a
+fresh Play Mode session. No script or shader compilation errors occurred;
+Metal reports two known memoryless-depth notices when MCP captures a Game View
+screenshot, which are capture-driver messages rather than game exceptions.
+
 ## 2026-08-24 · Mainland coast and horizon correction
 
 The open-world surround now places the ocean at the same surface height as the

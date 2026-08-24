@@ -18,7 +18,7 @@ namespace Isoperia.Unity
             int width = grid.Width, height = grid.Height;
             var vertices = new List<Vector3>((width + 1) * (height + 1));
             var colors = new List<Color>((width + 1) * (height + 1));
-            var triangles = new List<int>[] { new List<int>(), new List<int>(), new List<int>(), new List<int>() };
+            var triangles = new List<int>(width * height * 6);
             for (int z = 0; z <= height; z++)
             for (int x = 0; x <= width; x++)
             {
@@ -31,42 +31,30 @@ namespace Isoperia.Unity
             for (int x = 0; x < width; x++)
             {
                 int a = z * (width + 1) + x, b = a + 1, c = a + width + 1, d = c + 1;
-                int submesh = BiomeIndex(grid.At(x, z).Biome);
-                triangles[submesh].Add(a); triangles[submesh].Add(c); triangles[submesh].Add(b);
-                triangles[submesh].Add(b); triangles[submesh].Add(c); triangles[submesh].Add(d);
+                triangles.Add(a); triangles.Add(c); triangles.Add(b);
+                triangles.Add(b); triangles.Add(c); triangles.Add(d);
             }
             terrainMesh = new Mesh { name = "Isoperia_OpenWorldTerrain" };
-            terrainMesh.SetVertices(vertices); terrainMesh.SetColors(colors); terrainMesh.subMeshCount = triangles.Length;
-            for (int i = 0; i < triangles.Length; i++) terrainMesh.SetTriangles(triangles[i], i);
+            terrainMesh.SetVertices(vertices); terrainMesh.SetColors(colors); terrainMesh.SetTriangles(triangles, 0);
             terrainMesh.RecalculateNormals(); terrainMesh.RecalculateBounds();
             GetComponent<MeshFilter>().sharedMesh = terrainMesh;
             GetComponent<MeshCollider>().sharedMesh = terrainMesh;
-            Color[] palette = { new Color(.30f, .48f, .25f), new Color(.18f, .34f, .19f), new Color(.50f, .62f, .66f), new Color(.22f, .31f, .18f) };
-            terrainMaterials = new Material[palette.Length];
-            for (int i = 0; i < palette.Length; i++)
-            {
-                terrainMaterials[i] = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                terrainMaterials[i].enableInstancing = true;
-                terrainMaterials[i].color = palette[i];
-            }
+            Shader terrainShader = Shader.Find("Isoperia/Terrain Vertex Color") ??
+                Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            terrainMaterials = new[] { new Material(terrainShader) { enableInstancing = true } };
             GetComponent<MeshRenderer>().sharedMaterials = terrainMaterials;
         }
 
         private static Color ColorFor(Biome biome, TerrainType terrain)
         {
-            if (terrain == TerrainType.Water) return new Color(.05f, .18f, .24f);
-            if (biome == Biome.Snow) return new Color(.52f, .62f, .66f);
-            if (biome == Biome.Swamp) return new Color(.18f, .28f, .18f);
-            if (biome == Biome.Forest) return new Color(.20f, .36f, .20f);
-            return new Color(.28f, .43f, .23f);
-        }
-
-        private static int BiomeIndex(Biome biome)
-        {
-            if (biome == Biome.Forest) return 1;
-            if (biome == Biome.Snow) return 2;
-            if (biome == Biome.Swamp) return 3;
-            return 0;
+            if (terrain == TerrainType.Water) return new Color(.045f, .16f, .22f);
+            if (terrain == TerrainType.Sand) return new Color(.50f, .42f, .22f);
+            if (terrain == TerrainType.Rock) return new Color(.27f, .29f, .30f);
+            if (terrain == TerrainType.Dirt) return new Color(.30f, .19f, .10f);
+            if (biome == Biome.Snow) return new Color(.48f, .60f, .63f);
+            if (biome == Biome.Swamp) return new Color(.17f, .30f, .18f);
+            if (biome == Biome.Forest) return new Color(.16f, .36f, .18f);
+            return new Color(.30f, .46f, .22f);
         }
 
         /// <summary>
