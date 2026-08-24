@@ -9,6 +9,8 @@ namespace Isoperia.Unity
     public sealed class MainlandDiscoveryView : MonoBehaviour
     {
         private Transform player;
+        private int lastExploredX = -1;
+        private int lastExploredY = -1;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
@@ -21,11 +23,39 @@ namespace Isoperia.Unity
             if (player == null)
                 player = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
             if (player == null || SaveDriver.Instance?.State?.Player == null) return;
-            string district = DistrictAt(Mathf.FloorToInt(player.position.x), Mathf.FloorToInt(player.position.z));
+            int x = Mathf.FloorToInt(player.position.x);
+            int y = Mathf.FloorToInt(player.position.z);
+            RecordExploration(x, y);
+            string district = DistrictAt(x, y);
             if (SaveDriver.Instance.State.Player.MapDiscovered.Contains(district)) return;
 
             SaveDriver.Instance.State.Player.MapDiscovered.Add(district);
             SaveDriver.Instance.ShowStatus("Discovered · " + DisplayName(district));
+        }
+
+        private void RecordExploration(int x, int y)
+        {
+            if (x == lastExploredX && y == lastExploredY) return;
+            lastExploredX = x;
+            lastExploredY = y;
+
+            var state = SaveDriver.Instance.State.Player;
+            int width = WorldRuntime.Instance?.Grid?.Width ?? 0;
+            int height = WorldRuntime.Instance?.Grid?.Height ?? 0;
+            if (width <= 0 || height <= 0) return;
+
+            RecordTile(state.MapExplored, width, height, x, y);
+            RecordTile(state.MapExplored, width, height, x + 1, y);
+            RecordTile(state.MapExplored, width, height, x - 1, y);
+            RecordTile(state.MapExplored, width, height, x, y + 1);
+            RecordTile(state.MapExplored, width, height, x, y - 1);
+        }
+
+        private static void RecordTile(System.Collections.Generic.List<double> explored, int width, int height, int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= width || y >= height) return;
+            double index = y * width + x;
+            if (!explored.Contains(index)) explored.Add(index);
         }
 
         private static string DistrictAt(int x, int y)

@@ -146,8 +146,11 @@ ruins are natural boundaries; invisible walls are not a progression tool.
 
 ## Current repository impact
 
-The current grid has fixed `WorldSize = 42`, 6×6 regions, fixed-coordinate
-town/dungeon views, and a save sanitizer that validates coordinates against 42.
-M0 must address all four together. The current 3D horizon/town-density work is
-prototype presentation work and must be rebased onto the M1/M2 mainland layout;
-it is not evidence that a mainland conversion is complete.
+M0 and the first M1/M2 foundations are now present: the deterministic grid is
+126×126 with 18×18 chunks, the sanitizer migrates legacy 42×42 coordinates,
+and the Unity presentation has continuous terrain, a broad ocean horizon,
+grounded routes, a central Hearthvale, and a third-person/orbit controller.
+The map survey records walking exploration at chunk scale. These foundations do
+not complete the roadmap: route activities, district progression, NPC/enemy
+replacement, physical-device QA, and a current hosted WebGL verification
+remain active work.

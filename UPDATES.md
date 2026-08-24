@@ -1,5 +1,22 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Mainland exploration survey
+
+The Map panel now renders a 7×7 chunk survey of the 126×126 mainland instead
+of creating one UI element for every tile. Uncharted chunks remain dark,
+charted chunks use their dominant terrain colour, and the player’s current
+chunk is gold. `MainlandDiscoveryView` now records the player’s current tile
+and four immediate neighbours into the existing bounded `MapExplored` save
+data as they travel, so the survey survives a session restart without adding a
+second presentation-only save format.
+
+This makes the existing discovery toast meaningful in the exploration loop and
+keeps map opening bounded to 49 elements rather than 15,876. District names,
+Core movement, resource state, combat, and save migration rules are unchanged.
+
+**Validation:** the map panel opened in a fresh Play Mode session with zero
+Unity Console errors. EditMode tests passed **379/379**.
+
 ## 2026-08-24 · Grounded third-person travel pass
 
 The perspective controller now has a closer default third-person framing,

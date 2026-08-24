@@ -164,21 +164,31 @@ namespace Isoperia.Unity
 
             int playerX = SaveDriver.Instance?.State?.Player?.Pos?.Gx ?? -1;
             int playerY = SaveDriver.Instance?.State?.Player?.Pos?.Gy ?? -1;
-            AddPanelMessage($"{world.Grid.Width} × {world.Grid.Height} deterministic survey · You are the gold tile.");
+            const int chunkSize = Isoperia.Core.World.Grid.GridChunk;
+            int columns = Mathf.CeilToInt(world.Grid.Width / (float)chunkSize);
+            int rows = Mathf.CeilToInt(world.Grid.Height / (float)chunkSize);
+            AddPanelMessage($"{world.Grid.Width} × {world.Grid.Height} mainland survey · gold marks your position · dark areas remain uncharted.");
 
             var map = new VisualElement();
             map.AddToClassList("map-grid");
 
-            for (int y = 0; y < world.Grid.Height; y++)
+            for (int chunkY = 0; chunkY < rows; chunkY++)
             {
-                for (int x = 0; x < world.Grid.Width; x++)
+                for (int chunkX = 0; chunkX < columns; chunkX++)
                 {
-                    Tile tile = world.Grid.Tiles[y][x];
                     var cell = new VisualElement();
                     cell.AddToClassList("map-cell");
-                    cell.style.backgroundColor = TerrainColor(tile.TerrainType);
+                    int minX = chunkX * chunkSize;
+                    int minY = chunkY * chunkSize;
+                    int maxX = Mathf.Min(world.Grid.Width, minX + chunkSize);
+                    int maxY = Mathf.Min(world.Grid.Height, minY + chunkSize);
+                    bool containsPlayer = playerX >= minX && playerX < maxX && playerY >= minY && playerY < maxY;
+                    bool explored = ContainsExploredTile(SaveDriver.Instance?.State?.Player?.MapExplored, world.Grid.Width, minX, minY, maxX, maxY);
+                    cell.style.backgroundColor = explored || containsPlayer
+                        ? ChunkTerrainColor(world.Grid, minX, minY, maxX, maxY)
+                        : new Color(.055f, .07f, .08f, 1f);
 
-                    if (tile.X == playerX && tile.Y == playerY)
+                    if (containsPlayer)
                     {
                         cell.AddToClassList("map-player");
                         cell.style.backgroundColor = new Color(0.96f, 0.77f, 0.36f, 1f);
@@ -189,6 +199,35 @@ namespace Isoperia.Unity
             }
 
             panelBody.Add(map);
+        }
+
+        private static bool ContainsExploredTile(System.Collections.Generic.List<double> explored, int width,
+            int minX, int minY, int maxX, int maxY)
+        {
+            if (explored == null || explored.Count == 0) return false;
+            // A mainland chunk is only 18×18; this scan runs when the player opens
+            // the map, never during the frame loop. It avoids allocating a second
+            // dense 126×126 presentation cache just for a panel.
+            foreach (double savedIndex in explored)
+            {
+                int index = (int)savedIndex;
+                int x = index % width;
+                int y = index / width;
+                if (x >= minX && x < maxX && y >= minY && y < maxY) return true;
+            }
+            return false;
+        }
+
+        private static Color ChunkTerrainColor(Isoperia.Core.World.Grid grid, int minX, int minY, int maxX, int maxY)
+        {
+            int[] counts = new int[6];
+            for (int y = minY; y < maxY; y++)
+                for (int x = minX; x < maxX; x++)
+                    counts[(int)grid.Tiles[y][x].TerrainType]++;
+
+            int dominant = 0;
+            for (int i = 1; i < counts.Length; i++) if (counts[i] > counts[dominant]) dominant = i;
+            return TerrainColor((TerrainType)dominant);
         }
 
         private void OpenSkills()

@@ -207,10 +207,14 @@
 }
 
 .map-cell {
-    width: 7px;
-    min-width: 7px;
-    height: 7px;
-    min-height: 7px;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    min-height: 42px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-right-color: rgba(24, 20, 17, 0.55);
+    border-bottom-color: rgba(24, 20, 17, 0.55);
 }
 
 .map-player {
