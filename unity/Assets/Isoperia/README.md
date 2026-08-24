@@ -38,7 +38,7 @@ Presentation reads Core's state and never writes gameplay outcomes back into it.
 Animation, VFX and the camera are downstream of the 600 ms tick, never inputs to
 it.
 
-## Mono's `mcs` disagrees with Roslyn, silently — twice so far
+## Mono's `mcs` disagrees with Roslyn — three times so far, twice silently
 
 `Isoperia.Core` is declared `noEngineReferences` so the whole port can be
 compiled and tested with `mcs` in about a second, with no Unity licence. Unity
@@ -46,7 +46,7 @@ builds the *same source* with Roslyn. Where the two compilers disagree, the
 verification harness tests something the game does not do — which is precisely
 what the harness exists to prevent.
 
-Two disagreements are confirmed, and neither produced a warning:
+Three disagreements are confirmed. The first two produced no warning at all:
 
 1. **Tuple swap.** `(a[i], a[j]) = (a[j], a[i])` was miscompiled into list
    indexer calls, corrupting the A\* binary heap so anything beyond an adjacent
@@ -64,6 +64,14 @@ Two disagreements are confirmed, and neither produced a warning:
    the content JSON, which is parsed at runtime and therefore correct.
 
    `npm run verify:separators` bans them from Core.
+
+3. **Ternaries over named-tuple arrays.** `(string Id, int Count)[] x = c ? new[]
+   { ("a", 1) } : new[] { ("b", 2) };` is rejected with a CS0029 that names the
+   *same type* on both sides of the conversion. Spelling the element type out
+   does not help. This one is at least loud — it fails the build rather than
+   changing behaviour — but the error message points nowhere useful.
+   `DungeonSystem.MonsterRow` is a named struct rather than a tuple for this
+   reason, and a named struct is the general workaround.
 
 **Rule:** treat `mcs` as a second compiler whose disagreements are silent. When
 a C# feature has a plainer equivalent, prefer the plainer one in this assembly.
