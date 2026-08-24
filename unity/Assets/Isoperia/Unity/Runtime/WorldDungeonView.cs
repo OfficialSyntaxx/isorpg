@@ -6,10 +6,14 @@ namespace Isoperia.Unity
     public sealed class WorldDungeonView : MonoBehaviour
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
+        private const string CinderGateAsset = "Art/OwnedModels/cinder_gate";
         private readonly Vector3[] pools = { new Vector3(82.5f, .22f, 62.5f), new Vector3(94.5f, .22f, 62.5f), new Vector3(105.5f, .22f, 68.5f) };
         private Material glow;
         private Material basalt;
         private Material ash;
+        private Material gateBasalt;
+        private Material gateRune;
+        private Material gateDarkness;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateView()
@@ -54,6 +58,15 @@ namespace Isoperia.Unity
         private void CreateEntrance()
         {
             Vector3 entrance = Grounded(new Vector3(113.5f, 0f, 69.5f));
+            GameObject prefab = Resources.Load<GameObject>(CinderGateAsset);
+            if (prefab != null)
+            {
+                GameObject gate = Instantiate(prefab, entrance, Quaternion.Euler(0f, 20f, 0f), transform);
+                gate.name = "CinderHollow_EntranceGate";
+                OwnedModelPresentation.FitToHeight(gate, 2.65f);
+                ApplyGatePalette(gate);
+                return;
+            }
             CreateRock("CinderHollow_EntranceLeft", entrance + Vector3.left * 1.2f, new Vector3(.9f, 1.5f, .7f));
             CreateRock("CinderHollow_EntranceRight", entrance + Vector3.right * 1.2f, new Vector3(.9f, 1.5f, .7f));
             GameObject lintel = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -63,6 +76,30 @@ namespace Isoperia.Unity
             lintel.transform.localScale = new Vector3(2.9f, .45f, .7f);
             lintel.GetComponent<Renderer>().sharedMaterial = basalt;
             Destroy(lintel.GetComponent<Collider>());
+        }
+
+        private void ApplyGatePalette(GameObject gate)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            if (gateBasalt == null) gateBasalt = new Material(shader) { color = new Color(.17f, .095f, .15f) };
+            if (gateDarkness == null) gateDarkness = new Material(shader) { color = new Color(.012f, .010f, .018f) };
+            if (gateRune == null)
+            {
+                gateRune = new Material(shader) { color = new Color(1f, .20f, .025f) };
+                gateRune.EnableKeyword("_EMISSION");
+                gateRune.SetColor("_EmissionColor", new Color(1f, .05f, .005f) * 2.6f);
+            }
+            foreach (Renderer renderer in gate.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    palette[i] = name.Contains("Rune") ? gateRune : name.Contains("Darkness") ? gateDarkness : gateBasalt;
+                }
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void CreateRouteMarkers()
@@ -104,6 +141,9 @@ namespace Isoperia.Unity
             if (glow != null) Destroy(glow);
             if (basalt != null) Destroy(basalt);
             if (ash != null) Destroy(ash);
+            if (gateBasalt != null) Destroy(gateBasalt);
+            if (gateRune != null) Destroy(gateRune);
+            if (gateDarkness != null) Destroy(gateDarkness);
         }
     }
 }

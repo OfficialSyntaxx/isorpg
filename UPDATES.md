@@ -1,5 +1,21 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Cinder Hollow Blender threshold
+
+`cinder_gate.fbx` is a new original Blender-authored basalt threshold for the
+Cinder Hollow route destination. It replaces the prior two-rock-and-cube
+entrance with a compact arch, recessed dark opening, and emissive ember-rune
+facets. It is visual-only and keeps the existing light-pool expedition
+coordinates, damage rule, journal progression, combat clearing, and return
+objective intact. The previous kit-only composition remains a runtime fallback
+if the owned FBX is unavailable.
+
+**Validation:** Blender source and Unity import orientation were reviewed in
+the live Cinder Hollow scene; the initial Z-up export was rejected before
+shipping, and the corrected project Y-up asset was retained. Unity reported
+zero gameplay Console errors. After one runner initialization retry, EditMode
+tests passed **379/379**.
+
 ## 2026-08-24 · Attunable return-waystones
 
 The Sunmere and Ember Road route wayfinders now act as physical, clickable
