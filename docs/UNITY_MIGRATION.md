@@ -441,6 +441,23 @@ Rewrite `README.md`. Keep `WIKI.md`, `docs/PORTING_SPEC.md`, `ROADMAP.md`. Histo
 - **Phase 1 (code lane) — done** (commit `5ab974a`). PWA WebGL template, service
   worker, icons, Netlify/Vercel headers, and `npm run verify:pwa` (18 assertions).
 
+- **Download budget, measured 2026-08-24.** The CI build artifact is **20.72 MB**,
+  about **52% of the 40 MB compressed budget**. It was 34.82 MB (88%) one commit
+  earlier; optimising four monster GLBs took 20.48 MB of source art down to
+  1.80 MB and 14.11 MB out of the build.
+
+  **A number to be careful with:** `build-report.txt` reports `total_size_mb`
+  *uncompressed* — 68.50 MB at the time. The budget is about the Brotli-compressed
+  download (`Build/*.br`), which is roughly half that. Comparing the uncompressed
+  figure to the budget once produced a false alarm of "171% over" when the build
+  was actually under.
+
+  The models went in raw for a mundane reason worth remembering: `optimize-glb.cjs`
+  required `playwright` while the repo depends on `playwright-core`, so it printed
+  "unavailable" and **exited 0** — reporting success while doing nothing. A tool
+  that fails open is worse than one that fails loudly. `npm run verify:models` now
+  gates the source archive at 1.5 MB per model.
+
 - **Phase 1 — three deploys to get one visible, correct frame.** The first
   device load showed a white wedge, the second a magenta octagon, and each
   looked like the same broken build. They were three different faults, and
