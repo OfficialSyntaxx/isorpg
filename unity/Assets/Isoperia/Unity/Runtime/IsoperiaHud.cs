@@ -199,6 +199,31 @@ namespace Isoperia.Unity
             }
 
             panelBody.Add(map);
+
+            SaveDriver save = SaveDriver.Instance;
+            if (save?.State?.Player?.MapFastTravel == true)
+            {
+                AddSettingButton("Return to Hearthvale", ReturnToHearthvale);
+            }
+            else
+            {
+                AddPanelMessage("Attune an outer-route waystone to unlock a safe return to Hearthvale.");
+            }
+        }
+
+        private void ReturnToHearthvale()
+        {
+            OpenWorldPlayerController controller = GameObject.Find(WorldPlayerAvatarView.AvatarName)
+                ?.GetComponent<OpenWorldPlayerController>();
+            if (controller == null || !controller.TryTeleportTo(Isoperia.Core.World.Grid.TownCenter, Isoperia.Core.World.Grid.TownCenter))
+            {
+                AddPanelMessage("Hearthvale return is unavailable right now.");
+                return;
+            }
+
+            SaveDriver.Instance?.ShowStatus("Returned to Hearthvale");
+            SaveDriver.Instance?.Save?.ForceSave();
+            ClosePanel();
         }
 
         private static bool ContainsExploredTile(System.Collections.Generic.List<double> explored, int width,

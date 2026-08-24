@@ -124,6 +124,26 @@ namespace Isoperia.Unity
             pos.Wz = transform.position.z;
         }
 
+        /// <summary>
+        /// Presentation bridge for an already-authoritative map destination.
+        /// It never invents a target: the caller supplies a validated mainland
+        /// coordinate, then this controller places the CharacterController on
+        /// its terrain surface and immediately updates the saved coarse marker.
+        /// </summary>
+        public bool TryTeleportTo(int x, int z)
+        {
+            CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
+            if (x < 0 || z < 0 || x >= grid.Width || z >= grid.Height || !grid.IsWalkable(x, z)) return false;
+
+            var tile = grid.At(x, z);
+            verticalSpeed = 0f;
+            controller.enabled = false;
+            transform.position = new Vector3(x + .5f, OpenWorldTerrainView.SurfaceHeight(tile, x + .5f, z + .5f) + .03f, z + .5f);
+            controller.enabled = true;
+            SyncStatePosition();
+            return true;
+        }
+
         private void OnDisable()
         {
             IsMoving = false;

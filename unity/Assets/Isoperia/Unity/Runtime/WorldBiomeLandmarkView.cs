@@ -69,7 +69,8 @@ namespace Isoperia.Unity
                     origin + new Vector3(i * .85f, 0f, 2.0f), Vector3.one * .9f, 0f);
             }
             Place("lantern", "BiomeLandmark_Sunmere_RoadLantern", origin + new Vector3(-2.4f, 0f, -.7f), Vector3.one * 1.1f, 0f);
-            PlaceWayfinder("BiomeLandmark_Sunmere_Wayfinder", origin + new Vector3(-3.25f, 0f, -1.4f), 180f);
+            PlaceWayfinder("BiomeLandmark_Sunmere_Wayfinder", origin + new Vector3(-3.25f, 0f, -1.4f), 180f,
+                "sunmere", 63, 91);
         }
 
         private void BuildEmberRoad()
@@ -83,7 +84,8 @@ namespace Isoperia.Unity
             Place("lantern", "BiomeLandmark_EmberRoad_LanternLeft", origin + new Vector3(-1.55f, 0f, .45f), Vector3.one * 1.18f, 0f);
             Place("lantern", "BiomeLandmark_EmberRoad_LanternRight", origin + new Vector3(1.55f, 0f, .45f), Vector3.one * 1.18f, 0f);
             Place("road-bend", "BiomeLandmark_EmberRoad_Approach", origin + new Vector3(0f, .01f, -1.2f), Vector3.one * 1.05f, 0f);
-            PlaceWayfinder("BiomeLandmark_EmberRoad_Wayfinder", origin + new Vector3(0f, 0f, -2.45f), 0f);
+            PlaceWayfinder("BiomeLandmark_EmberRoad_Wayfinder", origin + new Vector3(0f, 0f, -2.45f), 0f,
+                "ember_road", 82, 63);
         }
 
         private Vector3 Grounded(int x, int z)
@@ -109,7 +111,7 @@ namespace Isoperia.Unity
             instances.Add(instance);
         }
 
-        private void PlaceWayfinder(string instanceName, Vector3 position, float yaw)
+        private void PlaceWayfinder(string instanceName, Vector3 position, float yaw, string waystoneId, int tileX, int tileY)
         {
             GameObject prefab = Resources.Load<GameObject>(WayfinderAsset);
             if (prefab == null)
@@ -120,6 +122,8 @@ namespace Isoperia.Unity
             GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
             instance.name = instanceName;
             OwnedModelPresentation.FitToHeight(instance, 2.15f);
+            instance.AddComponent<BoxCollider>().size = new Vector3(1.2f, 2.1f, .75f);
+            instance.AddComponent<WorldInteractionTarget>().SetWaystone(waystoneId, tileX, tileY);
             instances.Add(instance);
         }
 
