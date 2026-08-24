@@ -24,6 +24,8 @@ namespace Isoperia.Unity
             BuildFrostwatch();
             BuildMiregate();
             BuildWildwood();
+            BuildSunmere();
+            BuildEmberRoad();
         }
 
         private void BuildFrostwatch()
@@ -51,6 +53,34 @@ namespace Isoperia.Unity
             Place("tree", "BiomeLandmark_Wildwood_TreeA", origin + new Vector3(-1.9f, 0f, 1.1f), Vector3.one * 1.45f, -25f);
             Place("tree", "BiomeLandmark_Wildwood_TreeB", origin + new Vector3(1.7f, 0f, .9f), Vector3.one * 1.35f, 32f);
             Place("rock-small", "BiomeLandmark_Wildwood_RootStone", origin + new Vector3(.5f, 0f, -1.7f), Vector3.one * 1.15f, -16f);
+        }
+
+        private void BuildSunmere()
+        {
+            // A working agricultural silhouette on the southern approach: the
+            // mill is visible from the town road, while the low fence mass
+            // makes the fields read as a destination rather than open grass.
+            Vector3 origin = Grounded(63, 91);
+            Place("windmill", "BiomeLandmark_Sunmere_Mill", origin, Vector3.one * 1.35f, 0f);
+            for (int i = -2; i <= 2; i++)
+            {
+                Place("fence", "BiomeLandmark_Sunmere_FieldFence_" + i,
+                    origin + new Vector3(i * .85f, 0f, 2.0f), Vector3.one * .9f, 0f);
+            }
+            Place("lantern", "BiomeLandmark_Sunmere_RoadLantern", origin + new Vector3(-2.4f, 0f, -.7f), Vector3.one * 1.1f, 0f);
+        }
+
+        private void BuildEmberRoad()
+        {
+            // The eastern route needs a strong transition before the existing
+            // Cinder Hollow light pools. A compact stone-and-lantern gate gives
+            // the player a visible forward cue and a memorable return point.
+            Vector3 origin = Grounded(82, 63);
+            Place("rock-large", "BiomeLandmark_EmberRoad_GateLeft", origin + new Vector3(-1.1f, 0f, 0f), new Vector3(.78f, 1.35f, .72f), -10f);
+            Place("rock-large", "BiomeLandmark_EmberRoad_GateRight", origin + new Vector3(1.1f, 0f, 0f), new Vector3(.78f, 1.35f, .72f), 10f);
+            Place("lantern", "BiomeLandmark_EmberRoad_LanternLeft", origin + new Vector3(-1.55f, 0f, .45f), Vector3.one * 1.18f, 0f);
+            Place("lantern", "BiomeLandmark_EmberRoad_LanternRight", origin + new Vector3(1.55f, 0f, .45f), Vector3.one * 1.18f, 0f);
+            Place("road-bend", "BiomeLandmark_EmberRoad_Approach", origin + new Vector3(0f, .01f, -1.2f), Vector3.one * 1.05f, 0f);
         }
 
         private Vector3 Grounded(int x, int z)

@@ -1,5 +1,18 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Mainland route landmark pass
+
+Sunmere now has a mill-and-field silhouette on the south road, and Ember Road
+has a paired basalt-and-lantern gate before the existing Cinder Hollow light
+pools. These landmarks are grounded to the authoritative terrain and use the
+already credited CC0 town-kit props; they add no new paid or unreviewed assets.
+The mill provides a long-range farming destination, while the gate makes the
+town-to-dungeon transition and return direction readable from travel distance.
+
+**Validation:** fresh Play Mode resolved both new runtime objects
+`BiomeLandmark_Sunmere_Mill` and `BiomeLandmark_EmberRoad_GateLeft`; Unity
+reported zero Console errors after the source reimport.
+
 ## 2026-08-24 · Player action readability pass
 
 Successful gathering and attacks now draw a short, world-space action arc from
