@@ -91,6 +91,13 @@ namespace NUnit.Framework
                 $"Expected the collection to contain:\n  {Show(expected)}\nBut it did not.{Msg(message, args)}");
         }
 
+        public static void IsEmpty(System.Collections.ICollection value, string message = null, params object[] args)
+        {
+            if (value != null && value.Count == 0) return;
+            throw new AssertionException(
+                $"Expected an empty collection but got {(value == null ? "null" : value.Count + " item(s)")}.{Msg(message, args)}");
+        }
+
         public static void IsNotEmpty(string value, string message = null, params object[] args)
         {
             if (!string.IsNullOrEmpty(value)) return;
