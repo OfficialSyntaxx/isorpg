@@ -69,3 +69,21 @@ enemy-clearing motion. This is not a substitute for the physical-device sweep.
 texture subtarget even though the project requests ASTC. Desktop-browser output
 is valid, but mobile texture compression remains a release follow-up to verify
 in Unity Build Profiles before public mobile release.
+
+## Latest candidate
+
+On 2026-08-24 the mainland visual pass was rebuilt as
+`20260824-192516-0ff57a11`, **49.45 MB**. This candidate includes the
+continuous terrain shader, grounded travel routes, and the corrected
+ocean/horizon surround. The build reported `Succeeded` with Brotli, exceptions
+None, high stripping, 320 MB initial memory, the PWA template, and a
+cache-stamped service worker. To protect the custom runtime terrain shader from
+WebGL stripping, the build configuration now creates an authored Resources
+material that explicitly references it. Unity EditMode tests passed
+**379/379** after this change.
+
+The outstanding validation remains unchanged: publish this candidate through
+the canonical CI deployment, then test touch traversal, camera, audio,
+persistence, background/resume, and long-session stability on physical mobile
+hardware. The WebGL texture subtarget is still `Generic`; verify ASTC in the
+WebGL Build Profile before calling a mobile release ready.

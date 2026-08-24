@@ -42,7 +42,9 @@ namespace Isoperia.EditorTools
         private const string PipelineAsset = SettingsDir + "/IsoperiaURP.asset";
         private const string RendererData = SettingsDir + "/IsoperiaURP_Renderer.asset";
         private const string RuntimeThemeAsset = "Assets/Isoperia/Resources/UI/IsoperiaRuntimeTheme.asset";
+        private const string TerrainMaterialAsset = "Assets/Isoperia/Resources/Materials/IsoperiaTerrainVertexColor.mat";
         private const string UrpLitShader = "Universal Render Pipeline/Lit";
+        private const string TerrainVertexColorShader = "Isoperia/Terrain Vertex Color";
         private const string TemplateName = "PROJECT:IsoperiaPWA";
 
         [MenuItem("Isoperia/Configure WebGL settings")]
@@ -79,6 +81,7 @@ namespace Isoperia.EditorTools
             // no pipeline asset of its own, and without one every URP material in
             // the scene renders magenta.
             ConfigureRenderPipeline();
+            EnsureTerrainShaderRetention();
 
             PlayerSettings.colorSpace = ColorSpace.Linear;
 
@@ -140,6 +143,32 @@ namespace Isoperia.EditorTools
             AssetDatabase.CreateAsset(theme, RuntimeThemeAsset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Isoperia] runtime UI theme created at " + RuntimeThemeAsset);
+        }
+
+        /// <summary>
+        /// The mainland terrain creates its material at runtime. Keep an authored
+        /// Resources material that references its custom shader so high managed
+        /// stripping cannot remove the shader from a WebGL player.
+        /// </summary>
+        private static void EnsureTerrainShaderRetention()
+        {
+            Shader shader = Shader.Find(TerrainVertexColorShader);
+            if (shader == null)
+                throw new BuildFailedException("[Isoperia] Missing terrain shader: " + TerrainVertexColorShader);
+
+            string directory = Path.GetDirectoryName(TerrainMaterialAsset);
+            if (!AssetDatabase.IsValidFolder(directory)) Directory.CreateDirectory(directory);
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(TerrainMaterialAsset);
+            if (material == null)
+            {
+                material = new Material(shader) { name = "IsoperiaTerrainVertexColor" };
+                AssetDatabase.CreateAsset(material, TerrainMaterialAsset);
+            }
+            else if (material.shader != shader)
+            {
+                material.shader = shader;
+                EditorUtility.SetDirty(material);
+            }
         }
 
         /// <summary>

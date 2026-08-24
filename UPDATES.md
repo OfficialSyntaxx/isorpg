@@ -1,5 +1,20 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · WebGL candidate with terrain-shader retention
+
+The continuous mainland terrain shader now has an authored Resources material
+created by the WebGL configuration step. That keeps the custom shader as an
+explicit player dependency under high stripping rather than relying on an
+Editor-only `Shader.Find` success. The current WebGL candidate completed as
+`20260824-192516-0ff57a11`, **49.45 MB**, with Brotli compression, exceptions
+disabled, high stripping, a 320 MB initial heap, the PWA template, and a
+cache-stamped service worker.
+
+**Validation:** the build reported `Succeeded`; Unity EditMode tests passed
+**379/379** after the retention change. The current local WebGL texture
+subtarget remains `Generic`, not the requested ASTC, and remains an explicit
+physical-device/mobile release follow-up.
+
 ## 2026-08-24 · Continuous mainland terrain shading
 
 The open-world terrain no longer renders as four hard biome-colour submeshes.

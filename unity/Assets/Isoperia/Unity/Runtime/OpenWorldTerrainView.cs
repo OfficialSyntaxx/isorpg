@@ -11,6 +11,7 @@ namespace Isoperia.Unity
     {
         private Mesh terrainMesh;
         private Material[] terrainMaterials;
+        private const string TerrainMaterialResource = "Materials/IsoperiaTerrainVertexColor";
 
         private void Awake()
         {
@@ -39,9 +40,12 @@ namespace Isoperia.Unity
             terrainMesh.RecalculateNormals(); terrainMesh.RecalculateBounds();
             GetComponent<MeshFilter>().sharedMesh = terrainMesh;
             GetComponent<MeshCollider>().sharedMesh = terrainMesh;
+            Material terrainTemplate = Resources.Load<Material>(TerrainMaterialResource);
             Shader terrainShader = Shader.Find("Isoperia/Terrain Vertex Color") ??
                 Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            terrainMaterials = new[] { new Material(terrainShader) { enableInstancing = true } };
+            Material terrainMaterial = terrainTemplate != null ? new Material(terrainTemplate) : new Material(terrainShader);
+            terrainMaterial.enableInstancing = true;
+            terrainMaterials = new[] { terrainMaterial };
             GetComponent<MeshRenderer>().sharedMaterials = terrainMaterials;
         }
 
