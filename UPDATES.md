@@ -1,5 +1,21 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Grounded controller recovery
+
+The third-person player no longer depends on a `CharacterController` against
+the rebuilt mainland terrain mesh. Unity could resolve an initial mesh overlap
+by throwing that controller outside the world; the saved grid tile was clamped
+while the presentation transform kept falling, which produced an unusable
+scene. Locomotion now grounds directly to the existing authoritative terrain
+sampler, keeps the water/slope boundary checks, rejects movement outside the
+mainland before a step is applied, and validates a saved spawn tile before
+starting. Player save coordinates are clamped together with the visual
+position, preventing corrupt raw world coordinates from persisting.
+
+**Validation:** a fresh Play Mode start kept the hero and saved position at
+Hearthvale `(63.5, 0.21, 63.5)` / `(63,63)` after one second, with zero Unity
+Console errors. EditMode tests passed **379/379**.
+
 ## 2026-08-24 · Current mainland WebGL candidate
 
 The current `main` source, including the owned ore veins, attunable return

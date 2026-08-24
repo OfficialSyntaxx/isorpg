@@ -9,9 +9,7 @@ namespace Isoperia.Unity
     [RequireComponent(typeof(CharacterController))]
     public sealed class OpenWorldPlayerController : MonoBehaviour
     {
-        private CharacterController controller;
         private Transform cameraTransform;
-        private float verticalSpeed;
         private bool spawned;
 
         // The lower-left portion of a touch screen is a direct virtual stick.
@@ -28,10 +26,14 @@ namespace Isoperia.Unity
 
         private void Awake()
         {
-            controller = GetComponent<CharacterController>();
-            controller.height = 1.4f;
-            controller.radius = .28f;
-            controller.center = new Vector3(0f, .7f, 0f);
+            CharacterController collider = GetComponent<CharacterController>();
+            // The mainland uses a procedurally rebuilt mesh collider. On some
+            // reloads Unity resolves its initial overlap by ejecting a
+            // CharacterController far outside the mesh. Locomotion already has
+            // deterministic water and slope checks below, so ground directly on
+            // the authoritative terrain sampler and keep this legacy collider
+            // disabled rather than letting physics own player position.
+            if (collider != null) collider.enabled = false;
             cameraTransform = Camera.main != null ? Camera.main.transform : null;
         }
 
@@ -51,15 +53,23 @@ namespace Isoperia.Unity
             IsSprinting = WantsSprint(input);
             float speed = IsSprinting ? SprintSpeed : WalkSpeed;
             Vector3 move = moveDirection * speed;
-            if (!CanStepTo(transform.position, transform.position + move * Time.deltaTime))
+            Vector3 candidate = transform.position + move * Time.deltaTime;
+            if (!CanStepTo(transform.position, candidate))
             {
                 move = Vector3.zero;
                 IsSprinting = false;
             }
             IsMoving = move.sqrMagnitude > .01f;
             if (IsMoving) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), 14f * Time.deltaTime);
-            verticalSpeed = controller.isGrounded ? -.5f : verticalSpeed + Physics.gravity.y * Time.deltaTime;
-            controller.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
+            if (IsMoving)
+            {
+                candidate = transform.position + move * Time.deltaTime;
+                CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
+                int x = Mathf.FloorToInt(candidate.x);
+                int z = Mathf.FloorToInt(candidate.z);
+                candidate.y = OpenWorldTerrainView.SurfaceHeight(grid.At(x, z), candidate.x, candidate.z) + .03f;
+                transform.position = candidate;
+            }
             SyncStatePosition();
         }
 
@@ -89,13 +99,15 @@ namespace Isoperia.Unity
         private static bool CanStepTo(Vector3 sourcePosition, Vector3 candidate)
         {
             CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
-            int currentX = Mathf.Clamp(Mathf.FloorToInt(candidate.x), 0, grid.Width - 1);
-            int currentZ = Mathf.Clamp(Mathf.FloorToInt(candidate.z), 0, grid.Height - 1);
+            int currentX = Mathf.FloorToInt(candidate.x);
+            int currentZ = Mathf.FloorToInt(candidate.z);
+            if (currentX < 0 || currentZ < 0 || currentX >= grid.Width || currentZ >= grid.Height) return false;
             var destination = grid.At(currentX, currentZ);
             if (destination == null || destination.TerrainType == Isoperia.Core.World.TerrainType.Water) return false;
 
-            int sourceX = Mathf.Clamp(Mathf.FloorToInt(sourcePosition.x), 0, grid.Width - 1);
-            int sourceZ = Mathf.Clamp(Mathf.FloorToInt(sourcePosition.z), 0, grid.Height - 1);
+            int sourceX = Mathf.FloorToInt(sourcePosition.x);
+            int sourceZ = Mathf.FloorToInt(sourcePosition.z);
+            if (sourceX < 0 || sourceZ < 0 || sourceX >= grid.Width || sourceZ >= grid.Height) return false;
             var source = grid.At(sourceX, sourceZ);
             if (source == null) return false;
             float sourceHeight = OpenWorldTerrainView.SurfaceHeight(source, sourceX + .5f, sourceZ + .5f);
@@ -109,7 +121,14 @@ namespace Isoperia.Unity
             if (cameraTransform == null) cameraTransform = Camera.main != null ? Camera.main.transform : null;
             int x = SaveDriver.Instance?.State?.Player?.Pos?.Gx ?? CoreGrid.TownCenter;
             int z = SaveDriver.Instance?.State?.Player?.Pos?.Gy ?? CoreGrid.TownCenter;
-            transform.position = new Vector3(x + .5f, 1f, z + .5f);
+            CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
+            if (x < 0 || z < 0 || x >= grid.Width || z >= grid.Height || !grid.IsWalkable(x, z))
+            {
+                x = CoreGrid.TownCenter;
+                z = CoreGrid.TownCenter;
+            }
+            var tile = grid.At(x, z);
+            transform.position = new Vector3(x + .5f, OpenWorldTerrainView.SurfaceHeight(tile, x + .5f, z + .5f) + .03f, z + .5f);
             SyncStatePosition();
             spawned = true;
         }
@@ -118,10 +137,12 @@ namespace Isoperia.Unity
         {
             if (SaveDriver.Instance?.State?.Player?.Pos == null) return;
             var pos = SaveDriver.Instance.State.Player.Pos;
-            pos.Gx = Mathf.Clamp(Mathf.FloorToInt(transform.position.x), 0, CoreGrid.WorldSize - 1);
-            pos.Gy = Mathf.Clamp(Mathf.FloorToInt(transform.position.z), 0, CoreGrid.WorldSize - 1);
-            pos.Wx = transform.position.x;
-            pos.Wz = transform.position.z;
+            float x = Mathf.Clamp(transform.position.x, .001f, CoreGrid.WorldSize - .001f);
+            float z = Mathf.Clamp(transform.position.z, .001f, CoreGrid.WorldSize - .001f);
+            pos.Gx = Mathf.FloorToInt(x);
+            pos.Gy = Mathf.FloorToInt(z);
+            pos.Wx = x;
+            pos.Wz = z;
         }
 
         /// <summary>
@@ -136,10 +157,7 @@ namespace Isoperia.Unity
             if (x < 0 || z < 0 || x >= grid.Width || z >= grid.Height || !grid.IsWalkable(x, z)) return false;
 
             var tile = grid.At(x, z);
-            verticalSpeed = 0f;
-            controller.enabled = false;
             transform.position = new Vector3(x + .5f, OpenWorldTerrainView.SurfaceHeight(tile, x + .5f, z + .5f) + .03f, z + .5f);
-            controller.enabled = true;
             SyncStatePosition();
             return true;
         }
