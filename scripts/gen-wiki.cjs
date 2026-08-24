@@ -34,6 +34,31 @@ const { SEEDS, SEED_IDS } = D("Farming.js");
 const { CLUE_TIER_LIST } = D("Clues.js");
 const { masteryXpForLevel, MASTERY_MAX } = require(path.join(EMIT, "components", "Skills.js"));
 
+/** Newest commit date touching the data the wiki is generated from. */
+function dataDate() {
+  try {
+    const out = execFileSync(
+      "git",
+      ["log", "-1", "--format=%cs", "--", "src/data", "src/components/Skills.ts"],
+      { cwd: ROOT, encoding: "utf8" }
+    ).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(out)) return out;
+  } catch {
+    /* not a git checkout — fall through */
+  }
+
+  let newest = 0;
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else newest = Math.max(newest, fs.statSync(p).mtimeMs);
+    }
+  };
+  walk(path.join(ROOT, "src/data"));
+  return new Date(newest).toISOString().slice(0, 10);
+}
+
 const L = [];
 const w = (s = "") => L.push(s);
 const nameOf = (id) => (ITEMS[id] && ITEMS[id].name) || id;
@@ -49,7 +74,19 @@ w("> **Generated from the game's data files** by `scripts/gen-wiki.cjs`.");
 w("> Do not edit by hand — run `npm run wiki` after changing anything in `src/data/`.");
 w("> Every number here is read straight from the code, so it cannot drift out of date.");
 w("");
-w(`_Last generated: ${new Date().toISOString().slice(0, 10)}_`);
+// Stamp the DATA's last-changed date, not today's.
+//
+// This used to be `new Date()`, which made WIKI.md non-deterministic: the file
+// changed every day whether or not the game did. CI regenerates it and then
+// fails if anything differs from what is committed, so from the day after any
+// commit, CI was red by construction — on every push, regardless of the code.
+// That is a large part of why the pipeline sat red for days and stopped being
+// read at all.
+//
+// Deriving it from the newest commit touching the data keeps the useful signal
+// (how current the content is) while being stable for a given commit. Falls back
+// to the working-tree mtime outside a git checkout.
+w(`_Last generated: ${dataDate()}_`);
 w("");
 
 // ————— Contents —————

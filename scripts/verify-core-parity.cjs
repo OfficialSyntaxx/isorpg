@@ -171,7 +171,34 @@ function section(label) {
   };
 }
 
-for (const label of ["TERRAIN", "BIOME", "ZONE", "SEED", "ELEVATION", "WALKABLE", "PATHS"]) {
+// WORLD-GENERATION PARITY IS RETIRED, NOT BROKEN.
+//
+// This compared the C# world against the TypeScript one tile for tile, and it
+// was the strongest check in the project: 1,764 tiles byte-identical, proving
+// the port had not drifted.
+//
+// It stopped being meaningful at "feat: migrate to 126x126 mainland world". The
+// Unity game now generates a 126x126 mainland; the TypeScript is the FROZEN web
+// build and still generates 42x42. They are supposed to differ, in every tile,
+// forever. Left enabled it produced six confident failures per run against a
+// perfectly healthy port — and it did, on every push for days, which is a large
+// part of why nobody was reading CI at all.
+//
+// Deleting it would be worse than disabling it: world generation is still a pure
+// function of a 32-bit PRNG, and a single wrong shift still silently produces a
+// different map. What it needs is a NEW reference — a committed C# golden dump
+// of the 126x126 world, compared C#-against-C# — so determinism is still pinned
+// without a TypeScript that no longer describes this game. That is Phase B.
+//
+// Until then this is a KNOWN GAP, printed loudly on every run rather than
+// quietly skipped. PATHS is kept: A* is world-shape agnostic and still compares.
+const WORLD_GEN_PARITY_RETIRED = true;
+
+const worldSections = WORLD_GEN_PARITY_RETIRED
+  ? ["PATHS"]
+  : ["TERRAIN", "BIOME", "ZONE", "SEED", "ELEVATION", "WALKABLE", "PATHS"];
+
+for (const label of worldSections) {
   const s = section(label);
   if (!s) { ok(`${label}: section present in both dumps`, false); continue; }
   const firstBad = s.ts.findIndex((l, i) => l !== s.cs[i]);
@@ -183,13 +210,23 @@ for (const label of ["TERRAIN", "BIOME", "ZONE", "SEED", "ELEVATION", "WALKABLE"
   );
 }
 
-ok("whole dump byte-identical", tsDump === run.stdout);
+if (!WORLD_GEN_PARITY_RETIRED) ok("whole dump byte-identical", tsDump === run.stdout);
 
 // --- 4. the XP curve and the combat rules -----------------------------------
 // Separate binaries: neither depends on the world, and a focused failure names
 // which subsystem drifted.
 compareDump("XP curve", XP_SOURCES, "dumpxp.exe", "tools/parity/dump-xp-ts.cjs");
 compareDump("Combat", COMBAT_SOURCES, "dumpcombat.exe", "tools/parity/dump-combat-ts.cjs");
+
+if (WORLD_GEN_PARITY_RETIRED) {
+  console.log(
+    "\nKNOWN GAP  world-generation parity is retired: the Unity world is 126x126\n" +
+    "           and the frozen TypeScript is 42x42, so tile-for-tile comparison\n" +
+    "           can never pass again. World-gen determinism is currently UNPINNED.\n" +
+    "           Phase B replaces it with a committed C# golden dump of the 126x126\n" +
+    "           world, compared C#-against-C#."
+  );
+}
 
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);

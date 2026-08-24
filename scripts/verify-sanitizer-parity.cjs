@@ -301,13 +301,27 @@ const cases = [
 fs.mkdirSync(OUT, { recursive: true });
 const exe = path.join(OUT, "sanitize.exe");
 
+// Compile the WHOLE Core runtime, not a hand-listed subset.
+//
+// This used to name five files explicitly. That list rotted silently the moment
+// GameState gained a reference to Isoperia.Core.World: the harness stopped
+// compiling, printed "did not compile", and — because a non-compiling harness
+// still exits non-zero in a CI that was already red — nobody noticed that
+// sanitizer parity had not been checked at all for days.
+//
+// Core is noEngineReferences, so compiling all of it costs about a second and
+// cannot rot this way again.
+function collect(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) return collect(p);
+    return e.name.endsWith(".cs") ? [p] : [];
+  });
+}
+
 const build = spawnSync("mcs", [
   "-out:" + exe, "-optimize+", "-langversion:latest",
-  path.join(CORE, "Save/Json.cs"),
-  path.join(CORE, "Save/Sanitizer.cs"),
-  path.join(CORE, "State/GameState.cs"),
-  path.join(CORE, "Components/Components.cs"),
-  path.join(CORE, "Data/XpTable.cs"),
+  ...collect(CORE),
   path.join(ROOT, "tools/parity/SanitizeRoundTrip.cs"),
 ], { cwd: ROOT, encoding: "utf8" });
 
@@ -361,6 +375,20 @@ try {
 // diverging also fails, so this cannot quietly go stale.
 // ---------------------------------------------------------------------------
 const expectedDivergences = {
+  // A case may instead declare `csDiffersAt`: a regex of paths where this ONE
+  // case is allowed to differ in value. Narrower than MIGRATION_REWRITES, which
+  // applies to every case — used where the divergence is a property of the
+  // input, not of the migration in general.
+  "out of bounds buildings": {
+    csDiffersAt: /^town\.buildings$/,
+    why: "TS DROPS a building outside the 42x42 map, keeping 1 of 3. Under the " +
+         "mainland migration C# instead CLAMPS it through MainlandTownCoordinate " +
+         "into the new town (centre +/- 8), keeping all 3. Relocating a player's " +
+         "buildings is better than deleting them, and the coordinates were going " +
+         "to be rewritten by the migration regardless. Note the `else if` in " +
+         "Sanitizer: a save already at 2.2.0 still has out-of-bounds buildings " +
+         "dropped, so this leniency applies only to the one-time migration.",
+  },
   "not an object (array)": {
     csRejects: true,
     why: "typeof [] === 'object' in JavaScript, so the TS type guard lets an array " +
@@ -396,7 +424,22 @@ const failures = [];
 const divergedAsExpected = new Set();
 
 /** Reports the first differing path rather than dumping two documents. */
-function firstDifference(a, b, pathStr = "") {
+/**
+ * Set by firstDifference when a csDiffersAt rule actually suppressed a real
+ * difference. Without this a stale rule would look like a passing case: the
+ * suppression is invisible, so the divergence could silently stop happening and
+ * nobody would learn that the behaviour changed.
+ */
+let csDiffersAtFired = false;
+
+function firstDifference(a, b, pathStr = "", csDiffersAt = null) {
+  if (pathStr && isMigrationRewrite(pathStr)) return null;
+  if (pathStr && csDiffersAt && csDiffersAt.test(pathStr)) {
+    // Only counts as fired if the values genuinely differ.
+    if (JSON.stringify(a) !== JSON.stringify(b)) csDiffersAtFired = true;
+    return null;
+  }
+
   const ta = a === null ? "null" : Array.isArray(a) ? "array" : typeof a;
   const tb = b === null ? "null" : Array.isArray(b) ? "array" : typeof b;
 
@@ -405,7 +448,7 @@ function firstDifference(a, b, pathStr = "") {
   if (ta === "array") {
     if (a.length !== b.length) return `${pathStr}: length ${a.length} vs ${b.length}`;
     for (let i = 0; i < a.length; i++) {
-      const d = firstDifference(a[i], b[i], `${pathStr}[${i}]`);
+      const d = firstDifference(a[i], b[i], `${pathStr}[${i}]`, csDiffersAt);
       if (d) return d;
     }
     return null;
@@ -414,11 +457,11 @@ function firstDifference(a, b, pathStr = "") {
   if (ta === "object") {
     const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
     const onlyA = ka.filter((k) => !kb.includes(k));
-    const onlyB = kb.filter((k) => !ka.includes(k));
+    const onlyB = kb.filter((k) => !ka.includes(k) && !csOnlyKeyAllowed(pathStr, k));
     if (onlyA.length) return `${pathStr}: only in TS: ${onlyA.join(", ")}`;
     if (onlyB.length) return `${pathStr}: only in C#: ${onlyB.join(", ")}`;
     for (const k of ka) {
-      const d = firstDifference(a[k], b[k], pathStr ? `${pathStr}.${k}` : k);
+      const d = firstDifference(a[k], b[k], pathStr ? `${pathStr}.${k}` : k, csDiffersAt);
       if (d) return d;
     }
     return null;
@@ -426,6 +469,71 @@ function firstDifference(a, b, pathStr = "") {
 
   if (a !== b) return `${pathStr}: ${JSON.stringify(a)} vs ${JSON.stringify(b)}`;
   return null;
+}
+
+/**
+ * Save keys the C# writes that the TypeScript never will.
+ *
+ * These are NOT behavioural divergences on malformed input — those go in
+ * expectedDivergences above, case by case. These are whole fields belonging to
+ * features that exist only in the Unity game: the web build was frozen at
+ * Phase 0 and will never grow them.
+ *
+ * Keyed by the object path they appear at, so an unexpected key ANYWHERE ELSE
+ * still fails. That distinction matters: a stray key at the root is new content,
+ * a stray key inside `player` is probably a port bug.
+ */
+const CS_ONLY_KEYS = {
+  // Resource node depletion state, persisted so a chopped tree stays chopped
+  // across a reload. Added by "feat: persist unity resource node state"; the
+  // web build has no equivalent because its nodes reset on load.
+  "(root)": ["resources"],
+};
+
+function csOnlyKeyAllowed(pathStr, key) {
+  const allowed = CS_ONLY_KEYS[pathStr || "(root)"];
+  return Array.isArray(allowed) && allowed.includes(key);
+}
+
+/**
+ * Paths the MAINLAND MIGRATION deliberately rewrites, plus the version stamp.
+ *
+ * The world moved from 42x42 to 126x126 ("feat: migrate to 126x126 mainland
+ * world"). Sanitizer.NeedsMainlandMigration fires for any save older than
+ * 2.2.0 and then, on purpose:
+ *
+ *   - moves the player to the new town centre (63,63), because their old
+ *     coordinates address a map that no longer exists;
+ *   - remaps building coordinates through MainlandTownCoordinate;
+ *   - clears the active clue, whose target tiles are unreachable on the new map;
+ *   - clears map.discovered, which describes the old world's tiles.
+ *
+ * The TypeScript reference is the frozen web build. It predates the mainland and
+ * will never do any of this, so on these paths the two are SUPPOSED to differ.
+ * Every corpus case is older than 2.2.0, so migration fires for all of them.
+ *
+ * Scoped to exact paths rather than switched off wholesale: everything the
+ * migration does not touch — inventory, skills, equip slots, name clamping,
+ * building type filtering, settings — is still compared strictly, which is where
+ * the remaining value of this harness is.
+ */
+const MIGRATION_REWRITES = [
+  /^player\.position\.[xy]$/,
+  /^player\.clue$/,
+  /^map\.discovered$/,
+  /^map\.explored$/,
+  /^map\.fastTravel$/,
+  /^town\.buildings\[\d+\]\.[xy]$/,
+
+  // Not a migration rewrite but the same kind of permanent, intended
+  // difference: the sanitizer stamps the CURRENT save version on its output
+  // (2.2.0), while the frozen web build stamps its own (1.1.0). These can never
+  // agree and should not.
+  /^version$/,
+];
+
+function isMigrationRewrite(pathStr) {
+  return MIGRATION_REWRITES.some((re) => re.test(pathStr));
 }
 
 try {
@@ -476,10 +584,22 @@ try {
       return;
     }
 
-    const diff = firstDifference(ts.state, cs);
+    csDiffersAtFired = false;
+    const diff = firstDifference(ts.state, cs, "", expected && expected.csDiffersAt);
 
     if (!diff) {
-      if (expected) {
+      if (expected && expected.csDiffersAt) {
+        // Suppressed by a per-case rule. Enforced in both directions like every
+        // other listed divergence: if it no longer differs, the rule is stale.
+        if (csDiffersAtFired) {
+          divergedAsExpected.add(name);
+          pass++;
+        } else {
+          fail++;
+          failures.push(`${name}: listed as diverging at ${expected.csDiffersAt}, but the ` +
+                        `two now agree -- remove it from expectedDivergences`);
+        }
+      } else if (expected) {
         fail++;
         failures.push(`${name}: listed as diverging at ${expected.path}, but the two now ` +
                       `agree -- remove it from expectedDivergences`);

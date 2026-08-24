@@ -29,8 +29,9 @@
       "sha256": "02da6813b898537b4323b3258714e45e492d175339cb6fd417547ceb9614a13e"
     },
     "quests.json": {
-      "bytes": 1663,
-      "sha256": "8305cf2060c356d6f015e8ec006e272256bc173dbb539c9c9c5f8b556bf2a2f0"
+      "authored": "unity",
+      "bytes": 3191,
+      "sha256": "11437305c21dfc7fdd74b59e148fd365b7deb185652a3f5e674074c983dedddb"
     },
     "recipes.json": {
       "bytes": 11749,

@@ -21,6 +21,8 @@ const { QUESTS } = D("Quests.js");
 const { SEEDS, SEED_IDS } = D("Farming.js");
 const { CLUE_TIERS, CLUE_TIER_LIST } = D("Clues.js");
 
+// quests are Unity-authored and have no TypeScript counterpart — see
+// UNITY_AUTHORED in scripts/export-content.cjs. Excluded on both sides.
 const out = [];
 const size = (v) =>
   v instanceof Set ? v.size : Array.isArray(v) ? v.length :
@@ -44,7 +46,6 @@ const TABLES = {
   achievements: { ACHIEVEMENTS },
   xp: { XP_TABLE },
   npcs: { VILLAGERS: N.VILLAGERS, CRITTERS: N.CRITTERS, VETERAN_TIERS: N.VETERAN_TIERS, VILLAGER_SPECS: N.VILLAGER_SPECS },
-  quests: { QUESTS },
   farming: { SEEDS, SEED_IDS },
   clues: { CLUE_TIERS, CLUE_TIER_LIST },
 };
@@ -84,7 +85,6 @@ ids("weapon", C.WEAPONS);
 ids("building", BUILDINGS);
 ids("recipe", RECIPES);
 ids("seed", SEEDS);
-ids("quest", QUESTS);
 
 XP_TABLE.forEach((v, i) => out.push(`xp\t${i}\t${num(v)}`));
 

@@ -16,6 +16,9 @@ using Isoperia.Core.Save;
 
 public static class DumpContent
 {
+    /// <summary>Must match UNITY_AUTHORED in scripts/export-content.cjs.</summary>
+    private static readonly HashSet<string> UnityAuthored = new HashSet<string> { "quests" };
+
     public static void Main(string[] args)
     {
         string dir = args.Length > 0 ? args[0] : "unity/Assets/Isoperia/Resources/Content";
@@ -31,6 +34,13 @@ public static class DumpContent
         // Every table, by size — catches a table silently losing entries.
         foreach (string file in ContentDatabase.RequiredFiles)
         {
+            // Unity-authored content has no TypeScript counterpart to compare
+            // against, so including it would guarantee a false failure. It is not
+            // unchecked: ContentDatabase validates its required tables and
+            // rejects an empty one at load. See UNITY_AUTHORED in
+            // scripts/export-content.cjs.
+            if (UnityAuthored.Contains(file)) continue;
+
             JsonValue root = db.File(file);
             var names = new List<string>(root.Members.Keys);
             names.Sort(StringComparer.Ordinal);
@@ -62,7 +72,6 @@ public static class DumpContent
         Ids(sb, "building", db.Buildings);
         Ids(sb, "recipe", db.Recipes);
         Ids(sb, "seed", db.Seeds);
-        Ids(sb, "quest", db.Quests);
 
         // The XP table, which is ALSO hardcoded in XpTable.cs and parity-tested
         // against TypeScript. Dumping both routes means the JSON and the C#

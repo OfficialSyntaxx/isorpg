@@ -43,6 +43,28 @@ const D = compileData(EMIT);
 // against the TypeScript. Serialising them would be impossible anyway, but the
 // line matters for a different reason: it keeps the boundary between "content a
 // designer edits" and "rules a test pins" visible in the file layout.
+// Content authored DIRECTLY in the Unity JSON, not in src/data/*.ts.
+//
+// This exporter was written when the TypeScript was the sole source of truth.
+// It no longer is: Phase 3-5 content (the starter task chain, the Cinder Hollow
+// route) was authored straight into the Unity JSON, because that is the game
+// being built. Regenerating those files from the TypeScript DELETES that work —
+// quests.json went from 6 quests back to 2, silently, with a valid-looking file,
+// every time anyone ran `npm test`.
+//
+// Files listed here are left alone. The exporter also refuses to overwrite any
+// OTHER file whose content has drifted, rather than assuming the TypeScript is
+// right (see the drift check below) — so the next file authored in Unity fails
+// loudly instead of being erased.
+//
+// This is a holding position, not the end state. The TypeScript data layer is
+// deleted at Phase 9 and the wiki still generates from it, so quests are
+// currently absent from the wiki. Flipping the whole pipeline to read the Unity
+// JSON is Phase B work; losing content is not acceptable in the meantime.
+const UNITY_AUTHORED = new Set([
+  "quests.json",
+]);
+
 const EXPORTS = {
   "items.json":        () => pick(D("Items.js"), ["ITEMS", "ITEM_ICONS", "ITEM_ICON_IMAGE_IDS"]),
   "skills.json":       () => pick(D("Skills.js"), ["SKILLS", "SKILL_IDS", "CRAFT_SKILLS", "COMBAT_SKILLS", "RESOURCES"]),
@@ -120,9 +142,51 @@ fs.mkdirSync(OUT, { recursive: true });
 const manifest = {};
 let total = 0;
 
+let skipped = 0;
+let blocked = 0;
+
 for (const [file, build] of Object.entries(EXPORTS)) {
+  const dest = path.join(OUT, file);
   const body = JSON.stringify(stable(build()), null, 2) + "\n";
-  fs.writeFileSync(path.join(OUT, file), body);
+
+  if (UNITY_AUTHORED.has(file)) {
+    if (!fs.existsSync(dest)) {
+      console.error(`FATAL  ${file} is marked Unity-authored but does not exist. ` +
+                    `Either restore it from git or remove it from UNITY_AUTHORED.`);
+      process.exit(1);
+    }
+    const existing = fs.readFileSync(dest, "utf8");
+    manifest[file] = {
+      bytes: existing.length,
+      sha256: crypto.createHash("sha256").update(existing).digest("hex"),
+      authored: "unity",
+    };
+    total += existing.length;
+    skipped++;
+    console.log(`  ${file.padEnd(20)} ${String(existing.length).padStart(7)} bytes  (Unity-authored, left alone)`);
+    continue;
+  }
+
+  // Refuse to clobber a file that has drifted from what this script last wrote.
+  // The point is not to be clever about merging — it is that DELETING somebody's
+  // content should never be the silent default.
+  if (fs.existsSync(dest)) {
+    const existing = fs.readFileSync(dest, "utf8");
+    if (existing !== body) {
+      console.error(`\nFATAL  ${file} differs from what this exporter would write.`);
+      console.error(`       Either src/data changed (then this is fine — rerun with`);
+      console.error(`       ISOPERIA_FORCE_EXPORT=1 to accept), or the file was edited`);
+      console.error(`       directly in Unity (then add it to UNITY_AUTHORED instead,`);
+      console.error(`       or your edits are about to be deleted).`);
+      if (!process.env.ISOPERIA_FORCE_EXPORT) {
+        blocked++;
+        continue;
+      }
+      console.error(`       ISOPERIA_FORCE_EXPORT set — overwriting.`);
+    }
+  }
+
+  fs.writeFileSync(dest, body);
 
   manifest[file] = {
     bytes: body.length,
@@ -142,4 +206,10 @@ fs.writeFileSync(
 
 fs.rmSync(EMIT, { recursive: true, force: true });
 
-console.log(`\ncontent: ${Object.keys(EXPORTS).length} files, ${(total / 1024).toFixed(1)} kB -> ${path.relative(ROOT, OUT)}`);
+console.log(`\ncontent: ${Object.keys(EXPORTS).length} files, ${(total / 1024).toFixed(1)} kB -> ${path.relative(ROOT, OUT)}` +
+            (skipped ? `  (${skipped} Unity-authored)` : ""));
+
+if (blocked > 0) {
+  console.error(`\n${blocked} file(s) NOT written because they would have lost content.`);
+  process.exit(1);
+}
