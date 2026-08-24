@@ -1,5 +1,46 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Hybrid mainland direction, mobile controls, and release consolidation
+
+**Product decision:** Isoperia remains a hybrid, immersive third-person 3D
+world. The fixed-isometric-camera alternative is superseded. The player must
+be able to travel through the mainland with keyboard, gamepad, and touch
+controls; an overhead map remains a navigation aid, not the primary game view.
+
+**Mobile repair:** the prior browser demo could load but could not be played on
+a phone: movement only read keyboard/gamepad input, interaction was mouse-only,
+and the supplied `hero_rigged.glb` had no runtime animation clips, leaving the
+avatar in its bind pose. `OpenWorldPlayerController`,
+`OpenWorldCameraController`, and `WorldInteractionController` now provide a
+left-side touch stick, right-side camera orbit, two-finger zoom, and tap
+interactions. `WorldPlayerAvatarView` hides an imported model without a
+runtime Animator controller and substitutes a small animated procedural avatar
+rather than ever presenting a T-pose.
+
+**Release consolidation:** Claude handoff `774d0b2` was fast-forward merged
+into `main`, including the Core-system ports, CI guards, and deployment
+workflow. The stale runtime `dire_wolf` GLB mirror was refreshed from its
+optimised source, reducing the checked model payload from **8.42 MB** to
+**5.66 MB**. The new headless WebGL build succeeded as
+`20260824-163801-9d1184dc`, **47.83 MB**, Brotli-compressed with cache busting
+stamped into its service worker. `main` was pushed at `2dc9f1b`.
+
+**Validation:** Core deterministic suite **378/378 passed**; JSON, content,
+world golden, shader-pinning, separator, PWA-template, and model-budget gates
+passed. GitHub CI and the Unity WebGL deployment workflow were triggered from
+`main`. The next required evidence is a physical-phone pass of touch movement,
+camera orbit, pinch zoom, tap interaction, and save durability after the CI
+deployment is live.
+
+**Deployment policy:** use one canonical CI-managed Netlify production URL.
+The prior manual Netlify Drop URL is obsolete and must not be used for further
+testing or release reports.
+
+**Next art task:** retain the procedural animated avatar only as a safe testing
+fallback. Prepare a real humanoid animation set for `hero_rigged` using
+zero-cost/CC0 clips or locally authored Blender animation, then import it with
+a runtime Animator controller and validate it on desktop and phone.
+
 ## 2026-08 · Mainland M0 — 126×126 authoritative world migration
 
 The prototype island is now an authoritative 126×126 mainland with 18×18
