@@ -6,8 +6,9 @@
 - Unity: `6000.5.8f1`
 - Target: WebGL
 - Build output: `unity/WebGLBuild/` (git-ignored)
-- Built: 2026-08-23
-- Size: 68.68 MB total output; Unity reported 33.5 MB compressed / 55.3 MB uncompressed.
+- Built: 2026-08-24
+- Build ID: `20260824-173100-117bf348`
+- Size: 49.53 MB total output; Unity reported 9.7 MB compressed / 19.2 MB uncompressed scene content.
 
 ## Evidence completed in this workspace
 
@@ -15,9 +16,9 @@
 | --- | --- | --- |
 | Mainland save migration | Pass | Grid/sanitizer EditMode suite previously passed 206/206; a pre-mainland save was observed to migrate and spawn at `(63,63)` without losing state. |
 | Runtime mainland traversal | Pass | Play Mode verified player/Core position stay synchronized at the Hearthvale mainland spawn; settlements, discovery, combat clearings, Cinder route and light pools instantiate. Streamed free-model trees and rocks are normalized from their rendered bounds, preventing oversized asset geometry from blocking the third-person camera. |
-| Character fallback and motion bridge | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the owned hero GLB is used only when it has a runtime controller. The current source contains a rig but no clips, so the player uses an animated six-part fallback rather than shipping a T-pose. Owned wolf/ogre actors cover mainland encounters; authoritative harvest and combat events drive presentation without owning gameplay state. |
+| Character and motion bridge | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager` with bounded ambient presentation. The owned hero ships as `hero_animated.fbx` with Blender-authored idle, walk, gather, attack, and hit clips; Play Mode verified `PlayerAvatar/HeroModel` with an initialized Animator and no primitive fallback. Owned wolf/ogre actors cover mainland encounters; authoritative harvest and combat events drive presentation without owning gameplay state. |
 | Open-world input | Pass in Editor | The third-person controller reads keyboard/gamepad and a left-side touch virtual stick; right-side touch drag orbits, two fingers pinch zoom, and a short tap interacts with nearby targets. This corrected the prior build where the open-world controller had no touch path. |
-| WebGL compilation/build | Pass | Headless `Isoperia.EditorTools.IsoperiaBuild.BuildWebGL` completed with exit code 0 and emitted loader, data, framework and wasm artifacts. |
+| WebGL compilation/build | Pass | `Isoperia.EditorTools.IsoperiaBuild.BuildWebGL` completed successfully on 2026-08-24. Build report records Brotli, exceptions None, high stripping, 320 MB initial memory, cache-stamped service worker, and all loader/data/framework/wasm artifacts. |
 | First-tap audio | Code reviewed | `OpenWorldExperience` supplies the listener; must be confirmed in a hosted browser with a real user gesture. |
 
 ## Measured desktop snapshot
@@ -57,8 +58,14 @@ browser testing is recorded separately after the candidate is deployed.
 
 ## Follow-up build
 
-On 2026-08-23 the terrain-relief, hero, wolf and ogre-inclusive candidate
-completed the headless WebGL build path with exit code 0. The current candidate
-is 68.68 MB with a 320 MB initial WebGL memory setting and was visually
-confirmed in Play Mode after the streamed-decoration scale correction. This is
-not a substitute for the physical-device sweep above.
+On 2026-08-24 the candidate completed the WebGL path with build ID
+`20260824-173100-117bf348`, **49.53 MB** total output, and a 320 MB initial
+WebGL memory setting. Unity EditMode tests passed **379/379** before this build.
+The candidate includes the animated owned hero, Blender-authored wayfinding
+signs, Sunmere/Ember route landmarks, ambient settlement contacts, and bounded
+enemy-clearing motion. This is not a substitute for the physical-device sweep.
+
+**Known configuration note:** the build report records `Generic` for WebGL
+texture subtarget even though the project requests ASTC. Desktop-browser output
+is valid, but mobile texture compression remains a release follow-up to verify
+in Unity Build Profiles before public mobile release.

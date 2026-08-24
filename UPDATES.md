@@ -1,5 +1,19 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · M6 WebGL candidate validation
+
+Unity EditMode tests passed **379/379**, followed by a successful WebGL build:
+`20260824-173100-117bf348`, **49.53 MB** total output. The candidate uses the
+Isoperia PWA template, Brotli compression, exceptions disabled, high managed
+stripping, 320 MB initial memory, and a cache-stamped service worker.
+
+The build report flags that WebGL texture subtarget is currently `Generic`
+rather than the requested ASTC. The desktop candidate remains valid, but this
+is retained as a mobile release configuration check rather than hidden. A new
+hosted browser pass and real-device touch/save/audio pass are still required;
+the Mac locked immediately after this build, so the new in-game screenshot and
+hosted deployment resume after it is unlocked.
+
 ## 2026-08-24 · Encounter clearing ambient motion
 
 Live enemies now make a small phase-offset pacing loop and look around inside
