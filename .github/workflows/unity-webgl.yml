@@ -71,6 +71,7 @@ jobs:
           npm run verify:sanitizer
           npm run verify:content
           npm run verify:world
+          npm run verify:shaders
 
   build:
     needs: preflight

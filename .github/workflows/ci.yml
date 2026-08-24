@@ -59,6 +59,7 @@ jobs:
           npm run verify:sanitizer
           npm run verify:content
           npm run verify:world
+          npm run verify:shaders
           npm run verify:pwa
 
       # The generated files must match what is committed, or the wiki and the

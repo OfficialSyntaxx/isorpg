@@ -441,11 +441,65 @@ namespace Isoperia.EditorTools
                 QualitySettings.SetQualityLevel(previous, applyExpensiveChanges: false);
             }
 
+            EnsureUrpLitIsAlwaysIncluded();
+
             AssetDatabase.SaveAssets();
 
             Debug.Log($"[Isoperia] render pipeline: {(existing == null ? "created" : "reused")} " +
                       $"{PipelineAsset}, assigned to graphics defaults and all " +
                       $"{QualitySettings.names.Length} quality levels.");
+        }
+
+        /// <summary>
+        /// Keeps URP/Lit in the build even when nothing references it as an asset.
+        ///
+        /// THIS IS A DEVICE-ONLY FAILURE WAITING TO HAPPEN, so it is worth stating
+        /// exactly. Eleven runtime views build their materials with
+        /// `new Material(Shader.Find("Universal Render Pipeline/Lit"))`. A shader
+        /// found that way at runtime has NO tracked asset dependency, so the build
+        /// only keeps it if something else pulls it in.
+        ///
+        /// Right now something does, by accident: the four generated .mat assets
+        /// reference it — and those are referenced only by the objects in
+        /// Bootstrap.unity named "legacy placeholder", every one of which is
+        /// already deactivated. Deleting them is an obviously harmless cleanup
+        /// that would strip URP/Lit from the build and turn every runtime-created
+        /// material magenta ON DEVICE ONLY. The Editor does not strip shaders, so
+        /// it would look perfectly fine right up until someone loaded the site.
+        ///
+        /// Listing it explicitly severs that accidental dependency.
+        /// verify-always-included-shaders.cjs asserts the entry survives.
+        /// </summary>
+        private static void EnsureUrpLitIsAlwaysIncluded()
+        {
+            Shader lit = Shader.Find(UrpLitShader);
+            if (lit == null)
+            {
+                Debug.LogWarning("[Isoperia] " + UrpLitShader + " not found; cannot pin it into the build.");
+                return;
+            }
+
+            var graphics = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/GraphicsSettings.asset");
+            if (graphics == null || graphics.Length == 0) return;
+
+            var so = new SerializedObject(graphics[0]);
+            SerializedProperty list = so.FindProperty("m_AlwaysIncludedShaders");
+            if (list == null) return;
+
+            for (int i = 0; i < list.arraySize; i++)
+            {
+                if (list.GetArrayElementAtIndex(i).objectReferenceValue == lit)
+                {
+                    Debug.Log("[Isoperia] " + UrpLitShader + " already in Always Included Shaders.");
+                    return;
+                }
+            }
+
+            list.InsertArrayElementAtIndex(list.arraySize);
+            list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = lit;
+            so.ApplyModifiedProperties();
+
+            Debug.Log("[Isoperia] added " + UrpLitShader + " to Always Included Shaders.");
         }
 
         /// <summary>
