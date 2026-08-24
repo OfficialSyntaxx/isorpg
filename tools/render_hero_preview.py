@@ -21,6 +21,20 @@ def main(asset_path, output_path):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=asset_path)
 
+    if "hero" in os.path.basename(asset_path).lower():
+        preview_material = bpy.data.materials.new("HeroPreviewPalette")
+        preview_material.diffuse_color = (0.14, 0.24, 0.48, 1.0)
+        preview_material.use_nodes = True
+        principled = preview_material.node_tree.nodes.get("Principled BSDF")
+        if principled:
+            principled.inputs["Base Color"].default_value = (0.14, 0.24, 0.48, 1.0)
+            principled.inputs["Roughness"].default_value = 0.72
+        for obj in bpy.context.scene.objects:
+            if obj.type != "MESH":
+                continue
+            obj.data.materials.clear()
+            obj.data.materials.append(preview_material)
+
     # The FBX exporter includes an unskinned helper cube from the source scene.
     helper = bpy.data.objects.get("Cube")
     if helper:

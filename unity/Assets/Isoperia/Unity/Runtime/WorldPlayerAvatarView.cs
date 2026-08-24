@@ -16,6 +16,7 @@ namespace Isoperia.Unity
 
         private Material tunic;
         private Material skin;
+        private Material heroMaterial;
         private Transform tunicTransform;
         private Transform headTransform;
         private Transform leftArmTransform;
@@ -68,6 +69,7 @@ namespace Isoperia.Unity
                 Transform helperCube = FindChild(hero.transform, "Cube");
                 if (helperCube != null) Destroy(helperCube.gameObject);
                 OwnedModelPresentation.FitToHeight(hero, 1.45f);
+                ApplyHeroPalette(hero);
                 Animator animator = hero.GetComponentInChildren<Animator>(true);
                 if (animator == null) animator = hero.AddComponent<Animator>();
                 if (animator.runtimeAnimatorController == null)
@@ -118,6 +120,14 @@ namespace Isoperia.Unity
                 if (match != null) return match;
             }
             return null;
+        }
+
+        private void ApplyHeroPalette(GameObject hero)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            heroMaterial = new Material(shader) { color = new Color(.14f, .24f, .48f, 1f) };
+            foreach (Renderer renderer in hero.GetComponentsInChildren<Renderer>(true))
+                renderer.sharedMaterial = heroMaterial;
         }
 
         private void Update()
@@ -278,6 +288,7 @@ namespace Isoperia.Unity
             }
             if (tunic != null) Destroy(tunic);
             if (skin != null) Destroy(skin);
+            if (heroMaterial != null) Destroy(heroMaterial);
             if (actionTrailMaterial != null) Destroy(actionTrailMaterial);
         }
     }

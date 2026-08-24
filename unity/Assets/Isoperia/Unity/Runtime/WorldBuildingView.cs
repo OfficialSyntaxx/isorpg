@@ -8,6 +8,7 @@ namespace Isoperia.Unity
     public sealed class WorldBuildingView : MonoBehaviour
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
+        private const string CampfireAsset = "Art/OwnedModels/campfire";
         private readonly List<GameObject> instances = new List<GameObject>();
         private int renderedCount = -1;
         private Material wood;
@@ -78,6 +79,16 @@ namespace Isoperia.Unity
 
         private void CreateCampfire(Transform parent)
         {
+            GameObject prefab = Resources.Load<GameObject>(CampfireAsset);
+            if (prefab != null)
+            {
+                GameObject campfire = Instantiate(prefab, parent);
+                campfire.name = "BuildingModel_Campfire";
+                campfire.transform.localPosition = Vector3.zero;
+                campfire.transform.localRotation = Quaternion.identity;
+                OwnedModelPresentation.FitToHeight(campfire, .9f);
+                return;
+            }
             AddCube(parent, new Vector3(-.18f, .12f, 0f), new Vector3(.68f, .12f, .16f), wood, 35f);
             AddCube(parent, new Vector3(.18f, .12f, 0f), new Vector3(.68f, .12f, .16f), wood, -35f);
             AddCube(parent, new Vector3(0f, .34f, 0f), new Vector3(.22f, .42f, .22f), fire);

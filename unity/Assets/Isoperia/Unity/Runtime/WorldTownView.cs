@@ -13,6 +13,7 @@ namespace Isoperia.Unity
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
         private const string VillagerAsset = "Art/OwnedModels/villager";
+        private const string CampfireAsset = "Art/OwnedModels/campfire";
         private readonly List<GameObject> instances = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
 
@@ -57,6 +58,7 @@ namespace Isoperia.Unity
             Place("stall-green", center + new Vector3(3.5f, 0f, -2.4f), Vector3.one * 1.25f);
             Place("lantern", center + new Vector3(-2.2f, 0f, -2.2f), Vector3.one * 1.1f);
             Place("lantern", center + new Vector3(2.2f, 0f, 2.2f), Vector3.one * 1.1f, 180f);
+            PlaceCampfire(center + new Vector3(-3.4f, 0f, -4.1f));
             CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", center + new Vector3(-2.8f, .7f, 1.2f), new Color(.31f, .55f, .28f));
             CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", center + new Vector3(2.8f, .7f, -1.2f), new Color(.73f, .39f, .22f));
             CreateJourneyNpc("Wayfinder Nahl", "Lantern Road accepted · follow the eastern lights to Cinder Hollow, then return.",
@@ -194,6 +196,38 @@ namespace Isoperia.Unity
             GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
             instance.name = "Town_" + assetName;
             instance.transform.localScale = scale;
+            instances.Add(instance);
+        }
+
+        private void PlaceCampfire(Vector3 position)
+        {
+            GameObject prefab = Resources.Load<GameObject>(CampfireAsset);
+            if (prefab == null) return;
+            GameObject instance = Instantiate(prefab, position, Quaternion.identity, transform);
+            instance.name = "Town_HearthvaleCampfire";
+            OwnedModelPresentation.FitToHeight(instance, .9f);
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    Color color = name.Contains("Stone") ? new Color(.20f, .22f, .24f) :
+                        name.Contains("Wood") ? new Color(.20f, .07f, .02f) :
+                        name.Contains("Ember") ? new Color(.88f, .18f, .025f) : new Color(1f, .46f, .04f);
+                    Material material = new Material(shader) { color = color };
+                    if (!name.Contains("Stone") && !name.Contains("Wood"))
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        material.SetColor("_EmissionColor", color * 1.8f);
+                    }
+                    runtimeMaterials.Add(material);
+                    palette[i] = material;
+                }
+                renderer.sharedMaterials = palette;
+            }
             instances.Add(instance);
         }
     }
