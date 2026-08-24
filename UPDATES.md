@@ -1,5 +1,13 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Owned Frostwatch mine landmark
+
+`frostwatch_mine.fbx` is a new Isoperia-owned Blender model for the highland
+mining route. Its rock face, timber header, dark tunnel, rail stubs, rubble,
+and lanterns replace Frostwatch's generic crag with a destination that explains
+the copper/tin/iron progression nearby. It remains presentation-only: Core
+resource nodes, terrain, combat, and saves are unchanged.
+
 ## 2026-08-24 · Owned Wildwood shrine landmark
 
 `wildwood_shrine.fbx` is a new Isoperia-owned Blender ruin for the Wildwood

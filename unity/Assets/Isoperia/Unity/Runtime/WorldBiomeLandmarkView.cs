@@ -9,6 +9,7 @@ namespace Isoperia.Unity
         private const string AssetRoot = "Art/KenneyFantasyTown/";
         private const string WayfinderAsset = "Art/OwnedModels/wayfinder_sign";
         private const string WildwoodShrineAsset = "Art/OwnedModels/wildwood_shrine";
+        private const string FrostwatchMineAsset = "Art/OwnedModels/frostwatch_mine";
         private Material snow;
         private readonly System.Collections.Generic.List<Material> runtimeMaterials = new System.Collections.Generic.List<Material>();
         private readonly System.Collections.Generic.List<GameObject> instances = new System.Collections.Generic.List<GameObject>();
@@ -34,10 +35,44 @@ namespace Isoperia.Unity
         private void BuildFrostwatch()
         {
             Vector3 origin = Grounded(96, 28);
-            Place("rock-large", "BiomeLandmark_Frostwatch_Crag", origin, new Vector3(2.15f, 2.7f, 1.75f), 14f);
+            PlaceFrostwatchMine(origin);
             Place("rock-small", "BiomeLandmark_Frostwatch_StoneA", origin + new Vector3(-1.8f, 0f, .9f), Vector3.one * 1.15f, -28f);
             Place("rock-small", "BiomeLandmark_Frostwatch_StoneB", origin + new Vector3(1.6f, 0f, -.7f), Vector3.one * 1.05f, 42f);
             CreateSnowBeacon(origin + new Vector3(0f, 3.2f, 0f));
+        }
+
+        private void PlaceFrostwatchMine(Vector3 position)
+        {
+            GameObject prefab = Resources.Load<GameObject>(FrostwatchMineAsset);
+            if (prefab == null)
+            {
+                Place("rock-large", "BiomeLandmark_Frostwatch_Crag", position, new Vector3(2.15f, 2.7f, 1.75f), 14f);
+                return;
+            }
+            GameObject instance = Instantiate(prefab, position, Quaternion.identity, transform);
+            instance.name = "BiomeLandmark_FrostwatchMine";
+            ApplyOwnedPalette(instance, "Mine", new Color(.23f, .28f, .33f), new Color(.19f, .09f, .03f), new Color(.92f, .62f, .16f));
+            instances.Add(instance);
+        }
+
+        private void ApplyOwnedPalette(GameObject root, string prefix, Color stone, Color wood, Color glow)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    Color color = name.Contains("Timber") ? wood : name.Contains("Lantern") ? glow : stone;
+                    Material material = new Material(shader) { color = color };
+                    if (name.Contains("Lantern")) { material.EnableKeyword("_EMISSION"); material.SetColor("_EmissionColor", color * 1.5f); }
+                    runtimeMaterials.Add(material);
+                    palette[i] = material;
+                }
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void BuildMiregate()
