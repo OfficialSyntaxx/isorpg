@@ -1,5 +1,18 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Current mainland WebGL candidate
+
+The current `main` source, including the owned ore veins, attunable return
+waystones, and Cinder Hollow gate, built successfully as WebGL candidate
+`20260824-201419-66587a16`. The output is **49.49 MB** with Brotli,
+exceptions disabled, high stripping, a 320 MB initial heap, the Isoperia PWA
+template, and a cache-stamped service worker.
+
+The build continues to report WebGL texture subtarget `Generic` despite the
+project requesting ASTC. This is a known mobile release limitation, not hidden
+by the candidate; desktop/browser deployment can proceed while the physical
+mobile compression/profile check remains part of M6.
+
 ## 2026-08-24 · Cinder Hollow Blender threshold
 
 `cinder_gate.fbx` is a new original Blender-authored basalt threshold for the

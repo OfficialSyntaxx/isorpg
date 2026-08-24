@@ -72,15 +72,15 @@ in Unity Build Profiles before public mobile release.
 
 ## Latest candidate
 
-On 2026-08-24 the mainland visual pass was rebuilt as
-`20260824-192516-0ff57a11`, **49.45 MB**. This candidate includes the
-continuous terrain shader, grounded travel routes, and the corrected
-ocean/horizon surround. The build reported `Succeeded` with Brotli, exceptions
-None, high stripping, 320 MB initial memory, the PWA template, and a
-cache-stamped service worker. To protect the custom runtime terrain shader from
-WebGL stripping, the build configuration now creates an authored Resources
-material that explicitly references it. Unity EditMode tests passed
-**379/379** after this change.
+On 2026-08-24 the current mainland pass rebuilt successfully as
+`20260824-201419-66587a16`, **49.49 MB**. It includes the continuous terrain
+shader, grounded travel routes, ocean/horizon surround, owned ore veins,
+attunable return-waystones, and Cinder Hollow’s owned gate. The build reported
+`Succeeded` with Brotli, exceptions None, high stripping, 320 MB initial
+memory, the PWA template, and a cache-stamped service worker. The terrain
+shader remains explicitly retained by an authored Resources material. Unity
+EditMode tests passed **379/379** immediately before this release-validation
+pass.
 
 The outstanding validation remains unchanged: publish this candidate through
 the canonical CI deployment, then test touch traversal, camera, audio,
