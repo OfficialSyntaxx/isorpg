@@ -220,11 +220,12 @@ compareDump("Combat", COMBAT_SOURCES, "dumpcombat.exe", "tools/parity/dump-comba
 
 if (WORLD_GEN_PARITY_RETIRED) {
   console.log(
-    "\nKNOWN GAP  world-generation parity is retired: the Unity world is 126x126\n" +
-    "           and the frozen TypeScript is 42x42, so tile-for-tile comparison\n" +
-    "           can never pass again. World-gen determinism is currently UNPINNED.\n" +
-    "           Phase B replaces it with a committed C# golden dump of the 126x126\n" +
-    "           world, compared C#-against-C#."
+    "\nNOTE  world-generation parity against the TypeScript is retired: the Unity\n" +
+    "      world is 126x126 and the frozen web build is 42x42, so tile-for-tile\n" +
+    "      comparison can never pass again. Determinism is now pinned instead by\n" +
+    "      `npm run verify:world` against a committed C# golden dump. That is a\n" +
+    "      weaker guarantee -- it compares the code against ITSELF, so it proves\n" +
+    "      the world has not CHANGED, not that it is correct."
   );
 }
 

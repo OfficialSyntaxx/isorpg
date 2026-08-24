@@ -70,6 +70,7 @@ jobs:
           npm run verify:json
           npm run verify:sanitizer
           npm run verify:content
+          npm run verify:world
 
   build:
     needs: preflight
