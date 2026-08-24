@@ -64,8 +64,19 @@ function writeGlb(json, bin, dest) {
 }
 
 async function recompress(images, maxSize, quality, brighten, saturate) {
-  let playwright;
-  try { playwright = require("playwright"); } catch { return null; }
+  // Try the same drivers, in the same order, that scripts/smoke.cjs does.
+  //
+  // This used to require("playwright") only. This repo depends on
+  // playwright-core, so the require always threw, the function returned null,
+  // and the script printed "playwright/chromium unavailable" and exited 0 —
+  // reporting success while silently doing nothing. That is why four monster
+  // GLBs were committed unoptimised at 20.5 MB while the tool that shrinks them
+  // sat right here: anyone who ran it was told it was unavailable.
+  let playwright = null;
+  for (const name of ["playwright", "playwright-core"]) {
+    try { playwright = require(name); break; } catch { /* try the next */ }
+  }
+  if (!playwright) return null;
   const exe = process.env.CHROME_PATH || findChrome();
   const browser = await playwright.chromium.launch({
     args: ["--no-sandbox", "--headless=new"],

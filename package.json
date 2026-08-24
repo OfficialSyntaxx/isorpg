@@ -29,7 +29,8 @@
     "export:content": "node scripts/export-content.cjs",
     "verify:content": "node scripts/verify-content-parity.cjs",
     "verify:world": "node scripts/verify-world-golden.cjs",
-    "verify:shaders": "node scripts/verify-always-included-shaders.cjs"
+    "verify:shaders": "node scripts/verify-always-included-shaders.cjs",
+    "verify:models": "node scripts/verify-model-budget.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

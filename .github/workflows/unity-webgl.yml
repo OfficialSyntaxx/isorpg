@@ -72,6 +72,7 @@ jobs:
           npm run verify:content
           npm run verify:world
           npm run verify:shaders
+          npm run verify:models
 
   build:
     needs: preflight
