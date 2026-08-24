@@ -1,5 +1,16 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Mainland route regression coverage
+
+- Added a deterministic Core pathfinding gate for every authored mainland
+  destination: Wildwood shrine, Frostwatch mine, Sunmere waystone, Miregate
+  ruin, and Ember Road waystone.
+- Each destination now has a required walkable approach from Hearthvale, using
+  the same adjacent-goal behaviour players use when a resource occupies a
+  destination tile. This prevents a terrain or coast revision from leaving a
+  visible district unreachable.
+- Unity EditMode validation: **380/380 passed**.
+
 ## 2026-08-24 · Current WebGL material-cache candidate
 
 The current `main` source built successfully as WebGL candidate

@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using Isoperia.Core.AI;
 using Isoperia.Core.World;
 
 namespace Isoperia.Core.Tests
@@ -52,6 +53,38 @@ namespace Isoperia.Core.Tests
                     if (_grid.At(x, y).Walkable) walkable++;
 
             Assert.Greater(walkable, Grid.WorldSize * Grid.WorldSize / 2);
+        }
+
+        /// <summary>
+        /// The authored Unity landmarks are deliberately presentation-only, but
+        /// their destinations still need a real terrain route from Hearthvale.
+        /// This catches a future terrain/coast change that leaves a district
+        /// visible on the map but impossible to reach through the Core grid.
+        /// Resources may occupy the exact destination at runtime, so the
+        /// pathfinder uses its standard adjacent-goal behaviour.
+        /// </summary>
+        [Test]
+        public void EveryMainlandDistrictHasAWalkableApproachFromHearthvale()
+        {
+            var destinations = new[]
+            {
+                (Name: "Wildwood shrine", X: 28, Y: 32),
+                (Name: "Frostwatch mine", X: 96, Y: 28),
+                (Name: "Sunmere waystone", X: 63, Y: 91),
+                (Name: "Miregate ruin", X: 28, Y: 98),
+                (Name: "Ember Road waystone", X: 82, Y: 63),
+            };
+
+            foreach (var destination in destinations)
+            {
+                var path = AStar.FindPath(_grid, Grid.TownCenter, Grid.TownCenter,
+                    destination.X, destination.Y, allowAdjacentIfBlocked: true);
+                Assert.IsNotNull(path, destination.Name + " has no terrain route from Hearthvale");
+                Assert.Greater(path.Count, 0, destination.Name + " should be outside the town centre");
+                var finalStep = path[path.Count - 1];
+                Assert.LessOrEqual(System.Math.Max(System.Math.Abs(finalStep.X - destination.X),
+                    System.Math.Abs(finalStep.Y - destination.Y)), 1, destination.Name + " approach distance");
+            }
         }
 
         [Test]
