@@ -10,6 +10,7 @@ namespace Isoperia.Unity
         private const string WayfinderAsset = "Art/OwnedModels/wayfinder_sign";
         private const string WildwoodShrineAsset = "Art/OwnedModels/wildwood_shrine";
         private const string FrostwatchMineAsset = "Art/OwnedModels/frostwatch_mine";
+        private const string MiregateRuinAsset = "Art/OwnedModels/miregate_ruin";
         private Material snow;
         private readonly System.Collections.Generic.List<Material> runtimeMaterials = new System.Collections.Generic.List<Material>();
         private readonly System.Collections.Generic.List<GameObject> instances = new System.Collections.Generic.List<GameObject>();
@@ -78,7 +79,14 @@ namespace Isoperia.Unity
         private void BuildMiregate()
         {
             Vector3 origin = Grounded(28, 98);
-            Place("watermill", "BiomeLandmark_Miregate_Mill", origin, new Vector3(1.25f, 1.25f, 1.25f), 90f);
+            GameObject ruin = Resources.Load<GameObject>(MiregateRuinAsset);
+            if (ruin != null)
+            {
+                GameObject instance = Instantiate(ruin, origin, Quaternion.identity, transform);
+                instance.name = "BiomeLandmark_MiregateRuin";
+                instances.Add(instance);
+            }
+            else Place("watermill", "BiomeLandmark_Miregate_Mill", origin, new Vector3(1.25f, 1.25f, 1.25f), 90f);
             Place("fence", "BiomeLandmark_Miregate_FenceA", origin + new Vector3(-2.0f, 0f, 1.5f), Vector3.one * 1.3f, 35f);
             Place("fence", "BiomeLandmark_Miregate_FenceB", origin + new Vector3(1.8f, 0f, 1.3f), Vector3.one * 1.3f, -38f);
             Place("rock-large", "BiomeLandmark_Miregate_Rock", origin + new Vector3(1.5f, 0f, -1.7f), Vector3.one * 1.05f, 12f);
