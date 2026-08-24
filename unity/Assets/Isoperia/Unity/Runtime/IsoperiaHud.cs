@@ -20,7 +20,7 @@ namespace Isoperia.Unity
         private const string HudName = "IsoperiaHUD";
         private const string DocumentResource = "UI/IsoperiaHUD";
         private const string StyleResource = "UI/IsoperiaHUD";
-        private const string ThemeResource = "UI/IsoperiaRuntimeTheme";
+        private const string PanelSettingsResource = "UI/IsoperiaRuntimePanelSettings";
 
         private UIDocument document;
         private PanelSettings panelSettings;
@@ -55,17 +55,18 @@ namespace Isoperia.Unity
             document = GetComponent<UIDocument>();
             document.visualTreeAsset = Resources.Load<VisualTreeAsset>(DocumentResource);
 
-            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
-            panelSettings.scaleMode = PanelScaleMode.ScaleWithScreenSize;
-            panelSettings.referenceResolution = new Vector2Int(1080, 1920);
-            panelSettings.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
-            panelSettings.match = 0.5f;
-            panelSettings.themeStyleSheet = Resources.Load<ThemeStyleSheet>(ThemeResource);
-            if (panelSettings.themeStyleSheet == null)
+            // WebGL's ICU text data is retained through this authored asset.
+            // A PanelSettings created at runtime can render in the Editor but
+            // loses that data under a stripped player, producing the startup
+            // NullReferenceException that leaves the browser at “Starting…”.
+            panelSettings = Resources.Load<PanelSettings>(PanelSettingsResource);
+            if (panelSettings == null)
             {
                 Debug.LogError(
-                    "Isoperia HUD cannot find its runtime UI theme. " +
-                    "Run Isoperia/Create runtime UI theme before entering Play Mode.", this);
+                    "Isoperia HUD cannot find its authored runtime PanelSettings. " +
+                    "Run Isoperia/Create runtime UI theme before building.", this);
+                enabled = false;
+                return;
             }
             document.panelSettings = panelSettings;
         }
@@ -503,8 +504,6 @@ namespace Isoperia.Unity
             if (mapButton != null) mapButton.clicked -= OpenMap;
             if (questButton != null) questButton.clicked -= OpenQuests;
             if (settingsButton != null) settingsButton.clicked -= OpenSettings;
-
-            if (panelSettings != null) Destroy(panelSettings);
         }
     }
 }

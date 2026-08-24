@@ -1,5 +1,19 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · WebGL HUD text-data startup fix
+
+- Fixed the hosted WebGL startup failure that held the browser at **Starting…**.
+  The HUD had created `PanelSettings` at runtime; under the stripped WebGL
+  player that panel lacked Unity's ICU text-data reference and cascaded into
+  `NullReferenceException`s.
+- The HUD now loads authored, Resources-backed `PanelSettings` and
+  `PanelTextSettings` assets. The build configuration creates and retains them,
+  including the serialized ICU data reference, so UI Toolkit text is present in
+  a WebGL player rather than only in the Editor.
+- Local evidence: HUD resolved the authored panel/text settings in Play Mode
+  with zero Console errors; EditMode tests passed **380/380**; a fresh WebGL
+  build succeeded as `20260824-214716-637d31db` (**50.44 MB**).
+
 ## 2026-08-24 · Mainland route regression coverage
 
 - Added a deterministic Core pathfinding gate for every authored mainland

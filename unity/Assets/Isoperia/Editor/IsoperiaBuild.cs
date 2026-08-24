@@ -42,6 +42,8 @@ namespace Isoperia.EditorTools
         private const string PipelineAsset = SettingsDir + "/IsoperiaURP.asset";
         private const string RendererData = SettingsDir + "/IsoperiaURP_Renderer.asset";
         private const string RuntimeThemeAsset = "Assets/Isoperia/Resources/UI/IsoperiaRuntimeTheme.asset";
+        private const string RuntimePanelTextSettingsAsset = "Assets/Isoperia/Resources/UI/IsoperiaRuntimeTextSettings.asset";
+        private const string RuntimePanelSettingsAsset = "Assets/Isoperia/Resources/UI/IsoperiaRuntimePanelSettings.asset";
         private const string TerrainMaterialAsset = "Assets/Isoperia/Resources/Materials/IsoperiaTerrainVertexColor.mat";
         private const string UrpLitShader = "Universal Render Pipeline/Lit";
         private const string TerrainVertexColorShader = "Isoperia/Terrain Vertex Color";
@@ -82,6 +84,7 @@ namespace Isoperia.EditorTools
             // the scene renders magenta.
             ConfigureRenderPipeline();
             EnsureTerrainShaderRetention();
+            EnsureRuntimeUiTheme();
 
             PlayerSettings.colorSpace = ColorSpace.Linear;
 
@@ -137,12 +140,35 @@ namespace Isoperia.EditorTools
         public static void EnsureRuntimeUiTheme()
         {
             var theme = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.ThemeStyleSheet>(RuntimeThemeAsset);
-            if (theme != null) return;
+            if (theme == null)
+            {
+                theme = ScriptableObject.CreateInstance<UnityEngine.UIElements.ThemeStyleSheet>();
+                AssetDatabase.CreateAsset(theme, RuntimeThemeAsset);
+            }
 
-            theme = ScriptableObject.CreateInstance<UnityEngine.UIElements.ThemeStyleSheet>();
-            AssetDatabase.CreateAsset(theme, RuntimeThemeAsset);
+            var textSettings = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.PanelTextSettings>(RuntimePanelTextSettingsAsset);
+            if (textSettings == null)
+            {
+                textSettings = ScriptableObject.CreateInstance<UnityEngine.UIElements.PanelTextSettings>();
+                AssetDatabase.CreateAsset(textSettings, RuntimePanelTextSettingsAsset);
+            }
+
+            var panelSettings = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.PanelSettings>(RuntimePanelSettingsAsset);
+            if (panelSettings == null)
+            {
+                panelSettings = ScriptableObject.CreateInstance<UnityEngine.UIElements.PanelSettings>();
+                AssetDatabase.CreateAsset(panelSettings, RuntimePanelSettingsAsset);
+            }
+
+            panelSettings.scaleMode = UnityEngine.UIElements.PanelScaleMode.ScaleWithScreenSize;
+            panelSettings.referenceResolution = new Vector2Int(1080, 1920);
+            panelSettings.screenMatchMode = UnityEngine.UIElements.PanelScreenMatchMode.MatchWidthOrHeight;
+            panelSettings.match = .5f;
+            panelSettings.themeStyleSheet = theme;
+            panelSettings.textSettings = textSettings;
+            EditorUtility.SetDirty(panelSettings);
             AssetDatabase.SaveAssets();
-            Debug.Log("[Isoperia] runtime UI theme created at " + RuntimeThemeAsset);
+            Debug.Log("[Isoperia] runtime UI assets are ready at " + RuntimeThemeAsset);
         }
 
         /// <summary>
