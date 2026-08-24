@@ -8,7 +8,9 @@ namespace Isoperia.Unity
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
         private const string WayfinderAsset = "Art/OwnedModels/wayfinder_sign";
+        private const string WildwoodShrineAsset = "Art/OwnedModels/wildwood_shrine";
         private Material snow;
+        private readonly System.Collections.Generic.List<Material> runtimeMaterials = new System.Collections.Generic.List<Material>();
         private readonly System.Collections.Generic.List<GameObject> instances = new System.Collections.Generic.List<GameObject>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -50,10 +52,51 @@ namespace Isoperia.Unity
         private void BuildWildwood()
         {
             Vector3 origin = Grounded(28, 32);
-            Place("tree-high", "BiomeLandmark_Wildwood_Ancient", origin, Vector3.one * 2.3f, 8f);
+            PlaceWildwoodShrine(origin);
             Place("tree", "BiomeLandmark_Wildwood_TreeA", origin + new Vector3(-1.9f, 0f, 1.1f), Vector3.one * 1.45f, -25f);
             Place("tree", "BiomeLandmark_Wildwood_TreeB", origin + new Vector3(1.7f, 0f, .9f), Vector3.one * 1.35f, 32f);
             Place("rock-small", "BiomeLandmark_Wildwood_RootStone", origin + new Vector3(.5f, 0f, -1.7f), Vector3.one * 1.15f, -16f);
+        }
+
+        private void PlaceWildwoodShrine(Vector3 position)
+        {
+            GameObject prefab = Resources.Load<GameObject>(WildwoodShrineAsset);
+            if (prefab == null)
+            {
+                Place("tree-high", "BiomeLandmark_Wildwood_Ancient", position, Vector3.one * 2.3f, 8f);
+                return;
+            }
+
+            GameObject instance = Instantiate(prefab, position, Quaternion.identity, transform);
+            instance.name = "BiomeLandmark_WildwoodShrine";
+            ApplyWildwoodShrinePalette(instance);
+            instances.Add(instance);
+        }
+
+        private void ApplyWildwoodShrinePalette(GameObject shrine)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            foreach (Renderer renderer in shrine.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    Color color = name.Contains("Moss") ? new Color(.18f, .25f, .20f) :
+                        name.Contains("Old") ? new Color(.31f, .34f, .32f) :
+                        name.Contains("Timber") ? new Color(.15f, .07f, .025f) : new Color(.18f, .72f, .48f);
+                    Material material = new Material(shader) { color = color };
+                    if (name.Contains("Rune"))
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        material.SetColor("_EmissionColor", color * 1.4f);
+                    }
+                    runtimeMaterials.Add(material);
+                    palette[i] = material;
+                }
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void BuildSunmere()
@@ -142,6 +185,8 @@ namespace Isoperia.Unity
         private void OnDestroy()
         {
             if (snow != null) Destroy(snow);
+            for (int i = 0; i < runtimeMaterials.Count; i++)
+                if (runtimeMaterials[i] != null) Destroy(runtimeMaterials[i]);
             for (int i = 0; i < instances.Count; i++)
             {
                 if (instances[i] != null) Destroy(instances[i]);

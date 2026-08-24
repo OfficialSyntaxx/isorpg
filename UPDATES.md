@@ -1,5 +1,18 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Owned Wildwood shrine landmark
+
+`wildwood_shrine.fbx` is a new Isoperia-owned Blender ruin for the Wildwood
+route: mossed stone dais and altar, standing portal stones, timber boughs, and
+an emissive rune face. It replaces the old single-tree destination while
+keeping the existing woodcutting route, deterministic grid, resource nodes,
+and navigation untouched.
+
+**Validation:** Blender source preview and the live Unity district view were
+captured after an explicit script reimport. Unity resolved
+`BiomeLandmark_WildwoodShrine` at the intended terrain-grounded coordinates
+with zero Console errors.
+
 ## 2026-08-24 · Owned Hearthvale forge landmark
 
 `hearthvale_forge.fbx` is a new Isoperia-owned Blender asset for the
