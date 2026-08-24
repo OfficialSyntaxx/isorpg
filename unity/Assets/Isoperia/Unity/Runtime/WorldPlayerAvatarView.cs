@@ -67,7 +67,8 @@ namespace Isoperia.Unity
                 if (helperCube != null) Destroy(helperCube.gameObject);
                 OwnedModelPresentation.FitToHeight(hero, 1.45f);
                 Animator animator = hero.GetComponentInChildren<Animator>(true);
-                if (animator != null && animator.runtimeAnimatorController == null)
+                if (animator == null) animator = hero.AddComponent<Animator>();
+                if (animator.runtimeAnimatorController == null)
                     animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(HeroControllerAsset);
                 if (animator != null && animator.runtimeAnimatorController != null)
                 {

@@ -1,5 +1,27 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Animated owned hero verified in the playable world
+
+Blender 5.2 LTS is installed and the owned `hero_rigged` mesh now ships as
+`hero_animated.fbx`, with five Blender-authored rig-native clips: idle, walk, gather,
+attack, and hit. The Unity controller uses existing third-person movement as
+the authority (`Speed`) and optional action triggers; root motion is disabled,
+so animation cannot desynchronise travel, gathering, combat, or saves.
+
+The runtime bridge now adds an Animator when an imported model does not carry
+one. This is important for the FBX model root: on a clean Play Mode reload the
+live hierarchy contains `PlayerAvatar/HeroModel` with an Animator and no
+procedural `Tunic` fallback parts. Unity reported zero runtime errors. The
+shipped mesh and the new clips remain Isoperia-owned work. Quaternius'
+Universal Animation Library remains vetted as a future CC0 reference source,
+but its motion data is not shipped in this asset.
+
+For repeatable art review, `tools/render_hero_preview.py` renders the exact
+game-ready FBX in Blender (including a sampled attack pose), and writes a
+matching `.blend` review file outside the repository. The next work is a
+combat/readability polish pass, then mainland route, settlement, and encounter
+expansion before a fresh WebGL release validation.
+
 ## 2026-08-24 · Animator-ready hero presentation bridge
 
 The player avatar now has a controller-ready presentation bridge at

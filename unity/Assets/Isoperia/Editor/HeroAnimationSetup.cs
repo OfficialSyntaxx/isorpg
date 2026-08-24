@@ -9,6 +9,7 @@ namespace Isoperia.EditorTools
         private const string ModelPath = "Assets/Isoperia/Resources/Art/OwnedModels/hero_animated.fbx";
         private const string ControllerPath = "Assets/Isoperia/Resources/Art/HeroController.controller";
 
+        [MenuItem("Isoperia/Build Hero Animator Controller")]
         public static void CreateController()
         {
             var clips = AssetDatabase.LoadAllAssetsAtPath(ModelPath);
