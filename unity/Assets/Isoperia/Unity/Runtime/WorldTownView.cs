@@ -139,6 +139,7 @@ namespace Isoperia.Unity
         {
             GameObject npc = CreateNpcBody(name, position, color);
             npc.AddComponent<WorldInteractionTarget>().SetNpc(name, hint);
+            npc.AddComponent<WorldNpcAmbientView>();
             instances.Add(npc);
         }
 
@@ -148,6 +149,7 @@ namespace Isoperia.Unity
             WorldInteractionTarget target = npc.AddComponent<WorldInteractionTarget>();
             target.SetNpc(name, hint);
             target.SetJourney(LightPoolExpeditionSystem.AcceptedJournalId);
+            npc.AddComponent<WorldNpcAmbientView>();
             instances.Add(npc);
         }
 
