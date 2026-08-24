@@ -1,5 +1,24 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Animator-ready hero presentation bridge
+
+The player avatar now has a controller-ready presentation bridge at
+`dbb1a42`. A future Unity Animator controller may expose `Speed` (float),
+`IsMoving` (bool), and optional `Gather`, `Attack`, and `Hit` triggers; the
+runtime discovers only the parameters that exist, drives locomotion from the
+existing third-person controller, and leaves root motion disabled. That keeps
+movement, combat cadence, gathering, and saves authoritative outside animation.
+The procedural avatar remains the safe fallback until the owned hero receives
+valid clips and a controller.
+
+**Vetted free source:** Quaternius' [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html)
+has a 15 MB standard download with 45 CC0 animations, Unity-ready exports, and
+locomotion/combat coverage. Import only the needed idle, walk, gather, attack,
+hit, and death clips; set them Humanoid; then create a controller matching the
+above parameter contract. Blender is not installed at its normal macOS path on
+this workstation, so locally authored clips require Blender to be restored or
+installed before that route can be used.
+
 ## 2026-08-24 · Hybrid mainland direction, mobile controls, and release consolidation
 
 **Product decision:** Isoperia remains a hybrid, immersive third-person 3D
