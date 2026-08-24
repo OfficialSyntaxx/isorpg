@@ -67,10 +67,7 @@ namespace Isoperia.Unity
                 {
                     string name = source[i] == null ? string.Empty : source[i].name;
                     Color color = name.Contains("Timber") || name.Contains("Moss") ? wood : name.Contains("Lantern") || name.Contains("Rune") ? glow : stone;
-                    Material material = new Material(shader) { color = color };
-                    if (name.Contains("Lantern") || name.Contains("Rune")) { material.EnableKeyword("_EMISSION"); material.SetColor("_EmissionColor", color * 1.5f); }
-                    runtimeMaterials.Add(material);
-                    palette[i] = material;
+                    palette[i] = WorldMaterialCache.Lit(prefix + "_" + name, color, name.Contains("Lantern") || name.Contains("Rune"));
                 }
                 renderer.sharedMaterials = palette;
             }
