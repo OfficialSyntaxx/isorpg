@@ -7,8 +7,8 @@
         </ui:VisualElement>
 
         <ui:VisualElement name="hint-card" class="hint-card">
-            <ui:Label name="hint-title" text="Environment prototype" class="hint-title" />
-            <ui:Label name="hint-body" text="Tap a tile to move · Drag to pan · Pinch to zoom" class="hint-body" />
+            <ui:Label name="hint-title" text="Mainland controls" class="hint-title" />
+            <ui:Label name="hint-body" text="WASD / gamepad to move · touch: left drag moves, right drag looks, pinch zooms · tap nearby objects" class="hint-body" />
         </ui:VisualElement>
 
         <ui:VisualElement name="panel" class="panel" style="display:none;">

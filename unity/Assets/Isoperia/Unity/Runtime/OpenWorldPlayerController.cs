@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using CoreGrid = Isoperia.Core.World.Grid;
 
 namespace Isoperia.Unity
@@ -12,6 +13,12 @@ namespace Isoperia.Unity
         private Transform cameraTransform;
         private float verticalSpeed;
         private bool spawned;
+
+        // The lower-left portion of a touch screen is a direct virtual stick.
+        // Keeping the gesture in the controller makes the actual gameplay input
+        // owner explicit instead of relying on the disabled isometric prototype.
+        private const float TouchMoveArea = .48f;
+        private const float TouchMoveRadius = 92f;
 
         public bool IsMoving { get; private set; }
 
@@ -32,6 +39,7 @@ namespace Isoperia.Unity
                 (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0),
                 (Keyboard.current.wKey.isPressed ? 1 : 0) - (Keyboard.current.sKey.isPressed ? 1 : 0));
             if (Gamepad.current != null) input += Gamepad.current.leftStick.ReadValue();
+            input += ReadTouchMove();
             input = Vector2.ClampMagnitude(input, 1f);
             Vector3 forward = Vector3.ProjectOnPlane(cameraTransform.forward, Vector3.up).normalized;
             Vector3 right = Vector3.ProjectOnPlane(cameraTransform.right, Vector3.up).normalized;
@@ -41,6 +49,21 @@ namespace Isoperia.Unity
             verticalSpeed = controller.isGrounded ? -.5f : verticalSpeed + Physics.gravity.y * Time.deltaTime;
             controller.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
             SyncStatePosition();
+        }
+
+        private static Vector2 ReadTouchMove()
+        {
+            Touchscreen touchscreen = Touchscreen.current;
+            if (touchscreen == null) return Vector2.zero;
+
+            TouchControl touch = touchscreen.primaryTouch;
+            if (!touch.press.isPressed) return Vector2.zero;
+
+            Vector2 start = touch.startPosition.ReadValue();
+            if (start.x > Screen.width * TouchMoveArea) return Vector2.zero;
+
+            Vector2 delta = touch.position.ReadValue() - start;
+            return Vector2.ClampMagnitude(delta / TouchMoveRadius, 1f);
         }
 
         private void Start()

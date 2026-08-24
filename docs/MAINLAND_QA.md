@@ -7,7 +7,7 @@
 - Target: WebGL
 - Build output: `unity/WebGLBuild/` (git-ignored)
 - Built: 2026-08-23
-- Size: 68.50 MB total output; Unity reported 33.5 MB compressed / 55.3 MB uncompressed.
+- Size: 68.68 MB total output; Unity reported 33.5 MB compressed / 55.3 MB uncompressed.
 
 ## Evidence completed in this workspace
 
@@ -15,7 +15,8 @@
 | --- | --- | --- |
 | Mainland save migration | Pass | Grid/sanitizer EditMode suite previously passed 206/206; a pre-mainland save was observed to migrate and spawn at `(63,63)` without losing state. |
 | Runtime mainland traversal | Pass | Play Mode verified player/Core position stay synchronized at the Hearthvale mainland spawn; settlements, discovery, combat clearings, Cinder route and light pools instantiate. Streamed free-model trees and rocks are normalized from their rendered bounds, preventing oversized asset geometry from blocking the third-person camera. |
-| Character fallback and motion bridge | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the player instantiates `hero_rigged`; owned wolf/ogre actors cover mainland encounters; compact primitive fallbacks remain. Authoritative harvest and combat events drive hero harvest/swing/recoil and target-hit presentation without owning gameplay state. |
+| Character fallback and motion bridge | Pass | Four Hearthvale NPCs instantiate from `Resources/Art/OwnedModels/villager`; the owned hero GLB is used only when it has a runtime controller. The current source contains a rig but no clips, so the player uses an animated six-part fallback rather than shipping a T-pose. Owned wolf/ogre actors cover mainland encounters; authoritative harvest and combat events drive presentation without owning gameplay state. |
+| Open-world input | Pass in Editor | The third-person controller reads keyboard/gamepad and a left-side touch virtual stick; right-side touch drag orbits, two fingers pinch zoom, and a short tap interacts with nearby targets. This corrected the prior build where the open-world controller had no touch path. |
 | WebGL compilation/build | Pass | Headless `Isoperia.EditorTools.IsoperiaBuild.BuildWebGL` completed with exit code 0 and emitted loader, data, framework and wasm artifacts. |
 | First-tap audio | Code reviewed | `OpenWorldExperience` supplies the listener; must be confirmed in a hosted browser with a real user gesture. |
 
@@ -58,6 +59,6 @@ browser testing is recorded separately after the candidate is deployed.
 
 On 2026-08-23 the terrain-relief, hero, wolf and ogre-inclusive candidate
 completed the headless WebGL build path with exit code 0. The current candidate
-is 68.50 MB with a 320 MB initial WebGL memory setting and was visually
+is 68.68 MB with a 320 MB initial WebGL memory setting and was visually
 confirmed in Play Mode after the streamed-decoration scale correction. This is
 not a substitute for the physical-device sweep above.

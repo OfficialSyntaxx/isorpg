@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 namespace Isoperia.Unity
 {
@@ -11,6 +12,7 @@ namespace Isoperia.Unity
         private float yaw = 35f;
         private float pitch = 20f;
         private float distance = 8.5f;
+        private float previousPinchDistance;
 
         private void Start()
         {
@@ -28,6 +30,7 @@ namespace Isoperia.Unity
                 yaw += delta.x * .18f; pitch = Mathf.Clamp(pitch - delta.y * .12f, 8f, 58f);
             }
             if (Mouse.current != null) distance = Mathf.Clamp(distance - Mouse.current.scroll.ReadValue().y * .004f, 3.5f, 15f);
+            HandleTouchCamera();
             if (Gamepad.current != null)
             {
                 Vector2 look = Gamepad.current.rightStick.ReadValue();
@@ -37,6 +40,34 @@ namespace Isoperia.Unity
             Vector3 focus = target.position + Vector3.up * 1.15f;
             transform.position = focus - orbit * Vector3.forward * distance;
             transform.rotation = orbit;
+        }
+
+        private void HandleTouchCamera()
+        {
+            Touchscreen touchscreen = Touchscreen.current;
+            if (touchscreen == null) return;
+
+            TouchControl first = touchscreen.touches[0];
+            TouchControl second = touchscreen.touches[1];
+            if (first.press.isPressed && second.press.isPressed)
+            {
+                float pinchDistance = Vector2.Distance(first.position.ReadValue(), second.position.ReadValue());
+                if (previousPinchDistance > 0f)
+                    distance = Mathf.Clamp(distance - (pinchDistance - previousPinchDistance) * .012f, 3.5f, 15f);
+                previousPinchDistance = pinchDistance;
+                return;
+            }
+
+            previousPinchDistance = 0f;
+            TouchControl touch = touchscreen.primaryTouch;
+            if (!touch.press.isPressed) return;
+
+            // The right half is reserved for looking, leaving the left half for
+            // movement. A tap on either half still reaches interaction handling.
+            if (touch.startPosition.ReadValue().x < Screen.width * .48f) return;
+            Vector2 delta = touch.delta.ReadValue();
+            yaw += delta.x * .18f;
+            pitch = Mathf.Clamp(pitch - delta.y * .12f, 8f, 58f);
         }
     }
 }

@@ -17,6 +17,10 @@ namespace Isoperia.Unity
         private Material skin;
         private Transform tunicTransform;
         private Transform headTransform;
+        private Transform leftArmTransform;
+        private Transform rightArmTransform;
+        private Transform leftLegTransform;
+        private Transform rightLegTransform;
         private Transform heroTransform;
         private OpenWorldPlayerController playerController;
         private SkillSystem gathering;
@@ -44,16 +48,39 @@ namespace Isoperia.Unity
                 hero.transform.localRotation = Quaternion.identity;
                 hero.transform.localScale = Vector3.one;
                 OwnedModelPresentation.FitToHeight(hero, 1.45f);
-                heroTransform = hero.transform;
-                return;
+                Animator animator = hero.GetComponentInChildren<Animator>(true);
+                if (animator != null && animator.runtimeAnimatorController != null)
+                {
+                    heroTransform = hero.transform;
+                    return;
+                }
+
+                // The owned source has a rig but no baked clips. Do not ship its
+                // bind pose as the playable character; retain the usable source
+                // only when it can actually animate.
+                hero.SetActive(false);
+                Destroy(hero);
             }
 
+            CreateAnimatedFallback();
+        }
+
+        private void CreateAnimatedFallback()
+        {
             tunic = CreateMaterial(new Color(.18f, .33f, .58f, 1f));
             skin = CreateMaterial(new Color(.78f, .52f, .36f, 1f));
             tunicTransform = CreatePart(PrimitiveType.Capsule, "Tunic", new Vector3(0f, .47f, 0f),
                 new Vector3(.28f, .45f, .28f), tunic);
             headTransform = CreatePart(PrimitiveType.Sphere, "Head", new Vector3(0f, .97f, 0f),
                 new Vector3(.30f, .30f, .30f), skin);
+            leftArmTransform = CreatePart(PrimitiveType.Capsule, "LeftArm", new Vector3(-.29f, .58f, 0f),
+                new Vector3(.105f, .27f, .105f), skin);
+            rightArmTransform = CreatePart(PrimitiveType.Capsule, "RightArm", new Vector3(.29f, .58f, 0f),
+                new Vector3(.105f, .27f, .105f), skin);
+            leftLegTransform = CreatePart(PrimitiveType.Capsule, "LeftLeg", new Vector3(-.12f, .13f, 0f),
+                new Vector3(.12f, .30f, .12f), tunic);
+            rightLegTransform = CreatePart(PrimitiveType.Capsule, "RightLeg", new Vector3(.12f, .13f, 0f),
+                new Vector3(.12f, .30f, .12f), tunic);
         }
 
         private void Update()
@@ -81,6 +108,11 @@ namespace Isoperia.Unity
                 tunicTransform.localRotation = Quaternion.Euler(moving ? Mathf.Sin(cycle) * 5f : 0f, 0f, 0f);
             }
             if (headTransform != null) headTransform.localPosition = new Vector3(0f, .97f + bob, 0f);
+            float stride = moving ? Mathf.Sin(cycle) * 28f : 0f;
+            if (leftArmTransform != null) leftArmTransform.localRotation = Quaternion.Euler(stride, 0f, 12f);
+            if (rightArmTransform != null) rightArmTransform.localRotation = Quaternion.Euler(-stride, 0f, -12f);
+            if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.Euler(-stride, 0f, 0f);
+            if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.Euler(stride, 0f, 0f);
         }
 
         private Transform CreatePart(PrimitiveType type, string partName, Vector3 localPosition,
