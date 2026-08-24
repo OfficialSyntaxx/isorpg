@@ -1,5 +1,15 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Current WebGL material-cache candidate
+
+The current `main` source built successfully as WebGL candidate
+`20260824-211246-20f59204` after the shared landmark/town/dungeon palette
+cache pass. The Brotli PWA output is **50.08 MB**, with exceptions disabled,
+high stripping, a 320 MB heap, and cache-stamped service worker output.
+
+The build still reports WebGL texture subtarget `Generic` rather than ASTC;
+this remains an explicit physical-mobile validation item, not a hidden pass.
+
 ## 2026-08-24 · Owned Frostwatch mine landmark
 
 `frostwatch_mine.fbx` is a new Isoperia-owned Blender model for the highland
