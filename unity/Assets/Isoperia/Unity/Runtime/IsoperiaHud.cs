@@ -171,6 +171,7 @@ namespace Isoperia.Unity
 
             var map = new VisualElement();
             map.AddToClassList("map-grid");
+            map.style.position = Position.Relative;
 
             for (int chunkY = 0; chunkY < rows; chunkY++)
             {
@@ -198,6 +199,12 @@ namespace Isoperia.Unity
                 }
             }
 
+            AddDistrictMarker(map, "Hearthvale", "hearthvale", 63, 63);
+            AddDistrictMarker(map, "Wildwood", "wildwood", 33, 36);
+            AddDistrictMarker(map, "Frostwatch", "frostwatch", 92, 35);
+            AddDistrictMarker(map, "Ember Road", "ember_road", 93, 63);
+            AddDistrictMarker(map, "Sunmere", "sunmere", 93, 93);
+            AddDistrictMarker(map, "Miregate", "miregate", 34, 92);
             panelBody.Add(map);
 
             SaveDriver save = SaveDriver.Instance;
@@ -209,6 +216,20 @@ namespace Isoperia.Unity
             {
                 AddPanelMessage("Attune an outer-route waystone to unlock a safe return to Hearthvale.");
             }
+        }
+
+        private void AddDistrictMarker(VisualElement map, string label, string districtId, int x, int y)
+        {
+            var discovered = SaveDriver.Instance?.State?.Player?.MapDiscovered;
+            if (discovered == null || !discovered.Contains(districtId)) return;
+
+            const float mapSize = 294f;
+            const float mainlandSize = Isoperia.Core.World.Grid.WorldSize;
+            var marker = new Label(label);
+            marker.AddToClassList("map-district-marker");
+            marker.style.left = Mathf.Clamp((x / mainlandSize) * mapSize - 31f, 2f, mapSize - 64f);
+            marker.style.top = Mathf.Clamp((y / mainlandSize) * mapSize - 10f, 2f, mapSize - 22f);
+            map.Add(marker);
         }
 
         private void ReturnToHearthvale()

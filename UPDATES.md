@@ -1,5 +1,19 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Readable mainland survey markers
+
+The Map panel now layers named markers for Hearthvale and each outer district
+over the persisted 7×7 exploration survey. A marker appears only after that
+district has been discovered, so the map is useful for orienting a returning
+player without revealing the whole mainland or creating a second map-state
+format. The gold player chunk and waystone-gated Return to Hearthvale action
+remain unchanged.
+
+**Validation:** the updated HUD compiled in Unity and the complete EditMode
+suite passed **379/379**. The terrain and route screenshot was also captured
+from the live Game View; it confirms the grounded avatar and town presentation
+remain stable after the HUD change.
+
 ## 2026-08-24 · Authoritative safe-return reconciliation
 
 Combat defeat and the Cinder Hollow expedition already reset the Core player

@@ -221,6 +221,26 @@
     background-color: rgb(245, 197, 92);
 }
 
+.map-district-marker {
+    position: absolute;
+    width: 62px;
+    min-width: 62px;
+    color: rgb(250, 235, 188);
+    font-size: 9px;
+    unity-font-style: bold;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    background-color: rgba(22, 25, 23, 0.72);
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-color: rgba(220, 178, 91, 0.72);
+    border-bottom-color: rgba(220, 178, 91, 0.72);
+    border-left-color: rgba(220, 178, 91, 0.72);
+    border-right-color: rgba(220, 178, 91, 0.72);
+}
+
 .bottom-bar {
     flex-direction: row;
     align-items: center;
