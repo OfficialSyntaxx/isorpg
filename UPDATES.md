@@ -13,8 +13,10 @@ starting. Player save coordinates are clamped together with the visual
 position, preventing corrupt raw world coordinates from persisting.
 
 **Validation:** a fresh Play Mode start kept the hero and saved position at
-Hearthvale `(63.5, 0.21, 63.5)` / `(63,63)` after one second, with zero Unity
-Console errors. EditMode tests passed **379/379**.
+Hearthvale `(63.5, 0.21, 63.5)` / `(63,63)` after one second. A queued W-key
+input then moved the hero from Hearthvale and releasing it stopped movement;
+the test returned safely to town afterward. Unity reported zero Console errors
+and EditMode tests passed **379/379**.
 
 ## 2026-08-24 · Current mainland WebGL candidate
 
