@@ -1802,3 +1802,13 @@ Also fixed in the same sweep:
 
 *Phase 8 asset passes draw on the subscription credit pool (SFX, music, and
 rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
+## 2026-08-24 · Mainland M5/M6 validation and horizon polish
+
+- Validated the live Unity travel loop in Play Mode: safe destination placement,
+  resource interaction gating, enemy engagement/damage, and Hearthvale return.
+- `OpenWorldHorizonView` now adds a collider-free irregular shoreline apron,
+  raises the visual ocean to meet the low-water terrain, and increases distance
+  fog. This is presentation only; deterministic Core terrain, navigation and
+  saved coordinates remain unchanged.
+- Unity EditMode regression gate: **379/379 passed**. Fresh WebGL candidate
+  remains recorded in `unity/build-report.txt`.

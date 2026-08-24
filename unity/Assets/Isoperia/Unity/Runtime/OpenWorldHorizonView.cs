@@ -15,9 +15,13 @@ namespace Isoperia.Unity
         private const float HorizonExtent = 220f;
         private const float CoastStart = 22f;
         private const float CoastDepth = 44f;
-        private const float OceanHeight = -.14f;
+        // Keep the surround close to the low-water level of the runtime terrain.
+        // The old ocean sat noticeably below the terrain edge, making the mainland
+        // read as a square, floating game board when viewed from Hearthvale.
+        private const float OceanHeight = -.06f;
         private readonly List<Material> materials = new List<Material>();
         private Mesh oceanMesh;
+        private Mesh shorelineMesh;
         private Mesh coastMesh;
         private bool priorFog;
         private Color priorFogColor;
@@ -42,10 +46,11 @@ namespace Isoperia.Unity
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = new Color(.30f, .42f, .49f);
-            RenderSettings.fogDensity = .0085f;
+            RenderSettings.fogDensity = .016f;
             RenderSettings.ambientLight = new Color(.48f, .55f, .59f);
 
             CreateOcean();
+            CreateShoreline();
             CreateCoast();
         }
 
@@ -81,6 +86,17 @@ namespace Isoperia.Unity
             renderer.sharedMaterial = CreateMaterial(new Color(.19f, .33f, .16f), 0f, .18f);
         }
 
+        private void CreateShoreline()
+        {
+            GameObject shore = new GameObject("MainlandShoreline");
+            shore.transform.SetParent(transform, false);
+            var filter = shore.AddComponent<MeshFilter>();
+            var renderer = shore.AddComponent<MeshRenderer>();
+            shorelineMesh = BuildShorelineMesh();
+            filter.sharedMesh = shorelineMesh;
+            renderer.sharedMaterial = CreateMaterial(new Color(.18f, .29f, .16f), 0f, .08f);
+        }
+
         private static Mesh BuildCoastMesh()
         {
             // Four distant shore strips leave a broad water buffer around the
@@ -94,6 +110,27 @@ namespace Isoperia.Unity
             AddStrip(vertices, triangles, segments, false, false);
             AddStrip(vertices, triangles, segments, false, true);
             var mesh = new Mesh { name = "Isoperia_MainlandHorizon" };
+            mesh.SetVertices(vertices);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static Mesh BuildShorelineMesh()
+        {
+            // A shallow, irregular apron visually carries the playable terrain
+            // into the ocean. It is presentation-only: no colliders, no Core
+            // tiles, and no change to the world's navigation contract.
+            const int segments = 42;
+            const float apronDepth = 18f;
+            var vertices = new List<Vector3>((segments + 1) * 8);
+            var triangles = new List<int>(segments * 24);
+            AddShoreStrip(vertices, triangles, segments, true, false, apronDepth);
+            AddShoreStrip(vertices, triangles, segments, true, true, apronDepth);
+            AddShoreStrip(vertices, triangles, segments, false, false, apronDepth);
+            AddShoreStrip(vertices, triangles, segments, false, true, apronDepth);
+            var mesh = new Mesh { name = "Isoperia_MainlandShoreline" };
             mesh.SetVertices(vertices);
             mesh.SetTriangles(triangles, 0);
             mesh.RecalculateNormals();
@@ -124,6 +161,32 @@ namespace Isoperia.Unity
             }
         }
 
+        private static void AddShoreStrip(List<Vector3> vertices, List<int> triangles, int segments,
+            bool horizontal, bool farSide, float depth)
+        {
+            int start = vertices.Count;
+            for (int i = 0; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                float along = Mathf.Lerp(WorldMin, WorldMax, t);
+                float ripple = Mathf.Sin(i * 1.37f) * 1.7f + Mathf.Sin(i * .43f) * 1.1f;
+                float inner = farSide ? WorldMax : WorldMin;
+                float outer = farSide ? WorldMax + depth + ripple : WorldMin - depth - ripple;
+                // A small vertical lip prevents a visible crack on flat edge
+                // tiles while the outer shore falls softly toward ocean level.
+                float innerHeight = .075f + Mathf.Max(0f, Mathf.Sin(i * .71f)) * .025f;
+                float outerHeight = OceanHeight + .008f;
+                vertices.Add(horizontal ? new Vector3(along, innerHeight, inner) : new Vector3(inner, innerHeight, along));
+                vertices.Add(horizontal ? new Vector3(along, outerHeight, outer) : new Vector3(outer, outerHeight, along));
+            }
+            for (int i = 0; i < segments; i++)
+            {
+                int a = start + i * 2;
+                triangles.Add(a); triangles.Add(a + 2); triangles.Add(a + 1);
+                triangles.Add(a + 1); triangles.Add(a + 2); triangles.Add(a + 3);
+            }
+        }
+
         private Material CreateMaterial(Color color, float metallic, float smoothness)
         {
             Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
@@ -145,6 +208,7 @@ namespace Isoperia.Unity
             RenderSettings.fogDensity = priorFogDensity;
             RenderSettings.ambientLight = priorAmbient;
             if (oceanMesh != null) Destroy(oceanMesh);
+            if (shorelineMesh != null) Destroy(shorelineMesh);
             if (coastMesh != null) Destroy(coastMesh);
             for (int i = 0; i < materials.Count; i++) if (materials[i] != null) Destroy(materials[i]);
         }
