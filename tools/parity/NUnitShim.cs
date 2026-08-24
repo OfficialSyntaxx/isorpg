@@ -91,6 +91,12 @@ namespace NUnit.Framework
                 $"Expected the collection to contain:\n  {Show(expected)}\nBut it did not.{Msg(message, args)}");
         }
 
+        public static void IsNotEmpty(string value, string message = null, params object[] args)
+        {
+            if (!string.IsNullOrEmpty(value)) return;
+            throw new AssertionException($"Expected a non-empty string but got {Show(value)}.{Msg(message, args)}");
+        }
+
         public static void DoesNotThrow(Action code)
         {
             if (code == null) throw new ArgumentNullException(nameof(code));
