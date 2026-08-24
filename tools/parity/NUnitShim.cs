@@ -80,6 +80,17 @@ namespace NUnit.Framework
             throw new AssertionException($"Expected {typeof(TException).Name} but nothing was thrown.");
         }
 
+        /// <summary>NUnit's Assert.Contains(expected, collection).</summary>
+        public static void Contains(object expected, IEnumerable collection, string message = null, params object[] args)
+        {
+            if (collection != null)
+                foreach (object o in collection)
+                    if (ValuesEqual(o, expected)) return;
+
+            throw new AssertionException(
+                $"Expected the collection to contain:\n  {Show(expected)}\nBut it did not.{Msg(message, args)}");
+        }
+
         public static void DoesNotThrow(Action code)
         {
             if (code == null) throw new ArgumentNullException(nameof(code));

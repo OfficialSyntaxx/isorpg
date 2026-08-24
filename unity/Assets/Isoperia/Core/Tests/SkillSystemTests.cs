@@ -66,6 +66,7 @@ namespace Isoperia.Core.Tests
                 ["quests"] = @"{""QUESTS"":[{""id"":""q""}]}",
                 ["farming"] = @"{""SEEDS"":{""s"":{}},""SEED_IDS"":[""s""]}",
                 ["clues"] = @"{""CLUE_TIERS"":{""easy"":{}},""CLUE_TIER_LIST"":[""easy""]}",
+                ["shop"] = @"{""STOCK"":[{""itemId"":""potato_seed"",""price"":10}]}",
             };
 
             return ContentDatabase.Load(n => files.TryGetValue(n, out string v) ? v : null);

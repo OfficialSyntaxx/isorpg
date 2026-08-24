@@ -37,6 +37,10 @@
       "bytes": 11749,
       "sha256": "3457f0838e6f946887eafce906f5d9d7ab02fd80ea5179889e752e18aa09cf22"
     },
+    "shop.json": {
+      "bytes": 833,
+      "sha256": "1b1ba73462d7e03f987bb371e003b9c50c4b64a0a5eae9ac2ffb6bf91daaf019"
+    },
     "skills.json": {
       "bytes": 5524,
       "sha256": "7fc41a14b6dc3bb79ba778880240855ba078203adfd6cacefe5fe682195e20ef"

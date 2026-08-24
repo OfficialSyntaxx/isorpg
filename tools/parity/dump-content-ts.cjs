@@ -20,6 +20,9 @@ const N = D("Npcs.js");
 const { QUESTS } = D("Quests.js");
 const { SEEDS, SEED_IDS } = D("Farming.js");
 const { CLUE_TIERS, CLUE_TIER_LIST } = D("Clues.js");
+// STOCK lives in src/data/Shop.ts, extracted out of the ShopSystem so it could
+// be exported at all — see scripts/export-content.cjs.
+const { STOCK } = D("Shop.js");
 
 // quests are Unity-authored and have no TypeScript counterpart — see
 // UNITY_AUTHORED in scripts/export-content.cjs. Excluded on both sides.
@@ -48,6 +51,7 @@ const TABLES = {
   npcs: { VILLAGERS: N.VILLAGERS, CRITTERS: N.CRITTERS, VETERAN_TIERS: N.VETERAN_TIERS, VILLAGER_SPECS: N.VILLAGER_SPECS },
   farming: { SEEDS, SEED_IDS },
   clues: { CLUE_TIERS, CLUE_TIER_LIST },
+  shop: { STOCK },
 };
 
 for (const file of Object.keys(TABLES)) {

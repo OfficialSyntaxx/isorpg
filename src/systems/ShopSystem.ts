@@ -7,6 +7,11 @@ import type { Grid } from "../world/Grid";
 import type { GameState } from "../state/GameState";
 import { ITEMS, itemIconHtml } from "../data/Items";
 import { countItem, addItem, removeItem, type InventoryComponent } from "../components/Inventory";
+// STOCK and the price curves live in src/data/Shop.ts so the Unity content
+// exporter can read them; this file imports three.js and can never be
+// require()d by a build script. Re-exported so existing importers are unchanged.
+import { STOCK, sellMultFor, buyMultFor } from "../data/Shop";
+export { STOCK, sellMultFor, buyMultFor } from "../data/Shop";
 
 export interface ShopStockRow {
   itemId: string;
@@ -29,39 +34,8 @@ export interface ShopSnapshot {
   sellable: ShopSellRow[];
 }
 
-/** What the merchant stocks, with fixed prices (value ×3 for stock goods). */
-const STOCK: { itemId: string; price: number }[] = [
-  // Seeds are the entry point to Farming — without a source it is unreachable.
-  { itemId: "potato_seed", price: 10 },
-  { itemId: "cabbage_seed", price: 36 },
-  { itemId: "redberry_seed", price: 120 },
-  { itemId: "cooked_shrimp", price: 40 },
-  { itemId: "cooked_trout", price: 60 },
- { itemId: "combat_potion", price: 120 },
-  { itemId: "bronze_sword", price: 30 },
-  { itemId: "bronze_2h", price: 55 },
-  { itemId: "shortbow", price: 90 },
-  { itemId: "bronze_helm", price: 60 },
-  { itemId: "bronze_plate", price: 90 },
-  { itemId: "bronze_legs", price: 60 },
-  { itemId: "iron_sword", price: 220 },
-];
-
 const ITEM = (id: string) => ITEMS[id];
 const isCoin = (id: string) => id === "coins";
-
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-
-/** P7.8: sell-price curve — flooding an item with supply drags its price down. */
-export function sellMultFor(supply: number, demand: number): number {
-  return clamp((1 + 0.12 * demand) / (1 + 0.1 * supply), 0.4, 1.5);
-}
-
-/** P7.8: buy-price curve — shop demand + coin hoarding push prices up. */
-export function buyMultFor(supply: number, demand: number, coinCount: number): number {
-  const inflation = 1 + Math.min(0.25, coinCount / 4000);
-  return clamp(((1 + 0.08 * demand) / (1 + 0.05 * supply)) * inflation, 0.6, 1.4);
-}
 
 export class ShopSystem {
   /** Walkable tile the merchant stall sits on (beside the centre). */

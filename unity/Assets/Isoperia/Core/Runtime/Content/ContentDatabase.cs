@@ -38,7 +38,7 @@ namespace Isoperia.Core.Content
         public static readonly string[] RequiredFiles =
         {
             "items", "skills", "combat", "recipes", "buildings",
-            "achievements", "xp", "npcs", "quests", "farming", "clues",
+            "achievements", "xp", "npcs", "quests", "farming", "clues", "shop",
         };
 
         /// <summary>
@@ -61,6 +61,7 @@ namespace Isoperia.Core.Content
                 ["quests"] = new[] { "QUESTS" },
                 ["farming"] = new[] { "SEEDS", "SEED_IDS" },
                 ["clues"] = new[] { "CLUE_TIERS", "CLUE_TIER_LIST" },
+                ["shop"] = new[] { "STOCK" },
             };
 
         private readonly Dictionary<string, JsonValue> _files = new Dictionary<string, JsonValue>();
@@ -167,6 +168,7 @@ namespace Isoperia.Core.Content
         public JsonValue Buildings => Table("buildings", "BUILDINGS");
         public JsonValue Seeds => Table("farming", "SEEDS");
         public JsonValue Quests => Table("quests", "QUESTS");
+        public JsonValue ShopStock => Table("shop", "STOCK");
 
         /// <summary>Ids of a table, in the order the exporter emitted them (sorted).</summary>
         public List<string> IdsOf(string file, string table)

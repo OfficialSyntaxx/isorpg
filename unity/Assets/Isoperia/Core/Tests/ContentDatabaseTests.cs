@@ -41,6 +41,7 @@ namespace Isoperia.Core.Tests
                 ["quests"] = @"{""QUESTS"":{""q"":{}}}",
                 ["farming"] = @"{""SEEDS"":{""s"":{}},""SEED_IDS"":[""s""]}",
                 ["clues"] = @"{""CLUE_TIERS"":{""easy"":{}},""CLUE_TIER_LIST"":[""easy""]}",
+                ["shop"] = @"{""STOCK"":[{""itemId"":""potato_seed"",""price"":10}]}",
             };
         }
 

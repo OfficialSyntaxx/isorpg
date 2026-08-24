@@ -82,6 +82,10 @@ const EXPORTS = {
   "quests.json":       () => pick(D("Quests.js"), ["QUESTS"]),
   "farming.json":      () => pick(D("Farming.js"), ["SEEDS", "SEED_IDS"]),
   "clues.json":        () => pick(D("Clues.js"), ["CLUE_TIERS", "CLUE_TIER_LIST"]),
+  // STOCK was extracted out of src/systems/ShopSystem.ts, which imports three.js
+  // and so can never be require()d here. It was the last piece of content that
+  // would otherwise have had to be hand-transcribed into C#.
+  "shop.json":         () => pick(D("Shop.js"), ["STOCK"]),
 };
 
 function pick(mod, names) {
