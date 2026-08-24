@@ -22,12 +22,27 @@ namespace Isoperia.Unity
         private Transform leftLegTransform;
         private Transform rightLegTransform;
         private Transform heroTransform;
+        private Animator heroAnimator;
         private OpenWorldPlayerController playerController;
         private SkillSystem gathering;
         private WorldCombatRegistry combat;
         private float harvestUntil;
         private float attackUntil;
         private float hitUntil;
+
+        // Conventional controller contract for the owned hero and every future
+        // Humanoid actor. They are queried once at startup so an asset can omit
+        // an optional action without per-frame warnings or parameter spam.
+        private static readonly int SpeedParameter = Animator.StringToHash("Speed");
+        private static readonly int MovingParameter = Animator.StringToHash("IsMoving");
+        private static readonly int GatherTrigger = Animator.StringToHash("Gather");
+        private static readonly int AttackTrigger = Animator.StringToHash("Attack");
+        private static readonly int HitTrigger = Animator.StringToHash("Hit");
+        private bool hasSpeedParameter;
+        private bool hasMovingParameter;
+        private bool hasGatherTrigger;
+        private bool hasAttackTrigger;
+        private bool hasHitTrigger;
 
         public static Transform Create()
         {
@@ -52,6 +67,9 @@ namespace Isoperia.Unity
                 if (animator != null && animator.runtimeAnimatorController != null)
                 {
                     heroTransform = hero.transform;
+                    heroAnimator = animator;
+                    heroAnimator.applyRootMotion = false;
+                    CacheAnimatorParameters();
                     return;
                 }
 
@@ -91,15 +109,7 @@ namespace Isoperia.Unity
             float bob = Mathf.Sin(cycle) * (moving ? .035f : .006f);
             if (heroTransform != null)
             {
-                float now = Time.time;
-                float harvest = now < harvestUntil ? Mathf.Sin(now * 20f) * 14f : 0f;
-                float attack = now < attackUntil ? Mathf.Sin(now * 28f) * 18f : 0f;
-                float recoil = now < hitUntil ? Mathf.Sin(now * 24f) * 8f : 0f;
-                heroTransform.localPosition = new Vector3(0f, bob, 0f);
-                heroTransform.localRotation = Quaternion.Euler(
-                    (moving ? Mathf.Sin(cycle) * 2.5f : 0f) + harvest - recoil,
-                    attack,
-                    0f);
+                DriveHeroAnimator(moving);
                 return;
             }
             if (tunicTransform != null)
@@ -147,9 +157,49 @@ namespace Isoperia.Unity
             }
         }
 
-        private void OnHarvestStarted(IResourceNode _) => harvestUntil = Time.time + .7f;
-        private void OnPlayerAttacked(WorldEnemyNode _) => attackUntil = Time.time + .24f;
-        private void OnPlayerHit(WorldEnemyNode _) => hitUntil = Time.time + .22f;
+        private void OnHarvestStarted(IResourceNode _)
+        {
+            harvestUntil = Time.time + .7f;
+            if (hasGatherTrigger) heroAnimator.SetTrigger(GatherTrigger);
+        }
+
+        private void OnPlayerAttacked(WorldEnemyNode _)
+        {
+            attackUntil = Time.time + .24f;
+            if (hasAttackTrigger) heroAnimator.SetTrigger(AttackTrigger);
+        }
+
+        private void OnPlayerHit(WorldEnemyNode _)
+        {
+            hitUntil = Time.time + .22f;
+            if (hasHitTrigger) heroAnimator.SetTrigger(HitTrigger);
+        }
+
+        private void CacheAnimatorParameters()
+        {
+            if (heroAnimator == null) return;
+            foreach (AnimatorControllerParameter parameter in heroAnimator.parameters)
+            {
+                if (parameter.nameHash == SpeedParameter && parameter.type == AnimatorControllerParameterType.Float)
+                    hasSpeedParameter = true;
+                else if (parameter.nameHash == MovingParameter && parameter.type == AnimatorControllerParameterType.Bool)
+                    hasMovingParameter = true;
+                else if (parameter.nameHash == GatherTrigger && parameter.type == AnimatorControllerParameterType.Trigger)
+                    hasGatherTrigger = true;
+                else if (parameter.nameHash == AttackTrigger && parameter.type == AnimatorControllerParameterType.Trigger)
+                    hasAttackTrigger = true;
+                else if (parameter.nameHash == HitTrigger && parameter.type == AnimatorControllerParameterType.Trigger)
+                    hasHitTrigger = true;
+            }
+        }
+
+        private void DriveHeroAnimator(bool moving)
+        {
+            if (heroAnimator == null) return;
+            float speed = moving ? 1f : 0f;
+            if (hasSpeedParameter) heroAnimator.SetFloat(SpeedParameter, speed, .12f, Time.deltaTime);
+            if (hasMovingParameter) heroAnimator.SetBool(MovingParameter, moving);
+        }
 
         private void OnDestroy()
         {
