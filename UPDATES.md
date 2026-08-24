@@ -1,5 +1,20 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Authoritative safe-return reconciliation
+
+Combat defeat and the Cinder Hollow expedition already reset the Core player
+position to Hearthvale, but the free-moving third-person avatar could remain at
+the old encounter until another input occurred. `OpenWorldPlayerController` now
+checks for a large externally-authored position change before reading input and
+uses its existing safe terrain teleport bridge to reconcile the visual player.
+Normal movement remains visual-to-Core synchronized every frame, so small
+fractional movement never snaps.
+
+**Validation:** Play Mode moved the avatar to `(78,65)`, applied the same Core
+town reset used by failure systems, and confirmed the avatar reconciled to
+Hearthvale `(63.5, 0.21, 63.5)` on the following frame with zero Console
+errors. EditMode tests passed **379/379**.
+
 ## 2026-08-24 · Grounded controller recovery
 
 The third-person player no longer depends on a `CharacterController` against

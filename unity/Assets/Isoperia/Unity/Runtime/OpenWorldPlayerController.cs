@@ -41,6 +41,7 @@ namespace Isoperia.Unity
         {
             if (cameraTransform == null) cameraTransform = Camera.main != null ? Camera.main.transform : null;
             if (cameraTransform == null) return;
+            if (ApplyAuthoritativeRelocation()) return;
             Vector2 input = Keyboard.current == null ? Vector2.zero : new Vector2(
                 (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0),
                 (Keyboard.current.wKey.isPressed ? 1 : 0) - (Keyboard.current.sKey.isPressed ? 1 : 0));
@@ -71,6 +72,21 @@ namespace Isoperia.Unity
                 transform.position = candidate;
             }
             SyncStatePosition();
+        }
+
+        private bool ApplyAuthoritativeRelocation()
+        {
+            var saved = SaveDriver.Instance?.State?.Player?.Pos;
+            if (saved == null) return false;
+
+            // Normal movement writes the precise visual coordinates back every
+            // frame. Combat defeat and expedition failure deliberately replace
+            // them with a safe Core tile, however, so only reconcile a large
+            // difference to avoid fighting ordinary fractional movement.
+            if (Mathf.Abs(transform.position.x - (float)saved.Wx) <= 1.5f &&
+                Mathf.Abs(transform.position.z - (float)saved.Wz) <= 1.5f) return false;
+
+            return TryTeleportTo(saved.Gx, saved.Gy);
         }
 
         private static Vector2 ReadTouchMove()
