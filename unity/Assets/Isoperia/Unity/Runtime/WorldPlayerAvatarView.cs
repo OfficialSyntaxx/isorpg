@@ -30,6 +30,8 @@ namespace Isoperia.Unity
         private float harvestUntil;
         private float attackUntil;
         private float hitUntil;
+        private LineRenderer actionTrail;
+        private Material actionTrailMaterial;
 
         // Conventional controller contract for the owned hero and every future
         // Humanoid actor. They are queried once at startup so an asset can omit
@@ -127,6 +129,7 @@ namespace Isoperia.Unity
             if (heroTransform != null)
             {
                 DriveHeroAnimator(moving);
+                UpdateActionTrail();
                 return;
             }
             if (tunicTransform != null)
@@ -178,18 +181,65 @@ namespace Isoperia.Unity
         {
             harvestUntil = Time.time + .7f;
             if (hasGatherTrigger) heroAnimator.SetTrigger(GatherTrigger);
+            ShowActionTrail(new Color(.38f, 1f, .54f, 1f));
         }
 
         private void OnPlayerAttacked(WorldEnemyNode _)
         {
             attackUntil = Time.time + .24f;
             if (hasAttackTrigger) heroAnimator.SetTrigger(AttackTrigger);
+            ShowActionTrail(new Color(1f, .62f, .22f, 1f));
         }
 
         private void OnPlayerHit(WorldEnemyNode _)
         {
             hitUntil = Time.time + .22f;
             if (hasHitTrigger) heroAnimator.SetTrigger(HitTrigger);
+            Camera.main?.GetComponent<OpenWorldCameraController>()?.AddShake(.035f);
+        }
+
+        private void ShowActionTrail(Color color)
+        {
+            if (heroTransform == null) return;
+            if (actionTrail == null)
+            {
+                GameObject trail = new GameObject("HeroActionTrail");
+                trail.transform.SetParent(heroTransform, false);
+                actionTrail = trail.AddComponent<LineRenderer>();
+                actionTrail.useWorldSpace = true;
+                actionTrail.positionCount = 7;
+                actionTrail.widthCurve = AnimationCurve.EaseInOut(0f, .02f, 1f, .10f);
+                actionTrail.numCapVertices = 3;
+                Shader shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+                actionTrailMaterial = new Material(shader);
+                actionTrail.sharedMaterial = actionTrailMaterial;
+            }
+            actionTrailMaterial.color = color;
+            actionTrail.startColor = color;
+            actionTrail.endColor = new Color(color.r, color.g, color.b, 0f);
+            actionTrail.gameObject.SetActive(true);
+        }
+
+        private void UpdateActionTrail()
+        {
+            if (actionTrail == null) return;
+            float until = Mathf.Max(harvestUntil, attackUntil);
+            if (Time.time >= until)
+            {
+                actionTrail.gameObject.SetActive(false);
+                return;
+            }
+            float duration = attackUntil > harvestUntil ? .24f : .7f;
+            float progress = 1f - Mathf.Clamp01((until - Time.time) / duration);
+            Vector3 origin = heroTransform.position + Vector3.up * .78f;
+            Vector3 forward = heroTransform.forward;
+            for (int i = 0; i < actionTrail.positionCount; i++)
+            {
+                float t = i / (float)(actionTrail.positionCount - 1);
+                float angle = Mathf.Lerp(-62f, 62f, t) * Mathf.Deg2Rad;
+                Vector3 direction = Quaternion.AngleAxis(angle, Vector3.up) * forward;
+                actionTrail.SetPosition(i, origin + direction * Mathf.Lerp(.28f, .9f, progress));
+            }
         }
 
         private void CacheAnimatorParameters()
@@ -228,6 +278,7 @@ namespace Isoperia.Unity
             }
             if (tunic != null) Destroy(tunic);
             if (skin != null) Destroy(skin);
+            if (actionTrailMaterial != null) Destroy(actionTrailMaterial);
         }
     }
 }

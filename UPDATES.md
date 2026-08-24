@@ -1,5 +1,18 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Player action readability pass
+
+Successful gathering and attacks now draw a short, world-space action arc from
+the animated hero, coloured green for gathering and amber for attacks. Taking
+damage produces a restrained camera shake. These are bounded, lazily-created
+presentation objects: they listen to the existing Core-facing events, allocate
+nothing in the frame loop, and do not affect combat results, input, movement,
+or saves.
+
+**Validation:** Unity recompiled the runtime scripts; a fresh Play Mode launch
+reported zero Console errors. The existing target ring, enemy reaction, owned
+SFX bridge, and action Animator triggers remain active alongside this pass.
+
 ## 2026-08-24 · Animated owned hero verified in the playable world
 
 Blender 5.2 LTS is installed and the owned `hero_rigged` mesh now ships as

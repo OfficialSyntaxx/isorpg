@@ -13,6 +13,7 @@ namespace Isoperia.Unity
         private float pitch = 20f;
         private float distance = 8.5f;
         private float previousPinchDistance;
+        private float shakeAmplitude;
 
         private void Start()
         {
@@ -38,8 +39,21 @@ namespace Isoperia.Unity
             }
             Quaternion orbit = Quaternion.Euler(pitch, yaw, 0f);
             Vector3 focus = target.position + Vector3.up * 1.15f;
-            transform.position = focus - orbit * Vector3.forward * distance;
+            Vector3 position = focus - orbit * Vector3.forward * distance;
+            if (shakeAmplitude > 0f)
+            {
+                float time = Time.unscaledTime * 46f;
+                position += new Vector3(Mathf.Sin(time * 1.31f), Mathf.Cos(time), 0f) * shakeAmplitude;
+                shakeAmplitude = Mathf.Max(0f, shakeAmplitude - Time.unscaledDeltaTime * .46f);
+            }
+            transform.position = position;
             transform.rotation = orbit;
+        }
+
+        /// <summary>Presentation-only impact response; it never changes camera orbit state.</summary>
+        public void AddShake(float amount)
+        {
+            shakeAmplitude = Mathf.Clamp(shakeAmplitude + amount, 0f, .12f);
         }
 
         private void HandleTouchCamera()
