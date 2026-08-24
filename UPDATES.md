@@ -1,5 +1,21 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · CC0 mainland ground-detail pass
+
+The continuous mainland terrain now layers a restrained, world-space 1K ground
+detail over the existing vertex-colour biome surface. It breaks up the broad
+flat colour fields at player scale while terrain type, biome colour, Core
+coordinates, collider geometry, and movement authority remain unchanged.
+
+The texture is Poly Haven's **Forest Ground 01**, imported only as its compact
+1K diffuse map under its CC0 license and recorded in `docs/ASSET_CREDITS.md`.
+It is deliberately a modest WebGL-safe detail layer, not a claim that one
+texture replaces the needed district-scale architecture and vegetation pass.
+
+**Validation:** live Play Mode terrain review showed the detail material
+assigned to the mainland mesh with zero Unity Console errors. EditMode tests
+passed **379/379**.
+
 ## 2026-08-24 · Readable mainland survey markers
 
 The Map panel now layers named markers for Hearthvale and each outer district

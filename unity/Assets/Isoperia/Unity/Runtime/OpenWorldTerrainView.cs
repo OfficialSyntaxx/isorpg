@@ -12,6 +12,7 @@ namespace Isoperia.Unity
         private Mesh terrainMesh;
         private Material[] terrainMaterials;
         private const string TerrainMaterialResource = "Materials/IsoperiaTerrainVertexColor";
+        private const string GroundDetailResource = "Textures/PolyHaven/forrest_ground_01_diff_1k";
 
         private void Awake()
         {
@@ -45,6 +46,8 @@ namespace Isoperia.Unity
                 Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             Material terrainMaterial = terrainTemplate != null ? new Material(terrainTemplate) : new Material(terrainShader);
             terrainMaterial.enableInstancing = true;
+            Texture2D groundDetail = Resources.Load<Texture2D>(GroundDetailResource);
+            if (groundDetail != null) terrainMaterial.SetTexture("_GroundDetail", groundDetail);
             terrainMaterials = new[] { terrainMaterial };
             GetComponent<MeshRenderer>().sharedMaterials = terrainMaterials;
         }

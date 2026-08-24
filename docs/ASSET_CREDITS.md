@@ -6,6 +6,7 @@ there is a row here with a clear owner/source and license status.
 
 | Asset | Live use | Owner/source | License status | Technical review |
 | --- | --- | --- | --- | --- |
+| `forrest_ground_01_diff_1k.jpg` | Restrained world-space terrain detail | [Poly Haven — Forest Ground 01](https://polyhaven.com/a/forrest_ground_01) | CC0 | Imported at 1K only for the browser/WebGL budget; vertex colours remain the gameplay-facing biome authority. |
 | Kenney Fantasy Town Kit 2.0 subset | Hearthvale roads, buildings, market and props | Kenney / curated project subset | CC0; bundled `LICENSE.txt` retained beside the asset | FBX imports, URP Lit materials, static use only |
 | `villager.glb` | Hearthvale service NPCs | Isoperia owned model bundle | Owned project asset; no third-party purchase or attribution requirement recorded | glTFast import verified; child-renderer model, root interaction capsule, WebGL build validation pending M6 |
 | `hero_animated.fbx` (from `hero_rigged.glb`) | Player avatar, idle/walk/gather/attack/hit | Isoperia-owned mesh and Blender-authored rig-native clips (`tools/author_hero_animations.py`) | Original project art; no paid or third-party animation content is shipped | Imported Generic rig with `HeroController`; live Play Mode hierarchy and Animator verified, WebGL validation remains in the next release pass |

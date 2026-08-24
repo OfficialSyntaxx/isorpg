@@ -3,6 +3,8 @@ Shader "Isoperia/Terrain Vertex Color"
     Properties
     {
         _AmbientStrength ("Ambient Strength", Range(0, 1)) = 0.42
+        _GroundDetail ("Ground Detail (CC0)", 2D) = "gray" {}
+        _GroundDetailStrength ("Ground Detail Strength", Range(0, 1)) = 0.24
     }
 
     SubShader
@@ -22,7 +24,11 @@ Shader "Isoperia/Terrain Vertex Color"
 
             CBUFFER_START(UnityPerMaterial)
                 half _AmbientStrength;
+                half _GroundDetailStrength;
             CBUFFER_END
+
+            TEXTURE2D(_GroundDetail);
+            SAMPLER(sampler_GroundDetail);
 
             struct Attributes
             {
@@ -55,10 +61,16 @@ Shader "Isoperia/Terrain Vertex Color"
                 half3 normalWS = normalize(input.normalWS);
                 Light light = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half diffuse = saturate(dot(normalWS, light.direction)) * light.shadowAttenuation;
+                // A restrained world-space detail pass breaks up broad colour
+                // fields while vertex colours remain the biome/terrain authority.
+                half3 detail = SAMPLE_TEXTURE2D(_GroundDetail, sampler_GroundDetail,
+                    input.positionWS.xz * 0.16h).rgb;
+                half3 albedo = lerp(input.color.rgb, input.color.rgb * (detail * 1.34h),
+                    _GroundDetailStrength);
                 // Keep the palette authored in vertex colours intact under the
                 // bright daylight rig; the terrain should not wash to white.
                 half3 lighting = _AmbientStrength.xxx + light.color * (diffuse * 0.55h);
-                return half4(input.color.rgb * lighting, 1.0h);
+                return half4(albedo * lighting, 1.0h);
             }
             ENDHLSL
         }
