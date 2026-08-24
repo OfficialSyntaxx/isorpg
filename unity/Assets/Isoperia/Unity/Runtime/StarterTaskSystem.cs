@@ -1,42 +1,43 @@
 using System;
 using Isoperia.Core.Content;
-using Isoperia.Core.Save;
+using Isoperia.Core.Sim;
 using Isoperia.Core.State;
+using Isoperia.Core.Systems;
 
 namespace Isoperia.Unity
 {
-    /// <summary>Completes the small starter task set from existing persisted state.</summary>
+    /// <summary>
+    /// Thin delegate to <see cref="Isoperia.Core.Systems.QuestSystem"/>.
+    ///
+    /// The logic that used to live here referenced no UnityEngine type at all —
+    /// it was pure simulation sitting in the engine assembly, where the
+    /// noEngineReferences harness could not reach it and so it had no tests. It
+    /// moved to Core, where it is now covered along with the Caves stage machine
+    /// that had never been ported.
+    ///
+    /// This wrapper keeps the exact public surface SaveDriver already uses
+    /// (constructor, Tick, Completed), so no call site changed. Prefer the Core
+    /// type directly in new code; this exists so the move needed no edits in
+    /// files that cannot be compile-checked outside the Editor.
+    /// </summary>
     public sealed class StarterTaskSystem
     {
-        private readonly GameState state;
-        private readonly ContentDatabase content;
+        private readonly QuestSystem _quests;
+
+        /// <summary>Fires with the completed quest's TITLE, as before.</summary>
         public event Action<string> Completed;
 
         public StarterTaskSystem(GameState state, ContentDatabase content)
-        { this.state = state ?? throw new ArgumentNullException(nameof(state)); this.content = content ?? throw new ArgumentNullException(nameof(content)); }
-
-        public void Tick(long _)
         {
-            foreach (JsonValue task in content.Quests.Items)
-            {
-                string id = task["id"].AsString();
-                string type = task["starterType"].AsString();
-                if (string.IsNullOrEmpty(type) || state.Player.Journal.Contains(id) || !IsComplete(task, type)) continue;
-                state.Player.Journal.Add(id);
-                foreach (JsonValue reward in task["rewards"].Items)
-                    state.Player.Inventory.Add(reward["itemId"].AsString(), (int)reward["qty"].AsNumber(1));
-                Completed?.Invoke(task["title"].AsString("Task complete"));
-            }
+            // Reward rows for the starter tasks are fixed quantities, so the
+            // random source is only reached by the story quests' min/max ranges.
+            _quests = new QuestSystem(state, content, new Mulberry32Random(unchecked((int)DateTime.UtcNow.Ticks)));
+            _quests.Completed += (id, title) => Completed?.Invoke(title);
         }
 
-        private bool IsComplete(JsonValue task, string type)
-        {
-            string target = task["target"].AsString();
-            int count = (int)task["count"].AsNumber(1);
-            if (type == "inventory") return state.Player.Inventory.Count(target) >= count;
-            if (type == "kills") { state.Player.MetaKills.TryGetValue(target, out double kills); return kills >= count; }
-            if (type == "journal") return state.Player.Journal.Contains(target);
-            return false;
-        }
+        /// <summary>Exposed so callers can reach the stage machine and rewards.</summary>
+        public QuestSystem Quests => _quests;
+
+        public void Tick(long _) => _quests.Tick();
     }
 }
