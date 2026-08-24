@@ -73,7 +73,7 @@ in Unity Build Profiles before public mobile release.
 ## Latest candidate
 
 On 2026-08-24 the current mainland pass rebuilt successfully as
-`20260824-201419-66587a16`, **49.49 MB**. It includes the continuous terrain
+`20260824-202744-3aa1a8fc`, **49.52 MB**. It includes the continuous terrain
 shader, grounded travel routes, ocean/horizon surround, owned ore veins,
 attunable return-waystones, and Cinder Hollow’s owned gate. The build reported
 `Succeeded` with Brotli, exceptions None, high stripping, 320 MB initial

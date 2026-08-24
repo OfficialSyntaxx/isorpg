@@ -19,8 +19,9 @@ Console errors. EditMode tests passed **379/379**.
 ## 2026-08-24 · Current mainland WebGL candidate
 
 The current `main` source, including the owned ore veins, attunable return
-waystones, and Cinder Hollow gate, built successfully as WebGL candidate
-`20260824-201419-66587a16`. The output is **49.49 MB** with Brotli,
+waystones, Cinder Hollow gate, and grounded third-person recovery, built
+successfully as WebGL candidate `20260824-202744-3aa1a8fc`. The output is
+**49.52 MB** with Brotli,
 exceptions disabled, high stripping, a 320 MB initial heap, the Isoperia PWA
 template, and a cache-stamped service worker.
 
