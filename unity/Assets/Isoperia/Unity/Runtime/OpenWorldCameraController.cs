@@ -9,9 +9,9 @@ namespace Isoperia.Unity
     public sealed class OpenWorldCameraController : MonoBehaviour
     {
         private Transform target;
-        private float yaw = 35f;
-        private float pitch = 20f;
-        private float distance = 8.5f;
+        private float yaw = 38f;
+        private float pitch = 16f;
+        private float distance = 7.25f;
         private float previousPinchDistance;
         private float shakeAmplitude;
 
@@ -39,7 +39,9 @@ namespace Isoperia.Unity
             }
             Quaternion orbit = Quaternion.Euler(pitch, yaw, 0f);
             Vector3 focus = target.position + Vector3.up * 1.15f;
-            Vector3 position = focus - orbit * Vector3.forward * distance;
+            Vector3 desiredOffset = -(orbit * Vector3.forward) * distance;
+            float resolvedDistance = ResolveObstructionDistance(focus, desiredOffset, distance);
+            Vector3 position = focus + desiredOffset.normalized * resolvedDistance;
             if (shakeAmplitude > 0f)
             {
                 float time = Time.unscaledTime * 46f;
@@ -54,6 +56,17 @@ namespace Isoperia.Unity
         public void AddShake(float amount)
         {
             shakeAmplitude = Mathf.Clamp(shakeAmplitude + amount, 0f, .12f);
+        }
+
+        private float ResolveObstructionDistance(Vector3 focus, Vector3 desiredOffset, float desiredDistance)
+        {
+            if (Physics.SphereCast(focus, .18f, desiredOffset.normalized, out RaycastHit hit, desiredDistance,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) &&
+                (target == null || !hit.collider.transform.IsChildOf(target)))
+            {
+                return Mathf.Clamp(hit.distance - .14f, 2.1f, desiredDistance);
+            }
+            return desiredDistance;
         }
 
         private void HandleTouchCamera()

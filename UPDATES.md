@@ -1,5 +1,23 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Grounded third-person travel pass
+
+The perspective controller now has a closer default third-person framing,
+camera obstruction handling, walk/sprint tuning, and terrain-safe travel.
+Holding **Shift** on keyboard or pressing the gamepad left-stick button sprints;
+touch remains a stable walking control. Before a movement step is committed, the
+presentation controller rejects water and unrealistic terrain-height jumps, so
+the player cannot walk across the coast or climb a visual cliff while the Core
+position and save continue to be updated only from successful travel.
+
+The camera now spherecasts from its focus point toward the desired orbit
+position and shortens only when scenery blocks the view. This keeps the player
+visible in dense landmarks without allocations or a second camera system.
+
+**Validation:** Unity recompiled the camera and player controllers; a fresh
+Play Mode run produced a third-person town screenshot with **zero Console
+errors**. The full EditMode suite follows before this milestone is published.
+
 ## 2026-08-24 · WebGL candidate with terrain-shader retention
 
 The continuous mainland terrain shader now has an authored Resources material

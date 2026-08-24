@@ -19,8 +19,12 @@ namespace Isoperia.Unity
         // owner explicit instead of relying on the disabled isometric prototype.
         private const float TouchMoveArea = .48f;
         private const float TouchMoveRadius = 92f;
+        private const float WalkSpeed = 4.35f;
+        private const float SprintSpeed = 6.1f;
+        private const float MaxTerrainRise = .52f;
 
         public bool IsMoving { get; private set; }
+        public bool IsSprinting { get; private set; }
 
         private void Awake()
         {
@@ -43,7 +47,15 @@ namespace Isoperia.Unity
             input = Vector2.ClampMagnitude(input, 1f);
             Vector3 forward = Vector3.ProjectOnPlane(cameraTransform.forward, Vector3.up).normalized;
             Vector3 right = Vector3.ProjectOnPlane(cameraTransform.right, Vector3.up).normalized;
-            Vector3 move = (forward * input.y + right * input.x) * 5f;
+            Vector3 moveDirection = forward * input.y + right * input.x;
+            IsSprinting = WantsSprint(input);
+            float speed = IsSprinting ? SprintSpeed : WalkSpeed;
+            Vector3 move = moveDirection * speed;
+            if (!CanStepTo(transform.position, transform.position + move * Time.deltaTime))
+            {
+                move = Vector3.zero;
+                IsSprinting = false;
+            }
             IsMoving = move.sqrMagnitude > .01f;
             if (IsMoving) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), 14f * Time.deltaTime);
             verticalSpeed = controller.isGrounded ? -.5f : verticalSpeed + Physics.gravity.y * Time.deltaTime;
@@ -64,6 +76,31 @@ namespace Isoperia.Unity
 
             Vector2 delta = touch.position.ReadValue() - start;
             return Vector2.ClampMagnitude(delta / TouchMoveRadius, 1f);
+        }
+
+        private static bool WantsSprint(Vector2 input)
+        {
+            if (input.sqrMagnitude < .01f) return false;
+            if (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed))
+                return true;
+            return Gamepad.current != null && Gamepad.current.leftStickButton.isPressed;
+        }
+
+        private static bool CanStepTo(Vector3 sourcePosition, Vector3 candidate)
+        {
+            CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
+            int currentX = Mathf.Clamp(Mathf.FloorToInt(candidate.x), 0, grid.Width - 1);
+            int currentZ = Mathf.Clamp(Mathf.FloorToInt(candidate.z), 0, grid.Height - 1);
+            var destination = grid.At(currentX, currentZ);
+            if (destination == null || destination.TerrainType == Isoperia.Core.World.TerrainType.Water) return false;
+
+            int sourceX = Mathf.Clamp(Mathf.FloorToInt(sourcePosition.x), 0, grid.Width - 1);
+            int sourceZ = Mathf.Clamp(Mathf.FloorToInt(sourcePosition.z), 0, grid.Height - 1);
+            var source = grid.At(sourceX, sourceZ);
+            if (source == null) return false;
+            float sourceHeight = OpenWorldTerrainView.SurfaceHeight(source, sourceX + .5f, sourceZ + .5f);
+            float destinationHeight = OpenWorldTerrainView.SurfaceHeight(destination, candidate.x, candidate.z);
+            return Mathf.Abs(destinationHeight - sourceHeight) <= MaxTerrainRise;
         }
 
         private void Start()
@@ -90,6 +127,7 @@ namespace Isoperia.Unity
         private void OnDisable()
         {
             IsMoving = false;
+            IsSprinting = false;
         }
     }
 }
