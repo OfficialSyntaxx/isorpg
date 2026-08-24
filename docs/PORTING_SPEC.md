@@ -1,8 +1,8 @@
 # Isoperia Porting Spec — TypeScript/three.js → Unity C#
 
-**Status:** authoritative. Where this document and the Unity implementation disagree,
-this document wins. Where this document and `src/` (tag `web-final`) disagree, `src/` wins
-and this document is a bug.
+**Status:** authoritative **except where §0.1 says the game has deliberately moved on.**
+Where this document and the Unity implementation disagree, this document wins. Where this
+document and `src/` (tag `web-final`) disagree, `src/` wins and this document is a bug.
 
 **Purpose.** The Unity migration ports game *systems* unchanged and rebuilds *visuals* from
 scratch. This file pins the behaviour that must survive the port, with the exact constants
@@ -13,6 +13,37 @@ Companion documents:
 - `WIKI.md` — auto-generated content/balance reference (items, monsters, recipes, drops).
   Regenerate with `npm run wiki` before trusting it.
 - `docs/PORTING_SPEC.md` (this file) — mechanics and contracts.
+
+---
+
+## 0.1 Superseded by later design decisions — READ BEFORE PORTING ANYTHING
+
+This spec was written at Phase 0 to pin the frozen web build. Since then the Unity game has
+deliberately diverged in ways that make parts of it **wrong as a target**, while the rest is
+still the contract for the systems not yet ported.
+
+It is annotated rather than rewritten, because the original numbers are still the record of
+what the TypeScript did — and the remaining ports (Farm, Quest, Npc, Dungeon, Shop, Labour,
+Clue, Meta, Map) are ports *of that code*.
+
+| This spec says | The game now does | Where |
+|---|---|---|
+| `WORLD_SIZE = 42` | **126×126** (`Grid.WorldSize`); 42 survives as `LegacyWorldSize` for save migration | §3 |
+| identical 42×42 terrain in C# and TS | **not achievable and not wanted** — the worlds differ by design | §3.1, §10.7 |
+| `SAVE_VERSION = "1.1.0"` | **`"2.2.0"`**; anything older triggers the mainland migration | §8 |
+| — | migration relocates the player to the new town centre, remaps buildings through `MainlandTownCoordinate`, and clears clue / discovered / explored / fastTravel | §8 |
+| — | saves carry a `resources` key (resource-node depletion) that the web build never had | §8 |
+| the wiki is generated from `src/data` | quests are now authored directly in the Unity JSON (`UNITY_AUTHORED` in `scripts/export-content.cjs`) and are **absent from the wiki** | §10 |
+
+**How determinism is pinned now.** §10.7 asks for a C#-vs-TypeScript tile diff. That check is
+retired. World generation is instead pinned against a committed C# golden dump —
+`npm run verify:world`, `tools/parity/golden/world-126x126.txt`. That is a weaker guarantee
+and the script says so: it proves the world has not *changed*, not that it is *correct*.
+
+**What is still fully authoritative:** the 600 ms tick, the camera geometry, `mulberry32`
+itself and its draw-order traps, the XP and mastery curves, and every combat formula. Those
+are still verified against the TypeScript on every run (`npm run verify:parity` — XP 121
+lines, Combat 1,338 lines) and have never drifted.
 
 ---
 
@@ -98,7 +129,7 @@ trusting the number. Shadow projection must be checked at this angle specificall
 Source: `src/world/Grid.ts`
 
 ```
-WORLD_SIZE = 42          (42×42 tiles)
+WORLD_SIZE = 42          (42×42 tiles)   ← SUPERSEDED: now 126×126, see §0.1
 GRID_CHUNK = 6           (7×7 chunks)
 ```
 
@@ -119,8 +150,10 @@ function mulberry32(a):
 integers with wrapping. Use `int`/`uint` with `unchecked{}` and implement `imul` as
 `unchecked((int)((long)a * (long)b))`. `>>>` is `>>` on a `uint`.
 
-Determinism is a hard requirement: the same seed must produce the identical 42×42 terrain
-in C# as in TS. This is a test (§10), not an aspiration.
+Determinism is a hard requirement — but **no longer against the TypeScript**. The worlds are
+different sizes by design (§0.1), so the same seed cannot and should not produce the same
+terrain in both. `mulberry32` itself must still be bit-exact, and world generation is pinned
+against a committed C# golden dump instead: `npm run verify:world`.
 
 #### ⚠ Draw-order trap
 
@@ -376,7 +409,7 @@ at full HP; damage is `slamDmg` if set, else `6 + floor(random()·5)` (i.e. 6–
 Sources: `src/systems/SaveSystem.ts`, `src/utils/Sanitizer.ts`, `src/state/GameState.ts`
 
 ```
-SAVE_VERSION          = "1.1.0"
+SAVE_VERSION          = "1.1.0"   ← SUPERSEDED: now "2.2.0", see §0.1
 AUTOSAVE_EVERY_TICKS  = 20        (~12 s)
 OFFLINE_CAP           = 8 h       (12 h with a Town Hall)
 DAY_START_MINUTE      = 10·60     (new game opens at 10:00)
@@ -491,8 +524,10 @@ These are the acceptance criteria for Phase 2. They are direct translations of
 5. **Recipes** — every recipe's inputs and outputs reference real item ids.
 6. **A\*** — known paths on a fixture grid, no corner-cutting, `allowAdjacentIfBlocked`
    reaches the adjacent tile, unreachable returns null.
-7. **World-gen determinism** — dump the 42×42 terrain grid from the TS build and from C#
-   for the same seed and diff them. Byte-identical, or `mulberry32` is wrong.
+7. **World-gen determinism** — ~~dump the 42×42 terrain grid from the TS build and from C#
+   for the same seed and diff them~~. **Retired** (§0.1): the worlds differ by design. Now a
+   committed C# golden dump of the 126×126 world, `npm run verify:world`, mutation-tested
+   against a removed PRNG draw, a 1e-9 coefficient change, and a reordered stream.
 8. **Save round-trip** — serialize → deserialize → deep-equal; sanitizer handles a
    truncated save, an unknown-version save, and a save with an out-of-range value.
 9. **Offline progression** — 0 h, 4 h, 8 h, and 30 h elapsed produce the expected capped
