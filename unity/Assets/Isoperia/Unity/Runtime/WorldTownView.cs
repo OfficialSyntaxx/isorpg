@@ -149,14 +149,7 @@ namespace Isoperia.Unity
                         name.Contains("Roof") ? new Color(.12f, .16f, .20f) :
                         name.Contains("Iron") ? new Color(.12f, .15f, .18f) :
                         name.Contains("Ember") ? new Color(1f, .20f, .025f) : new Color(.20f, .22f, .25f);
-                    Material material = new Material(shader) { color = color };
-                    if (name.Contains("Ember"))
-                    {
-                        material.EnableKeyword("_EMISSION");
-                        material.SetColor("_EmissionColor", color * 2f);
-                    }
-                    runtimeMaterials.Add(material);
-                    palette[i] = material;
+                    palette[i] = WorldMaterialCache.Lit("Forge_" + name, color, name.Contains("Ember"));
                 }
                 renderer.sharedMaterials = palette;
             }
@@ -261,14 +254,7 @@ namespace Isoperia.Unity
                     Color color = name.Contains("Stone") ? new Color(.20f, .22f, .24f) :
                         name.Contains("Wood") ? new Color(.20f, .07f, .02f) :
                         name.Contains("Ember") ? new Color(.88f, .18f, .025f) : new Color(1f, .46f, .04f);
-                    Material material = new Material(shader) { color = color };
-                    if (!name.Contains("Stone") && !name.Contains("Wood"))
-                    {
-                        material.EnableKeyword("_EMISSION");
-                        material.SetColor("_EmissionColor", color * 1.8f);
-                    }
-                    runtimeMaterials.Add(material);
-                    palette[i] = material;
+                    palette[i] = WorldMaterialCache.Lit("Campfire_" + name, color, !name.Contains("Stone") && !name.Contains("Wood"));
                 }
                 renderer.sharedMaterials = palette;
             }

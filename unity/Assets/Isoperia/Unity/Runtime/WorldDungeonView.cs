@@ -24,12 +24,9 @@ namespace Isoperia.Unity
 
         private void Start()
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            glow = new Material(shader) { color = new Color(1f, .34f, .06f, 1f) };
-            glow.EnableKeyword("_EMISSION");
-            glow.SetColor("_EmissionColor", new Color(1f, .08f, .01f) * 2.4f);
-            basalt = new Material(shader) { color = new Color(.10f, .075f, .09f, 1f) };
-            ash = new Material(shader) { color = new Color(.22f, .14f, .12f, 1f) };
+            glow = WorldMaterialCache.Lit("CinderPoolGlow", new Color(1f, .34f, .06f, 1f), true);
+            basalt = WorldMaterialCache.Lit("CinderBasalt", new Color(.10f, .075f, .09f, 1f));
+            ash = WorldMaterialCache.Lit("CinderAsh", new Color(.22f, .14f, .12f, 1f));
             foreach (Vector3 point in pools) CreatePool(point);
             CreateRouteMarkers();
             CreateEntrance();
@@ -80,15 +77,9 @@ namespace Isoperia.Unity
 
         private void ApplyGatePalette(GameObject gate)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            if (gateBasalt == null) gateBasalt = new Material(shader) { color = new Color(.17f, .095f, .15f) };
-            if (gateDarkness == null) gateDarkness = new Material(shader) { color = new Color(.012f, .010f, .018f) };
-            if (gateRune == null)
-            {
-                gateRune = new Material(shader) { color = new Color(1f, .20f, .025f) };
-                gateRune.EnableKeyword("_EMISSION");
-                gateRune.SetColor("_EmissionColor", new Color(1f, .05f, .005f) * 2.6f);
-            }
+            gateBasalt = WorldMaterialCache.Lit("CinderGateBasalt", new Color(.17f, .095f, .15f));
+            gateDarkness = WorldMaterialCache.Lit("CinderGateDarkness", new Color(.012f, .010f, .018f));
+            gateRune = WorldMaterialCache.Lit("CinderGateRune", new Color(1f, .20f, .025f), true);
             foreach (Renderer renderer in gate.GetComponentsInChildren<Renderer>(true))
             {
                 Material[] source = renderer.sharedMaterials;
@@ -138,12 +129,7 @@ namespace Isoperia.Unity
 
         private void OnDestroy()
         {
-            if (glow != null) Destroy(glow);
-            if (basalt != null) Destroy(basalt);
-            if (ash != null) Destroy(ash);
-            if (gateBasalt != null) Destroy(gateBasalt);
-            if (gateRune != null) Destroy(gateRune);
-            if (gateDarkness != null) Destroy(gateDarkness);
+            // Shared palette materials are owned by WorldMaterialCache.
         }
     }
 }
