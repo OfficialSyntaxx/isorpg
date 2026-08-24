@@ -66,9 +66,9 @@ namespace Isoperia.Unity
                 for (int i = 0; i < source.Length; i++)
                 {
                     string name = source[i] == null ? string.Empty : source[i].name;
-                    Color color = name.Contains("Timber") ? wood : name.Contains("Lantern") ? glow : stone;
+                    Color color = name.Contains("Timber") || name.Contains("Moss") ? wood : name.Contains("Lantern") || name.Contains("Rune") ? glow : stone;
                     Material material = new Material(shader) { color = color };
-                    if (name.Contains("Lantern")) { material.EnableKeyword("_EMISSION"); material.SetColor("_EmissionColor", color * 1.5f); }
+                    if (name.Contains("Lantern") || name.Contains("Rune")) { material.EnableKeyword("_EMISSION"); material.SetColor("_EmissionColor", color * 1.5f); }
                     runtimeMaterials.Add(material);
                     palette[i] = material;
                 }
@@ -84,6 +84,7 @@ namespace Isoperia.Unity
             {
                 GameObject instance = Instantiate(ruin, origin, Quaternion.identity, transform);
                 instance.name = "BiomeLandmark_MiregateRuin";
+                ApplyOwnedPalette(instance, "Fen", new Color(.20f, .27f, .24f), new Color(.14f, .34f, .20f), new Color(.20f, .68f, .54f));
                 instances.Add(instance);
             }
             else Place("watermill", "BiomeLandmark_Miregate_Mill", origin, new Vector3(1.25f, 1.25f, 1.25f), 90f);
