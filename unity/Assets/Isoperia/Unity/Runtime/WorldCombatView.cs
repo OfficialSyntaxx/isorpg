@@ -44,7 +44,13 @@ namespace Isoperia.Unity
                     : 1f;
                 if (!basePositions.TryGetValue(pair.Key, out Vector3 basePosition))
                     basePosition = pair.Value.transform.localPosition;
-                pair.Value.transform.localPosition = basePosition + Vector3.up * bob;
+                // Presentation-only clearing movement. The Core node remains
+                // tile-authoritative, while this small loop prevents enemies
+                // from reading as static placement markers in a 3D world.
+                float pace = Time.time * .72f + pair.Key.X * .31f + pair.Key.Y * .17f;
+                Vector3 wander = new Vector3(Mathf.Sin(pace) * .16f, 0f, Mathf.Cos(pace * .83f) * .10f);
+                pair.Value.transform.localPosition = basePosition + wander + Vector3.up * bob;
+                pair.Value.transform.localRotation = Quaternion.Euler(0f, Mathf.Sin(pace * .48f) * 24f, 0f);
                 pair.Value.transform.localScale = Vector3.one * hit;
             }
         }

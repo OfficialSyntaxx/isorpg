@@ -1,5 +1,16 @@
 # Isoperia — Update Log
 
+## 2026-08-24 · Encounter clearing ambient motion
+
+Live enemies now make a small phase-offset pacing loop and look around inside
+their combat clearing. The visual offset is deliberately less than a quarter
+tile; Core positions, aggro/range checks, combat results, respawns, and saved
+world state remain unchanged. Existing hit reaction scaling still takes priority
+when the player attacks.
+
+**Validation:** the combat view recompiled and a fresh Play Mode session ran
+with zero Unity Console errors.
+
 ## 2026-08-24 · Hearthvale settlement-life pass
 
 The four persistent Hearthvale contacts now carry a small ambient presentation
