@@ -14,11 +14,22 @@ namespace Isoperia.Unity
     public sealed class WorldDecorationView : MonoBehaviour
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
+        private const string OreVeinAsset = "Art/OwnedModels/ore_vein";
         private const float VisibleRadius = 28f;
         private const int RebuildDistance = 10;
+        private const int MaxVisibleTrees = 32;
+        private const int MaxVisibleOreVeins = 24;
+        private const int MaxVisibleFishingSpots = 8;
         private readonly System.Collections.Generic.List<GameObject> instances =
             new System.Collections.Generic.List<GameObject>();
+        private readonly System.Collections.Generic.List<WorldResourceNode> nearbyNodes =
+            new System.Collections.Generic.List<WorldResourceNode>();
         private Material waterMarkerMaterial;
+        private Material oreStoneMaterial;
+        private Material copperMaterial;
+        private Material tinMaterial;
+        private Material ironMaterial;
+        private Material coalMaterial;
         private Transform player;
         private int lastAnchorX = int.MinValue;
         private int lastAnchorZ = int.MinValue;
@@ -65,6 +76,7 @@ namespace Isoperia.Unity
             lastAnchorZ = anchorZ;
             if (resources != null)
             {
+                nearbyNodes.Clear();
                 for (int i = 0; i < resources.Nodes.Count; i++)
                 {
                     WorldResourceNode node = resources.Nodes[i];
@@ -72,6 +84,27 @@ namespace Isoperia.Unity
                     float dx = node.X - anchorX;
                     float dz = node.Y - anchorZ;
                     if (dx * dx + dz * dz > VisibleRadius * VisibleRadius) continue;
+                    nearbyNodes.Add(node);
+                }
+
+                // Show the closest, distinct interactables first. The Core still
+                // owns every node and direct tile interaction; this only keeps a
+                // streamed 3D view from turning into a wall of duplicate props.
+                nearbyNodes.Sort((left, right) =>
+                {
+                    float leftDistance = (left.X - anchorX) * (left.X - anchorX) + (left.Y - anchorZ) * (left.Y - anchorZ);
+                    float rightDistance = (right.X - anchorX) * (right.X - anchorX) + (right.Y - anchorZ) * (right.Y - anchorZ);
+                    return leftDistance.CompareTo(rightDistance);
+                });
+                int trees = 0;
+                int oreVeins = 0;
+                int fishingSpots = 0;
+                for (int i = 0; i < nearbyNodes.Count; i++)
+                {
+                    WorldResourceNode node = nearbyNodes[i];
+                    if (node.Type == "TREE" && trees >= MaxVisibleTrees) continue;
+                    if (node.Type == "ROCK" && oreVeins >= MaxVisibleOreVeins) continue;
+                    if (node.Type != "TREE" && node.Type != "ROCK" && fishingSpots >= MaxVisibleFishingSpots) continue;
 
                     Tile tile = grid.At(node.X, node.Y);
                     float ground = OpenWorldTerrainView.SurfaceHeight(tile, node.X + .5f, node.Y + .5f);
@@ -83,14 +116,17 @@ namespace Isoperia.Unity
                     if (node.Type == "TREE")
                     {
                         Place(tile.Seed % 3 == 0 ? "tree-high" : "tree", basePosition, 4.35f, yaw, node);
+                        trees++;
                     }
                     else if (node.Type == "ROCK")
                     {
-                        Place(tile.Seed % 2 == 0 ? "rock-large" : "rock-small", basePosition, 1.05f, yaw, node);
+                        PlaceOreVein(basePosition, yaw, node);
+                        oreVeins++;
                     }
                     else
                     {
                         CreateWaterMarker(basePosition, yaw, node);
+                        fishingSpots++;
                     }
                 }
             }
@@ -109,6 +145,55 @@ namespace Isoperia.Unity
             instance.AddComponent<SphereCollider>().radius = .7f;
             instance.AddComponent<WorldInteractionTarget>().SetResource(node);
             instances.Add(instance);
+        }
+
+        private void PlaceOreVein(Vector3 position, float yaw, WorldResourceNode node)
+        {
+            GameObject prefab = Resources.Load<GameObject>(OreVeinAsset);
+            if (prefab == null)
+            {
+                Place(node.X % 2 == 0 ? "rock-large" : "rock-small", position, 1.05f, yaw, node);
+                return;
+            }
+
+            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = "Resource_OreVein_" + node.Def["masteryKey"].AsString("ore");
+            OwnedModelPresentation.FitToHeight(instance, 1.28f);
+            ApplyOrePalette(instance, node.Def["masteryKey"].AsString("copper"));
+            instance.AddComponent<SphereCollider>().radius = .72f;
+            instance.AddComponent<WorldInteractionTarget>().SetResource(node);
+            instances.Add(instance);
+        }
+
+        private void ApplyOrePalette(GameObject oreVein, string type)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            if (oreStoneMaterial == null) oreStoneMaterial = new Material(shader) { color = new Color(.18f, .22f, .27f) };
+            if (copperMaterial == null) copperMaterial = CreateMineralMaterial(shader, new Color(.76f, .28f, .07f));
+            if (tinMaterial == null) tinMaterial = CreateMineralMaterial(shader, new Color(.53f, .72f, .79f));
+            if (ironMaterial == null) ironMaterial = CreateMineralMaterial(shader, new Color(.45f, .49f, .55f));
+            if (coalMaterial == null) coalMaterial = new Material(shader) { color = new Color(.06f, .07f, .09f) };
+            Material mineral = type == "tin" ? tinMaterial : type == "iron" ? ironMaterial : type == "coal" ? coalMaterial : copperMaterial;
+
+            foreach (Renderer renderer in oreVein.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    palette[i] = name.Contains("Mineral") ? mineral : oreStoneMaterial;
+                }
+                renderer.sharedMaterials = palette;
+            }
+        }
+
+        private static Material CreateMineralMaterial(Shader shader, Color color)
+        {
+            var material = new Material(shader) { color = color };
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", color * .20f);
+            return material;
         }
 
         private void CreateWaterMarker(Vector3 position, float yaw, WorldResourceNode node)
@@ -150,7 +235,17 @@ namespace Isoperia.Unity
                 if (instances[i] != null) Destroy(instances[i]);
             instances.Clear();
             if (waterMarkerMaterial != null) Destroy(waterMarkerMaterial);
+            if (oreStoneMaterial != null) Destroy(oreStoneMaterial);
+            if (copperMaterial != null) Destroy(copperMaterial);
+            if (tinMaterial != null) Destroy(tinMaterial);
+            if (ironMaterial != null) Destroy(ironMaterial);
+            if (coalMaterial != null) Destroy(coalMaterial);
             waterMarkerMaterial = null;
+            oreStoneMaterial = null;
+            copperMaterial = null;
+            tinMaterial = null;
+            ironMaterial = null;
+            coalMaterial = null;
         }
     }
 }
