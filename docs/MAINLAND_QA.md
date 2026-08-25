@@ -43,6 +43,18 @@ directional desktop Editor measurement, not a mobile performance claim.
 Physical-device testing is intentionally not marked as passed here. Hosted
 browser testing is recorded separately after the candidate is deployed.
 
+## Mobile QA status
+
+**Deferred by project direction on 2026-08-25.** The Android Chrome and iOS
+Safari physical-device sweep is intentionally postponed so world-building and
+desktop-browser testing can continue. This is a deferral, not a pass: the
+current candidate must not be described as mobile-release-ready, and the full
+touch, audio, save/resume, performance, and texture-compression sweep above
+remains required before a mobile public release.
+
+The canonical WebGL URL may still be shared for desktop-browser feedback while
+this mobile release gate remains open.
+
 ## Hosted browser check
 
 - URL: `https://radiant-taiyaki-275365.netlify.app/`

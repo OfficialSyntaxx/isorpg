@@ -1,5 +1,15 @@
 # Isoperia — Update Log
 
+## 2026-08-25 · Mobile QA deferred
+
+- The project owner has explicitly deferred the physical Android/iOS QA sweep
+  to keep the current effort focused on world-building and desktop-browser
+  feedback.
+- This is recorded as a release-gate deferral, not a passing result. The WebGL
+  build must not be called mobile-release-ready until touch input, audio,
+  save/resume, long traversal, and WebGL texture compression are verified on
+  physical devices.
+
 ## 2026-08-24 · WebGL HUD text-data startup fix
 
 - Fixed the hosted WebGL startup failure that held the browser at **Starting…**.
