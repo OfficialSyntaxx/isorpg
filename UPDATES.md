@@ -1,5 +1,17 @@
 # Isoperia — Update Log
 
+## 2026-08-25 · Hearthvale east-road prop placement and pipeline
+
+- The locally authored trail lantern and reinforced travel crate now form an
+  east-road departure stop in live Hearthvale, placed alongside the route NPC
+  rather than remaining an isolated asset test. The FBX receives the shared
+  URP wood/iron/amber palette at runtime.
+- Live Play Mode visual review confirmed the imported prop group, ground
+  placement, and town composition. Unity reported no new Console errors.
+- Added `docs/ASSET_PIPELINE.md`: the permanent local-only intake, Blender,
+  Unity, review, WebGL, and animation workflow, plus the first prioritized
+  environment, NPC, monster, and animation asset backlog.
+
 ## 2026-08-25 · Local Blender prop-production trial
 
 - Added a repeatable, entirely local Blender generator for two original props:

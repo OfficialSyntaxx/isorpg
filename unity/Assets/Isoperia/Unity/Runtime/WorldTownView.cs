@@ -15,6 +15,7 @@ namespace Isoperia.Unity
         private const string VillagerAsset = "Art/OwnedModels/villager";
         private const string CampfireAsset = "Art/OwnedModels/campfire";
         private const string ForgeAsset = "Art/OwnedModels/hearthvale_forge";
+        private const string LocalPropTrialAsset = "Art/OwnedModels/local_prop_trial";
         private readonly List<GameObject> instances = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
 
@@ -60,6 +61,9 @@ namespace Isoperia.Unity
             Place("lantern", center + new Vector3(-2.2f, 0f, -2.2f), Vector3.one * 1.1f);
             Place("lantern", center + new Vector3(2.2f, 0f, 2.2f), Vector3.one * 1.1f, 180f);
             PlaceCampfire(center + new Vector3(-3.4f, 0f, -4.1f));
+            // A lantern-and-crate stop explains the eastern road departure and
+            // gives the first local Blender asset trial a player-visible home.
+            PlaceLocalPropTrial(center + new Vector3(7.9f, 0f, -1.9f), 1.1f, 18f);
             CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", center + new Vector3(-2.8f, .7f, 1.2f), new Color(.31f, .55f, .28f));
             CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", center + new Vector3(2.8f, .7f, -1.2f), new Color(.73f, .39f, .22f));
             CreateJourneyNpc("Wayfinder Nahl", "Lantern Road accepted · follow the eastern lights to Cinder Hollow, then return.",
@@ -259,6 +263,36 @@ namespace Isoperia.Unity
                 renderer.sharedMaterials = palette;
             }
             instances.Add(instance);
+        }
+
+        private void PlaceLocalPropTrial(Vector3 position, float scale, float yaw)
+        {
+            GameObject prefab = Resources.Load<GameObject>(LocalPropTrialAsset);
+            if (prefab == null) return;
+
+            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = "Town_EastRoadLanternAndCrate";
+            instance.transform.localScale = Vector3.one * scale;
+            ApplyLocalPropTrialPalette(instance);
+            instances.Add(instance);
+        }
+
+        private static void ApplyLocalPropTrialPalette(GameObject instance)
+        {
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    Color color = name.Contains("WarmWood") ? new Color(.25f, .10f, .035f) :
+                        name.Contains("DarkIron") ? new Color(.045f, .055f, .07f) :
+                        name.Contains("AmberGlass") ? new Color(1f, .22f, .025f) : new Color(.18f, .20f, .22f);
+                    palette[i] = WorldMaterialCache.Lit("LocalTrial_" + name, color, name.Contains("AmberGlass"));
+                }
+                renderer.sharedMaterials = palette;
+            }
         }
     }
 }
