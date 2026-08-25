@@ -1,5 +1,20 @@
 # Isoperia — Update Log
 
+## 2026-08-25 · Local Blender prop-production trial
+
+- Added a repeatable, entirely local Blender generator for two original props:
+  `MCP_TrailLantern` and `MCP_TravelersCrate`. It uses only Blender procedural
+  geometry and locally-authored materials—no remote model, texture, or asset
+  service—and exports `local_prop_trial.fbx` into the Unity Resources pipeline.
+- Blender rendered the source scene successfully; Unity reimported the FBX as
+  a GameObject with no new Console errors. The source `.blend`, review render,
+  and generator script are retained for future variants.
+- Installed the MIT-licensed `dcc-mcp-blender` bridge and configured Codex to
+  use its local-only gateway. Blender registers successfully, but its typed
+  tool executor currently reports an adapter-side Blender 5.2 compatibility
+  error. The bridge remains installed for a future adapter fix; the bundled
+  Blender Python workflow is the validated local production fallback.
+
 ## 2026-08-25 · Mobile QA deferred
 
 - The project owner has explicitly deferred the physical Android/iOS QA sweep
