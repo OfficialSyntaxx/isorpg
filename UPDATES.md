@@ -1901,3 +1901,10 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   and rope coil.
 - Unity reimported all five as GameObjects with no Console errors. As with the
   route kit, they are not placed until composition begins.
+
+## 2026-08-25 · Phase 1 Frostwatch mining kit
+
+- Added original local Blender assets for Frostwatch: mine support, ore cart,
+  hand winch, supply tent, and glowing crystal cluster.
+- Unity reimported all five as GameObjects with no Console errors. They remain
+  library assets pending the later district-composition pass.
