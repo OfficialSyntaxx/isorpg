@@ -1,5 +1,15 @@
 # Isoperia — Update Log
 
+## 2026-08-25 · Phase 1 settlement asset-library expansion
+
+- Continued the local-only Phase 1 art pass without adding new scene placement.
+  The completed unintegrated service kit contains an anvil/tool stump, fish
+  rack, and produce crate; the settlement kit adds barrels, sacks, a bench,
+  handcart, hay bale, and scarecrow.
+- Each kit has a repeatable Blender generator, source `.blend`, review render,
+  and individual FBX exports. Unity scene integration is intentionally deferred
+  until the Phase 1 asset-library creation pass is complete.
+
 ## 2026-08-25 · Hearthvale east-road prop placement and pipeline
 
 - The locally authored trail lantern and reinforced travel crate now form an

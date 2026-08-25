@@ -48,6 +48,15 @@ Minimum actor acceptance:
 
 ## Asset backlog
 
+## Phase 1 library status
+
+The following original local-only assets are complete as an unintegrated
+library and are awaiting the later Unity placement pass: trail lantern, travel
+crate, forge anvil/tool stump, fish rack, produce crate, barrel, sacks, bench,
+handcart, hay bale, and scarecrow. Each has an FBX under `OwnedModels` and a
+matching Blender source/render under `art/blender`. Keep library creation ahead
+of scene placement so composition work can use a stable, reviewed kit.
+
 ### Hearthvale and routes
 
 - Market: produce stall, fish rack, barrels, sacks, cloth awnings, handcarts.
