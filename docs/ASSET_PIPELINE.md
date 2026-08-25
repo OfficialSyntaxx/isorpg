@@ -50,22 +50,24 @@ Minimum actor acceptance:
 
 ## Phase 1 library status
 
-The following original local-only assets are complete as an unintegrated
-library and are awaiting the later Unity placement pass: trail lantern, travel
-crate, forge anvil/tool stump, fish rack, produce crate, barrel, sacks, bench,
-handcart, hay bale, scarecrow, table, chair, bed, shelf, fireplace, hanging
-sign, noticeboard, cooking pot, tool rack, banner, awning, merchant pack,
-blacksmith kit, farmer kit, guard kit, ranger kit, Cinder Hound, wildwood boar,
-mire wisp, three tree families, fallen log, stump, mushroom and reed clusters,
-and the route bridge, milestone, brazier, ruined cart, and road lantern. Each
-has an FBX under `OwnedModels` and a matching Blender source/render under
-`art/blender`. Keep library creation ahead of scene placement so composition
-work can use a stable, reviewed kit. The Wildwood landmark set now also covers
-the first logging-camp composition: log stack, sawhorse, canvas tent, rune
-shrine fragments, and rope coil. Frostwatch has its first mine composition:
-timber support, ore cart, hand winch, supply tent, and cold crystal cluster.
-Sunmere now has its shoreline anchor set: fishing dock, rowboat, net rack,
-buoy, and lake shrine.
+**Complete — asset-library milestone.** All listed Phase 1 entries have an
+original local Blender source, review render, FBX import under `OwnedModels`,
+and Unity import verification. The library is deliberately unplaced. Phase 2
+owns purposeful scene composition, colliders, materials, Animator Controllers,
+and in-game visual validation.
+
+The completed library covers: Hearthvale service, home, market, role, farm,
+and route props; Wildwood logging/shrine assets; Frostwatch mining assets;
+Sunmere shoreline assets; Miregate swamp assets; Cinder Hollow volcanic assets;
+three tree families and all planned wilderness scatter; six NPC silhouettes;
+four friendly creatures; seven standard monsters; five outer-route boss
+silhouettes (Cinder Hound included); and two source animation assets.
+
+`cinder_hound_animated.fbx` supplies original Idle and Walk actions.
+`actor_animation_baseline.fbx` supplies original source actions for Idle, Walk,
+Run, Turn, Gather, Talk, Emote, LightAttack, HeavyAttack, Block, Hit, Defeat,
+Spawn, and ResourceInteract. Their runtime Animator wiring is explicitly a
+Phase 2 task; no animation is treated as gameplay authority.
 
 ### Hearthvale and routes
 

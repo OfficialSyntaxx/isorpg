@@ -1915,3 +1915,19 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   rack, buoy, and lake shrine.
 - Unity reimported all five as GameObjects with no Console errors. They remain
   library assets pending the later district-composition pass.
+
+## 2026-08-25 · Phase 1 asset library complete
+
+- Completed and Unity-imported the remaining district landmark kits: Miregate
+  (broken gate, boardwalk, watchtower, bone totem) and Cinder Hollow (lava
+  rock, ash tree, barricade, furnace ruins).
+- Completed farm/wilderness scatter: fence, crops, trough, chicken coop,
+  boulder, fern, and shoreline-debris clusters.
+- Completed original NPC, friendly-creature, monster, and outer-route-boss
+  silhouette rosters. Added `actor_animation_baseline.fbx` with source actions
+  for the planned presentation states; Cinder Hound remains the first animated
+  creature source.
+- Every newly added FBX reimported as a Unity GameObject with no Console
+  errors. Phase 1 is now complete as an unintegrated, local-only asset library.
+  Phase 2 starts the controlled Unity composition, collision, materials, and
+  Animator integration pass.
