@@ -1884,3 +1884,12 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   saved coordinates remain unchanged.
 - Unity EditMode regression gate: **379/379 passed**. Fresh WebGL candidate
   remains recorded in `unity/build-report.txt`.
+
+## 2026-08-25 · Phase 1 travel-route asset kit
+
+- Added five original, local Blender route assets: a wood bridge, glowing
+  milestone, roadside brazier, ruined cart, and a second road-lantern
+  silhouette. Their source scene, review render, repeatable generator, and
+  exported FBXs are versioned with the project.
+- Unity reimported all five as GameObjects with no Console errors. They remain
+  deliberately unplaced while the Phase 1 asset library is completed.

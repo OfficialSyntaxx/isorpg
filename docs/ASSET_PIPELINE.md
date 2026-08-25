@@ -53,9 +53,14 @@ Minimum actor acceptance:
 The following original local-only assets are complete as an unintegrated
 library and are awaiting the later Unity placement pass: trail lantern, travel
 crate, forge anvil/tool stump, fish rack, produce crate, barrel, sacks, bench,
-handcart, hay bale, and scarecrow. Each has an FBX under `OwnedModels` and a
-matching Blender source/render under `art/blender`. Keep library creation ahead
-of scene placement so composition work can use a stable, reviewed kit.
+handcart, hay bale, scarecrow, table, chair, bed, shelf, fireplace, hanging
+sign, noticeboard, cooking pot, tool rack, banner, awning, merchant pack,
+blacksmith kit, farmer kit, guard kit, ranger kit, Cinder Hound, wildwood boar,
+mire wisp, three tree families, fallen log, stump, mushroom and reed clusters,
+and the route bridge, milestone, brazier, ruined cart, and road lantern. Each
+has an FBX under `OwnedModels` and a matching Blender source/render under
+`art/blender`. Keep library creation ahead of scene placement so composition
+work can use a stable, reviewed kit.
 
 ### Hearthvale and routes
 
