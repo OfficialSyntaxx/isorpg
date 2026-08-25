@@ -1908,3 +1908,10 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   hand winch, supply tent, and glowing crystal cluster.
 - Unity reimported all five as GameObjects with no Console errors. They remain
   library assets pending the later district-composition pass.
+
+## 2026-08-25 · Phase 1 Sunmere shoreline kit
+
+- Added original local Blender assets for Sunmere: fishing dock, rowboat, net
+  rack, buoy, and lake shrine.
+- Unity reimported all five as GameObjects with no Console errors. They remain
+  library assets pending the later district-composition pass.

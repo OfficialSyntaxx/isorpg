@@ -64,6 +64,8 @@ work can use a stable, reviewed kit. The Wildwood landmark set now also covers
 the first logging-camp composition: log stack, sawhorse, canvas tent, rune
 shrine fragments, and rope coil. Frostwatch has its first mine composition:
 timber support, ore cart, hand winch, supply tent, and cold crystal cluster.
+Sunmere now has its shoreline anchor set: fishing dock, rowboat, net rack,
+buoy, and lake shrine.
 
 ### Hearthvale and routes
 
