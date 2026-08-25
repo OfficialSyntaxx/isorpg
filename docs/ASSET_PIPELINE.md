@@ -60,7 +60,9 @@ mire wisp, three tree families, fallen log, stump, mushroom and reed clusters,
 and the route bridge, milestone, brazier, ruined cart, and road lantern. Each
 has an FBX under `OwnedModels` and a matching Blender source/render under
 `art/blender`. Keep library creation ahead of scene placement so composition
-work can use a stable, reviewed kit.
+work can use a stable, reviewed kit. The Wildwood landmark set now also covers
+the first logging-camp composition: log stack, sawhorse, canvas tent, rune
+shrine fragments, and rope coil.
 
 ### Hearthvale and routes
 

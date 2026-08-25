@@ -1893,3 +1893,11 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   exported FBXs are versioned with the project.
 - Unity reimported all five as GameObjects with no Console errors. They remain
   deliberately unplaced while the Phase 1 asset library is completed.
+
+## 2026-08-25 · Phase 1 Wildwood landmark kit
+
+- Added original local Blender assets for the Wildwood logging camp and its
+  nearby sacred site: log stack, sawhorse, canvas tent, rune-shrine fragments,
+  and rope coil.
+- Unity reimported all five as GameObjects with no Console errors. As with the
+  route kit, they are not placed until composition begins.
