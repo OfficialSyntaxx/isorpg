@@ -62,7 +62,7 @@ namespace Isoperia.Unity
 
         private static void Disable<T>() where T : Behaviour
         {
-            foreach (T view in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
+            foreach (T view in Object.FindObjectsByType<T>())
                 view.gameObject.SetActive(false);
         }
     }

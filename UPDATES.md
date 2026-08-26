@@ -2111,3 +2111,17 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
 - Extended route anchors to four outer district endpoints: Wildwood green,
   Frostwatch blue, Miregate teal, and Cinder orange. Each uses the same
   terrain-grounded construction and clock-responsive local light.
+
+## 2026-08-26 · Pre-deployment quality gate
+
+- Replaced the obsolete `FindObjectsByType` overload in the open-world
+  bootstrap, leaving the Unity Console free of project warnings and errors.
+- Validated the current clean `main` with **380/380 EditMode tests passing**;
+  a Play Mode smoke check confirmed the third-person player, follow camera,
+  terrain, town, route anchors, and HUD are active while the retired prototype
+  renderers remain disabled.
+- Built a fresh production WebGL/PWA candidate successfully: build ID
+  `20260826-045902-4b123b75`, **50.72 MB**, Brotli compression, high stripping,
+  no exceptions, and a cache-stamped service worker. The physical mobile sweep
+  remains intentionally deferred; this candidate is suitable for browser
+  feedback, not a mobile-release-ready claim.
