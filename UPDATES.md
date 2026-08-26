@@ -2020,3 +2020,16 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
 - District discovery, map reveal, and waystone-backed return behavior remain
   the existing save-backed systems. Unity compiled with zero Console errors;
   EditMode remained **380/380 passed**.
+
+## 2026-08-26 · Phase 6 clean WebGL candidate
+
+- Revalidated the current pushed `main` in a fresh Unity clone after the prior
+  temporary worktree unexpectedly lost tracked files. The clone imported and
+  compiled successfully, and its EditMode regression gate passed **380/380**.
+- A fresh WebGL build succeeded in **4m 28s**, producing **50.79 MB** of
+  Brotli-compressed PWA content in `unity/WebGLBuild`. The generated report
+  records build ID `20260826-045513-272dc1fd`; cache-busting service-worker and
+  required template files are present.
+- The earlier damaged temporary checkout was not restored or modified. Further
+  work should use a clean checkout or clone until that worktree is explicitly
+  repaired, preserving any external changes for review.
