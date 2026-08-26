@@ -26,6 +26,10 @@ namespace Isoperia.Unity
             CreateWaystone(82, 63, stone, glow);
             CreateLamp(63, 77, timber, glow);
             CreateWaystone(63, 91, stone, glow);
+            CreateDistrictMarker(32, 36, new Color(.20f, .58f, .28f), timber, stone, "WildwoodShrine");
+            CreateDistrictMarker(92, 35, new Color(.42f, .72f, .94f), timber, stone, "FrostwatchBeacon");
+            CreateDistrictMarker(34, 92, new Color(.32f, .74f, .55f), timber, stone, "MiregateMarker");
+            CreateDistrictMarker(102, 69, new Color(1f, .24f, .06f), timber, stone, "CinderSignal");
         }
 
         private void CreateLamp(int x, int z, Material timber, Material glow)
@@ -50,6 +54,20 @@ namespace Isoperia.Unity
             Sphere(root.transform, new Vector3(0f, 1.18f, 0f), .20f, glow);
             Light light = root.AddComponent<Light>();
             light.type = LightType.Point; light.color = new Color(.35f, .8f, 1f); light.range = 3.2f; light.shadows = LightShadows.None;
+            root.AddComponent<WorldLocalLightPool>();
+        }
+
+        private void CreateDistrictMarker(int x, int z, Color color, Material timber, Material stone, string name)
+        {
+            GameObject root = new GameObject(name);
+            root.transform.SetParent(transform, false);
+            root.transform.position = Grounded(x, z);
+            Block(root.transform, new Vector3(0f, .55f, 0f), new Vector3(.75f, 1.1f, .58f), stone);
+            Block(root.transform, new Vector3(0f, 1.5f, 0f), new Vector3(.12f, .9f, .12f), timber);
+            Material glow = MakeMaterial(color, true);
+            Sphere(root.transform, new Vector3(0f, 2.05f, 0f), .28f, glow);
+            Light light = root.AddComponent<Light>();
+            light.type = LightType.Point; light.color = color; light.range = 5f; light.shadows = LightShadows.None;
             root.AddComponent<WorldLocalLightPool>();
         }
 

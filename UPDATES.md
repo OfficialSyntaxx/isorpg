@@ -2108,3 +2108,6 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   three warm travel lamps and two blue waystones are grounded to the runtime
   terrain and fade against the existing day/night clock. These are sparse
   navigation and atmosphere cues, not a return to the retired asset scatter.
+- Extended route anchors to four outer district endpoints: Wildwood green,
+  Frostwatch blue, Miregate teal, and Cinder orange. Each uses the same
+  terrain-grounded construction and clock-responsive local light.
