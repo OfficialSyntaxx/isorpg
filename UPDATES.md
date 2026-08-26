@@ -1984,3 +1984,16 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   plaza instances are grounded in the live town; the EditMode regression gate
   remained **380/380 passed**. Further Phase 4 work remains: more landmark
   replacements plus broader NPC/enemy animation coverage.
+
+## 2026-08-25 · Phase 4 route landmark replacement — tranche 2
+
+- Added original local Blender entry landmarks for two early travel destinations:
+  the rune-marked Wildwood Waygate and the reinforced Frostwatch Mine Gate.
+  The source scene, review render, repeatable generator, FBX exports, and
+  Unity-generated metadata are versioned with the game.
+- `WorldOwnedAssetLibraryView` composes them into their existing district
+  approaches without colliders or Core changes. They act as visible route
+  anchors, not progression walls.
+- Unity imported with zero Console errors. Play Mode confirmed the Wildwood
+  gate at its live camp/shrine approach; the EditMode gate remained
+  **380/380 passed**.

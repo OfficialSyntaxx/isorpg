@@ -77,10 +77,12 @@ namespace Isoperia.Unity
             PlaceAt("wildwood_log_stack", 35, 44, 1.2f, 0f, true);
             PlaceAt("wildwood_sawhorse", 37, 43, 1.1f, 18f, true);
             PlaceAt("wildwood_tent", 34, 47, 1.1f, 0f, true);
+            PlaceAt("wildwood_waygate", 31, 43, 1.65f, 90f, false);
             PlaceAt("wildwood_shrine_fragments", 29, 39, 1.25f, 0f, true);
             PlaceAt("wildwood_rope_coil", 36, 46, 1f, 0f, false);
             // Frostwatch's mine reads from the approach without sealing the path.
             PlaceAt("frostwatch_mine_support", 36, 90, 1.35f, 90f, true);
+            PlaceAt("frostwatch_mine_gate", 33, 90, 1.85f, 90f, false);
             PlaceAt("frostwatch_ore_cart", 39, 89, 1.15f, 0f, true);
             PlaceAt("frostwatch_winch", 34, 88, 1.1f, 0f, true);
             PlaceAt("frostwatch_supply_tent", 39, 93, 1.1f, 0f, true);

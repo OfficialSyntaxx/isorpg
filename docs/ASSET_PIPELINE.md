@@ -98,6 +98,11 @@ and `hearthvale_market_canopy` are original local Blender replacements for the
 central plaza and market. `WorldTownView` loads them first and retains the
 existing CC0 town-kit fountain/stall as a safe stripped-build fallback.
 
+**Route tranche 2 complete.** `wildwood_waygate` and `frostwatch_mine_gate`
+are original local Blender route anchors composed at the existing Wildwood and
+Frostwatch approaches. They are collider-free visual landmarks and do not
+change Core navigation or progression authority.
+
 Continue Phase 4 by replacing additional high-visibility route/district
 silhouettes and broadening rigged NPC/enemy Animator coverage. Capture a new
 WebGL candidate only after that visual tranche is coherent enough for tester
