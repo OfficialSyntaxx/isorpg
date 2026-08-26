@@ -2010,3 +2010,13 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   asset task rather than shipping broken animation bindings.
 - Unity compiled with zero Console errors, Play Mode loaded the actor set, and
   the EditMode regression gate remained **380/380 passed**.
+
+## 2026-08-25 · Phase 5 exploration-loop foundation
+
+- Optimized `MainlandDiscoveryView` without changing its save schema or Core
+  authority. It now maintains a local index cache for the existing persisted
+  explored-tile list, avoiding an increasingly long linear duplicate scan for
+  every newly walked mainland tile.
+- District discovery, map reveal, and waystone-backed return behavior remain
+  the existing save-backed systems. Unity compiled with zero Console errors;
+  EditMode remained **380/380 passed**.

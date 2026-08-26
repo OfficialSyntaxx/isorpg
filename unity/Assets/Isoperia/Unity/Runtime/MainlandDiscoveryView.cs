@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Isoperia.Unity
 {
@@ -11,6 +12,8 @@ namespace Isoperia.Unity
         private Transform player;
         private int lastExploredX = -1;
         private int lastExploredY = -1;
+        private List<double> exploredOwner;
+        private readonly HashSet<int> exploredIndices = new HashSet<int>();
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
@@ -44,6 +47,8 @@ namespace Isoperia.Unity
             int height = WorldRuntime.Instance?.Grid?.Height ?? 0;
             if (width <= 0 || height <= 0) return;
 
+            EnsureExplorationCache(state.MapExplored);
+
             RecordTile(state.MapExplored, width, height, x, y);
             RecordTile(state.MapExplored, width, height, x + 1, y);
             RecordTile(state.MapExplored, width, height, x - 1, y);
@@ -51,11 +56,20 @@ namespace Isoperia.Unity
             RecordTile(state.MapExplored, width, height, x, y - 1);
         }
 
-        private static void RecordTile(System.Collections.Generic.List<double> explored, int width, int height, int x, int y)
+        private void EnsureExplorationCache(List<double> explored)
+        {
+            if (ReferenceEquals(exploredOwner, explored)) return;
+            exploredOwner = explored;
+            exploredIndices.Clear();
+            if (explored == null) return;
+            for (int i = 0; i < explored.Count; i++) exploredIndices.Add((int)explored[i]);
+        }
+
+        private void RecordTile(List<double> explored, int width, int height, int x, int y)
         {
             if (x < 0 || y < 0 || x >= width || y >= height) return;
-            double index = y * width + x;
-            if (!explored.Contains(index)) explored.Add(index);
+            int index = y * width + x;
+            if (exploredIndices.Add(index)) explored.Add(index);
         }
 
         private static string DistrictAt(int x, int y)
