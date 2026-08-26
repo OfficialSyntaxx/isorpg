@@ -2093,3 +2093,11 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   preserving the existing idle/stride presentation. No bind-pose asset is
   allowed back into the playable path until its clips are independently valid.
 - Unity compiled with zero Console errors; EditMode: **380/380 passed**.
+
+## 2026-08-26 · Follow-camera composition pass
+
+- Tightened the live third-person follow camera from the prototype-wide view to
+  a shorter 5.8-unit default distance, narrower 56° lens, lower focus point,
+  and a constrained orbit range. The player, plaza contacts, and nearby town
+  architecture now share the gameplay frame while touch orbit and pinch zoom
+  remain available.

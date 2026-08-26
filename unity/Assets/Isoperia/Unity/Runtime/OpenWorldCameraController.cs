@@ -10,8 +10,8 @@ namespace Isoperia.Unity
     {
         private Transform target;
         private float yaw = 38f;
-        private float pitch = 16f;
-        private float distance = 7.25f;
+        private float pitch = 22f;
+        private float distance = 5.8f;
         private float previousPinchDistance;
         private float shakeAmplitude;
 
@@ -19,7 +19,7 @@ namespace Isoperia.Unity
         {
             target = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
             GetComponent<Camera>().orthographic = false;
-            GetComponent<Camera>().fieldOfView = 62f;
+            GetComponent<Camera>().fieldOfView = 56f;
         }
 
         private void LateUpdate()
@@ -28,9 +28,9 @@ namespace Isoperia.Unity
             if (Mouse.current != null && Mouse.current.rightButton.isPressed)
             {
                 Vector2 delta = Mouse.current.delta.ReadValue();
-                yaw += delta.x * .18f; pitch = Mathf.Clamp(pitch - delta.y * .12f, 8f, 58f);
+                yaw += delta.x * .18f; pitch = Mathf.Clamp(pitch - delta.y * .12f, 12f, 52f);
             }
-            if (Mouse.current != null) distance = Mathf.Clamp(distance - Mouse.current.scroll.ReadValue().y * .004f, 3.5f, 15f);
+            if (Mouse.current != null) distance = Mathf.Clamp(distance - Mouse.current.scroll.ReadValue().y * .004f, 3.9f, 11f);
             HandleTouchCamera();
             if (Gamepad.current != null)
             {
@@ -38,7 +38,7 @@ namespace Isoperia.Unity
                 yaw += look.x * 110f * Time.deltaTime; pitch = Mathf.Clamp(pitch - look.y * 70f * Time.deltaTime, 8f, 58f);
             }
             Quaternion orbit = Quaternion.Euler(pitch, yaw, 0f);
-            Vector3 focus = target.position + Vector3.up * 1.15f;
+            Vector3 focus = target.position + Vector3.up * .95f;
             Vector3 desiredOffset = -(orbit * Vector3.forward) * distance;
             float resolvedDistance = ResolveObstructionDistance(focus, desiredOffset, distance);
             Vector3 position = focus + desiredOffset.normalized * resolvedDistance;
@@ -64,7 +64,7 @@ namespace Isoperia.Unity
                 Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) &&
                 (target == null || !hit.collider.transform.IsChildOf(target)))
             {
-                return Mathf.Clamp(hit.distance - .14f, 2.1f, desiredDistance);
+                return Mathf.Clamp(hit.distance - .14f, 2.6f, desiredDistance);
             }
             return desiredDistance;
         }
@@ -80,7 +80,7 @@ namespace Isoperia.Unity
             {
                 float pinchDistance = Vector2.Distance(first.position.ReadValue(), second.position.ReadValue());
                 if (previousPinchDistance > 0f)
-                    distance = Mathf.Clamp(distance - (pinchDistance - previousPinchDistance) * .012f, 3.5f, 15f);
+                    distance = Mathf.Clamp(distance - (pinchDistance - previousPinchDistance) * .012f, 3.9f, 11f);
                 previousPinchDistance = pinchDistance;
                 return;
             }
@@ -94,7 +94,7 @@ namespace Isoperia.Unity
             if (touch.startPosition.ReadValue().x < Screen.width * .48f) return;
             Vector2 delta = touch.delta.ReadValue();
             yaw += delta.x * .18f;
-            pitch = Mathf.Clamp(pitch - delta.y * .12f, 8f, 58f);
+            pitch = Mathf.Clamp(pitch - delta.y * .12f, 12f, 52f);
         }
     }
 }
