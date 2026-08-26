@@ -91,10 +91,18 @@ keep their existing social idle. The player controller deliberately relies on
 deterministic terrain and water checks rather than `CharacterController`
 physics, so scenic prop colliders cannot trap a player.
 
-The next art phase is higher-detail replacement meshes for the current first
-pass silhouettes, broader rigged actor/Animator coverage, and a new WebGL
-candidate with in-game visual review. These remain presentation changes unless
-a separate gameplay ticket explicitly changes Core authority.
+## Phase 4 replacement status
+
+**In progress — Hearthvale tranche 1 complete.** `hearthvale_plaza_fountain`
+and `hearthvale_market_canopy` are original local Blender replacements for the
+central plaza and market. `WorldTownView` loads them first and retains the
+existing CC0 town-kit fountain/stall as a safe stripped-build fallback.
+
+Continue Phase 4 by replacing additional high-visibility route/district
+silhouettes and broadening rigged NPC/enemy Animator coverage. Capture a new
+WebGL candidate only after that visual tranche is coherent enough for tester
+review. These remain presentation changes unless a separate gameplay ticket
+explicitly changes Core authority.
 
 ### Hearthvale and routes
 

@@ -1968,3 +1968,19 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
 - The next visual pass is intentionally larger: replace the first low-detail
   landmark silhouettes with authored higher-detail meshes, extend rigged actor
   coverage, then capture a new WebGL candidate for tester review.
+
+## 2026-08-25 · Phase 4 Hearthvale landmark replacement — tranche 1
+
+- Added two original local Blender landmarks to replace the most visible early
+  town-kit silhouettes: a layered rune fountain for Hearthvale's central plaza
+  and a timber-framed, stocked market canopy. Their repeatable generator,
+  Blender source, review render, FBX exports, and Unity-generated metadata are
+  versioned together.
+- `WorldTownView` now prefers these owned models and falls back to the existing
+  CC0 fountain/stall only when a stripped build cannot load an owned asset.
+  Runtime palette materials keep the models compatible with the current URP
+  world look; neither model has gameplay authority or creates a travel blocker.
+- Unity imported the models with zero Console errors. Play Mode confirmed the
+  plaza instances are grounded in the live town; the EditMode regression gate
+  remained **380/380 passed**. Further Phase 4 work remains: more landmark
+  replacements plus broader NPC/enemy animation coverage.

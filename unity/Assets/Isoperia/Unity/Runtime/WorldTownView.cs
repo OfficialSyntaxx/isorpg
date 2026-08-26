@@ -17,6 +17,8 @@ namespace Isoperia.Unity
         private const string CampfireAsset = "Art/OwnedModels/campfire";
         private const string ForgeAsset = "Art/OwnedModels/hearthvale_forge";
         private const string LocalPropTrialAsset = "Art/OwnedModels/local_prop_trial";
+        private const string PlazaFountainAsset = "Art/OwnedModels/hearthvale_plaza_fountain";
+        private const string MarketCanopyAsset = "Art/OwnedModels/hearthvale_market_canopy";
         private readonly List<GameObject> instances = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
 
@@ -56,8 +58,10 @@ namespace Isoperia.Unity
             for (int x = 10; x <= 33; x += 2)
                 Place("road", center + new Vector3(x - 21.5f, .01f, 0f), new Vector3(2f, 1f, 2f), 90f);
 
-            Place("fountain-round", center + new Vector3(0f, .02f, 0f), Vector3.one * 1.35f);
-            Place("stall-red", center + new Vector3(-3.5f, 0f, 2.4f), Vector3.one * 1.25f, 180f);
+            PlaceOwnedLandmark(PlazaFountainAsset, "Town_HearthvalePlazaFountain", center + new Vector3(0f, .02f, 0f), 2.0f, 0f,
+                () => Place("fountain-round", center + new Vector3(0f, .02f, 0f), Vector3.one * 1.35f));
+            PlaceOwnedLandmark(MarketCanopyAsset, "Town_HearthvaleMarketCanopy", center + new Vector3(-3.5f, 0f, 2.4f), 1.75f, 180f,
+                () => Place("stall-red", center + new Vector3(-3.5f, 0f, 2.4f), Vector3.one * 1.25f, 180f));
             Place("stall-green", center + new Vector3(3.5f, 0f, -2.4f), Vector3.one * 1.25f);
             Place("lantern", center + new Vector3(-2.2f, 0f, -2.2f), Vector3.one * 1.1f);
             Place("lantern", center + new Vector3(2.2f, 0f, 2.2f), Vector3.one * 1.1f, 180f);
@@ -137,6 +141,43 @@ namespace Isoperia.Unity
             instance.name = "Town_HearthvaleForge";
             ApplyForgePalette(instance);
             instances.Add(instance);
+        }
+
+        private void PlaceOwnedLandmark(string assetPath, string instanceName, Vector3 position, float height, float yaw, System.Action fallback)
+        {
+            GameObject prefab = Resources.Load<GameObject>(assetPath);
+            if (prefab == null)
+            {
+                fallback();
+                return;
+            }
+
+            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = instanceName;
+            OwnedModelPresentation.FitToHeight(instance, height);
+            ApplyOwnedLandmarkPalette(instance);
+            instances.Add(instance);
+        }
+
+        private static void ApplyOwnedLandmarkPalette(GameObject instance)
+        {
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    string name = source[i] == null ? string.Empty : source[i].name;
+                    bool glow = name.Contains("Glow") || name.Contains("Rune") || name.Contains("Lantern");
+                    Color color = name.Contains("Water") ? new Color(.04f, .30f, .48f) :
+                        name.Contains("Cloth") ? new Color(.15f, .30f, .48f) :
+                        name.Contains("Wood") ? new Color(.19f, .07f, .025f) :
+                        name.Contains("Trim") ? new Color(.38f, .25f, .11f) :
+                        glow ? new Color(.14f, .72f, .92f) : new Color(.18f, .22f, .26f);
+                    palette[i] = WorldMaterialCache.Lit("Phase4_" + name, color, glow);
+                }
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void ApplyForgePalette(GameObject instance)
