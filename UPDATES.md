@@ -2064,3 +2064,20 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
 - Unity compiled with no Console errors after explicit asset import. EditMode
   regression gate: **380/380 passed**. Browser build/deploy remains pending
   final mobile-input verification.
+
+## 2026-08-26 · Hearthvale controlled vertical-slice rebuild
+
+- Replaced the retired tiled-road and raw plaza imports with controlled plaza,
+  street, fountain, and market-shelter geometry. These use fixed dimensions and
+  shared runtime materials, so they are grounded and readable at the intended
+  third-person camera distance.
+- Rebuilt Hearthvale homes as proportioned timber/plaster structures with
+  foundations, windows, doors, and roofs. The previous disconnected imported
+  wall/roof fragments are no longer used for houses.
+- Replaced fallback capsule NPCs with simple constructed humanoid contacts
+  (tunic, arms, boots, head, and root collider). The initial contact roster
+  now supports interactions without raw experimental character meshes.
+- Blender was used to regenerate a local clip-bearing hero candidate
+  (`hero_animated_v2.fbx`). Unity imports the mesh cleanly but does not expose
+  a dependable animation-clip list yet, so it is intentionally not wired into
+  the live player until clip validation is complete.

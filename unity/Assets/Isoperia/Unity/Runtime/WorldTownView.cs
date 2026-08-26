@@ -21,6 +21,11 @@ namespace Isoperia.Unity
         private const string MarketCanopyAsset = "Art/OwnedModels/hearthvale_market_canopy";
         private readonly List<GameObject> instances = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
+        private Material paving;
+        private Material plaster;
+        private Material timber;
+        private Material roof;
+        private Material windowGlow;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateTownView()
@@ -52,21 +57,14 @@ namespace Isoperia.Unity
             const float ground = .18f;
             Vector3 center = new Vector3(CoreGrid.TownCenter + .5f, ground, CoreGrid.TownCenter + .5f);
 
-            // Main street through the plaza.
-            for (int z = 10; z <= 33; z += 2)
-                Place("road", center + new Vector3(0f, 0f, z - 21.5f), new Vector3(2f, 1f, 2f));
-            for (int x = 10; x <= 33; x += 2)
-                Place("road", center + new Vector3(x - 21.5f, .01f, 0f), new Vector3(2f, 1f, 2f), 90f);
+            CreateTownMaterials();
+            CreatePlazaAndStreets(center);
 
-            PlaceOwnedLandmark(PlazaFountainAsset, "Town_HearthvalePlazaFountain", center + new Vector3(0f, .02f, 0f), 2.0f, 0f,
-                () => Place("fountain-round", center + new Vector3(0f, .02f, 0f), Vector3.one * 1.35f));
-            PlaceOwnedLandmark(MarketCanopyAsset, "Town_HearthvaleMarketCanopy", center + new Vector3(-3.5f, 0f, 2.4f), 1.75f, 180f,
-                () => Place("stall-red", center + new Vector3(-3.5f, 0f, 2.4f), Vector3.one * 1.25f, 180f));
-            Place("stall-green", center + new Vector3(3.5f, 0f, -2.4f), Vector3.one * 1.25f);
-            Place("lantern", center + new Vector3(-2.2f, 0f, -2.2f), Vector3.one * 1.1f);
-            Place("lantern", center + new Vector3(2.2f, 0f, 2.2f), Vector3.one * 1.1f, 180f);
-            CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", center + new Vector3(-2.8f, .7f, 1.2f), new Color(.31f, .55f, .28f));
-            CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", center + new Vector3(2.8f, .7f, -1.2f), new Color(.73f, .39f, .22f));
+            CreatePlazaFountain(center + new Vector3(0f, .02f, 0f));
+            CreateMarketShelter(center + new Vector3(-4.2f, .02f, 2.8f), 180f);
+            CreateMarketShelter(center + new Vector3(4.2f, .02f, -2.8f), 0f);
+            CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", center + new Vector3(-2.8f, .7f, 1.2f), new Color(.23f, .32f, .22f));
+            CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", center + new Vector3(2.8f, .7f, -1.2f), new Color(.38f, .23f, .16f));
             CreateJourneyNpc("Wayfinder Nahl", "Lantern Road accepted · follow the eastern lights to Cinder Hollow, then return.",
                 center + new Vector3(6.8f, .7f, .7f), new Color(.82f, .66f, .22f));
 
@@ -209,11 +207,106 @@ namespace Isoperia.Unity
 
         private void CreateHouse(Vector3 position, float yaw, float scale)
         {
-            Quaternion rotation = Quaternion.Euler(0f, yaw, 0f);
-            Vector3 bodyScale = new Vector3(scale * 1.75f, scale * 1.15f, scale * 1.45f);
-            Place("wall-wood-door", position, bodyScale, yaw);
-            Place("roof-gable", position + new Vector3(0f, scale * .95f, 0f), new Vector3(scale * 1.9f, scale * 1.3f, scale * 1.6f), yaw);
-            Place("wall-wood-window-shutters", position + rotation * new Vector3(0f, 0f, scale * .85f), new Vector3(scale * 1.7f, scale, scale), yaw);
+            GameObject house = new GameObject("Town_HearthvaleHome");
+            house.transform.SetParent(transform, false);
+            house.transform.position = position;
+            house.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            instances.Add(house);
+
+            float width = scale * 1.45f;
+            float depth = scale * 1.15f;
+            float wallHeight = scale * 1.34f;
+            AddBlock(house.transform, "StoneFoundation", new Vector3(0f, .14f, 0f), new Vector3(width + .12f, .28f, depth + .12f), plaster);
+            AddBlock(house.transform, "PlasterWall", new Vector3(0f, wallHeight * .55f, 0f), new Vector3(width, wallHeight, depth), plaster);
+            AddBlock(house.transform, "FrontTimber", new Vector3(0f, wallHeight * .55f, -depth - .025f), new Vector3(.12f, wallHeight * 1.02f, .10f), timber);
+            AddBlock(house.transform, "CornerTimberLeft", new Vector3(-width, wallHeight * .55f, -depth - .025f), new Vector3(.10f, wallHeight * 1.02f, .10f), timber);
+            AddBlock(house.transform, "CornerTimberRight", new Vector3(width, wallHeight * .55f, -depth - .025f), new Vector3(.10f, wallHeight * 1.02f, .10f), timber);
+            AddBlock(house.transform, "Door", new Vector3(0f, wallHeight * .34f, -depth - .09f), new Vector3(width * .28f, wallHeight * .62f, .06f), timber);
+            AddBlock(house.transform, "WindowLeft", new Vector3(-width * .62f, wallHeight * .62f, -depth - .09f), new Vector3(width * .16f, wallHeight * .24f, .05f), windowGlow);
+            AddBlock(house.transform, "WindowRight", new Vector3(width * .62f, wallHeight * .62f, -depth - .09f), new Vector3(width * .16f, wallHeight * .24f, .05f), windowGlow);
+            AddBlock(house.transform, "RoofLeft", new Vector3(-width * .5f, wallHeight + scale * .35f, 0f), new Vector3(width * .78f, .15f, depth + .18f), roof, 0f, 0f, -32f);
+            AddBlock(house.transform, "RoofRight", new Vector3(width * .5f, wallHeight + scale * .35f, 0f), new Vector3(width * .78f, .15f, depth + .18f), roof, 0f, 0f, 32f);
+        }
+
+        private void CreateTownMaterials()
+        {
+            if (paving != null) return;
+            paving = TrackMaterial(new Color(.28f, .25f, .21f));
+            plaster = TrackMaterial(new Color(.56f, .47f, .34f));
+            timber = TrackMaterial(new Color(.18f, .07f, .025f));
+            roof = TrackMaterial(new Color(.11f, .19f, .22f));
+            windowGlow = TrackMaterial(new Color(.86f, .52f, .16f), true);
+        }
+
+        private void CreatePlazaAndStreets(Vector3 center)
+        {
+            AddBlock(transform, "HearthvalePlaza", center + new Vector3(0f, .025f, 0f), new Vector3(7.2f, .05f, 6.2f), paving);
+            AddBlock(transform, "HearthvaleNorthRoad", center + new Vector3(0f, .02f, 13f), new Vector3(1.45f, .04f, 13f), paving);
+            AddBlock(transform, "HearthvaleSouthRoad", center + new Vector3(0f, .02f, -13f), new Vector3(1.45f, .04f, 13f), paving);
+            AddBlock(transform, "HearthvaleEastRoad", center + new Vector3(13f, .02f, 0f), new Vector3(13f, .04f, 1.45f), paving);
+            AddBlock(transform, "HearthvaleWestRoad", center + new Vector3(-13f, .02f, 0f), new Vector3(13f, .04f, 1.45f), paving);
+        }
+
+        private void CreatePlazaFountain(Vector3 position)
+        {
+            GameObject fountain = new GameObject("Town_HearthvalePlazaFountain");
+            fountain.transform.SetParent(transform, false);
+            fountain.transform.position = position;
+            instances.Add(fountain);
+            AddCylinder(fountain.transform, "Basin", Vector3.zero, .95f, .18f, plaster);
+            AddCylinder(fountain.transform, "Water", new Vector3(0f, .11f, 0f), .72f, .045f, windowGlow);
+            AddCylinder(fountain.transform, "Column", new Vector3(0f, .38f, 0f), .16f, .58f, plaster);
+            AddCylinder(fountain.transform, "Finial", new Vector3(0f, .75f, 0f), .24f, .12f, roof);
+        }
+
+        private void CreateMarketShelter(Vector3 position, float yaw)
+        {
+            GameObject stall = new GameObject("Town_HearthvaleMarketShelter");
+            stall.transform.SetParent(transform, false);
+            stall.transform.position = position;
+            stall.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            instances.Add(stall);
+            AddBlock(stall.transform, "Counter", new Vector3(0f, .48f, 0f), new Vector3(1.4f, .55f, .48f), timber);
+            AddBlock(stall.transform, "PostLeft", new Vector3(-.58f, 1.32f, 0f), new Vector3(.08f, 1.2f, .08f), timber);
+            AddBlock(stall.transform, "PostRight", new Vector3(.58f, 1.32f, 0f), new Vector3(.08f, 1.2f, .08f), timber);
+            AddBlock(stall.transform, "Canopy", new Vector3(0f, 1.86f, 0f), new Vector3(1.55f, .10f, .92f), roof);
+        }
+
+        private Material TrackMaterial(Color color, bool emission = false)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Material material = new Material(shader) { color = color };
+            if (emission)
+            {
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", color * .35f);
+            }
+            runtimeMaterials.Add(material);
+            return material;
+        }
+
+        private static void AddBlock(Transform parent, string name, Vector3 localPosition, Vector3 localScale, Material material,
+            float xRotation = 0f, float yRotation = 0f, float zRotation = 0f)
+        {
+            GameObject block = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            block.name = name;
+            block.transform.SetParent(parent, false);
+            block.transform.localPosition = localPosition;
+            block.transform.localRotation = Quaternion.Euler(xRotation, yRotation, zRotation);
+            block.transform.localScale = localScale;
+            block.GetComponent<Renderer>().sharedMaterial = material;
+            Destroy(block.GetComponent<Collider>());
+        }
+
+        private static void AddCylinder(Transform parent, string name, Vector3 localPosition, float radius, float height, Material material)
+        {
+            GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            cylinder.name = name;
+            cylinder.transform.SetParent(parent, false);
+            cylinder.transform.localPosition = localPosition;
+            cylinder.transform.localScale = new Vector3(radius * 2f, height * .5f, radius * 2f);
+            cylinder.GetComponent<Renderer>().sharedMaterial = material;
+            Destroy(cylinder.GetComponent<Collider>());
         }
 
         private void CreateNpc(string name, string hint, Vector3 position, Color color)
@@ -240,24 +333,32 @@ namespace Isoperia.Unity
             // inconsistent origins and scale. A deliberately simple, grounded
             // town-contact silhouette is clearer and safer until the shared
             // rigged NPC set is finished.
-            GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            fallback.name = "NPC_" + name.Replace(" ", string.Empty);
+            GameObject fallback = new GameObject("NPC_" + name.Replace(" ", string.Empty));
             fallback.transform.SetParent(transform, false);
             fallback.transform.position = position;
-            fallback.transform.localScale = new Vector3(.34f, .65f, .34f);
             Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            Material material = new Material(shader) { color = fallbackColor };
-            runtimeMaterials.Add(material);
-            fallback.GetComponent<Renderer>().sharedMaterial = material;
+            Material tunicMaterial = new Material(shader) { color = fallbackColor };
+            runtimeMaterials.Add(tunicMaterial);
+            Material skinMaterial = new Material(shader) { color = new Color(.72f, .48f, .31f) };
+            runtimeMaterials.Add(skinMaterial);
+            Material bootMaterial = new Material(shader) { color = new Color(.10f, .07f, .05f) };
+            runtimeMaterials.Add(bootMaterial);
+            AddBlock(fallback.transform, "Tunic", new Vector3(0f, .79f, 0f), new Vector3(.42f, .62f, .24f), tunicMaterial);
+            AddBlock(fallback.transform, "LeftArm", new Vector3(-.31f, .82f, 0f), new Vector3(.11f, .48f, .11f), tunicMaterial, 0f, 0f, -10f);
+            AddBlock(fallback.transform, "RightArm", new Vector3(.31f, .82f, 0f), new Vector3(.11f, .48f, .11f), tunicMaterial, 0f, 0f, 10f);
+            AddBlock(fallback.transform, "LeftBoot", new Vector3(-.13f, .22f, 0f), new Vector3(.14f, .38f, .16f), bootMaterial);
+            AddBlock(fallback.transform, "RightBoot", new Vector3(.13f, .22f, 0f), new Vector3(.14f, .38f, .16f), bootMaterial);
             GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             head.name = "Head";
             head.transform.SetParent(fallback.transform, false);
-            head.transform.localPosition = new Vector3(0f, 1.02f, 0f);
-            head.transform.localScale = Vector3.one * .72f;
-            Material skinMaterial = new Material(shader) { color = new Color(.72f, .48f, .31f) };
+            head.transform.localPosition = new Vector3(0f, 1.28f, 0f);
+            head.transform.localScale = new Vector3(.34f, .38f, .34f);
             head.GetComponent<Renderer>().sharedMaterial = skinMaterial;
-            runtimeMaterials.Add(skinMaterial);
             Destroy(head.GetComponent<Collider>());
+            CapsuleCollider collider = fallback.AddComponent<CapsuleCollider>();
+            collider.radius = .34f;
+            collider.height = 1.58f;
+            collider.center = new Vector3(0f, .79f, 0f);
             return fallback;
         }
 
