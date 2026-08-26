@@ -2101,3 +2101,10 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   and a constrained orbit range. The player, plaza contacts, and nearby town
   architecture now share the gameplay frame while touch orbit and pinch zoom
   remain available.
+
+## 2026-08-26 · Mainland route-anchor pass
+
+- Added a controlled route-anchor view for the first east and south routes:
+  three warm travel lamps and two blue waystones are grounded to the runtime
+  terrain and fade against the existing day/night clock. These are sparse
+  navigation and atmosphere cues, not a return to the retired asset scatter.
