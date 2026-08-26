@@ -65,27 +65,22 @@ namespace Isoperia.Unity
             Place("stall-green", center + new Vector3(3.5f, 0f, -2.4f), Vector3.one * 1.25f);
             Place("lantern", center + new Vector3(-2.2f, 0f, -2.2f), Vector3.one * 1.1f);
             Place("lantern", center + new Vector3(2.2f, 0f, 2.2f), Vector3.one * 1.1f, 180f);
-            PlaceCampfire(center + new Vector3(-3.4f, 0f, -4.1f));
-            // A lantern-and-crate stop explains the eastern road departure and
-            // gives the first local Blender asset trial a player-visible home.
-            PlaceLocalPropTrial(center + new Vector3(7.9f, 0f, -1.9f), 1.1f, 18f);
             CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", center + new Vector3(-2.8f, .7f, 1.2f), new Color(.31f, .55f, .28f));
             CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", center + new Vector3(2.8f, .7f, -1.2f), new Color(.73f, .39f, .22f));
             CreateJourneyNpc("Wayfinder Nahl", "Lantern Road accepted · follow the eastern lights to Cinder Hollow, then return.",
                 center + new Vector3(6.8f, .7f, .7f), new Color(.82f, .66f, .22f));
 
-            CreateHouse(center + new Vector3(-6f, 0f, -5f), 90f, 1.25f);
-            CreateHouse(center + new Vector3(6f, 0f, -5f), -90f, 1.25f);
-            CreateHouse(center + new Vector3(-6f, 0f, 5f), 90f, 1.1f);
-            CreateHouse(center + new Vector3(6f, 0f, 5f), -90f, 1.1f);
-            CreateResidentialLane(center + new Vector3(-10.5f, 0f, -7.8f), 90f, 3);
-            CreateResidentialLane(center + new Vector3(10.5f, 0f, -7.8f), -90f, 3);
-            CreateResidentialLane(center + new Vector3(-10.5f, 0f, 7.8f), 90f, 2);
-            CreateResidentialLane(center + new Vector3(10.5f, 0f, 7.8f), -90f, 2);
+            // Four readable, larger homes establish a proper residential ring.
+            // The former procedural lanes overlapped the plaza sightlines and
+            // turned each home into three tiny disconnected mesh fragments.
+            CreateHouse(center + new Vector3(-8.5f, 0f, -6.8f), 90f, 1.62f);
+            CreateHouse(center + new Vector3(8.5f, 0f, -6.8f), -90f, 1.62f);
+            CreateHouse(center + new Vector3(-8.5f, 0f, 7.2f), 90f, 1.46f);
+            CreateHouse(center + new Vector3(8.5f, 0f, 7.2f), -90f, 1.46f);
 
             // The north-west yard anchors the forest route with storage and a
             // working watermill, instead of ending the town in loose props.
-            CreateWorkshop(center + new Vector3(-12f, 0f, -1.5f), 90f);
+            CreateWorkshop(center + new Vector3(-14f, 0f, -1.5f), 90f);
             Place("fence", center + new Vector3(-10.5f, 0f, -3.8f), Vector3.one * 1.3f, 90f);
             Place("fence", center + new Vector3(-13.5f, 0f, .9f), Vector3.one * 1.3f);
 
@@ -95,9 +90,8 @@ namespace Isoperia.Unity
                 Place("fence", center + new Vector3(8f + x * 1.4f, 0f, 9.4f), Vector3.one * 1.2f);
                 Place("fence", center + new Vector3(8f + x * 1.4f, 0f, 13.3f), Vector3.one * 1.2f, 180f);
             }
-            Place("windmill", center + new Vector3(10f, 0f, 11f), Vector3.one * 1.45f, -25f);
-            CreateField(center + new Vector3(8.5f, 0f, 14.5f));
-            CreateField(center + new Vector3(13.2f, 0f, 14.5f));
+            Place("windmill", center + new Vector3(12.5f, 0f, 13.5f), Vector3.one * 1.7f, -25f);
+            CreateField(center + new Vector3(9.8f, 0f, 17f));
             CreateNpc("Scout Tamsin", "Defeat a Giant Rat on the eastern route.", center + new Vector3(8f, .7f, 7f), new Color(.28f, .40f, .70f));
             Place("watermill", center + new Vector3(-11f, 0f, 8f), Vector3.one * 1.25f, 90f);
 
@@ -122,7 +116,9 @@ namespace Isoperia.Unity
 
         private void CreateWorkshop(Vector3 origin, float yaw)
         {
-            PlaceForge(origin, yaw);
+            // The previous forge export reads as a huge siege engine at the
+            // town camera distance. Keep this edge space clear until its
+            // replacement is modeled to the settlement scale.
             Place("fence", origin + new Vector3(1.8f, 0f, 2.2f), Vector3.one * 1.35f, yaw);
             Place("rock-small", origin + new Vector3(-2.0f, 0f, -1.7f), Vector3.one * .95f, 27f);
         }
@@ -240,28 +236,10 @@ namespace Isoperia.Unity
 
         private GameObject CreateNpcBody(string name, Vector3 position, Color fallbackColor)
         {
-            string ownedName = name.Contains("Forester") ? "villager" :
-                name.Contains("Cook") ? "merchant" : name.Contains("Wayfinder") ? "questgiver" :
-                name.Contains("Scout") ? "guard" : "villager";
-            GameObject prefab = Resources.Load<GameObject>(OwnedNpcRoot + ownedName) ?? Resources.Load<GameObject>(VillagerAsset);
-            if (prefab != null)
-            {
-                GameObject npc = Instantiate(prefab, position, Quaternion.identity, transform);
-                npc.name = "NPC_" + name.Replace(" ", string.Empty);
-                npc.transform.localScale = Vector3.one;
-                OwnedModelPresentation.FitToHeight(npc, 1.55f);
-                if (npc.GetComponent<Collider>() == null)
-                {
-                    var collider = npc.AddComponent<CapsuleCollider>();
-                    collider.radius = .36f;
-                    collider.height = 1.35f;
-                    collider.center = new Vector3(0f, .67f, 0f);
-                }
-                return npc;
-            }
-
-            // Keep a robust fallback for a failed import or an intentionally
-            // stripped mobile build; gameplay interaction stays available.
+            // The available NPC source meshes are raw production studies with
+            // inconsistent origins and scale. A deliberately simple, grounded
+            // town-contact silhouette is clearer and safer until the shared
+            // rigged NPC set is finished.
             GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             fallback.name = "NPC_" + name.Replace(" ", string.Empty);
             fallback.transform.SetParent(transform, false);
@@ -271,6 +249,15 @@ namespace Isoperia.Unity
             Material material = new Material(shader) { color = fallbackColor };
             runtimeMaterials.Add(material);
             fallback.GetComponent<Renderer>().sharedMaterial = material;
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = "Head";
+            head.transform.SetParent(fallback.transform, false);
+            head.transform.localPosition = new Vector3(0f, 1.02f, 0f);
+            head.transform.localScale = Vector3.one * .72f;
+            Material skinMaterial = new Material(shader) { color = new Color(.72f, .48f, .31f) };
+            head.GetComponent<Renderer>().sharedMaterial = skinMaterial;
+            runtimeMaterials.Add(skinMaterial);
+            Destroy(head.GetComponent<Collider>());
             return fallback;
         }
 

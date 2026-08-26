@@ -2044,3 +2044,23 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   automation tab closed during the optional start interaction, so device-side
   movement and first-play input remain an explicit tester QA check rather than
   an assumed pass.
+
+## 2026-08-26 · Corrective opening-town pass
+
+- Tester screenshots exposed a real presentation regression: `hero_animated`
+  was imported with no animation clips but was still assigned to an Animator
+  Controller, which allowed the bind pose/T-pose to ship. The opening player
+  now uses the existing procedural animated fallback until a compatible hero
+  animation set is authored and validated.
+- Disabled the raw asset-library, prototype building/biome/decoration/dungeon,
+  and combat renderers from the starting experience. These systems had been
+  composing unreviewed assets alongside Hearthvale, producing overlapping,
+  incorrectly scaled objects and unsuitable creature silhouettes at spawn.
+- Reduced Hearthvale to a readable plaza, larger residential ring, and stable
+  fallback town contacts. Raw NPC imports are no longer used as live town
+  characters. This is a deliberate cleanup baseline, not the final art pass;
+  assets will return only after per-district scale, grounding, and camera
+  review.
+- Unity compiled with no Console errors after explicit asset import. EditMode
+  regression gate: **380/380 passed**. Browser build/deploy remains pending
+  final mobile-input verification.

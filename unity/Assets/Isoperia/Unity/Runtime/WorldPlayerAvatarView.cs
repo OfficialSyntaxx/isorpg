@@ -11,8 +11,6 @@ namespace Isoperia.Unity
     public sealed class WorldPlayerAvatarView : MonoBehaviour
     {
         public const string AvatarName = "PlayerAvatar";
-        private const string HeroAsset = "Art/OwnedModels/hero_animated";
-        private const string HeroControllerAsset = "Art/HeroController";
 
         private Material tunic;
         private Material skin;
@@ -58,38 +56,11 @@ namespace Isoperia.Unity
         private void Awake()
         {
             playerController = GetComponent<OpenWorldPlayerController>();
-            GameObject heroPrefab = Resources.Load<GameObject>(HeroAsset);
-            if (heroPrefab != null)
-            {
-                GameObject hero = Instantiate(heroPrefab, transform);
-                hero.name = "HeroModel";
-                hero.transform.localPosition = Vector3.zero;
-                hero.transform.localRotation = Quaternion.identity;
-                hero.transform.localScale = Vector3.one;
-                Transform helperCube = FindChild(hero.transform, "Cube");
-                if (helperCube != null) Destroy(helperCube.gameObject);
-                OwnedModelPresentation.FitToHeight(hero, 1.45f);
-                ApplyHeroPalette(hero);
-                Animator animator = hero.GetComponentInChildren<Animator>(true);
-                if (animator == null) animator = hero.AddComponent<Animator>();
-                if (animator.runtimeAnimatorController == null)
-                    animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(HeroControllerAsset);
-                if (animator != null && animator.runtimeAnimatorController != null)
-                {
-                    heroTransform = hero.transform;
-                    heroAnimator = animator;
-                    heroAnimator.applyRootMotion = false;
-                    CacheAnimatorParameters();
-                    return;
-                }
-
-                // The owned source has a rig but no baked clips. Do not ship its
-                // bind pose as the playable character; retain the usable source
-                // only when it can actually animate.
-                hero.SetActive(false);
-                Destroy(hero);
-            }
-
+            // hero_animated currently has a usable mesh and rig but no baked
+            // animation clips (its importer lists an empty clip set). Assigning
+            // it to HeroController therefore renders the bind pose in builds.
+            // Keep it in the library for the animation-authoring pass, but use
+            // the explicit animated fallback until compatible clips exist.
             CreateAnimatedFallback();
         }
 
@@ -109,25 +80,6 @@ namespace Isoperia.Unity
                 new Vector3(.12f, .30f, .12f), tunic);
             rightLegTransform = CreatePart(PrimitiveType.Capsule, "RightLeg", new Vector3(.12f, .13f, 0f),
                 new Vector3(.12f, .30f, .12f), tunic);
-        }
-
-        private static Transform FindChild(Transform root, string childName)
-        {
-            foreach (Transform child in root)
-            {
-                if (child.name == childName) return child;
-                Transform match = FindChild(child, childName);
-                if (match != null) return match;
-            }
-            return null;
-        }
-
-        private void ApplyHeroPalette(GameObject hero)
-        {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            heroMaterial = new Material(shader) { color = new Color(.14f, .24f, .48f, 1f) };
-            foreach (Renderer renderer in hero.GetComponentsInChildren<Renderer>(true))
-                renderer.sharedMaterial = heroMaterial;
         }
 
         private void Update()

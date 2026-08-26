@@ -23,8 +23,10 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
-            if (Object.FindAnyObjectByType<WorldOwnedAssetLibraryView>() != null) return;
-            new GameObject(nameof(WorldOwnedAssetLibraryView)).AddComponent<WorldOwnedAssetLibraryView>();
+            // This library mixed many raw asset experiments into the opening
+            // district. It remains available in source for deliberate,
+            // district-by-district reintroduction, but it must not instantiate
+            // in the playable starting town.
         }
 
         private void Start()

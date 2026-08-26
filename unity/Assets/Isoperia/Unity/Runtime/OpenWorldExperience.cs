@@ -6,6 +6,7 @@ namespace Isoperia.Unity
     [DefaultExecutionOrder(-900)]
     public sealed class OpenWorldExperience : MonoBehaviour
     {
+        private int prototypeSuppressionFrames = 3;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
@@ -36,6 +37,32 @@ namespace Isoperia.Unity
             if (player.GetComponent<WorldInteractionController>() == null) player.AddComponent<WorldInteractionController>();
             if (camera.GetComponent<OpenWorldCameraController>() == null) camera.gameObject.AddComponent<OpenWorldCameraController>();
             if (camera.GetComponent<AudioListener>() == null) camera.gameObject.AddComponent<AudioListener>();
+            SuppressPrototypeViews();
+        }
+
+        private void LateUpdate()
+        {
+            // RuntimeInitialize callbacks have no ordering guarantee. Repeat the
+            // suppression for the first frames so a legacy renderer created
+            // after this bootstrap cannot add its retired test geometry beside
+            // the authored open-world pass.
+            if (prototypeSuppressionFrames-- > 0) SuppressPrototypeViews();
+        }
+
+        private static void SuppressPrototypeViews()
+        {
+            Disable<WorldBuildingView>();
+            Disable<WorldBiomeLandmarkView>();
+            Disable<WorldDecorationView>();
+            Disable<WorldDungeonView>();
+            Disable<WorldOwnedAssetLibraryView>();
+            Disable<WorldCombatView>();
+        }
+
+        private static void Disable<T>() where T : Behaviour
+        {
+            foreach (T view in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
+                view.gameObject.SetActive(false);
         }
     }
 }
