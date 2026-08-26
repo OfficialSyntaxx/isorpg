@@ -81,9 +81,20 @@ fallbacks. `OwnedAnimationSetup` creates the Cinder Hound and actor-baseline
 controllers; root motion stays disabled and no clip changes combat or movement
 authority.
 
-Phase 3 begins only after this composition is reviewed in the running build:
-district density tuning, higher-detail replacement meshes, interaction-specific
-collision adjustments, and broader actor rig/Animator coverage.
+## Phase 3 world-presence status
+
+**Complete — runtime composition polish.** District props now stream by player
+distance, keeping the active presentation set local to travel. Lanterns,
+braziers, and milestones use small local lights tied to the saved world clock.
+Friendly creatures use bounded presentation-only idle wandering; villagers
+keep their existing social idle. The player controller deliberately relies on
+deterministic terrain and water checks rather than `CharacterController`
+physics, so scenic prop colliders cannot trap a player.
+
+The next art phase is higher-detail replacement meshes for the current first
+pass silhouettes, broader rigged actor/Animator coverage, and a new WebGL
+candidate with in-game visual review. These remain presentation changes unless
+a separate gameplay ticket explicitly changes Core authority.
 
 ### Hearthvale and routes
 

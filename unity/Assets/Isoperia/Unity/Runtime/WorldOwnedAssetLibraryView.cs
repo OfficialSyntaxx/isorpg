@@ -12,7 +12,13 @@ namespace Isoperia.Unity
     public sealed class WorldOwnedAssetLibraryView : MonoBehaviour
     {
         private const string AssetRoot = "Art/OwnedModels/";
+        private const float VisibilityRadius = 68f;
+        private const float VisibilityRadiusSquared = VisibilityRadius * VisibilityRadius;
+        private const int RebuildDistance = 9;
         private readonly List<GameObject> instances = new List<GameObject>();
+        private Transform player;
+        private int lastAnchorX = int.MinValue;
+        private int lastAnchorZ = int.MinValue;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
@@ -27,6 +33,12 @@ namespace Isoperia.Unity
             BuildRoutes();
             BuildDistricts();
             BuildAmbientLife();
+            RefreshVisibility(true);
+        }
+
+        private void Update()
+        {
+            RefreshVisibility(false);
         }
 
         private void BuildHearthvale()
@@ -115,8 +127,49 @@ namespace Isoperia.Unity
             OwnedModelPresentation.FitToHeight(instance, Mathf.Max(.45f, scale));
             ApplyPalette(instance);
             if (collider) AddBoundsCollider(instance);
-            if (ambient) instance.AddComponent<WorldNpcAmbientView>();
+            if (ambient)
+            {
+                // Friendly creature models idle inside their authored clearing;
+                // villagers keep the existing stationary social-idle treatment.
+                if (asset.StartsWith("friendly_")) instance.AddComponent<WorldAmbientCreatureView>();
+                else instance.AddComponent<WorldNpcAmbientView>();
+            }
+            if (asset.Contains("lantern") || asset.Contains("brazier") || asset.Contains("milestone"))
+                AddLocalLight(instance, asset.Contains("milestone") ? new Color(.25f, .85f, .48f) : new Color(1f, .30f, .08f));
             instances.Add(instance);
+        }
+
+        private void RefreshVisibility(bool force)
+        {
+            if (player == null) player = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
+            if (player == null) return;
+            int anchorX = Mathf.FloorToInt(player.position.x);
+            int anchorZ = Mathf.FloorToInt(player.position.z);
+            if (!force && Mathf.Abs(anchorX - lastAnchorX) < RebuildDistance && Mathf.Abs(anchorZ - lastAnchorZ) < RebuildDistance) return;
+            lastAnchorX = anchorX;
+            lastAnchorZ = anchorZ;
+            for (int i = 0; i < instances.Count; i++)
+            {
+                GameObject instance = instances[i];
+                if (instance == null) continue;
+                Vector3 delta = instance.transform.position - player.position;
+                bool visible = delta.x * delta.x + delta.z * delta.z <= VisibilityRadiusSquared;
+                if (instance.activeSelf != visible) instance.SetActive(visible);
+            }
+        }
+
+        private static void AddLocalLight(GameObject owner, Color color)
+        {
+            GameObject lightRoot = new GameObject("LocalLight");
+            lightRoot.transform.SetParent(owner.transform, false);
+            lightRoot.transform.localPosition = Vector3.up * .9f;
+            Light point = lightRoot.AddComponent<Light>();
+            point.type = LightType.Point;
+            point.color = color;
+            point.range = 4.4f;
+            point.shadows = LightShadows.None;
+            point.intensity = 1.4f;
+            lightRoot.AddComponent<WorldLocalLightPool>();
         }
 
         private static Vector3 Grounded(int x, int z)

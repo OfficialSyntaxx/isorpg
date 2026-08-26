@@ -1950,3 +1950,21 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
 - Unity EditMode regression gate: **380/380 passed**. Fresh WebGL build
   succeeded in **2m 09s**, outputting **50.61 MB** Brotli-compressed content to
   `unity/WebGLBuild` (final build ID `20260826-012154-29a28fa6`).
+
+## 2026-08-25 · Phase 3 world-presence pass
+
+- `WorldOwnedAssetLibraryView` now streams its presentation-only landmark
+  instances by player distance. This keeps nearby districts populated without
+  leaving all distant composed props active at once; Core terrain, navigation,
+  combat, and saves remain authoritative.
+- Route lanterns, braziers, and milestones now own small local point lights
+  whose intensity follows the saved day/night clock. Friendly creatures have a
+  tiny bounded idle wander, while villagers keep their existing social idle.
+- Player movement continues to use deterministic terrain and water checks with
+  the legacy `CharacterController` disabled, so decorative prop colliders do
+  not create invisible travel traps. Fresh Play Mode inspection reported zero
+  Console errors and three nearby local-light roots; the EditMode gate passed
+  **380/380**.
+- The next visual pass is intentionally larger: replace the first low-detail
+  landmark silhouettes with authored higher-detail meshes, extend rigged actor
+  coverage, then capture a new WebGL candidate for tester review.
