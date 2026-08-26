@@ -271,17 +271,25 @@
        build error.
     ------------------------------------------------------------------ */
     var buildUrl = "Build";
-    var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+    // IsoperiaBuild stamps this token after every build. Querying each payload
+    // with that build identifier protects a returning player during the one
+    // page load where their previous service worker still controls requests:
+    // its old cache cannot match the newly versioned request.
+    var buildVersion = "__BUILD_ID__";
+    function buildFile(filename) {
+      return buildUrl + "/" + filename + "?v=" + encodeURIComponent(buildVersion);
+    }
+    var loaderUrl = buildFile("{{{ LOADER_FILENAME }}}");
 
     var config = {
-      dataUrl:       buildUrl + "/{{{ DATA_FILENAME }}}",
-      frameworkUrl:  buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
-      codeUrl:       buildUrl + "/{{{ CODE_FILENAME }}}",
+      dataUrl:       buildFile("{{{ DATA_FILENAME }}}"),
+      frameworkUrl:  buildFile("{{{ FRAMEWORK_FILENAME }}}"),
+      codeUrl:       buildFile("{{{ CODE_FILENAME }}}"),
 #if MEMORY_FILENAME
-      memoryUrl:     buildUrl + "/{{{ MEMORY_FILENAME }}}",
+      memoryUrl:     buildFile("{{{ MEMORY_FILENAME }}}"),
 #endif
 #if SYMBOLS_FILENAME
-      symbolsUrl:    buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+      symbolsUrl:    buildFile("{{{ SYMBOLS_FILENAME }}}"),
 #endif
       streamingAssetsUrl: "StreamingAssets",
       companyName:   {{{ JSON.stringify(COMPANY_NAME) }}},

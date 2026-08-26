@@ -634,8 +634,8 @@ namespace Isoperia.EditorTools
         }
 
         /// <summary>
-        /// Replaces the __BUILD_ID__ placeholder in the built ServiceWorker.js
-        /// with a value unique to this build, and writes it to build-id.txt.
+        /// Replaces the __BUILD_ID__ placeholders in the built service worker
+        /// and page with a value unique to this build, then writes build-id.txt.
         ///
         /// This is what makes a redeploy actually reach a returning browser, and
         /// the reason it has to work this way is worth stating: a browser only
@@ -657,29 +657,25 @@ namespace Isoperia.EditorTools
                              "-" + System.Guid.NewGuid().ToString("N").Substring(0, 8);
             try
             {
-                string swPath = Path.Combine(BuildOutput, "ServiceWorker.js");
-
-                if (File.Exists(swPath))
+                foreach (string required in new[] { "ServiceWorker.js", "index.html" })
                 {
-                    string sw = File.ReadAllText(swPath);
-
-                    if (sw.Contains("__BUILD_ID__"))
+                    string path = Path.Combine(BuildOutput, required);
+                    if (!File.Exists(path))
                     {
-                        File.WriteAllText(swPath, sw.Replace("__BUILD_ID__", buildId));
+                        Debug.LogError("[Isoperia] no " + required + " in the build output to stamp.");
+                        continue;
                     }
-                    else
+
+                    string contents = File.ReadAllText(path);
+                    if (!contents.Contains("__BUILD_ID__"))
                     {
-                        // Loud, because silence here means every future deploy is
-                        // invisible to anyone who has already visited.
                         Debug.LogError(
-                            "[Isoperia] ServiceWorker.js has no __BUILD_ID__ placeholder. Cache " +
-                            "busting is DISABLED and returning visitors will keep the old build. " +
-                            "Restore the placeholder in the WebGL template.");
+                            "[Isoperia] " + required + " has no __BUILD_ID__ placeholder. Cache " +
+                            "busting is DISABLED; restore the placeholder in the WebGL template.");
+                        continue;
                     }
-                }
-                else
-                {
-                    Debug.LogWarning("[Isoperia] no ServiceWorker.js in the build output to stamp.");
+
+                    File.WriteAllText(path, contents.Replace("__BUILD_ID__", buildId));
                 }
 
                 File.WriteAllText(Path.Combine(BuildOutput, "build-id.txt"), buildId + "\n");

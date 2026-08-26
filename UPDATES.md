@@ -2125,3 +2125,17 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   no exceptions, and a cache-stamped service worker. The physical mobile sweep
   remains intentionally deferred; this candidate is suitable for browser
   feedback, not a mobile-release-ready claim.
+
+## 2026-08-26 · WebGL returning-visitor cache repair
+
+- Hosted smoke testing caught a loader/data-size mismatch at 90% for a browser
+  that had an older service-worker cache. Headers were correct; the old worker
+  was cache-first serving a prior payload under the unchanged `Build/*` name.
+- The WebGL template now stamps the build identifier into every loader, data,
+  framework, and wasm URL as a query value as well as into the service-worker
+  cache version. An older worker consequently misses its old cache and fetches
+  the matching new payload during the update visit.
+- An isolated headless Unity WebGL build succeeded with build ID
+  `20260826-152233-4612e3c5`, **50.85 MB**. The generated `index.html` and
+  `ServiceWorker.js` both contain that exact ID; this is the candidate to
+  publish and browser-smoke-test before sharing the URL.
