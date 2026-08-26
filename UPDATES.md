@@ -1949,4 +1949,4 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   the fix.
 - Unity EditMode regression gate: **380/380 passed**. Fresh WebGL build
   succeeded in **2m 09s**, outputting **50.61 MB** Brotli-compressed content to
-  `unity/WebGLBuild` (build ID `20260826-011910-62e97790`).
+  `unity/WebGLBuild` (final build ID `20260826-012154-29a28fa6`).
