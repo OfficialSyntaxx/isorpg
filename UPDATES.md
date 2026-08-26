@@ -2139,3 +2139,7 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   `20260826-152233-4612e3c5`, **50.85 MB**. The generated `index.html` and
   `ServiceWorker.js` both contain that exact ID; this is the candidate to
   publish and browser-smoke-test before sharing the URL.
+- Published that candidate to the existing single Netlify URL. Live Brotli
+  headers validate for both wasm and data; a browser carrying the previously
+  failing cache now reaches the `Tap to play` start screen instead of stopping
+  at 90% with an invalid data-size error.
