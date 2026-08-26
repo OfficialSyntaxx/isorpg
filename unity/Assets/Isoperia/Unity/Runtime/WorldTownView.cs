@@ -13,6 +13,7 @@ namespace Isoperia.Unity
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
         private const string VillagerAsset = "Art/OwnedModels/villager";
+        private const string OwnedNpcRoot = "Art/OwnedModels/npc_";
         private const string CampfireAsset = "Art/OwnedModels/campfire";
         private const string ForgeAsset = "Art/OwnedModels/hearthvale_forge";
         private const string LocalPropTrialAsset = "Art/OwnedModels/local_prop_trial";
@@ -198,7 +199,10 @@ namespace Isoperia.Unity
 
         private GameObject CreateNpcBody(string name, Vector3 position, Color fallbackColor)
         {
-            GameObject prefab = Resources.Load<GameObject>(VillagerAsset);
+            string ownedName = name.Contains("Forester") ? "villager" :
+                name.Contains("Cook") ? "merchant" : name.Contains("Wayfinder") ? "questgiver" :
+                name.Contains("Scout") ? "guard" : "villager";
+            GameObject prefab = Resources.Load<GameObject>(OwnedNpcRoot + ownedName) ?? Resources.Load<GameObject>(VillagerAsset);
             if (prefab != null)
             {
                 GameObject npc = Instantiate(prefab, position, Quaternion.identity, transform);

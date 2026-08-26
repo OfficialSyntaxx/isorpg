@@ -1931,3 +1931,22 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   errors. Phase 1 is now complete as an unintegrated, local-only asset library.
   Phase 2 starts the controlled Unity composition, collision, materials, and
   Animator integration pass.
+
+## 2026-08-25 · Phase 2 owned-asset integration complete
+
+- Added `WorldOwnedAssetLibraryView`, which composes grounded, sparse owned
+  landmark and ambient-life sets across Hearthvale, travel routes, and all five
+  outer districts. Shared runtime URP palette materials preserve a consistent
+  world look, while colliders are reserved for landmarks that should block
+  travel.
+- Town NPCs now prefer role-specific owned models; combat now prefers the owned
+  rat, ogre, and animated Cinder Hound assets while retaining safe fallbacks.
+  Generated Cinder Hound and actor-baseline Animator Controllers are
+  presentation-only, with root motion disabled.
+- Fixed mirrored Blender-transform collider sizing discovered during Play Mode.
+  Live validation found the composition root and representative Sunmere,
+  Miregate, and Cinder objects; Unity Console had **zero game errors** after
+  the fix.
+- Unity EditMode regression gate: **380/380 passed**. Fresh WebGL build
+  succeeded in **2m 09s**, outputting **50.61 MB** Brotli-compressed content to
+  `unity/WebGLBuild` (build ID `20260826-011910-62e97790`).

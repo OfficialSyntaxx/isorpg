@@ -69,6 +69,22 @@ Run, Turn, Gather, Talk, Emote, LightAttack, HeavyAttack, Block, Hit, Defeat,
 Spawn, and ResourceInteract. Their runtime Animator wiring is explicitly a
 Phase 2 task; no animation is treated as gameplay authority.
 
+## Phase 2 integration status
+
+**Complete.** `WorldOwnedAssetLibraryView` composes a sparse, grounded set of
+owned assets across Hearthvale, roads, Wildwood, Frostwatch, Sunmere, Miregate,
+and Cinder Hollow. It applies shared URP palette materials and adds colliders
+only to purposeful blocking landmarks. `WorldTownView` now selects owned NPC
+role silhouettes when available, while `WorldCombatView` uses the owned rat,
+ogre, and animated Cinder Hound presentation assets with existing safe
+fallbacks. `OwnedAnimationSetup` creates the Cinder Hound and actor-baseline
+controllers; root motion stays disabled and no clip changes combat or movement
+authority.
+
+Phase 3 begins only after this composition is reviewed in the running build:
+district density tuning, higher-detail replacement meshes, interaction-specific
+collision adjustments, and broader actor rig/Animator coverage.
+
 ### Hearthvale and routes
 
 - Market: produce stall, fish rack, barrels, sacks, cloth awnings, handcarts.

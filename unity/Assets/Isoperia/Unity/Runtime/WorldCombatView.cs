@@ -7,8 +7,10 @@ namespace Isoperia.Unity
     /// <summary>Minimal low-poly combat silhouettes for the live expedition registry.</summary>
     public sealed class WorldCombatView : MonoBehaviour
     {
-        private const string OgreAsset = "Art/OwnedModels/forest_ogre";
-        private const string WolfAsset = "Art/OwnedModels/dire_wolf";
+        private const string OgreAsset = "Art/OwnedModels/monster_forest_ogre";
+        private const string WolfAsset = "Art/OwnedModels/cinder_hound_animated";
+        private const string RatAsset = "Art/OwnedModels/monster_rat";
+        private const string CinderHoundController = "Art/CinderHoundController";
         private readonly Dictionary<WorldEnemyNode, GameObject> views = new Dictionary<WorldEnemyNode, GameObject>();
         private Material ratMaterial;
         private Material goblinMaterial;
@@ -52,6 +54,8 @@ namespace Isoperia.Unity
                 pair.Value.transform.localPosition = basePosition + wander + Vector3.up * bob;
                 pair.Value.transform.localRotation = Quaternion.Euler(0f, Mathf.Sin(pace * .48f) * 24f, 0f);
                 pair.Value.transform.localScale = Vector3.one * hit;
+                Animator animator = pair.Value.GetComponentInChildren<Animator>();
+                if (animator != null) animator.SetFloat("Speed", wander.sqrMagnitude > .002f ? 1f : 0f);
             }
         }
 
@@ -78,7 +82,7 @@ namespace Isoperia.Unity
 
         private GameObject CreateBody(WorldEnemyNode enemy)
         {
-            string asset = enemy.Id == "dire_wolf" ? WolfAsset : enemy.Id == "goblin" ? OgreAsset : null;
+            string asset = enemy.Id == "dire_wolf" ? WolfAsset : enemy.Id == "giant_rat" ? RatAsset : enemy.Id == "goblin" ? OgreAsset : null;
             GameObject prefab = asset == null ? null : Resources.Load<GameObject>(asset);
             GameObject root = new GameObject();
             if (prefab != null)
@@ -86,6 +90,13 @@ namespace Isoperia.Unity
                 GameObject model = Instantiate(prefab, root.transform);
                 model.transform.localScale = Vector3.one;
                 OwnedModelPresentation.FitToHeight(model, enemy.Id == "dire_wolf" ? .95f : 1.75f);
+                if (enemy.Id == "dire_wolf")
+                {
+                    Animator animator = model.GetComponentInChildren<Animator>();
+                    if (animator == null) animator = model.AddComponent<Animator>();
+                    animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(CinderHoundController);
+                    animator.applyRootMotion = false;
+                }
                 return root;
             }
 
