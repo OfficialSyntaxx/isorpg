@@ -2033,3 +2033,14 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
 - The earlier damaged temporary checkout was not restored or modified. Further
   work should use a clean checkout or clone until that worktree is explicitly
   repaired, preserving any external changes for review.
+
+## 2026-08-26 · Phase 6 browser-test deployment
+
+- Published the current clean WebGL candidate to the existing single Netlify
+  tester site: https://inspiring-tarsier-8973d6.netlify.app. No duplicate site
+  or alternate tester URL was created.
+- Netlify reported the production deployment live. A public browser load
+  reached the Isoperia start screen with no browser-console errors. The
+  automation tab closed during the optional start interaction, so device-side
+  movement and first-play input remain an explicit tester QA check rather than
+  an assumed pass.
