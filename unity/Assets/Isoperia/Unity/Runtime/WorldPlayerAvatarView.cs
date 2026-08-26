@@ -21,6 +21,7 @@ namespace Isoperia.Unity
         private Transform rightArmTransform;
         private Transform leftLegTransform;
         private Transform rightLegTransform;
+        private Transform staffTransform;
         private Transform heroTransform;
         private Animator heroAnimator;
         private OpenWorldPlayerController playerController;
@@ -80,6 +81,14 @@ namespace Isoperia.Unity
                 new Vector3(.12f, .30f, .12f), tunic);
             rightLegTransform = CreatePart(PrimitiveType.Capsule, "RightLeg", new Vector3(.12f, .13f, 0f),
                 new Vector3(.12f, .30f, .12f), tunic);
+            Transform brim = CreatePart(PrimitiveType.Cylinder, "WizardHatBrim", new Vector3(0f, 1.18f, 0f),
+                new Vector3(.42f, .045f, .42f), tunic);
+            brim.localRotation = Quaternion.identity;
+            Transform crown = CreatePart(PrimitiveType.Cylinder, "WizardHat", new Vector3(0f, 1.35f, 0f),
+                new Vector3(.18f, .26f, .18f), tunic);
+            crown.localRotation = Quaternion.Euler(0f, 0f, -10f);
+            staffTransform = CreatePart(PrimitiveType.Cylinder, "Staff", new Vector3(.42f, .48f, .05f),
+                new Vector3(.035f, .58f, .035f), CreateMaterial(new Color(.22f, .10f, .03f)));
         }
 
         private void Update()
@@ -105,6 +114,7 @@ namespace Isoperia.Unity
             if (rightArmTransform != null) rightArmTransform.localRotation = Quaternion.Euler(-stride, 0f, -12f);
             if (leftLegTransform != null) leftLegTransform.localRotation = Quaternion.Euler(-stride, 0f, 0f);
             if (rightLegTransform != null) rightLegTransform.localRotation = Quaternion.Euler(stride, 0f, 0f);
+            if (staffTransform != null) staffTransform.localRotation = Quaternion.Euler(0f, 0f, moving ? -8f + stride * .08f : -8f);
         }
 
         private Transform CreatePart(PrimitiveType type, string partName, Vector3 localPosition,

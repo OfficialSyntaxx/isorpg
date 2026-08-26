@@ -11,18 +11,24 @@ namespace Isoperia.Unity
     {
         private Transform cameraTransform;
         private bool spawned;
+        private Vector2 touchMove;
+        private Vector2 touchOrigin;
 
         // The lower-left portion of a touch screen is a direct virtual stick.
         // Keeping the gesture in the controller makes the actual gameplay input
         // owner explicit instead of relying on the disabled isometric prototype.
         private const float TouchMoveArea = .48f;
-        private const float TouchMoveRadius = 92f;
+        private const float TouchDeadZone = .10f;
+        private const float TouchMoveRadius = 132f;
         private const float WalkSpeed = 4.35f;
         private const float SprintSpeed = 6.1f;
         private const float MaxTerrainRise = .52f;
 
         public bool IsMoving { get; private set; }
         public bool IsSprinting { get; private set; }
+        public Vector2 TouchMove => touchMove;
+        public Vector2 TouchOrigin => touchOrigin;
+        public bool IsTouchMoving => touchMove.sqrMagnitude > TouchDeadZone * TouchDeadZone;
 
         private void Awake()
         {
@@ -89,19 +95,33 @@ namespace Isoperia.Unity
             return TryTeleportTo(saved.Gx, saved.Gy);
         }
 
-        private static Vector2 ReadTouchMove()
+        private Vector2 ReadTouchMove()
         {
             Touchscreen touchscreen = Touchscreen.current;
-            if (touchscreen == null) return Vector2.zero;
+            if (touchscreen == null)
+            {
+                touchMove = Vector2.zero;
+                return Vector2.zero;
+            }
 
             TouchControl touch = touchscreen.primaryTouch;
-            if (!touch.press.isPressed) return Vector2.zero;
+            if (!touch.press.isPressed)
+            {
+                touchMove = Vector2.zero;
+                return Vector2.zero;
+            }
 
             Vector2 start = touch.startPosition.ReadValue();
-            if (start.x > Screen.width * TouchMoveArea) return Vector2.zero;
+            if (start.x > Screen.width * TouchMoveArea)
+            {
+                touchMove = Vector2.zero;
+                return Vector2.zero;
+            }
 
+            touchOrigin = start;
             Vector2 delta = touch.position.ReadValue() - start;
-            return Vector2.ClampMagnitude(delta / TouchMoveRadius, 1f);
+            touchMove = Vector2.ClampMagnitude(delta / TouchMoveRadius, 1f);
+            return touchMove.sqrMagnitude < TouchDeadZone * TouchDeadZone ? Vector2.zero : touchMove;
         }
 
         private static bool WantsSprint(Vector2 input)

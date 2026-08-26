@@ -34,6 +34,7 @@ namespace Isoperia.Unity
             if (player == null) player = WorldPlayerAvatarView.Create().gameObject;
             if (player.GetComponent<CharacterController>() == null) player.AddComponent<CharacterController>();
             if (player.GetComponent<OpenWorldPlayerController>() == null) player.AddComponent<OpenWorldPlayerController>();
+            if (player.GetComponent<WorldMobileControlHint>() == null) player.AddComponent<WorldMobileControlHint>();
             if (player.GetComponent<WorldInteractionController>() == null) player.AddComponent<WorldInteractionController>();
             if (camera.GetComponent<OpenWorldCameraController>() == null) camera.gameObject.AddComponent<OpenWorldCameraController>();
             if (camera.GetComponent<AudioListener>() == null) camera.gameObject.AddComponent<AudioListener>();

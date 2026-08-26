@@ -2081,3 +2081,15 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   (`hero_animated_v2.fbx`). Unity imports the mesh cleanly but does not expose
   a dependable animation-clip list yet, so it is intentionally not wired into
   the live player until clip validation is complete.
+
+## 2026-08-26 · Player mobile-control and animation-safe pass
+
+- Reworked touch locomotion to retain a normalized joystick vector, expose its
+  active state to presentation, use a dead zone, and widen the movement radius
+  for less twitchy mobile dragging. Keyboard and gamepad input remain additive.
+- Added a mobile-only on-screen control guide with a live stick thumb tied to
+  `OpenWorldPlayerController`; it does not own movement or duplicate input.
+- Extended the procedural player fallback with a staff and wizard hat while
+  preserving the existing idle/stride presentation. No bind-pose asset is
+  allowed back into the playable path until its clips are independently valid.
+- Unity compiled with zero Console errors; EditMode: **380/380 passed**.
