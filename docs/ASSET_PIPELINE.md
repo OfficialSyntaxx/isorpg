@@ -103,6 +103,12 @@ are original local Blender route anchors composed at the existing Wildwood and
 Frostwatch approaches. They are collider-free visual landmarks and do not
 change Core navigation or progression authority.
 
+**Actor-presence pass complete.** NPC idle presentation preserves authored
+facing and responds to the existing interaction event with a short greeting
+turn. Hero and Cinder Hound remain the rig/controller references; do not bind
+the generic actor source clips to other owned meshes until their armatures are
+verified compatible.
+
 Continue Phase 4 by replacing additional high-visibility route/district
 silhouettes and broadening rigged NPC/enemy Animator coverage. Capture a new
 WebGL candidate only after that visual tranche is coherent enough for tester

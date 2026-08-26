@@ -1997,3 +1997,16 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
 - Unity imported with zero Console errors. Play Mode confirmed the Wildwood
   gate at its live camp/shrine approach; the EditMode gate remained
   **380/380 passed**.
+
+## 2026-08-25 · Phase 4 actor-presence pass
+
+- `WorldNpcAmbientView` now preserves each NPC's authored facing instead of
+  resetting it to world-forward during idle presentation. When the player
+  interacts with an NPC, that NPC gives a brief greeting turn through the
+  existing interaction event; this is visual feedback only.
+- The hero and Cinder Hound remain the controller-driven animated references
+  with root motion disabled. Other owned actor clips are not assigned across
+  incompatible rigs; broader rig-compatible Animator coverage remains a later
+  asset task rather than shipping broken animation bindings.
+- Unity compiled with zero Console errors, Play Mode loaded the actor set, and
+  the EditMode regression gate remained **380/380 passed**.
