@@ -60,16 +60,30 @@ fi
   echo "game_prefix:     ${GAME_PREFIX:-/ (site root)}"
 } > "$REPORT"
 
+# The deploy tool is PINNED, and that is not caution for its own sake.
+#
+# This was `npx netlify-cli`, unpinned, which resolves to whatever is newest at
+# the moment the job runs. On 2026-08-27 that became 27.4.0, which declares a
+# dependency on @netlify/ai@^1.0.1 — a version that has never been published.
+# Every deploy then failed at install with ETARGET, having published nothing.
+#
+# The outage was somebody else's bad release, but the exposure was ours: an
+# unpinned tool in the release path means any third party can stop this project
+# shipping, at a time of their choosing, with no change on our side. 27.3.1 is
+# the last release that installs. Raise it deliberately, after checking that the
+# new one resolves.
+NETLIFY_CLI="${NETLIFY_CLI:-netlify-cli@27.3.1}"
+
 if [ -z "$SITE" ]; then
   # DEPLOY_PROD=0 publishes a draft instead of production. The /play cutover
   # has to be provable before it is live, and a spike that can reach production
   # is not a spike. Default stays 1 so the existing release path is unchanged.
   if [ "${DEPLOY_PROD:-1}" = "1" ]; then
-    echo "==> deploying $DEPLOY_DIR (PRODUCTION)"
-    DEPLOY_LOG=$(npx netlify-cli deploy --dir "$DEPLOY_DIR" --prod --no-build 2>&1)
+    echo "==> deploying $DEPLOY_DIR (PRODUCTION) with $NETLIFY_CLI"
+    DEPLOY_LOG=$(npx --yes "$NETLIFY_CLI" deploy --dir "$DEPLOY_DIR" --prod --no-build 2>&1)
   else
-    echo "==> deploying $DEPLOY_DIR (draft preview, NOT production)"
-    DEPLOY_LOG=$(npx netlify-cli deploy --dir "$DEPLOY_DIR" --no-build 2>&1)
+    echo "==> deploying $DEPLOY_DIR (draft preview, NOT production) with $NETLIFY_CLI"
+    DEPLOY_LOG=$(npx --yes "$NETLIFY_CLI" deploy --dir "$DEPLOY_DIR" --no-build 2>&1)
   fi
   echo "$DEPLOY_LOG"
 
