@@ -10,8 +10,8 @@
 > Those live in `ROADMAP.md`, `docs/ART_BIBLE.md`, `docs/WORLD_LAYOUT.md`, and
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
-**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phase 1
-implemented and tested; blocked on one step that needs a real Unity build.
+**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phase 2 done.
+Phase 1 implemented and tested, with one gate open that needs a real Unity build.
 
 **Rollback anchor (§2.5).** The production deploy serving the game at the root
 before any cutover is Netlify deploy `6a8f04e32a032f122bbaba51` on site
@@ -22,13 +22,13 @@ that deploy restores the pre-website world exactly.
 
 ## 0. Progress dashboard
 
-Update the Status column as phases move. Nothing here is started yet.
+Update the Status column as phases move.
 
 | # | Phase | Owner model | Status | Gate to exit |
 |---|---|---|---|---|
 | 0 | Decisions & constraints | — | ✅ Done | All four architecture decisions locked (§1) |
 | 1 | Deploy composition spike | Opus 5 | 🟡 Code done, gate open | Game verified loading at `/play/` with correct Brotli headers |
-| 2 | Design system & tokens | Opus 5 | ⬜ Not started | Token file + type scale + motion scale reviewed against `docs/ART_BIBLE.md` |
+| 2 | Design system & tokens | Opus 5 | ✅ Done | Token file + type scale + motion scale reviewed against `docs/ART_BIBLE.md` |
 | 3 | Astro workspace scaffold | Sonnet 5 | ⬜ Not started | `npm run build` in `web/` green; CI runs it |
 | 4 | Landing page build | Opus 5 → Sonnet 5 | ⬜ Not started | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
 | 5 | Animation layer | Opus 5 | ⬜ Not started | Motion spec implemented; `prefers-reduced-motion` verified |
@@ -208,10 +208,16 @@ Write the ID into `unity/deploy-report.txt` as part of the cutover commit.
 | `scripts/verify-compose.cjs` | 23 assertions over the real template `_headers`. `npm run verify:compose` |
 | `scripts/verify-deploy-report.cjs` | 9 assertions driving the header check against a live local server. `npm run verify:deploy-report` |
 | `scripts/gen-holding-page.cjs` | Interim root page from `web/site.config.json`. `npm run site:holding` |
+| `web/src/styles/tokens.json` | **Design token source of truth** (Phase 2). Colour, type, space, motion, plus the contrast contract. |
+| `scripts/gen-tokens.cjs` | Emits `tokens.css` from the JSON. `npm run site:tokens` |
+| `scripts/verify-tokens.cjs` | 54 contrast/structure assertions over both themes. `npm run verify:tokens` |
+| `scripts/gen-specimen.cjs` | Both palettes + every component on one page. `npm run site:specimen` |
+| `web/src/styles/base.css`, `components.css` | Reset/elements and the component inventory. Tokens only, no literal colours. |
 | `web/site.config.json` | Single source of truth for domain, socials, contact, newsletter, analytics. A `null` url is a placeholder and is **not rendered** — a half-filled config yields a missing link, never a dead one. |
 | `.github/workflows/site-preview.yml` | Manual dispatch. Composes and publishes a **draft** deploy, then gates on the header verdict. Cannot reach production. |
 
-`npm run verify:site` runs both guards; `ci.yml` runs it on every push.
+`npm run verify:site` runs all three guards (tokens, compose, deploy-report);
+`ci.yml` runs it on every push.
 
 **Filling in a social link:** set its `url` in `web/site.config.json` and it
 appears. Discord, YouTube, Bluesky, Mastodon, X, Reddit, itch.io and Steam are
@@ -249,6 +255,23 @@ Three material layers, used consistently:
    like the same object.
 
 ### 3.3 Palette
+
+> **Superseded by `web/src/styles/tokens.json` (Phase 2, done).** That file is
+> the source of truth: `scripts/gen-tokens.cjs` emits the CSS from it and
+> `scripts/verify-tokens.cjs` audits it in CI. The block below is kept as the
+> record of the *intent*; where the two differ, the JSON is right.
+>
+> Implementation changed three things, all caught by the audit:
+> - **`border-strong` failed WCAG 1.4.11 in both themes** at the values first
+>   chosen (2.55:1 light, 2.17:1 dark, against a 3:1 requirement for non-text
+>   UI). Now `#8A7859` / `#5A6FA3`, which clear on page *and* card surfaces.
+> - **Light mode needed its own accent.** The HUD blue `#6AA8FF` is ~2:1 on
+>   parchment — unusable as a link. Light uses `#15579F`; `#6AA8FF` survives as
+>   a map *mark*, and the audit asserts it stays below 4.5:1 so nobody mistakes
+>   it for text-safe.
+> - **Semantic roles replaced raw names.** `--surface-page` / `--text-body` /
+>   `--accent` rather than `--ink-900` / `--parchment`, so a component never
+>   hardcodes which theme it is in.
 
 Derived from `src/style.css:2-13` (HUD) and `docs/ART_BIBLE.md` (world), not
 invented. Both light and dark are first-class — the artifact/theme rule is that
@@ -807,16 +830,56 @@ content-encoding and URL printed alongside it, and regression-tested. A build
 with no matching payload also used to return silently with no verdict at all;
 that now fails too.
 
-### Phase 2 — Design system ⬜
+### Phase 2 — Design system ✅
 
-- [ ] Token file (colour, type, space, radius, shadow, motion) as CSS custom
-      properties, light + dark.
-- [ ] Contrast audit of every token pair; document which pairs are forbidden.
-- [ ] Type scale with `clamp()`; pick and self-justify the two Google faces.
-- [ ] Component inventory: button, link, card, panel (glass), tag, nav, footer,
-      table, code block, callout.
-- [ ] Review against `docs/ART_BIBLE.md` — the site must not contradict the
-      game's stated visual contract.
+- [x] Token source — `web/src/styles/tokens.json`. Colour, type, space, radius,
+      shadow, motion, layout; light and dark both complete. `gen-tokens.cjs`
+      emits `tokens.css` with three theme blocks: `:root` (full light palette),
+      `prefers-color-scheme: dark` guarded by `:not([data-theme="light"])`, and
+      `[data-theme="dark"]` so an explicit choice wins in both directions. No
+      token is defined only inside a media query.
+- [x] Contrast audit — `scripts/verify-tokens.cjs`, 54 assertions across both
+      themes, in CI via `npm run verify:site`. It caught two real failures on
+      first run (see §3.3). It also checks that both themes declare identical
+      token sets and that every colour parses — a typo'd hex is dropped by the
+      browser and silently inherits, which survives review.
+- [x] Forbidden pairs are asserted to **fail**, not just documented: gold, HUD
+      blue and route orange on parchment. If a palette edit ever makes one pass,
+      the audit flags it so the ban is revisited deliberately rather than
+      decaying silently.
+- [x] Fluid type scale with `clamp()`, ~1.25 mobile → ~1.333 desktop. Three
+      faces, each justified in the JSON: **Fraunces** (display — variable serif
+      with optical sizing and real character, reads as almanac/survey),
+      **Inter** (body), **JetBrains Mono** (build IDs, wiki data). Google Fonts
+      only, per the §8.1 CSP; every stack ends in a real system fallback.
+- [x] Component inventory — `web/src/styles/components.css`: button (4
+      variants), link, card, glass panel, tag, district chip, nav, footer,
+      table, code block, callout (3 variants), reveal primitive. Plus
+      `base.css` for reset, element defaults, skip link and a designed focus
+      ring. No literal colours anywhere — everything is a token, so the audit
+      covers the whole surface.
+- [x] Specimen page — `npm run site:specimen`. Both palettes with real measured
+      ratios, the type scale, and every component on one page. Reviewed at
+      1280px and 390px in both themes: no console errors, no horizontal
+      overflow, and under `prefers-reduced-motion` reveal elements render at
+      full opacity with no transform.
+- [x] Reviewed against `docs/ART_BIBLE.md`. `--success` is the art bible's
+      meadow `#2E612B` verbatim; trunk `#452914` and rock `#5C5E61` are carried
+      as `--mark-trunk` / `--mark-rock`, reserved for map and illustration fills
+      — never chrome, never text. The dark theme is `src/style.css` verbatim
+      where it can be, so site panels and game HUD panels are the same object.
+
+#### Bugs found and fixed during the visual review
+
+Numbers alone would have shipped both of these:
+
+- **A card that was a link rendered its entire body as underlined accent text.**
+  `<a class="card">` inherited the link colour and underline. The card is the
+  affordance; the anchor is only how it is reached.
+- **The specimen printed light-theme hex values while displaying dark.** The
+  swatch chips were theme-reactive but their labels were baked from one theme,
+  so the page lied about itself. It now renders both palettes at once with
+  literal values, which is more useful for review anyway.
 
 ### Phase 3 — Astro workspace ⬜
 

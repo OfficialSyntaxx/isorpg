@@ -1,0 +1,388 @@
+/* Component layer — the inventory from docs/WEBSITE_BLUEPRINT.md Phase 2:
+ * button, link, card, panel (glass), tag, nav, footer, table, code block,
+ * callout, plus the district chip the /world map needs.
+ *
+ * These are primitives, not page sections. Phase 4 composes the landing page
+ * out of them; nothing here should know what a hero or a devlog entry is.
+ *
+ * Rules that hold throughout:
+ *   - No literal colours. Everything is a token, so the contrast audit covers it.
+ *   - Motion uses the shared duration/easing tokens, which collapse under
+ *     prefers-reduced-motion (tokens.css) rather than being disabled here.
+ *   - Only transform/opacity/colour animate. Blueprint §6.1.4.
+ */
+
+/* --- button --------------------------------------------------------------- */
+.btn {
+  --btn-bg: var(--accent);
+  --btn-fg: var(--accent-contrast);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-weight: 650;
+  font-size: var(--text-md);
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--dur-quick) var(--ease-out),
+    background-color var(--dur-quick) var(--ease-out),
+    border-color var(--dur-quick) var(--ease-out),
+    color var(--dur-quick) var(--ease-out);
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+  color: var(--btn-fg);
+  transform: translateY(-1px);
+}
+
+/* Blueprint M7: a 0.97 press. Small enough to read as physical rather than
+   bouncy. */
+.btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.btn[aria-disabled="true"],
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--lg {
+  padding: var(--space-md) var(--space-xl);
+  font-size: var(--text-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.btn--secondary {
+  --btn-bg: transparent;
+  --btn-fg: var(--text-strong);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+.btn--secondary:hover {
+  --btn-fg: var(--text-strong);
+  background: var(--surface-sunken);
+  border-color: var(--text-muted);
+}
+
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--accent);
+  box-shadow: none;
+}
+
+.btn--ghost:hover {
+  background: var(--surface-sunken);
+  --btn-fg: var(--accent-hover);
+}
+
+/* --- card ----------------------------------------------------------------- */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.card > p {
+  max-width: none;
+}
+
+/* A card that IS a link must not render its whole body as underlined link
+   text. The card is the affordance; the anchor is just how it is reached. */
+a.card {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.card:hover .card__title {
+  color: var(--accent);
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--text-strong);
+}
+
+.card__meta {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Only lift cards that are actually a link target. A hover state on something
+   unclickable is a lie about affordance. */
+a.card:hover,
+.card--interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
+}
+
+/* --- panel (glass) -------------------------------------------------------- */
+/* The game HUD's language: translucent, blurred, 16px radius, deep shadow.
+   Used for anything that floats over content, so the site's controls and the
+   game's controls read as the same object. */
+.panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-lg);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+}
+
+/* backdrop-filter is not universal. Without it the translucent background
+   leaves text on a near-transparent panel, so fall back to an opaque surface. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel {
+    background: var(--surface-raised);
+  }
+}
+
+/* --- tag / chip ----------------------------------------------------------- */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* District chips carry the route-anchor colours from the game (UPDATES.md).
+   The dot is the mark colour; the label uses the text-safe district colour,
+   because the mark colours are audited as NOT text-safe on parchment. */
+.chip-district {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  background: var(--surface-raised);
+}
+
+.chip-district::before {
+  content: "";
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background: var(--chip-mark, currentColor);
+}
+
+.chip-district--wildwood   { color: var(--district-wildwood);   --chip-mark: var(--mark-wildwood); }
+.chip-district--frostwatch { color: var(--district-frostwatch); --chip-mark: var(--mark-frostwatch); }
+.chip-district--miregate   { color: var(--district-miregate);   --chip-mark: var(--mark-miregate); }
+.chip-district--cinder     { color: var(--district-cinder);     --chip-mark: var(--mark-cinder); }
+
+/* --- nav ------------------------------------------------------------------ */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.nav__link {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--text-body);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  transition: background-color var(--dur-quick) var(--ease-out),
+              color var(--dur-quick) var(--ease-out);
+}
+
+.nav__link:hover {
+  background: var(--surface-sunken);
+  color: var(--text-strong);
+}
+
+/* aria-current is the accessible source of truth for "you are here"; styling
+   from it means the visual and the announced state cannot disagree. */
+.nav__link[aria-current="page"] {
+  color: var(--accent);
+  background: var(--surface-sunken);
+}
+
+/* --- footer --------------------------------------------------------------- */
+.footer {
+  border-top: 1px solid var(--border-subtle);
+  padding-block: var(--space-2xl);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.footer a {
+  color: var(--text-body);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* --- table ---------------------------------------------------------------- */
+/* Wraps in .scroll-x at the call site — a wide table scrolls inside its own
+   container, never the page. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table th,
+.table td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.table th {
+  color: var(--text-strong);
+  font-weight: 650;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  white-space: nowrap;
+}
+
+/* Numeric columns line up on the decimal, which is the whole point of tabular
+   figures in a wiki full of drop rates and XP values. */
+.table .num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.table tbody tr:hover {
+  background: var(--surface-sunken);
+}
+
+/* --- code ----------------------------------------------------------------- */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* --- callout -------------------------------------------------------------- */
+.callout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-sm) var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.callout__title {
+  grid-column: 2;
+  font-weight: 650;
+  color: var(--text-strong);
+}
+
+.callout__body {
+  grid-column: 2;
+}
+
+.callout__body > p { max-width: none; }
+
+.callout__icon {
+  grid-row: 1 / -1;
+  font-size: var(--text-lg);
+  line-height: 1.2;
+}
+
+.callout--success { border-left-color: var(--success); }
+.callout--warn    { border-left-color: var(--warn); }
+.callout--danger  { border-left-color: var(--danger); }
+
+/* --- reveal --------------------------------------------------------------- */
+/* Blueprint M6: 12px rise + fade on scroll, staggered.
+ *
+ * The final state is the DEFAULT and the offset state is opt-in via
+ * [data-reveal]. So content is visible if the observer never runs — a broken
+ * or blocked script must not leave the page blank, which is the standard
+ * failure of scroll-reveal implementations.
+ */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+  transition-delay: calc(var(--reveal-index, 0) * var(--stagger));
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Under reduced motion the durations are already ~0, but the offset would
+   still apply for a frame. Remove it entirely: everything arrives in place. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
