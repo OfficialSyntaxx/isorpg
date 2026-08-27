@@ -48,12 +48,12 @@ const pillars = [
 
 <section class="pitch" id="systems">
   <div class="wrap">
-    <p class="pitch__lede">
+    <p class="pitch__lede" data-reveal>
       A settlement builder and a character RPG in one loop: gather to craft, craft to
       build, build to go further out.
     </p>
 
-    <ul class="trust" aria-label="What you need to play">
+    <ul class="trust" aria-label="What you need to play" data-reveal>
       <li class="tag">Browser</li>
       <li class="tag">Installable</li>
       <li class="tag">Offline-capable</li>
@@ -62,21 +62,33 @@ const pillars = [
     </ul>
   </div>
 
-  <div class="wrap pillars">
-    <h2 class="pillars__title">One loop, five ways in</h2>
-    <ol class="pillars__list">
-      {
-        pillars.map((p) => (
-          <li class="pillar">
-            <span class={`pillar__n chip-district chip-district--${p.district}`}>
-              {p.n}
-            </span>
-            <h3 class="pillar__name">{p.name}</h3>
-            <p class="pillar__body">{p.body}</p>
-          </li>
-        ))
-      }
-    </ol>
+  <div class="wrap">
+    <h2 class="pillars__title" data-reveal>One loop, five ways in</h2>
+  </div>
+
+  <!-- M3. The numbering is not decoration: this IS a loop, and gather → craft →
+       build → fight → explore is the order it runs in, so a horizontal run
+       encodes something a grid cannot.
+
+       The base state below is a native scroll-snap row — complete and usable on
+       any width, with or without JavaScript. motion.ts upgrades it to a sticky,
+       scroll-driven run on wide viewports only. -->
+  <div class="hrun" data-hscroll>
+    <div class="hrun__sticky">
+      <ol class="hrun__track" data-hscroll-track>
+        {
+          pillars.map((p) => (
+            <li class="pillar">
+              <span class={`pillar__n chip-district chip-district--${p.district}`}>
+                {p.n}
+              </span>
+              <h3 class="pillar__name">{p.name}</h3>
+              <p class="pillar__body">{p.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
   </div>
 </section>
 
@@ -103,20 +115,18 @@ const pillars = [
     margin-top: var(--space-lg);
   }
 
-  .pillars {
-    margin-top: var(--space-3xl);
-  }
-
   .pillars__title {
+    margin-top: var(--space-3xl);
     margin-bottom: var(--space-lg);
   }
 
-  .pillars__list {
+  .hrun {
+    margin-bottom: var(--space-xl);
+  }
+
+  .hrun__track {
     list-style: none;
-    padding: 0;
-    display: grid;
-    gap: var(--space-md);
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    margin: 0;
   }
 
   .pillar {
@@ -127,6 +137,9 @@ const pillars = [
     background: var(--surface-raised);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
+    /* Equal heights across the run so the cards read as one sequence rather
+       than a ragged set. */
+    min-height: 14rem;
   }
 
   .pillar__n {

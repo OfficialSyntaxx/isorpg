@@ -407,3 +407,81 @@ pre code {
     transform: none;
   }
 }
+
+/* --- M9: page transitions -------------------------------------------------- */
+/* The NATIVE CSS view transition for multi-page navigation. Zero JavaScript —
+ * Astro's <ClientRouter /> would ship a client-side router (and would force
+ * every script on the site to re-init on astro:page-load), which is a lot of
+ * machinery for a cross-fade. Unsupported browsers simply navigate normally.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* --- M8: the hand-off into the game --------------------------------------- */
+/* Covers the Unity loader's first blank frame so entering the game reads as
+ * arrival rather than as the page breaking. Created on demand by motion.ts. */
+.exit-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--ink-wipe, var(--surface-page));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease-in-out);
+}
+
+.exit-wipe.is-on {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* --- M3: the pillars as a horizontal run ---------------------------------- */
+/* Base state is a native scroll-snap row: complete and usable on its own, on
+ * any width, with or without JavaScript. motion.ts upgrades it to a sticky
+ * scroll-driven run on wide viewports only. */
+.hrun__track {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding-inline: var(--layout-gutter);
+  padding-bottom: var(--space-sm);
+}
+
+.hrun__track > * {
+  scroll-snap-align: center;
+  flex: 0 0 min(85%, 22rem);
+}
+
+/* Upgraded state. The track stops being independently scrollable because
+   vertical scroll now drives it. */
+[data-hscroll][data-hscroll-active] {
+  position: relative;
+}
+
+[data-hscroll][data-hscroll-active] .hrun__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+[data-hscroll][data-hscroll-active] .hrun__track {
+  overflow-x: visible;
+  scroll-snap-type: none;
+  will-change: transform;
+}
+
+[data-hscroll][data-hscroll-active] .hrun__track > * {
+  flex: 0 0 22rem;
+}

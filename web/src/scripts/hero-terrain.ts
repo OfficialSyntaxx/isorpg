@@ -11,8 +11,9 @@
  * What is shared is the approach and the palette.
  *
  * DESIGN CONSTRAINTS
- *   - Paints exactly one frame. No animation loop, no rAF, nothing running
- *     after the hero leaves the viewport. Blueprint Phase 5 (M1) owns motion.
+ *   - Animates ONCE on load (M1: tiles rise into place, back to front) and then
+ *     stops. No permanent rAF loop — nothing is running after the entrance
+ *     finishes, and it never restarts on scroll.
  *   - Reads its colours from the live CSS custom properties, so it follows the
  *     theme and the Phase 2 contrast audit rather than hardcoding hexes.
  *   - Bails out — leaving the authored gradient fallback visible — on reduced
@@ -83,6 +84,72 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
 
   const root = document.documentElement;
 
+  // Tiles are collected once per layout, then either drawn instantly or
+  // animated in. Keeping the geometry separate from the painting is what makes
+  // the entrance possible without recomputing noise every frame.
+  interface Tile {
+    x: number;
+    y: number;
+    color: string;
+    lift: number;
+    /** Painter depth, gx + gy. Also drives the entrance stagger. */
+    depth: number;
+  }
+
+  let tiles: Tile[] = [];
+  let tileW = 0;
+  let tileH = 0;
+  let liftUnit = 0;
+
+  const paintTile = (t: Tile, progress: number): void => {
+    // progress 0..1 — the tile falls into place from above and fades in.
+    const rise = (1 - progress) * tileH * 3;
+    const x = t.x;
+    const y = t.y + rise;
+
+    ctx.globalAlpha = progress;
+
+    ctx.fillStyle = t.color;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + tileW / 2, y + tileH / 2);
+    ctx.lineTo(x, y + tileH);
+    ctx.lineTo(x - tileW / 2, y + tileH / 2);
+    ctx.closePath();
+    ctx.fill();
+
+    if (t.lift > 0) {
+      const side = t.lift * liftUnit + tileH * 0.35;
+
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.beginPath();
+      ctx.moveTo(x - tileW / 2, y + tileH / 2);
+      ctx.lineTo(x, y + tileH);
+      ctx.lineTo(x, y + tileH + side);
+      ctx.lineTo(x - tileW / 2, y + tileH / 2 + side);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(0,0,0,0.34)";
+      ctx.beginPath();
+      ctx.moveTo(x + tileW / 2, y + tileH / 2);
+      ctx.lineTo(x, y + tileH);
+      ctx.lineTo(x, y + tileH + side);
+      ctx.lineTo(x + tileW / 2, y + tileH / 2 + side);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+  };
+
+  const paintAll = (): void => {
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    ctx.clearRect(0, 0, cssW, cssH);
+    for (const t of tiles) paintTile(t, 1);
+  };
+
   const draw = (): void => {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const cssW = canvas.clientWidth;
@@ -106,13 +173,13 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
 
     // Tile size scales with the viewport so the composition holds from 360px to
     // ultrawide, rather than becoming a mosaic on one and four tiles on another.
-    const tileW = Math.max(38, Math.min(84, cssW / 16));
-    const tileH = tileW / 2;
+    const tileWLocal = Math.max(38, Math.min(84, cssW / 16));
+    const tileHLocal = tileWLocal / 2;
 
     // Anchored right-of-centre: the scrim keeps the left readable for the
     // headline, so the terrain's interest belongs on the right.
     const originX = cssW * 0.62;
-    const originY = -tileH * 6;
+    const originY = -tileHLocal * 6;
 
     // Which grid coordinates cover the viewport.
     //
@@ -125,8 +192,8 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     //   sx = originX + (gx - gy) * tileW/2   ->  u = gx - gy
     //   sy = originY + (gx + gy) * tileH/2   ->  v = gx + gy
     const toGrid = (sx: number, sy: number): { gx: number; gy: number } => {
-      const u = (sx - originX) / (tileW / 2);
-      const v = (sy - originY) / (tileH / 2);
+      const u = (sx - originX) / (tileWLocal / 2);
+      const v = (sy - originY) / (tileHLocal / 2);
       return { gx: (u + v) / 2, gy: (v - u) / 2 };
     };
 
@@ -141,12 +208,15 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     const gyMax = Math.ceil(Math.max(...corners.map((c) => c.gy))) + PAD_TILES;
 
     const noise = makeNoise(20260827);
-    const lift = tileH * 0.9;
+    const lift = tileHLocal * 0.9;
 
-    ctx.globalAlpha = 1;
+    // Publish the geometry the painters need.
+    tileW = tileWLocal;
+    tileH = tileHLocal;
+    liftUnit = lift;
 
-    // Painter's order: back to front so nearer tiles overlap correctly. Depth
-    // in this projection is gx + gy, and iterating gy then gx gives that.
+    const collected: Tile[] = [];
+
     for (let gy = gyMin; gy <= gyMax; gy++) {
       for (let gx = gxMin; gx <= gxMax; gx++) {
         const n = noise(gx * 0.16 + 8, gy * 0.16 + 8);
@@ -155,58 +225,82 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
         const x = originX + (gx - gy) * (tileW / 2);
         const y = originY + (gx + gy) * (tileH / 2) - band.lift * lift;
 
-        // Cheap cull. Without it a wide viewport draws thousands of invisible
-        // diamonds and the paint cost shows up in LCP.
+        // Cheap cull. Without it a wide viewport builds thousands of invisible
+        // tiles and the cost shows up in LCP.
         if (x < -tileW * 2 || x > cssW + tileW * 2) continue;
         if (y < -tileH * 4 || y > cssH + tileH * 6) continue;
 
-        // Top face.
-        ctx.fillStyle = band.color;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + tileW / 2, y + tileH / 2);
-        ctx.lineTo(x, y + tileH);
-        ctx.lineTo(x - tileW / 2, y + tileH / 2);
-        ctx.closePath();
-        ctx.fill();
-
-        // Two side faces, darkened, so the grid reads as volume rather than a
-        // flat tiling. Drawn only for lifted land — water has no visible sides.
-        if (band.lift > 0) {
-          const side = band.lift * lift + tileH * 0.35;
-
-          ctx.fillStyle = "rgba(0,0,0,0.22)";
-          ctx.beginPath();
-          ctx.moveTo(x - tileW / 2, y + tileH / 2);
-          ctx.lineTo(x, y + tileH);
-          ctx.lineTo(x, y + tileH + side);
-          ctx.lineTo(x - tileW / 2, y + tileH / 2 + side);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.fillStyle = "rgba(0,0,0,0.34)";
-          ctx.beginPath();
-          ctx.moveTo(x + tileW / 2, y + tileH / 2);
-          ctx.lineTo(x, y + tileH);
-          ctx.lineTo(x, y + tileH + side);
-          ctx.lineTo(x + tileW / 2, y + tileH / 2 + side);
-          ctx.closePath();
-          ctx.fill();
-        }
+        collected.push({ x, y, color: band.color, lift: band.lift, depth: gx + gy });
       }
     }
+
+    // Painter's order: back to front, so nearer tiles overlap correctly.
+    collected.sort((a, b) => a.depth - b.depth);
+    tiles = collected;
 
     canvas.setAttribute("data-painted", "");
   };
 
+  /**
+   * M1 — the tiles rise into place, back to front.
+   *
+   * Runs exactly once, on first layout. A resize or a theme change repaints
+   * instantly instead of replaying the entrance: re-animating every time
+   * someone drags a window edge would be noise, and re-animating on a theme
+   * toggle would punish the person who just used the toggle.
+   *
+   * Duration is capped rather than per-tile, so a 4K viewport with three
+   * thousand tiles finishes in the same ~1.1s as a phone with two hundred.
+   */
+  const animateIn = (): void => {
+    const DURATION = 1100;
+    const STAGGER_SPAN = 0.55; // fraction of DURATION spent handing out starts
+
+    const depths = tiles.map((t) => t.depth);
+    const minDepth = Math.min(...depths);
+    const maxDepth = Math.max(...depths);
+    const span = Math.max(1, maxDepth - minDepth);
+
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const start = performance.now();
+
+    const frame = (now: number): void => {
+      const elapsed = now - start;
+      const t = Math.min(1, elapsed / DURATION);
+
+      const cssW = canvas.clientWidth;
+      const cssH = canvas.clientHeight;
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      for (const tile of tiles) {
+        const offset = ((tile.depth - minDepth) / span) * STAGGER_SPAN;
+        const local = (t - offset) / (1 - STAGGER_SPAN);
+        if (local <= 0) continue;
+        paintTile(tile, easeOut(Math.min(1, local)));
+      }
+
+      if (t < 1) requestAnimationFrame(frame);
+      else paintAll(); // settle on the exact final frame
+    };
+
+    requestAnimationFrame(frame);
+  };
+
   draw();
 
-  // Repaint on resize and on a theme change, both debounced. Neither is an
-  // animation: each settles to one static frame.
+  // The entrance is skipped when motion is declined — draw() already bailed in
+  // that case, so reaching here means motion is welcome.
+  if (tiles.length > 0) animateIn();
+
+  // Repaint on resize and on a theme change, both debounced. Neither replays
+  // the entrance: each settles straight to the final frame.
   let timer: number | undefined;
   const schedule = (): void => {
     window.clearTimeout(timer);
-    timer = window.setTimeout(draw, 180);
+    timer = window.setTimeout(() => {
+      draw();
+      paintAll();
+    }, 180);
   };
 
   window.addEventListener("resize", schedule);

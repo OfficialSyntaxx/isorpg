@@ -67,8 +67,8 @@ const districts = [
 <section class="world" id="world">
   <div class="wrap">
     <p class="eyebrow">The mainland</p>
-    <h2>One place, six ways it changes</h2>
-    <p class="world__lede">
+    <h2 data-reveal>One place, six ways it changes</h2>
+    <p class="world__lede" data-reveal>
       A safe centre, landmark-led roads, and four outer regions whose terrain, resources
       and danger reinforce one another. Every route loops back to town.
     </p>
@@ -148,11 +148,15 @@ const districts = [
           fill="none"
           opacity="0.75"
         >
-          <path d="M299 270 L168 153"></path>
-          <path d="M299 270 L430 153"></path>
-          <path d="M299 270 L168 387"></path>
-          <path d="M299 270 L430 387"></path>
-          <path d="M299 270 L586 270"></path>
+          <path d="M299 270 L168 153" data-draw data-draw-delay="0"></path>
+          <path d="M299 270 L430 153" data-draw data-draw-delay="90"></path>
+          <path d="M299 270 L168 387" data-draw data-draw-delay="180"></path>
+          <path d="M299 270 L430 387" data-draw data-draw-delay="270"></path>
+          <path
+            d="M299 270 L586 270"
+            data-draw
+            data-draw-delay="380"
+            data-draw-duration="1200"></path>
         </g>
 
         <g class="rgn" data-rgn="hearthvale">

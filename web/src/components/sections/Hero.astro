@@ -18,20 +18,32 @@ import { site, gamePath } from "../../lib/site";
 ---
 
 <section class="hero">
-  <canvas class="hero__canvas" aria-hidden="true" data-hero-terrain></canvas>
+  <!-- M2: the terrain drifts against the scroll. 0.5 of the 40px cap, so it
+       reads as depth rather than as a parallax demo. -->
+  <div class="hero__layer" data-parallax="0.5">
+    <canvas class="hero__canvas" aria-hidden="true" data-hero-terrain></canvas>
+  </div>
+
+  <!-- M1, second half: a very slow day/night wash over the terrain. 90s and
+       low amplitude — it should be noticed only if you stay a while, which is
+       what "ambient" has to mean to avoid becoming a distraction. -->
+  <div class="hero__wash" aria-hidden="true"></div>
+
   <div class="hero__scrim"></div>
 
   <div class="wrap hero__content">
-    <p class="hero__eyebrow">Settlement builder · Character RPG · Runs in the browser</p>
-    <h1 class="hero__title">The world builds itself.</h1>
-    <p class="hero__lede">{site.tagline}</p>
+    <p class="hero__eyebrow" data-reveal>
+      Settlement builder · Character RPG · Runs in the browser
+    </p>
+    <h1 class="hero__title" data-reveal>The world builds itself.</h1>
+    <p class="hero__lede" data-reveal>{site.tagline}</p>
 
-    <div class="hero__actions">
-      <a class="btn btn--lg" href={gamePath}>Play in your browser</a>
+    <div class="hero__actions" data-reveal>
+      <a class="btn btn--lg" href={gamePath} data-exit>Play in your browser</a>
       <a class="btn btn--lg btn--secondary" href="#systems">See how it works</a>
     </div>
 
-    <p class="hero__weight">
+    <p class="hero__weight" data-reveal>
       No install, no account. First load downloads roughly 50&nbsp;MB.
     </p>
   </div>
@@ -49,6 +61,45 @@ import { site, gamePath } from "../../lib/site";
     background:
       radial-gradient(120% 80% at 50% 110%, var(--surface-sunken) 0%, transparent 60%),
       linear-gradient(180deg, var(--surface-page) 0%, var(--surface-sunken) 100%);
+  }
+
+  /* The parallax transform lives on a wrapper, not the canvas: transforming
+     the canvas itself would force it to re-rasterise its backing store on
+     every frame. */
+  .hero__layer {
+    position: absolute;
+    inset: -6% 0;
+    will-change: transform;
+  }
+
+  .hero__wash {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--ink-900, #0b1220) 55%, transparent) 0%,
+      transparent 45%,
+      color-mix(in srgb, var(--mark-gold) 12%, transparent) 100%
+    );
+    opacity: 0.5;
+    animation: wash 90s var(--ease-in-out) infinite alternate;
+  }
+
+  @keyframes wash {
+    from {
+      opacity: 0.28;
+    }
+    to {
+      opacity: 0.62;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__wash {
+      animation: none;
+      opacity: 0.4;
+    }
   }
 
   .hero__canvas {

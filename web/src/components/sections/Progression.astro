@@ -62,14 +62,14 @@ const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
 <section class="prog" id="progression">
   <div class="wrap">
     <p class="eyebrow">Progression</p>
-    <h2>Level 92 is halfway. Level 99 is the other half.</h2>
+    <h2 data-reveal>Level 92 is halfway. Level 99 is the other half.</h2>
     <p class="prog__lede">
       The OSRS-style curve, drawn from the game's own XP table. Reaching 99 costs{" "}
       {fullXp(maxXp)} experience — and <strong>{tailShare}%</strong> of it is spent after level
       92.
     </p>
 
-    <figure class="prog__figure">
+    <figure class="prog__figure" data-reveal>
       <svg
         class="prog__chart"
         viewBox={`0 0 ${W} ${H}`}
@@ -107,7 +107,8 @@ const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
         </g>
 
         <polygon class="fill" points={area}></polygon>
-        <polyline class="line" points={line}></polyline>
+        <polyline class="line" points={line} data-draw data-draw-duration="1400"
+        ></polyline>
 
         <!-- Selective direct labels. Never one per point. -->
         <g class="milestones">

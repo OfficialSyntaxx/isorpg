@@ -10,9 +10,18 @@
 > Those live in `ROADMAP.md`, `docs/ART_BIBLE.md`, `docs/WORLD_LAYOUT.md`, and
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
-**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 2 and 3
-done; Phase 4 built. Two gates open, both needing something this environment
-cannot provide — see Phase 1 and Phase 4 in §12.
+**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 1, 2,
+3 and 5 done; Phase 4 built with its Lighthouse gate still open. Merged to
+`main`.
+
+**Phase 1 gate closed 2026-08-27.** Run
+[33080016719](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33080016719)
+composed the landing site with the Unity build at `/play` and published a draft
+deploy. Both header checks returned **`VERDICT: OK`** — the wasm and the data
+file are served with `application/wasm` / `application/octet-stream` **and**
+`Content-Encoding: br` from their new path. The §2.3 blocker is solved and
+proven. Production was untouched (`DEPLOY_PROD=0`).
+Draft: `https://6a9043b4c38ae6fd0b2a82ba--inspiring-tarsier-8973d6.netlify.app`
 
 **Rollback anchor (§2.5).** The production deploy serving the game at the root
 before any cutover is Netlify deploy `6a8f04e32a032f122bbaba51` on site
@@ -28,11 +37,11 @@ Update the Status column as phases move.
 | # | Phase | Owner model | Status | Gate to exit |
 |---|---|---|---|---|
 | 0 | Decisions & constraints | — | ✅ Done | All four architecture decisions locked (§1) |
-| 1 | Deploy composition spike | Opus 5 | 🟡 Code done, gate open | Game verified loading at `/play/` with correct Brotli headers |
+| 1 | Deploy composition spike | Opus 5 | ✅ Done | Game verified loading at `/play/` with correct Brotli headers |
 | 2 | Design system & tokens | Opus 5 | ✅ Done | Token file + type scale + motion scale reviewed against `docs/ART_BIBLE.md` |
 | 3 | Astro workspace scaffold | Opus 5 | ✅ Done | `npm run build` in `web/` green; CI runs it |
 | 4 | Landing page build | Opus 5 | 🟡 Built; Lighthouse gate open | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
-| 5 | Animation layer | Opus 5 | ⬜ Not started | Motion spec implemented; `prefers-reduced-motion` verified |
+| 5 | Animation layer | Opus 5 | ✅ Done | Motion spec implemented; `prefers-reduced-motion` verified |
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 | ⬜ Not started | Feeds render from repo markdown; RSS valid |
 | 7 | Security hardening | Opus 5 | ⬜ Not started | CSP enforced with zero console violations; headers audit passes |
 | 8 | Netlify cutover | Opus 5 | ⬜ Not started | Landing at `/`, game at `/play`, no regression in `deploy-report.txt` |
@@ -796,16 +805,17 @@ the target is unambiguous. Haiku 4.5 for mechanical, verifiable passes.
       `web/site.config.json`. Not the landing page; Phase 4 replaces it.
 - [x] Record the current prod deploy ID for rollback (§2.5) — at the top of
       this document.
-- [ ] **OPEN — needs a real Unity build.** Run
-      `.github/workflows/site-preview.yml` (manual dispatch) and confirm the
-      game loads end-to-end at `/play/`, including service-worker registration
-      and scope. Requires `NETLIFY_AUTH_TOKEN` / `NETLIFY_SITE_ID` and one
-      successful `unity-webgl.yml` run to source the artifact from. This step
-      publishes a **draft** deploy (`DEPLOY_PROD=0`) and cannot reach
-      production.
+- [x] **Gate closed.** `site-preview.yml` run 33080016719 on `main`: composed,
+      published a draft, and both header checks returned `VERDICT: OK` against
+      `/play/Build/*`. Production untouched.
+- [x] Learned along the way: **`workflow_dispatch` only exists for workflows
+      present on the default branch.** While `site-preview.yml` lived on a
+      feature branch the API returned 404 and the workflow was not registered
+      at all — `web-ci.yml` registered fine because it has push triggers. Any
+      future dispatch-only workflow has to reach `main` before it can be run.
 
-**Exit gate:** a preview URL where `/play/` boots to the Isoperia start screen
-with zero console errors and a `VERDICT: OK` header report.
+**Exit gate:** ✅ met — draft URL serving `/play/` with a `VERDICT: OK` header
+report on both the wasm and the data file.
 
 #### Deviation from the original plan, and why
 
@@ -992,15 +1002,79 @@ Four, all invisible to the typecheck and the automated checks:
 - A card that was a link rendered its whole body as underlined accent text
   (fixed in Phase 2, found the same way).
 
-### Phase 5 — Animation ⬜
+### Phase 5 — Animation ✅
 
-- [ ] Motion tokens from §6.2.
-- [ ] M1–M10 implemented.
-- [ ] GSAP dynamically imported, verified absent from the base bundle.
-- [ ] `prefers-reduced-motion` pass on every set piece.
-- [ ] Frame-rate check on a real mid-tier Android — the project's own history
-      (`docs/CI_DEPLOY.md`, "what it will not catch") says device checks are not
-      optional.
+- [x] Motion tokens from §6.2 — shipped in Phase 2, collapsing under reduced
+      motion.
+- [x] **M1** hero tiles rise into place back-to-front on load, then a 90-second
+      ambient day/night wash. The entrance runs once; a resize or theme change
+      repaints instantly rather than replaying it.
+- [x] **M2** scroll parallax on the hero terrain, capped at the §6.2 40px. The
+      transform is on a wrapper, not the canvas — transforming the canvas would
+      re-rasterise its backing store every frame.
+- [x] **M3** the five pillars as a sticky, scroll-driven horizontal run on wide
+      viewports; a native scroll-snap row below 64rem and under reduced motion.
+- [x] **M4** map routes draw themselves, staggered, with the long Cinder Hollow
+      road drawing slowest.
+- [x] **M5** the XP curve draws left to right.
+- [x] **M6** section reveals, `IntersectionObserver`, staggered per group.
+- [x] **M7** press/hover feedback — shipped in Phase 2.
+- [x] **M8** an ink wipe covers the Unity loader's blank first frame on the way
+      into the game. Navigates on `transitionend` **or** a 700ms timer,
+      whichever fires first, so a dropped event cannot strand anyone behind an
+      opaque overlay. Modified clicks (new tab, new window) pass straight
+      through.
+- [x] **M9** page transitions via the **native CSS** `@view-transition`, zero
+      JS.
+- [x] **M10** the 404's route draws itself, reusing M4's primitive.
+- [x] `prefers-reduced-motion` verified on every set piece: 16/16 reveals
+      visible, path draws left untouched, parallax untransformed, the horizontal
+      run reverted to a scrollable row with all five pillars reachable, the hero
+      canvas skipped with the authored gradient carrying it, headline intact.
+- [x] Total first load **17.7 KB gzipped** — the entire motion layer cost
+      **2.3 KB**.
+- [ ] **Device check still owed.** No mid-tier Android here.
+      `docs/CI_DEPLOY.md` is blunt that CI "removes the round trip; it does not
+      remove the device check", and every Phase 1 fault that reached a phone had
+      passed CI. M2 and M3 are the two to watch, since both run work on scroll.
+
+#### Deviation from §6.4: no animation library
+
+§6.4 specifies GSAP + ScrollTrigger for M1–M5 and M8, and Motion One for
+M6/M7. Implemented set piece by set piece, **not one of them needed a library**:
+
+| Set piece | What it actually needed |
+|---|---|
+| M1 | canvas — a library cannot animate tiles the page must draw itself |
+| M2 | one transform per frame |
+| M3 | `position: sticky` + a scroll-progress calculation (~30 lines) |
+| M4 / M5 / M10 | `stroke-dashoffset` + a CSS transition, on `IntersectionObserver` |
+| M6 | `IntersectionObserver` + the Phase 2 CSS primitive |
+| M7 | CSS |
+| M8 | one CSS transition and a click handler |
+| M9 | the native CSS view transition |
+
+GSAP would have been roughly 30 KB gzipped to do what 2.3 KB of native code
+does, on a page whose entire first load was 15 KB. `@view-transition` also beats
+Astro's `<ClientRouter />`, which ships a client-side router and would force
+every script on the site to re-initialise on `astro:page-load` — a lot of
+machinery for a cross-fade. If a later set piece genuinely needs timeline
+orchestration, import a library dynamically **there and nowhere else**.
+
+**On M3 and scroll-jacking.** The page never intercepts or re-times scrolling.
+The section is simply tall, its track is `position: sticky`, and the horizontal
+offset is a pure function of scroll progress — so flicking, dragging the
+scrollbar and Page Down all behave normally, which is not true of libraries that
+capture wheel events.
+
+#### A process note worth keeping
+
+The M3 markup edit silently did nothing the first time: it was applied as an
+exact-string replacement against a file Prettier had since reformatted, so the
+pattern no longer matched and the script reported success. Only the browser
+check caught it — `[data-hscroll-track]` did not exist and the run never
+activated. Verify edits landed by grepping the built output, not by trusting the
+editing step's exit code.
 
 ### Phase 6 — Content routes ⬜
 

@@ -97,5 +97,12 @@ const canonical = absolute(pathname);
       <slot />
     </main>
     <SiteFooter />
+
+    <script>
+      // The single motion entry point. Deliberately no animation library —
+      // see the reasoning at the top of src/scripts/motion.ts.
+      import { initMotion } from "../scripts/motion";
+      initMotion();
+    </script>
   </body>
 </html>

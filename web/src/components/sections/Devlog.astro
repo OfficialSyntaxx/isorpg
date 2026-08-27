@@ -18,7 +18,7 @@ const total = all().length;
 <section class="devlog" id="devlog">
   <div class="wrap">
     <p class="eyebrow">Built in the open</p>
-    <h2>{total} entries, and counting</h2>
+    <h2 data-reveal>{total} entries, and counting</h2>
     <p class="devlog__lede">
       Every build, every regression, every corrective pass — written down as it happened.
       These are the three most recent.
@@ -27,7 +27,7 @@ const total = all().length;
     <ul class="devlog__list">
       {
         entries.map((e) => (
-          <li class="card">
+          <li class="card" data-reveal>
             <span class="card__meta">{formatDate(e)}</span>
             <span class="card__title">{e.title}</span>
             <p class="devlog__summary">{e.summary}</p>
