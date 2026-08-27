@@ -485,3 +485,156 @@ pre code {
 [data-hscroll][data-hscroll-active] .hrun__track > * {
   flex: 0 0 22rem;
 }
+
+/* --- prose -----------------------------------------------------------------
+ * Styling for markdown rendered at build time (the roadmap and the wiki, which
+ * come from ROADMAP.md and WIKI.md).
+ *
+ * Those documents are prose with tables, not structured records, so they are
+ * rendered rather than parsed into a bespoke data model — a parser would fight
+ * their heterogeneous headings and break on the next edit. This class is what
+ * makes rendered markdown wear the design system.
+ */
+.prose {
+  max-width: var(--measure-prose);
+}
+
+.prose > * + * {
+  margin-top: var(--space-md);
+}
+
+.prose h2 {
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.prose h3 {
+  margin-top: var(--space-xl);
+}
+
+.prose h4 {
+  margin-top: var(--space-lg);
+}
+
+.prose ul,
+.prose ol {
+  padding-left: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.prose li::marker {
+  color: var(--text-muted);
+}
+
+.prose blockquote {
+  margin-inline: 0;
+  padding: var(--space-sm) var(--space-lg);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-raised);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--text-muted);
+}
+
+.prose blockquote > p {
+  max-width: none;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  margin-block: var(--space-xl);
+}
+
+.prose img {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Tables in prose must scroll inside their own container — the page body never
+   scrolls sideways. */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.prose th,
+.prose td {
+  padding: var(--space-xs) var(--space-sm);
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.prose th {
+  color: var(--text-strong);
+  font-weight: 650;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  white-space: nowrap;
+}
+
+/* The wrapper the markdown renderer puts around every table. */
+.prose .table-wrap {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* A generated in-page table of contents. */
+.toc {
+  position: sticky;
+  top: var(--space-3xl);
+  align-self: start;
+  max-height: calc(100svh - var(--space-4xl));
+  overflow-y: auto;
+  font-size: var(--text-sm);
+}
+
+.toc ol {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+}
+
+.toc a {
+  display: block;
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.toc a:hover {
+  background: var(--surface-sunken);
+  color: var(--text-strong);
+}
+
+.toc li[data-depth="3"] a {
+  padding-left: var(--space-md);
+  font-size: var(--text-xs);
+}
+
+/* Two-column doc layout: content beside a sticky TOC on wide screens. */
+.doc-grid {
+  display: grid;
+  gap: var(--space-xl);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 64rem) {
+  .doc-grid {
+    grid-template-columns: 1fr 16rem;
+  }
+
+  .doc-grid > .toc {
+    order: 2;
+  }
+}
