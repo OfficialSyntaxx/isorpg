@@ -59,7 +59,7 @@ const at92 = points.find((p) => p.level === 92)!.xp;
 const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
 ---
 
-<section class="prog" id="progression">
+<section class="prog seam" data-region="frostwatch" id="progression">
   <div class="wrap">
     <p class="eyebrow">Progression</p>
     <h2 data-reveal>Level 92 is halfway. Level 99 is the other half.</h2>
@@ -77,6 +77,24 @@ const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
         aria-label={`Line chart: cumulative experience required per level, rising from 0 at level 1 to ${fullXp(maxXp)} at level 99. The curve is nearly flat until roughly level 70 and then rises steeply.`}
         data-chart
       >
+        <defs>
+          <!-- The curve climbs through the districts in travel order, so its
+               colour carries the same journey the page does. It is also the
+               honest shape of the thing: the last stretch really is a different
+               place from the first. -->
+          <linearGradient id="curve-grad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stop-color="var(--mark-wildwood)"></stop>
+            <stop offset="45%" stop-color="var(--mark-frostwatch)"></stop>
+            <stop offset="75%" stop-color="var(--mark-miregate)"></stop>
+            <stop offset="100%" stop-color="var(--mark-cinder)"></stop>
+          </linearGradient>
+          <linearGradient id="curve-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--mark-cinder)" stop-opacity="0.3"></stop>
+            <stop offset="100%" stop-color="var(--mark-frostwatch)" stop-opacity="0.02"
+            ></stop>
+          </linearGradient>
+        </defs>
+
         <!-- Gridlines and axes, recessive: they orient, they do not compete. -->
         <g class="grid">
           {
@@ -188,16 +206,6 @@ const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
 <style>
   .prog {
     padding-block: var(--space-3xl);
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    letter-spacing: var(--tracking-caps);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: var(--space-2xs);
   }
 
   .prog__lede {
@@ -236,20 +244,19 @@ const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
   }
 
   .fill {
-    fill: var(--accent);
-    opacity: 0.12;
+    fill: url(#curve-fill);
   }
 
   .line {
     fill: none;
-    stroke: var(--accent);
+    stroke: url(#curve-grad);
     stroke-width: 2;
     stroke-linejoin: round;
     stroke-linecap: round;
   }
 
   .dot {
-    fill: var(--accent);
+    fill: var(--region-mark, var(--accent));
     /* A surface ring so a dot never merges into the curve behind it. */
     stroke: var(--surface-raised);
     stroke-width: 2;

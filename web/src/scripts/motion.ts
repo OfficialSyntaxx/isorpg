@@ -332,6 +332,86 @@ export function initExitTransition(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Region ambience
+// ---------------------------------------------------------------------------
+/**
+ * Crossfades the page's ambient tint to match whichever `[data-region]` section
+ * is currently dominant on screen.
+ *
+ * Each section already carries its district colour locally; this is the part
+ * that makes moving between them feel continuous rather than like stepping
+ * between panels.
+ *
+ * It runs even under reduced motion — the tint is colour, not movement, and
+ * removing it would drop a layer of the design rather than calm it. What
+ * reduced motion turns off is the 900ms crossfade, handled in CSS, so the
+ * change becomes instant instead of animated.
+ */
+export function initRegionAmbience(): void {
+  const layers = new Map<string, HTMLElement>();
+  document.querySelectorAll<HTMLElement>("[data-ambient]").forEach((el) => {
+    const key = el.dataset.ambient;
+    if (key) layers.set(key, el);
+  });
+  if (layers.size === 0) return;
+
+  const sections = Array.from(
+    document.querySelectorAll<HTMLElement>("main [data-region]"),
+  );
+  if (sections.length === 0) return;
+
+  let current = "";
+  const show = (key: string): void => {
+    if (key === current) return;
+    current = key;
+    for (const [name, el] of layers) {
+      if (name === key) el.setAttribute("data-on", "");
+      else el.removeAttribute("data-on");
+    }
+  };
+
+  if (!("IntersectionObserver" in window)) {
+    show(sections[0]?.dataset.region ?? "hearth");
+    return;
+  }
+
+  // Track how much SCREEN each section covers and light the winner, rather
+  // than reacting to whichever crossed a line most recently — that flickers
+  // between neighbours on a fast scroll.
+  //
+  // The metric is intersectionRect.height, not intersectionRatio. Ratio is the
+  // fraction of the ELEMENT that is visible, so a short section fully on screen
+  // (ratio 1) beats a tall section half on screen (ratio 0.5) even though the
+  // tall one fills far more of the view. That produced a measurable wrong
+  // answer: standing in the devlog section lit the CTA's colour.
+  const visible = new Map<Element, number>();
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries)
+        visible.set(entry.target, entry.intersectionRect.height);
+
+      let best: string | null = null;
+      let bestArea = 0;
+      for (const section of sections) {
+        const area = visible.get(section) ?? 0;
+        if (area > bestArea) {
+          bestArea = area;
+          best = section.dataset.region ?? null;
+        }
+      }
+      if (best) show(best);
+    },
+    // Dense thresholds so a tall section keeps re-reporting its visible
+    // height as it passes, rather than only at a few crossings.
+    { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] },
+  );
+
+  sections.forEach((s) => io.observe(s));
+  show(sections[0]?.dataset.region ?? "hearth");
+}
+
+// ---------------------------------------------------------------------------
 // Header — condense on scroll
 // ---------------------------------------------------------------------------
 /**
@@ -387,8 +467,59 @@ export function initHeader(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Count-up numbers
+// ---------------------------------------------------------------------------
+/**
+ * Counts `[data-count]` figures up to their real value when they come into
+ * view.
+ *
+ * The final number is ALREADY in the markup — this only animates from a lower
+ * value up to it. So with no JavaScript, no IntersectionObserver, or reduced
+ * motion, the correct figure is simply there. A counter that starts at zero in
+ * the HTML and depends on script to become true is a page that lies when the
+ * script fails.
+ */
+export function initCounters(): void {
+  const els = Array.from(document.querySelectorAll<HTMLElement>("[data-count]"));
+  if (els.length === 0) return;
+  if (prefersReduced() || !("IntersectionObserver" in window)) return;
+
+  const DURATION = 900;
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  const run = (el: HTMLElement): void => {
+    const target = Number(el.dataset.count);
+    if (!Number.isFinite(target) || target <= 0) return;
+    const start = performance.now();
+
+    const frame = (now: number): void => {
+      const t = Math.min(1, (now - start) / DURATION);
+      el.textContent = String(Math.round(easeOut(t) * target));
+      if (t < 1) requestAnimationFrame(frame);
+      else el.textContent = String(target);
+    };
+    requestAnimationFrame(frame);
+  };
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        run(entry.target as HTMLElement);
+        io.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.5 },
+  );
+
+  els.forEach((el) => io.observe(el));
+}
+
+// ---------------------------------------------------------------------------
 export function initMotion(): void {
+  initCounters();
   initHeader();
+  initRegionAmbience();
   initReveals();
   initPathDraw();
   initParallax();

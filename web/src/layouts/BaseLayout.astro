@@ -121,6 +121,20 @@ const canonical = absolute(pathname);
   </head>
 
   <body>
+    {
+      /* Region ambience. One layer per district, crossfaded by motion.ts as
+         sections come into view, so scrolling reads as travelling outward
+         through the world rather than down a document. */
+    }
+    <div class="ambient" aria-hidden="true">
+      <div class="ambient__layer" data-region="hearth" data-ambient="hearth"></div>
+      <div class="ambient__layer" data-region="wildwood" data-ambient="wildwood"></div>
+      <div class="ambient__layer" data-region="frostwatch" data-ambient="frostwatch">
+      </div>
+      <div class="ambient__layer" data-region="miregate" data-ambient="miregate"></div>
+      <div class="ambient__layer" data-region="cinder" data-ambient="cinder"></div>
+    </div>
+
     <a class="skip-link" href="#main">Skip to content</a>
     <SiteHeader />
     <main id="main">

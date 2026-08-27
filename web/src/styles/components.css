@@ -685,3 +685,217 @@ pre code {
     order: 2;
   }
 }
+
+/* ===========================================================================
+ * REGION ACCENTS — scrolling the page as travelling through the world
+ * ===========================================================================
+ *
+ * The game's four districts have their own colours (the in-game route-anchor
+ * colours, UPDATES.md 2026-08-26). Until now those only appeared in a few
+ * chips, which left the page far more restrained than the thing it is selling.
+ *
+ * Each landing section now claims a district via `data-region`, which sets a
+ * local `--region` colour used by its eyebrow, its heading mark and its rules.
+ * A fixed ambient layer behind the page tints toward whichever region is in
+ * view, so moving down the page reads as moving outward through the world.
+ *
+ * WHY THE TINT IS A BACKGROUND LAYER AND NOT AN ANIMATED CUSTOM PROPERTY
+ * Custom properties do not transition without @property registration, and
+ * support for animating a registered colour property is still uneven. A plain
+ * element whose background-color transitions is boring, universally supported,
+ * and compositor-friendly.
+ */
+
+:root {
+  --region: var(--accent);
+}
+
+[data-region="wildwood"] {
+  --region: var(--district-wildwood);
+  --region-mark: var(--mark-wildwood);
+}
+[data-region="frostwatch"] {
+  --region: var(--district-frostwatch);
+  --region-mark: var(--mark-frostwatch);
+}
+[data-region="miregate"] {
+  --region: var(--district-miregate);
+  --region-mark: var(--mark-miregate);
+}
+[data-region="cinder"] {
+  --region: var(--district-cinder);
+  --region-mark: var(--mark-cinder);
+}
+[data-region="hearth"] {
+  --region: var(--accent);
+  --region-mark: var(--mark-gold);
+}
+
+/* The ambient wash. Fixed, behind everything, pointer-transparent. Its opacity
+   is low by design: this should register as warmth rather than as a colour
+   filter over the text. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 90% at 80% 0%,
+      color-mix(in srgb, var(--ambient-colour, var(--accent)) 18%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      100% 80% at 10% 100%,
+      color-mix(in srgb, var(--ambient-colour, var(--accent)) 12%, transparent) 0%,
+      transparent 55%
+    );
+  transition: opacity var(--dur-slow) var(--ease-in-out);
+}
+
+/* One layer per region, crossfaded. Transitioning a gradient is not reliable,
+   so each region gets its own layer and only opacity moves — which is
+   compositor-only and always smooth. */
+.ambient__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 900ms var(--ease-in-out);
+  background:
+    radial-gradient(
+      120% 90% at 80% 0%,
+      color-mix(in srgb, var(--region-mark) 20%, transparent) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      100% 80% at 5% 100%,
+      color-mix(in srgb, var(--region-mark) 13%, transparent) 0%,
+      transparent 58%
+    );
+}
+
+.ambient__layer[data-on] {
+  opacity: 1;
+}
+
+/* Without color-mix the layers would paint solid district colour over the whole
+   page. Better to have no ambient tint at all than that. */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .ambient {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient__layer {
+    transition: none;
+  }
+}
+
+/* --- seamless section transitions ---------------------------------------- */
+/* Replaces the hairline rule between sections. A rule says "new document
+   section"; a bleed says "still the same journey", which is what the page
+   is. The region colour makes each seam quietly different from the last. */
+.seam {
+  position: relative;
+  padding-block: var(--space-3xl);
+}
+
+.seam::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--region) 55%, transparent) 22%,
+    color-mix(in srgb, var(--region) 70%, transparent) 50%,
+    color-mix(in srgb, var(--region) 55%, transparent) 78%,
+    transparent 100%
+  );
+  opacity: 0.5;
+}
+
+/* A soft glow riding the seam, so the join reads as light rather than as a
+   drawn line. */
+.seam::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 8rem;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--region) 7%, transparent) 0%,
+    transparent 100%
+  );
+}
+
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .seam::before {
+    background: var(--border-subtle);
+  }
+  .seam::after {
+    display: none;
+  }
+}
+
+/* --- region-tinted section furniture ------------------------------------ */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* The dot is the region's colour: a small, repeated cue that this section
+   belongs somewhere. */
+.eyebrow::before {
+  content: "";
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--region-mark, var(--region));
+  flex: none;
+}
+
+/* --- the 600ms tick ------------------------------------------------------- */
+/* The game's engine runs on a 600ms tick, decoupled from the frame rate. This
+   pulses at exactly that interval. It is a detail almost nobody will decode,
+   which is the point: the ones who do have learned something true. */
+.tick {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--good);
+  animation: tick 600ms steps(1, end) infinite;
+}
+
+@keyframes tick {
+  0%,
+  49% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tick {
+    animation: none;
+    opacity: 1;
+  }
+}

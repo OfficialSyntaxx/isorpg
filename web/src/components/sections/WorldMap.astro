@@ -64,7 +64,7 @@ const districts = [
 ] as const;
 ---
 
-<section class="world" id="world">
+<section class="world seam" data-region="wildwood" id="world">
   <div class="wrap">
     <p class="eyebrow">The mainland</p>
     <h2 data-reveal>One place, six ways it changes</h2>
@@ -254,16 +254,6 @@ const districts = [
 <style>
   .world {
     padding-block: var(--space-3xl);
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    letter-spacing: var(--tracking-caps);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: var(--space-2xs);
   }
 
   .world__lede {

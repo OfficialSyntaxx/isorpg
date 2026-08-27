@@ -46,7 +46,7 @@ const pillars = [
 ];
 ---
 
-<section class="pitch" id="systems">
+<section class="pitch seam" data-region="hearth" id="systems">
   <div class="wrap">
     <p class="pitch__lede" data-reveal>
       A settlement builder and a character RPG in one loop: gather to craft, craft to
@@ -59,6 +59,10 @@ const pillars = [
       <li class="tag">Offline-capable</li>
       <li class="tag">No account</li>
       <li class="tag">Free</li>
+      <li class="tag tag--tick">
+        <span class="tick" aria-hidden="true"></span>
+        600ms tick
+      </li>
     </ul>
   </div>
 
@@ -95,7 +99,6 @@ const pillars = [
 <style>
   .pitch {
     padding-block: var(--space-3xl);
-    border-top: 1px solid var(--border-subtle);
   }
 
   .pitch__lede {
@@ -104,6 +107,12 @@ const pillars = [
     color: var(--text-strong);
     max-width: 34ch;
     line-height: var(--leading-snug);
+  }
+
+  /* The dot pulses at exactly the engine's tick interval. Almost nobody will
+     decode it; the ones who do have learned something true about the game. */
+  .tag--tick {
+    gap: var(--space-2xs);
   }
 
   .trust {

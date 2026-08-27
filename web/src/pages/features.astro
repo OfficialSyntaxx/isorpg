@@ -51,7 +51,9 @@ const stats = [
         {
           stats.map((s) => (
             <li class="stat">
-              <span class="stat__n">{s.n}</span>
+              <span class="stat__n" data-count={s.n}>
+                {s.n}
+              </span>
               <span class="stat__label">{s.label}</span>
             </li>
           ))

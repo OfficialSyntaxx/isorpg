@@ -17,7 +17,7 @@
 import { site, gamePath } from "../../lib/site";
 ---
 
-<section class="hero">
+<section class="hero" data-region="hearth">
   <!-- M2: the terrain drifts against the scroll. 0.5 of the 40px cap, so it
        reads as depth rather than as a parallax demo. -->
   <div class="hero__layer" data-parallax="0.5">
@@ -40,7 +40,7 @@ import { site, gamePath } from "../../lib/site";
   <div class="hero__scrim"></div>
 
   <div class="wrap hero__content">
-    <p class="hero__eyebrow" data-reveal>
+    <p class="eyebrow" data-reveal>
       Settlement builder · Character RPG · Runs in the browser
     </p>
     <h1 class="hero__title" data-reveal>The world builds itself.</h1>
@@ -281,15 +281,6 @@ import { site, gamePath } from "../../lib/site";
   .hero__content {
     position: relative;
     padding-block: var(--space-4xl);
-  }
-
-  .hero__eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    letter-spacing: var(--tracking-caps);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: var(--space-sm);
   }
 
   .hero__title {

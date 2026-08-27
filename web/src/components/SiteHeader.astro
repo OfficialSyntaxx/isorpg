@@ -155,11 +155,26 @@ const path = Astro.url.pathname;
   }
 
   /* From 48rem there is room for one row, so the nav returns to the middle and
-     never collapses. */
+     never collapses.
+     
+     The DOM order is brand, actions, nav — actions comes second so that on a
+     phone it shares row one with the brand while the nav wraps below. On wide
+     screens that has to be reordered explicitly: an earlier attempt gave the
+     nav `order: -1`, which put it in front of the brand and produced a header
+     reading "Features World Devlog Wiki Isoperia". All three get an order so
+     the intent is on the page rather than implied. */
   @media (min-width: 48rem) {
+    .site-header__brand {
+      order: 1;
+    }
+
+    .site-header__actions {
+      order: 3;
+    }
+
     .site-header__nav {
       flex: 0 1 auto;
-      order: -1;
+      order: 2;
       margin-inline: 0;
       padding-inline: 0;
       overflow-x: visible;
