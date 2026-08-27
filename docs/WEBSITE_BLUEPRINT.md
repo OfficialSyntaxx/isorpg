@@ -1419,6 +1419,53 @@ height — and none of them measured vertical overlap, published vocabulary, or
 whether the artwork was worth looking at. Each fault is now covered by a check
 that was verified to fail before it was trusted to pass.
 
+### Release-path faults found the same day ✅
+
+Two more, both surfaced by reading a green or newly-red run rather than by
+anything on the site.
+
+**The deploy tool was unpinned, and a third party broke it.** Production
+deploys began failing at install with `No matching version found for
+@netlify/ai@^1.0.1` — a version that has never been published. `npx netlify-cli`
+resolves to whatever is newest at the moment the job runs, so nothing on our
+side changed. The requirement is transitive (netlify-cli's own manifest asks for
+`^1.0.0`, which resolves), so the whole 27.2.x–27.4.x range is affected; 27.1.2
+installs and supports every flag the deploy uses. Now pinned, with
+`verify-deploy-report.cjs` asserting the pin exists and that no unpinned
+invocation remains.
+
+Production was never at risk — the failure happened before anything was
+uploaded — but that was luck rather than design. An unpinned tool in the release
+path lets anyone stop this project shipping at a time of their choosing.
+
+**CI had been certifying browser checks that never ran.** A green Web CI run
+contained `SKIP hero: no playwright available. / 0/0 passed`, and
+`verify-chrome`, `verify-doc-layout` and `verify-hero` each finished in under a
+second. The CSP browser pass had been doing the same since it was written. The
+scripts live at the repository root and import `playwright-core` from the root's
+`node_modules`, but the Web CI job installs only `web/` — and each script treated
+that as a reason to skip and exit 0.
+
+`scripts/lib/browser.cjs` is now the single resolver, and under CI a missing
+browser is exit 1 with a message naming the fix. The job installs the root
+dependencies, and installs the browser with the same Playwright version as
+`playwright-core` so the two agree on where it lives.
+
+Turning the guard on immediately turned CI red, correctly: the resolver knew
+only `chromium-*/chrome-linux/chrome`, the layout in the development sandbox,
+while a current Playwright unpacks Chrome-for-Testing into `chrome-linux64`. The
+browser was being installed and then not found — a bug that already existed and
+that the old skip-and-pass behaviour had been hiding. The resolver now asks
+Playwright first (checking the answer against the filesystem, since it names
+paths for revisions that were never installed) and searches both layouts behind
+that.
+
+`verify-browser-guard.cjs` covers the guard itself, 6 assertions, by running it
+in child processes with the browser lookup stubbed. Two earlier attempts at that
+negative control were worthless — one left the sandbox's own Chromium
+discoverable, the other read `$?` after a pipe and so reported `tail`'s exit
+status instead of `node`'s.
+
 ### Phase 9 — Custom domain ⏸️
 
 **Deferred at the owner's request, 2026-08-27: no domain has been purchased, so
