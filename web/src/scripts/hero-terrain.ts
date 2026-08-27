@@ -1,25 +1,51 @@
 /**
- * Generates the hero's isometric terrain in the browser.
+ * Generates the hero's isometric world in the browser, and then keeps it alive.
  *
- * This is a deliberate echo of how the game itself works — src/generators/ and
- * src/world/Grid.ts build every mesh and texture at runtime from primitives and
- * a seeded value noise, with zero external assets. The landing page makes the
- * same claim, so it generates rather than shipping a picture of generation.
+ * This is a deliberate echo of how the game itself works — every mesh and
+ * texture is produced at runtime from primitives and a seeded value noise, with
+ * zero external assets. The landing page makes that claim, so it generates
+ * rather than shipping a picture of generation.
  *
  * It is NOT a port of the game's generator and does not pretend to be: this
  * draws 2D isometric diamonds on a canvas, where the game builds a 3D scene.
  * What is shared is the approach and the palette.
  *
- * DESIGN CONSTRAINTS
- *   - Animates ONCE on load (M1: tiles rise into place, back to front) and then
- *     stops. No permanent rAF loop — nothing is running after the entrance
- *     finishes, and it never restarts on scroll.
- *   - Reads its colours from the live CSS custom properties, so it follows the
- *     theme and the Phase 2 contrast audit rather than hardcoding hexes.
- *   - Bails out — leaving the authored gradient fallback visible — on reduced
- *     motion, save-data, or no 2D context.
- *   - Caps the pixel ratio at 2. A 3x backing store on a phone is a lot of
+ * WHY IT MOVES NOW
+ * The first version painted one frame and stopped. It was defensible — no
+ * permanent animation loop, nothing running after load — and it was also a
+ * still photograph of a world, which is a strange thing to put at the top of a
+ * page selling a world you walk through. It read as a background texture rather
+ * than as a place.
+ *
+ * So the terrain is now a living scene: sunlight travels across it, cloud
+ * shadows drift over it, the water moves, the settlement's windows are lit and
+ * flicker, and birds cross it. All of it is generated, none of it is a video.
+ *
+ * HOW IT STAYS CHEAP, which is the whole design
+ * The terrain is painted ONCE into an offscreen canvas and blitted with a
+ * single drawImage each frame. Only the moving parts are redrawn — a light
+ * sweep, three cloud shadows, a bounded set of water tiles, a dozen window
+ * glows and a few birds. That is roughly 150 draw calls a frame instead of the
+ * ~1500 a full terrain repaint would cost, and it is what makes a
+ * continuously-animated hero affordable on a mid-range phone rather than a
+ * battery complaint.
+ *
+ * On top of that:
+ *   - The loop stops entirely when the hero scrolls out of view, and when the
+ *     tab is hidden. A hero animating to nobody is pure waste.
+ *   - Frame cost is measured. If frames are consistently slow the moving
+ *     detail is shed, worst first, rather than letting the whole page judder.
+ *   - The pixel ratio is capped at 2. A 3x backing store on a phone is a lot of
  *     fill for a decorative layer.
+ *
+ * REDUCED MOTION IS A DESIGNED STATE
+ * It used to bail out completely, leaving the authored gradient. That obeyed
+ * the setting and threw away the artwork with it. Now the world is still
+ * generated and painted in full — it simply does not move. Someone who has
+ * asked for less motion gets the same composition, held still, which is what
+ * the setting actually asks for. Save-Data is treated the same way: painting a
+ * still frame costs no bytes and almost no battery, so it keeps the picture and
+ * loses the loop.
  */
 
 /** Deterministic PRNG (mulberry32). A fixed seed means the art-directed frame
@@ -64,6 +90,47 @@ function cssVar(el: Element, name: string, fallback: string): string {
   return v.length > 0 ? v : fallback;
 }
 
+/**
+ * Parses a CSS colour to rgb components by asking the canvas to do it.
+ *
+ * The tokens are hex today, but they are authored in a stylesheet and could
+ * become any CSS colour at any time. Doing this by hand would mean a colour
+ * function silently producing black; letting the 2D context resolve it means
+ * whatever the browser accepts as a colour, this accepts too.
+ */
+function toRgb(ctx: CanvasRenderingContext2D, color: string): [number, number, number] {
+  ctx.save();
+  ctx.fillStyle = "#000";
+  ctx.fillStyle = color;
+  const resolved = ctx.fillStyle as string;
+  ctx.restore();
+
+  if (resolved.startsWith("#")) {
+    const hex = resolved.slice(1);
+    const full =
+      hex.length === 3
+        ? hex
+            .split("")
+            .map((c) => c + c)
+            .join("")
+        : hex;
+    return [
+      parseInt(full.slice(0, 2), 16),
+      parseInt(full.slice(2, 4), 16),
+      parseInt(full.slice(4, 6), 16),
+    ];
+  }
+  const m = /rgba?\(([^)]+)\)/.exec(resolved);
+  if (m) {
+    const parts = (m[1] as string)
+      .split(/[,\s/]+/)
+      .filter(Boolean)
+      .map(Number);
+    return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0];
+  }
+  return [0, 0, 0];
+}
+
 interface Band {
   /** Upper bound of the noise value this terrain occupies. */
   limit: number;
@@ -72,88 +139,234 @@ interface Band {
   lift: number;
 }
 
-export function paintTerrain(canvas: HTMLCanvasElement): void {
-  // Respect the viewer before doing any work.
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
-  const saveData = nav.connection?.saveData === true;
-  if (reduced || saveData) return;
+interface Tile {
+  x: number;
+  y: number;
+  color: string;
+  lift: number;
+  /** Painter depth, gx + gy. Also drives the entrance stagger. */
+  depth: number;
+  /** Index into `bands`. Water is 0; the settlement sits on the middle bands. */
+  band: number;
+  gx: number;
+  gy: number;
+}
 
+/** A lit window in the settlement. */
+interface Light {
+  x: number;
+  y: number;
+  /** Phase offset so they do not all pulse together. */
+  phase: number;
+  size: number;
+}
+
+/** A house in the settlement, drawn into the static terrain. */
+interface House {
+  /** Centre of the tile it stands on. */
+  x: number;
+  y: number;
+  scale: number;
+  height: number;
+}
+
+interface Bird {
+  /** Start position and velocity in screen space, px and px/second. */
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  scale: number;
+  phase: number;
+}
+
+export function paintTerrain(canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
   const root = document.documentElement;
+  const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
 
-  // Tiles are collected once per layout, then either drawn instantly or
-  // animated in. Keeping the geometry separate from the painting is what makes
-  // the entrance possible without recomputing noise every frame.
-  interface Tile {
-    x: number;
-    y: number;
-    color: string;
-    lift: number;
-    /** Painter depth, gx + gy. Also drives the entrance stagger. */
-    depth: number;
-  }
+  /** Whether the scene may move. Re-read rather than cached: someone can change
+   *  the setting while the page is open, and the honest response is to stop. */
+  const mayAnimate = (): boolean =>
+    !reducedQuery.matches && nav.connection?.saveData !== true;
 
   let tiles: Tile[] = [];
+  let waterTiles: Tile[] = [];
+  let lights: Light[] = [];
+  let houses: House[] = [];
+  let birds: Bird[] = [];
   let tileW = 0;
   let tileH = 0;
   let liftUnit = 0;
+  let cssW = 0;
+  let cssH = 0;
+  let dpr = 1;
 
-  const paintTile = (t: Tile, progress: number): void => {
+  /** Colours resolved once per build, so the frame loop never touches CSSOM. */
+  let waterRgb: [number, number, number] = [63, 168, 154];
+  let warmRgb: [number, number, number] = [255, 212, 121];
+  let shadowAlpha = 0.16;
+
+  /** The painted terrain, blitted once per frame instead of redrawn. */
+  const base = document.createElement("canvas");
+  const baseCtx = base.getContext("2d");
+
+  // -------------------------------------------------------------------------
+  // Terrain
+  // -------------------------------------------------------------------------
+  const paintTile = (
+    target: CanvasRenderingContext2D,
+    t: Tile,
+    progress: number,
+    yOffset = 0,
+  ): void => {
     // progress 0..1 — the tile falls into place from above and fades in.
     const rise = (1 - progress) * tileH * 3;
     const x = t.x;
-    const y = t.y + rise;
+    const y = t.y + rise + yOffset;
 
-    ctx.globalAlpha = progress;
+    target.globalAlpha = progress;
 
-    ctx.fillStyle = t.color;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + tileW / 2, y + tileH / 2);
-    ctx.lineTo(x, y + tileH);
-    ctx.lineTo(x - tileW / 2, y + tileH / 2);
-    ctx.closePath();
-    ctx.fill();
+    target.fillStyle = t.color;
+    target.beginPath();
+    target.moveTo(x, y);
+    target.lineTo(x + tileW / 2, y + tileH / 2);
+    target.lineTo(x, y + tileH);
+    target.lineTo(x - tileW / 2, y + tileH / 2);
+    target.closePath();
+    target.fill();
 
     if (t.lift > 0) {
       const side = t.lift * liftUnit + tileH * 0.35;
 
-      ctx.fillStyle = "rgba(0,0,0,0.22)";
-      ctx.beginPath();
-      ctx.moveTo(x - tileW / 2, y + tileH / 2);
-      ctx.lineTo(x, y + tileH);
-      ctx.lineTo(x, y + tileH + side);
-      ctx.lineTo(x - tileW / 2, y + tileH / 2 + side);
-      ctx.closePath();
-      ctx.fill();
+      target.fillStyle = "rgba(0,0,0,0.22)";
+      target.beginPath();
+      target.moveTo(x - tileW / 2, y + tileH / 2);
+      target.lineTo(x, y + tileH);
+      target.lineTo(x, y + tileH + side);
+      target.lineTo(x - tileW / 2, y + tileH / 2 + side);
+      target.closePath();
+      target.fill();
 
-      ctx.fillStyle = "rgba(0,0,0,0.34)";
-      ctx.beginPath();
-      ctx.moveTo(x + tileW / 2, y + tileH / 2);
-      ctx.lineTo(x, y + tileH);
-      ctx.lineTo(x, y + tileH + side);
-      ctx.lineTo(x + tileW / 2, y + tileH / 2 + side);
-      ctx.closePath();
-      ctx.fill();
+      target.fillStyle = "rgba(0,0,0,0.34)";
+      target.beginPath();
+      target.moveTo(x + tileW / 2, y + tileH / 2);
+      target.lineTo(x, y + tileH);
+      target.lineTo(x, y + tileH + side);
+      target.lineTo(x + tileW / 2, y + tileH / 2 + side);
+      target.closePath();
+      target.fill();
     }
 
-    ctx.globalAlpha = 1;
+    target.globalAlpha = 1;
   };
 
-  const paintAll = (): void => {
-    const cssW = canvas.clientWidth;
-    const cssH = canvas.clientHeight;
-    ctx.clearRect(0, 0, cssW, cssH);
-    for (const t of tiles) paintTile(t, 1);
+  /**
+   * One house: an isometric box with a roof, in the same projection as the
+   * terrain under it.
+   *
+   * Colours are fixed rather than tokenised, unlike everything else here. The
+   * tokens are surface and text colours audited for text contrast; a roof is
+   * neither, and borrowing one produced a building the same value as the grass
+   * it stood on. These are chosen to read as timber and thatch against every
+   * terrain band in both themes.
+   */
+  const paintHouse = (target: CanvasRenderingContext2D, h: House): void => {
+    const hw = tileW * 0.34 * h.scale;
+    const hh = tileH * 0.34 * h.scale;
+    const { x, y } = h;
+
+    // The box. Its base diamond is centred at (x, y - hh) with its south vertex
+    // at (x, y), so the building stands ON the tile rather than floating over
+    // its top corner. `topY` is the centre of the top face.
+    const topY = y - hh - h.height;
+
+    const tri = (
+      color: string,
+      ax: number,
+      ay: number,
+      bx: number,
+      by: number,
+      cx2: number,
+      cy2: number,
+    ): void => {
+      target.fillStyle = color;
+      target.beginPath();
+      target.moveTo(ax, ay);
+      target.lineTo(bx, by);
+      target.lineTo(cx2, cy2);
+      target.closePath();
+      target.fill();
+    };
+
+    // Left wall — the shaded side, matching the tile sides' own lighting.
+    target.fillStyle = "#4A3B2E";
+    target.beginPath();
+    target.moveTo(x - hw, y - hh);
+    target.lineTo(x, y);
+    target.lineTo(x, topY + hh);
+    target.lineTo(x - hw, topY);
+    target.closePath();
+    target.fill();
+
+    // Right wall — the lit side.
+    target.fillStyle = "#6B563F";
+    target.beginPath();
+    target.moveTo(x + hw, y - hh);
+    target.lineTo(x, y);
+    target.lineTo(x, topY + hh);
+    target.lineTo(x + hw, topY);
+    target.closePath();
+    target.fill();
+
+    // A hipped roof: four triangles meeting at an apex above the top face,
+    // sitting on eaves that oversail the walls.
+    //
+    // The first attempt drew two quads between the top face and a raised ridge
+    // line, which is not a roof — it produced a thin detached chevron floating
+    // above the box, clearly visible at hero size. A roof is a solid that meets
+    // its walls, so it is built from the four faces it actually has.
+    const ew = hw * 1.28; // eaves overhang
+    const eh = hh * 1.28;
+    const eaveY = topY + hh * 0.2; // centre of the eave diamond
+    // A deep roof relative to a low wall: the silhouette of a cottage rather
+    // than of a tower. An earlier pass had tall walls under a shallow roof and
+    // the settlement read as a row of chess pieces.
+    const apexY = eaveY - eh - h.height * 1.15;
+
+    // North face first, then the two visible southern ones, so the front
+    // overlaps the back exactly as the geometry says it should.
+    tri("#733E29", x, apexY, x, eaveY - eh, x - ew, eaveY);
+    tri("#733E29", x, apexY, x, eaveY - eh, x + ew, eaveY);
+    tri("#8A4B32", x, apexY, x - ew, eaveY, x, eaveY + eh);
+    tri("#A65C3C", x, apexY, x + ew, eaveY, x, eaveY + eh);
   };
 
-  const draw = (): void => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const cssW = canvas.clientWidth;
-    const cssH = canvas.clientHeight;
+  /** Repaints the cached terrain bitmap from the current tile list. */
+  const cacheBase = (): void => {
+    if (!baseCtx) return;
+    base.width = Math.round(cssW * dpr);
+    base.height = Math.round(cssH * dpr);
+    baseCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    baseCtx.clearRect(0, 0, cssW, cssH);
+    for (const t of tiles) paintTile(baseCtx, t, 1);
+    // After the terrain, so the town sits on the land rather than under it.
+    for (const h of houses) paintHouse(baseCtx, h);
+  };
+
+  /**
+   * Builds the scene: terrain, and the moving things that sit on it.
+   *
+   * Everything positional is computed here and never in the frame loop, so a
+   * frame is arithmetic and draw calls rather than noise sampling.
+   */
+  const build = (): void => {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cssW = canvas.clientWidth;
+    cssH = canvas.clientHeight;
     if (cssW === 0 || cssH === 0) return;
 
     canvas.width = Math.round(cssW * dpr);
@@ -171,15 +384,22 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
       { limit: 1.01, color: cssVar(root, "--mark-rock", "#5C5E61"), lift: 0.95 },
     ];
 
+    waterRgb = toRgb(ctx, bands[0]!.color);
+    warmRgb = toRgb(ctx, cssVar(root, "--mark-gold", "#FFD479"));
+    // Cloud shadows have to be lighter on the dark theme: the same multiply
+    // that reads as a passing cloud on parchment reads as a hole at night.
+    shadowAlpha = root.getAttribute("data-theme") === "dark" ? 0.1 : 0.16;
+
     // Tile size scales with the viewport so the composition holds from 360px to
     // ultrawide, rather than becoming a mosaic on one and four tiles on another.
-    const tileWLocal = Math.max(38, Math.min(84, cssW / 16));
-    const tileHLocal = tileWLocal / 2;
+    tileW = Math.max(38, Math.min(84, cssW / 16));
+    tileH = tileW / 2;
+    liftUnit = tileH * 0.9;
 
     // Anchored right-of-centre: the scrim keeps the left readable for the
     // headline, so the terrain's interest belongs on the right.
     const originX = cssW * 0.62;
-    const originY = -tileHLocal * 6;
+    const originY = -tileH * 6;
 
     // Which grid coordinates cover the viewport.
     //
@@ -192,8 +412,8 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     //   sx = originX + (gx - gy) * tileW/2   ->  u = gx - gy
     //   sy = originY + (gx + gy) * tileH/2   ->  v = gx + gy
     const toGrid = (sx: number, sy: number): { gx: number; gy: number } => {
-      const u = (sx - originX) / (tileWLocal / 2);
-      const v = (sy - originY) / (tileHLocal / 2);
+      const u = (sx - originX) / (tileW / 2);
+      const v = (sy - originY) / (tileH / 2);
       return { gx: (u + v) / 2, gy: (v - u) / 2 };
     };
 
@@ -208,29 +428,33 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     const gyMax = Math.ceil(Math.max(...corners.map((c) => c.gy))) + PAD_TILES;
 
     const noise = makeNoise(20260827);
-    const lift = tileHLocal * 0.9;
-
-    // Publish the geometry the painters need.
-    tileW = tileWLocal;
-    tileH = tileHLocal;
-    liftUnit = lift;
-
     const collected: Tile[] = [];
 
     for (let gy = gyMin; gy <= gyMax; gy++) {
       for (let gx = gxMin; gx <= gxMax; gx++) {
         const n = noise(gx * 0.16 + 8, gy * 0.16 + 8);
-        const band = bands.find((b) => n < b.limit) ?? (bands[bands.length - 1] as Band);
+        let bandIndex = bands.findIndex((b) => n < b.limit);
+        if (bandIndex < 0) bandIndex = bands.length - 1;
+        const band = bands[bandIndex] as Band;
 
         const x = originX + (gx - gy) * (tileW / 2);
-        const y = originY + (gx + gy) * (tileH / 2) - band.lift * lift;
+        const y = originY + (gx + gy) * (tileH / 2) - band.lift * liftUnit;
 
         // Cheap cull. Without it a wide viewport builds thousands of invisible
         // tiles and the cost shows up in LCP.
         if (x < -tileW * 2 || x > cssW + tileW * 2) continue;
         if (y < -tileH * 4 || y > cssH + tileH * 6) continue;
 
-        collected.push({ x, y, color: band.color, lift: band.lift, depth: gx + gy });
+        collected.push({
+          x,
+          y,
+          color: band.color,
+          lift: band.lift,
+          depth: gx + gy,
+          band: bandIndex,
+          gx,
+          gy,
+        });
       }
     }
 
@@ -238,11 +462,311 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     collected.sort((a, b) => a.depth - b.depth);
     tiles = collected;
 
+    // --- the moving cast -----------------------------------------------------
+
+    // Water that is actually on screen, nearest the centre of interest first.
+    // Bounded hard: a 4K viewport must not animate two thousand diamonds.
+    const focusX = cssW * 0.62;
+    const focusY = cssH * 0.5;
+    waterTiles = tiles
+      .filter(
+        (t) =>
+          t.band === 0 &&
+          t.x > -tileW &&
+          t.x < cssW + tileW &&
+          t.y > -tileH * 2 &&
+          t.y < cssH + tileH * 2,
+      )
+      .sort(
+        (a, b) =>
+          (a.x - focusX) ** 2 +
+          (a.y - focusY) ** 2 -
+          ((b.x - focusX) ** 2 + (b.y - focusY) ** 2),
+      )
+      .slice(0, 160);
+
+    // The settlement.
+    //
+    // The first version placed lit windows on the terrain with nothing under
+    // them, and a dozen warm dots floating on a green hillside reads as
+    // fireflies, not as a town. So the town is built: each light gets a house,
+    // the houses go into the static terrain bitmap, and the light is placed on
+    // the house's wall where a window would be.
+    //
+    // Clustered on high ground right of centre, which is where the composition
+    // already puts its interest — the scrim keeps the left readable.
+    const lightRand = rng(4242);
+    const candidates = tiles.filter(
+      (t) =>
+        (t.band === 2 || t.band === 3) &&
+        t.x > cssW * 0.42 &&
+        t.x < cssW + tileW &&
+        t.y > cssH * 0.1 &&
+        t.y < cssH * 0.9,
+    );
+    lights = [];
+    houses = [];
+    if (candidates.length > 0) {
+      const anchor = candidates[Math.floor(lightRand() * candidates.length)] as Tile;
+      // A tight cluster. Wider than about four tiles and it stops being one
+      // settlement and becomes buildings dotted across a valley.
+      const near = candidates.filter(
+        (t) => Math.abs(t.gx - anchor.gx) <= 4 && Math.abs(t.gy - anchor.gy) <= 4,
+      );
+      const pool = near.length >= 5 ? near : candidates;
+
+      // Painter's order again: a house behind must be drawn before the house in
+      // front of it, or the roofs stack wrongly.
+      const chosen = pool
+        .filter((_t, i) => i % Math.max(1, Math.floor(pool.length / 11)) === 0)
+        .slice(0, 11)
+        .sort((a, b) => a.depth - b.depth);
+
+      for (const t of chosen) {
+        const scale = 0.82 + lightRand() * 0.36;
+        const cx = t.x;
+        const cy = t.y + tileH / 2;
+        const height = tileH * 0.5 * scale;
+        houses.push({ x: cx, y: cy, scale, height });
+        lights.push({
+          // On the right-hand wall, two thirds up: where a window goes.
+          x: cx + tileW * 0.17 * scale,
+          y: cy - tileH * 0.34 * scale - height * 0.4,
+          phase: lightRand() * Math.PI * 2,
+          size: tileW * 0.1 * scale,
+        });
+      }
+    }
+
+    // Birds. Four is enough to read as life and few enough to cost nothing.
+    const birdRand = rng(99);
+    birds = Array.from({ length: 4 }, () => ({
+      x: birdRand() * cssW,
+      y: cssH * (0.08 + birdRand() * 0.35),
+      vx: 14 + birdRand() * 18,
+      vy: (birdRand() - 0.5) * 3,
+      scale: 0.7 + birdRand() * 0.6,
+      phase: birdRand() * Math.PI * 2,
+    }));
+
+    cacheBase();
     canvas.setAttribute("data-painted", "");
   };
 
+  // -------------------------------------------------------------------------
+  // The animated layers
+  // -------------------------------------------------------------------------
+
   /**
-   * M1 — the tiles rise into place, back to front.
+   * Detail level, shed under load.
+   *   2 — everything
+   *   1 — no birds, fewer shimmering tiles
+   *   0 — light sweep and cloud shadows only
+   */
+  let detail = 2;
+
+  /** Sunlight travelling across the land. One gradient fill. */
+  const drawSunSweep = (time: number): void => {
+    // 24 seconds for a full pass. Slow enough that it is felt rather than
+    // watched, which is the difference between atmosphere and a screensaver.
+    const t = (time / 24000) % 1;
+    const cx = -cssW * 0.4 + t * cssW * 1.8;
+    const g = ctx.createLinearGradient(cx - cssW * 0.5, 0, cx + cssW * 0.5, cssH);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.5, `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},0.16)`);
+    g.addColorStop(1, "rgba(255,255,255,0)");
+
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, cssW, cssH);
+    ctx.globalCompositeOperation = "source-over";
+  };
+
+  /** Three cloud shadows crossing the terrain at different speeds. */
+  const drawCloudShadows = (time: number): void => {
+    ctx.globalCompositeOperation = "multiply";
+    for (let i = 0; i < 3; i++) {
+      const speed = 0.018 + i * 0.011;
+      const rx = cssW * (0.34 + i * 0.12);
+      const ry = rx * 0.42;
+      const x = (((time * speed) / 100 + i * 0.42) % 1.6) * (cssW + rx * 2) - rx;
+      const y = cssH * (0.28 + i * 0.22) + Math.sin(time / 9000 + i) * cssH * 0.04;
+
+      const g = ctx.createRadialGradient(x, y, 0, x, y, rx);
+      g.addColorStop(0, `rgba(30,36,50,${shadowAlpha})`);
+      g.addColorStop(1, "rgba(30,36,50,0)");
+      ctx.fillStyle = g;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, ry / rx);
+      ctx.beginPath();
+      ctx.arc(0, 0, rx, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalCompositeOperation = "source-over";
+  };
+
+  /**
+   * Water. Each tile's top face gets a travelling highlight whose phase depends
+   * on its grid position, so the light moves ACROSS the water as a wave rather
+   * than every tile blinking in unison.
+   */
+  const drawWater = (time: number): void => {
+    const limit = detail >= 2 ? waterTiles.length : Math.min(60, waterTiles.length);
+    ctx.globalCompositeOperation = "screen";
+    for (let i = 0; i < limit; i++) {
+      const t = waterTiles[i] as Tile;
+      const wave = Math.sin(time / 1400 + (t.gx - t.gy) * 0.55 + t.gy * 0.18);
+      const a = 0.05 + Math.max(0, wave) * 0.16;
+      // A slight vertical bob, well under a pixel of visual drift at small
+      // sizes, which is what stops the surface looking like a printed pattern.
+      const bob = Math.sin(time / 1100 + t.gx * 0.4) * tileH * 0.045;
+
+      ctx.globalAlpha = a;
+      ctx.fillStyle = `rgb(${Math.min(255, waterRgb[0] + 70)},${Math.min(
+        255,
+        waterRgb[1] + 70,
+      )},${Math.min(255, waterRgb[2] + 60)})`;
+      const x = t.x;
+      const y = t.y + bob;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + tileW / 2, y + tileH / 2);
+      ctx.lineTo(x, y + tileH);
+      ctx.lineTo(x - tileW / 2, y + tileH / 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+  };
+
+  /** The settlement's windows, each on its own slow flicker. */
+  const drawLights = (time: number): void => {
+    ctx.globalCompositeOperation = "screen";
+    for (const l of lights) {
+      const pulse = 0.55 + 0.45 * Math.sin(time / 2200 + l.phase);
+      // A second, faster and much smaller term: a steady sine reads as a
+      // breathing dot, and a lit window does not breathe.
+      const flicker = 0.92 + 0.08 * Math.sin(time / 190 + l.phase * 3);
+      const r = l.size * (1.6 + pulse * 0.5);
+
+      const g = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, r);
+      g.addColorStop(
+        0,
+        `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},${0.5 * pulse * flicker})`,
+      );
+      g.addColorStop(1, `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(l.x, l.y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},${0.75 * flicker})`;
+      ctx.fillRect(
+        l.x - l.size * 0.18,
+        l.y - l.size * 0.18,
+        l.size * 0.36,
+        l.size * 0.36,
+      );
+    }
+    ctx.globalCompositeOperation = "source-over";
+  };
+
+  /** Birds, as two small strokes each. They wrap rather than respawn. */
+  const drawBirds = (time: number): void => {
+    const seconds = time / 1000;
+    ctx.strokeStyle = "rgba(28,32,44,0.38)";
+    ctx.lineCap = "round";
+    for (const b of birds) {
+      const span = cssW + 80;
+      const x = (((b.x + b.vx * seconds) % span) + span) % span;
+      const y = b.y + Math.sin(seconds * 0.5 + b.phase) * 8 + b.vy * 0;
+      const s = 5 * b.scale;
+      // Wingbeat: the V opens and closes.
+      const beat = 0.45 + 0.35 * Math.abs(Math.sin(seconds * 4 + b.phase));
+
+      ctx.lineWidth = 1.4 * b.scale;
+      ctx.beginPath();
+      ctx.moveTo(x - s, y - s * beat);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x + s, y - s * beat);
+      ctx.stroke();
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // The loop
+  // -------------------------------------------------------------------------
+  let rafId = 0;
+  let running = false;
+  let onScreen = true;
+  let slowFrames = 0;
+  let lastFrame = 0;
+
+  const renderFrame = (time: number): void => {
+    ctx.clearRect(0, 0, cssW, cssH);
+    if (baseCtx) ctx.drawImage(base, 0, 0, cssW, cssH);
+
+    drawWater(time);
+    drawLights(time);
+    drawCloudShadows(time);
+    drawSunSweep(time);
+    if (detail >= 2) drawBirds(time);
+  };
+
+  const loop = (now: number): void => {
+    if (!running) return;
+
+    // Shed detail rather than judder. Four consecutive frames over 26ms is a
+    // device telling us it cannot afford this, and the right response is to ask
+    // for less — not to keep asking and blame the phone.
+    if (lastFrame > 0) {
+      const delta = now - lastFrame;
+      if (delta > 26) {
+        slowFrames++;
+        if (slowFrames >= 4 && detail > 0) {
+          detail--;
+          slowFrames = 0;
+        }
+      } else if (slowFrames > 0) {
+        slowFrames--;
+      }
+    }
+    lastFrame = now;
+
+    renderFrame(now);
+    rafId = requestAnimationFrame(loop);
+  };
+
+  const start = (): void => {
+    if (running || !mayAnimate() || !onScreen || document.hidden) return;
+    running = true;
+    lastFrame = 0;
+    rafId = requestAnimationFrame(loop);
+  };
+
+  const stop = (): void => {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+  };
+
+  /** The still frame: the world, painted, not moving. */
+  const settle = (): void => {
+    ctx.clearRect(0, 0, cssW, cssH);
+    if (baseCtx) ctx.drawImage(base, 0, 0, cssW, cssH);
+    // Time zero, so the still frame is a composed moment rather than the
+    // terrain with its lighting missing.
+    drawWater(0);
+    drawLights(0);
+    drawCloudShadows(0);
+    drawSunSweep(6000);
+  };
+
+  /**
+   * M1 — the tiles rise into place, back to front, then the world starts.
    *
    * Runs exactly once, on first layout. A resize or a theme change repaints
    * instantly instead of replaying the entrance: re-animating every time
@@ -262,44 +786,84 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     const span = Math.max(1, maxDepth - minDepth);
 
     const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-    const start = performance.now();
+    const began = performance.now();
 
     const frame = (now: number): void => {
-      const elapsed = now - start;
+      const elapsed = now - began;
       const t = Math.min(1, elapsed / DURATION);
 
-      const cssW = canvas.clientWidth;
-      const cssH = canvas.clientHeight;
       ctx.clearRect(0, 0, cssW, cssH);
 
       for (const tile of tiles) {
         const offset = ((tile.depth - minDepth) / span) * STAGGER_SPAN;
         const local = (t - offset) / (1 - STAGGER_SPAN);
         if (local <= 0) continue;
-        paintTile(tile, easeOut(Math.min(1, local)));
+        paintTile(ctx, tile, easeOut(Math.min(1, local)));
+      }
+
+      // The settlement arrives last, over the final quarter. Without this the
+      // houses are absent for the whole entrance and then simply exist on the
+      // first blitted frame, which is a visible pop. Building the land and then
+      // the town on it is also the truer order.
+      if (t > 0.75 && houses.length > 0) {
+        ctx.globalAlpha = easeOut((t - 0.75) / 0.25);
+        for (const h of houses) paintHouse(ctx, h);
+        ctx.globalAlpha = 1;
       }
 
       if (t < 1) requestAnimationFrame(frame);
-      else paintAll(); // settle on the exact final frame
+      else start();
     };
 
     requestAnimationFrame(frame);
   };
 
-  draw();
+  build();
+  if (tiles.length === 0) return;
 
-  // The entrance is skipped when motion is declined — draw() already bailed in
-  // that case, so reaching here means motion is welcome.
-  if (tiles.length > 0) animateIn();
+  if (mayAnimate()) animateIn();
+  else settle();
+
+  // Stop when nobody is looking. A hero animating below the fold, or in a
+  // background tab, is spending a phone's battery on nothing.
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        onScreen = entries.some((e) => e.isIntersecting);
+        if (onScreen) start();
+        else stop();
+      },
+      { threshold: 0 },
+    );
+    io.observe(canvas);
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stop();
+    else start();
+  });
+
+  // Someone turning reduced motion on mid-session gets it honoured immediately,
+  // and turning it off gets the world back.
+  reducedQuery.addEventListener("change", () => {
+    if (mayAnimate()) start();
+    else {
+      stop();
+      settle();
+    }
+  });
 
   // Repaint on resize and on a theme change, both debounced. Neither replays
-  // the entrance: each settles straight to the final frame.
+  // the entrance: each rebuilds and settles straight to a composed frame.
   let timer: number | undefined;
   const schedule = (): void => {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => {
-      draw();
-      paintAll();
+      const wasRunning = running;
+      stop();
+      build();
+      if (wasRunning && mayAnimate()) start();
+      else settle();
     }, 180);
   };
 

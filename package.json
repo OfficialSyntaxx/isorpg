@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "2.5D isometric hybrid RPG & settlement builder \u2014 mobile-first, zero-asset procedural Three.js",
+  "description": "2.5D isometric hybrid RPG & settlement builder — mobile-first, zero-asset procedural Three.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -42,7 +42,10 @@
     "verify:compose": "node scripts/verify-compose.cjs",
     "verify:deploy-report": "node scripts/verify-deploy-report.cjs",
     "verify:site": "npm run verify:tokens && npm run verify:xp && npm run verify:compose && npm run verify:deploy-report",
-    "verify:security": "node scripts/verify-csp.cjs && node scripts/verify-chrome.cjs"
+    "verify:security": "node scripts/verify-csp.cjs && node scripts/verify-chrome.cjs && node scripts/verify-doc-layout.cjs && node scripts/verify-no-internals.cjs && node scripts/verify-hero.cjs",
+    "verify:doc-layout": "node scripts/verify-doc-layout.cjs",
+    "verify:no-internals": "node scripts/verify-no-internals.cjs",
+    "verify:hero": "node scripts/verify-hero.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"

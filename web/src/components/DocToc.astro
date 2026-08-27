@@ -1,0 +1,41 @@
+---
+/**
+ * The contents list for a long document page (/wiki, /roadmap).
+ *
+ * WHY A <details> AND NOT A <nav>
+ * The wiki's contents list is 51 entries. On a desktop sidebar that is a
+ * feature; on a phone, where the list is a full-width block at the top of the
+ * single column, it is a screen and a half of links before the reader reaches
+ * a single word of content.
+ *
+ * It ships OPEN, and a script closes it on narrow viewports. That ordering is
+ * deliberate: with no JavaScript the page behaves exactly as it did before,
+ * showing the whole list, rather than hiding content behind a control that
+ * needs a script to be useful. At >=64rem the summary is hidden entirely and
+ * the list becomes the sticky sidebar (see .toc in components.css).
+ */
+import type { Heading } from "../lib/markdown";
+
+interface Props {
+  headings: Heading[];
+  label: string;
+}
+
+const { headings, label } = Astro.props;
+---
+
+<details class="toc" data-toc open>
+  <summary class="toc__summary" aria-label={label}>
+    <span class="toc__title">On this page</span>
+    <span class="toc__count">{headings.length}</span>
+  </summary>
+  <ul class="toc__list">
+    {
+      headings.map((h) => (
+        <li class:list={["toc__item", h.depth === 3 && "toc__item--sub"]}>
+          <a href={`#${h.id}`}>{h.text}</a>
+        </li>
+      ))
+    }
+  </ul>
+</details>

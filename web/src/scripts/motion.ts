@@ -515,8 +515,35 @@ export function initCounters(): void {
   els.forEach((el) => io.observe(el));
 }
 
+/**
+ * Collapses a long document's contents list on narrow viewports.
+ *
+ * The markup ships `open` so that with no JavaScript the reader still gets the
+ * whole list — a disclosure that needs a script to open is worse than no
+ * disclosure. This closes it only where it costs a screen and a half of
+ * scrolling, and follows the viewport afterwards so a rotation or a resize
+ * cannot strand the sidebar showing nothing but its own summary.
+ */
+export function initDocToc(): void {
+  const tocs = Array.from(document.querySelectorAll<HTMLDetailsElement>("[data-toc]"));
+  if (tocs.length === 0) return;
+  if (!("matchMedia" in window)) return;
+
+  // Matches the sidebar breakpoint in components.css. Kept as a literal
+  // because a media query cannot read a custom property.
+  const sidebar = window.matchMedia("(min-width: 64rem)");
+
+  const apply = (): void => {
+    for (const toc of tocs) toc.open = sidebar.matches;
+  };
+
+  apply();
+  sidebar.addEventListener("change", apply);
+}
+
 // ---------------------------------------------------------------------------
 export function initMotion(): void {
+  initDocToc();
   initCounters();
   initHeader();
   initRegionAmbience();

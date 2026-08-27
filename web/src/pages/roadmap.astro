@@ -1,17 +1,23 @@
 ---
 /**
- * /roadmap/ — renders ROADMAP.md (repo root) at build time.
+ * /roadmap/ — renders the public roadmap at build time.
  *
- * ROADMAP.md is prose with tables, not a structured record — see
- * src/lib/markdown.ts for why this renders the markdown rather than parsing
- * it into a bespoke shape. This page only supplies the layout: intro copy,
- * an h1, and a two-column doc-grid (table of contents + prose) on wide
- * screens.
+ * WHY NOT ROADMAP.md
+ * It used to render that file, and the result was neither safe nor readable.
+ * The internal roadmap stacks three plans — the active one and two superseded
+ * ones — and carries build budgets, asset vendors, tool costs and source paths.
+ * A visitor met "Legacy Unity roadmap — superseded" next to a phase priced in
+ * credits, with nothing to indicate which plan was current.
+ *
+ * content/roadmap.md is written for players: what works now, what is being
+ * built, what is only an intention, and what is deliberately not planned. The
+ * internal roadmap stays internal.
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
+import DocToc from "../components/DocToc.astro";
 import { renderDoc } from "../lib/markdown";
 
-const { html, headings } = renderDoc("ROADMAP.md");
+const { html, headings } = renderDoc("content/roadmap.md");
 ---
 
 <BaseLayout
@@ -24,26 +30,14 @@ const { html, headings } = renderDoc("ROADMAP.md");
       <header class="doc__intro" data-reveal>
         <h1>Roadmap</h1>
         <p>
-          This is Isoperia's living development roadmap, not a promise of dates. It tracks
-          what has shipped, what is in progress, and the order the remaining work is
-          planned in — including an earlier, superseded plan kept for context. It changes
-          as the game does.
+          Where Isoperia is going, in the order it is being tackled. There are no dates on
+          it and nothing here is a commitment — the ordering is the useful part, and it
+          changes as the game does.
         </p>
       </header>
 
       <div class="doc-grid">
-        <nav class="toc" aria-label="Roadmap sections">
-          <p class="toc__title">On this page</p>
-          <ul>
-            {
-              headings.map((h) => (
-                <li class:list={["toc__item", h.depth === 3 && "toc__item--sub"]}>
-                  <a href={`#${h.id}`}>{h.text}</a>
-                </li>
-              ))
-            }
-          </ul>
-        </nav>
+        <DocToc headings={headings} label="Roadmap sections" />
 
         <div class="prose" set:html={html} />
       </div>
@@ -66,14 +60,5 @@ const { html, headings } = renderDoc("ROADMAP.md");
   .doc__intro p {
     color: var(--text-muted);
     margin-top: var(--space-sm);
-  }
-
-  .toc__title {
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    letter-spacing: var(--tracking-caps);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: var(--space-xs);
   }
 </style>

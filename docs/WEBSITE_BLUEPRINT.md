@@ -11,9 +11,14 @@
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
 **Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 1, 2,
-3, 5, 6, 7 and 8 done; Phase 4 built with its Lighthouse gate still open. Merged
-to `main` and **live in production** — landing page at `/`, game at `/play`. The
-site is 110 pages with an enforcing CSP.
+3, 5, 6, 7 and 8 done; Phase 4 built with its Lighthouse gate still open; Phase 9
+deferred (no domain purchased). Merged to `main` and **live in production** —
+landing page at `/`, game at `/play`, with an enforcing CSP.
+
+Four faults found on a real phone after the cutover are fixed and covered by new
+checks — the contents list overlapping the document, the site publishing its own
+engineering notes, nothing guarding against that recurring, and a hero that did
+not move. See "Post-cutover corrections" below.
 
 **Phase 1 gate closed 2026-08-27.** Run
 [33080016719](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33080016719)
@@ -69,7 +74,7 @@ Update the Status column as phases move.
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 ×2 + Opus 5 | ✅ Done | Feeds render from repo markdown; RSS valid |
 | 7 | Security hardening | Opus 5 | ✅ Done | CSP enforced with zero console violations; headers audit passes |
 | 8 | Netlify cutover | Opus 5 | ✅ Done — production serves `/` and `/play` | Landing at `/`, game at `/play`, no regression in `deploy-report.txt` |
-| 9 | Custom domain | Sonnet 5 | ⬜ Not started | DNS live, HTTPS, canonical + redirects correct |
+| 9 | Custom domain | Sonnet 5 | ⏸️ Deferred — no domain purchased | DNS live, HTTPS, canonical + redirects correct |
 | 10 | Backend Phase B1 (forms) | Sonnet 5 | ⬜ Not started | Newsletter + contact functions live, rate-limited, spam-guarded |
 | 11 | Backend Phase B2 (accounts) | Opus 5 | ⬜ Blocked on B1 | Design doc only until greenlit |
 | 12 | Backend Phase B3 (cloud saves) | Opus 5 | ⬜ Blocked on B2 | Design doc only until greenlit |
@@ -1328,7 +1333,99 @@ on the progress bar, while `deploy-report.txt` reported a healthy deploy.
 The fix is in `compose-site.cjs`: it hashes those inline blocks at compose time
 and adds the hashes to the policy. Re-verified 11/11.
 
-### Phase 9 — Custom domain ⬜
+### Post-cutover corrections (2026-08-27) ✅
+
+Four faults, all reported from a real phone against the live production site.
+Every one of them had passed CI.
+
+**1. The contents list painted over the document.** `/wiki` and `/roadmap` on a
+phone were two complete layers of overlapping text at every scroll position past
+the top of the page. `.toc` declared `position: sticky` unconditionally, but the
+sidebar layout it was written for only exists at 64rem and up; below that the
+list is a full-width block in a single column, and Chrome lets a sticky grid item
+travel past its own grid area, so it pinned itself over the prose scrolling
+underneath. Sticky now lives inside the media query that creates the sidebar, and
+the list is a disclosure on phones — 44px collapsed instead of 748px, shipped
+open so that with no JavaScript the whole list is still there.
+
+`scripts/verify-doc-layout.cjs` measures it now, 11 assertions. Worth recording
+why it nearly did not: the first version of that check passed against the broken
+build. `html { scroll-behavior: smooth }` makes `window.scrollTo` animate, and
+reading rectangles 120ms later measures a page that has barely moved — where
+there is no overlap. Two lines (force `scroll-behavior: auto`, then wait for
+`scrollY` to actually arrive) are the difference between a check and a
+decoration. The diagnosis was only trusted after the harness was made to
+reproduce the bug on the pre-fix build and then go green on the fixed one.
+
+**2. The site was publishing its own engineering notes.** `/devlog` rendered
+`UPDATES.md` and `/roadmap` rendered `ROADMAP.md`, both verbatim. Measured on the
+live build: **102 devlog pages** carrying build-script filenames, repository
+paths, internal document names, asset-vendor names and per-asset spend — plus a
+wiki page opening with an instruction to re-run a generator, a source-file path
+printed under the experience chart, a repository link on `/press` and
+`/legal/terms`, and in-template HTML comments naming source modules.
+
+Both pages now render their own player-facing files, `web/content/devlog.md` and
+`web/content/roadmap.md`. Scrubbing the internal documents with patterns was the
+cheaper option and the wrong one: a missed pattern is a leak that ships silently,
+and both source files keep growing. The internal roadmap was also unreadable as a
+public page — three stacked plans, one labelled "superseded", with nothing to
+indicate which was current.
+
+The devlog dropped from 102 entries to 8. That is a real loss of published
+history, and it is the right trade: eight entries a player can read beat 102
+written for whoever builds the game.
+
+**3. Nothing was stopping it happening again.** `scripts/verify-no-internals.cjs`
+scans every built page against 8 rules and fails the build. Verified against a
+planted leak — one paragraph containing a repository URL, a script name, a tool
+command, an internal document and an asset budget — which trips 6 rules.
+`scripts/strip-html-comments.cjs` removes in-template comments from the output,
+so components can stay documented without shipping their documentation.
+
+**4. The hero was a photograph of a world.** It generated one frame and stopped.
+Defensible on cost, and wrong for the top of a page selling a world you walk
+through. It is now a living scene: sunlight travelling across the land, three
+cloud shadows drifting at different speeds, water moving as a wave rather than
+tiles blinking in unison, a settlement of eleven houses with lit windows on their
+own flickers, and birds crossing.
+
+The cost discipline is what makes that affordable. The terrain is painted once
+into an offscreen canvas and blitted with a single `drawImage` per frame; only
+the moving parts are redrawn, which is roughly 150 draw calls a frame instead of
+the ~1500 a full repaint would cost. The loop stops entirely when the hero leaves
+the viewport and when the tab is hidden, and frame cost is measured so detail is
+shed under load rather than the whole page juddering. First load is still **22 KB
+gzipped**.
+
+Reduced motion changed meaning here. It used to bail out completely, leaving the
+authored gradient — obeying the setting by deleting the artwork. The world is now
+generated and painted in full and simply held still, which is what the setting
+actually asks for. Save-Data is treated the same way.
+
+`scripts/verify-hero.cjs` asserts all of it in a browser, 8 assertions, by
+hashing canvas pixels over time: a silent exception in the loop leaves a
+perfectly good still frame, which looks fine and is the bug.
+
+**Also fixed:** the sticky header stops being glass once condensed. Translucency
+over the hero is the effect; over body text it is a legibility problem, and at
+0.72 alpha wherever `backdrop-filter` is unavailable it left headings readable
+straight through the bar.
+
+**The pattern in all four.** Every one shipped through a green pipeline, and
+three of the four were found by a person looking at a phone. The checks measured
+what they were written to measure — horizontal overflow, contrast, CSP, header
+height — and none of them measured vertical overlap, published vocabulary, or
+whether the artwork was worth looking at. Each fault is now covered by a check
+that was verified to fail before it was trusted to pass.
+
+### Phase 9 — Custom domain ⏸️
+
+**Deferred at the owner's request, 2026-08-27: no domain has been purchased, so
+there is nothing to point anywhere.** Nothing downstream is blocked by it — every
+URL is written against `$SITE_ORIGIN` and the `netlify.app` origin stays
+canonical until a domain exists (D4). The checklist below is the plan for when
+one is bought, not outstanding work.
 
 - [ ] Purchase; point DNS at Netlify.
 - [ ] HTTPS + HSTS (only after the domain is confirmed correct — HSTS preload

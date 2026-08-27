@@ -614,13 +614,77 @@ pre code {
 }
 
 /* A generated in-page table of contents. */
+/* NOT sticky here. This is the whole of a bug that shipped.
+ *
+ * `position: sticky` was declared unconditionally, but the sidebar layout it
+ * was written for only exists at 64rem and up. Below that the TOC is an
+ * ordinary full-width block at the top of the single column — and a sticky
+ * full-width block pins itself to the viewport while the prose keeps scrolling
+ * underneath it. The TOC has no background, so the result was both layers
+ * painted on top of each other: /wiki and /roadmap on a phone were two
+ * complete documents of text overlapping, which is what a real device
+ * screenshot caught.
+ *
+ * Sticky is a sidebar affordance. It belongs in the media query that creates
+ * the sidebar, and nowhere else.
+ */
 .toc {
-  position: sticky;
-  top: var(--space-3xl);
-  align-self: start;
-  max-height: calc(100svh - var(--space-4xl));
-  overflow-y: auto;
   font-size: var(--text-sm);
+}
+
+/* On a phone the contents list is a disclosure. See DocToc.astro for why it
+   ships open and is closed by script rather than the other way round. */
+.toc__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  list-style: none;
+  /* 2.5.8: the whole row is the target, not just the words. */
+  min-height: 2.75rem;
+}
+
+.toc__summary::-webkit-details-marker {
+  display: none;
+}
+
+.toc__summary:hover {
+  border-color: var(--border-strong);
+}
+
+.toc__title {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.toc__count {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+/* The caret. Rotates to point down when the list is open. */
+.toc__count::after {
+  content: "▸";
+  display: inline-block;
+  margin-left: var(--space-2xs);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.toc[open] .toc__count::after {
+  transform: rotate(90deg);
+}
+
+.toc__list {
+  margin-top: var(--space-xs);
 }
 
 .toc ul,
@@ -683,6 +747,34 @@ pre code {
 
   .doc-grid > .toc {
     order: 2;
+  }
+
+  /* Sticky only once the TOC is a real sidebar in its own column, where there
+     is nothing behind it to overlap. See the note on .toc. */
+  .toc {
+    position: sticky;
+    top: var(--space-3xl);
+    align-self: start;
+    max-height: calc(100svh - var(--space-4xl));
+    overflow-y: auto;
+  }
+
+  /* In the sidebar the list is always shown, so the disclosure control is
+     noise. The plain title takes its place. */
+  .toc__summary {
+    pointer-events: none;
+    border: 0;
+    background: none;
+    padding: 0;
+    min-height: 0;
+  }
+
+  .toc__count {
+    display: none;
+  }
+
+  .toc__list {
+    margin-top: var(--space-sm);
   }
 }
 

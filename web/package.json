@@ -11,7 +11,7 @@
     "predev": "npm run tokens",
     "dev": "astro dev",
     "prebuild": "npm run tokens",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build && node ../scripts/strip-html-comments.cjs",
     "preview": "astro preview",
     "tokens": "node ../scripts/gen-tokens.cjs",
     "check": "astro check",

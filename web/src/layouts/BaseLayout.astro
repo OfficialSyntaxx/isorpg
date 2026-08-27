@@ -143,8 +143,9 @@ const canonical = absolute(pathname);
     <SiteFooter />
 
     <script>
-      // The single motion entry point. Deliberately no animation library —
-      // see the reasoning at the top of src/scripts/motion.ts.
+      // The single motion entry point. This comment ships to every visitor
+      // inside the inline module, so it says nothing a reader of the page has
+      // no business knowing — the reasoning lives with the module itself.
       import { initMotion } from "../scripts/motion";
       initMotion();
     </script>

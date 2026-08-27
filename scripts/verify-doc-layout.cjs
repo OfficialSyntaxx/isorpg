@@ -1,0 +1,247 @@
+#!/usr/bin/env node
+/**
+ * QC: asserts a long document page's contents list never paints on top of its
+ * prose.
+ *
+ * WHY THIS EXISTS
+ * /wiki and /roadmap shipped with their table of contents overlapping the
+ * document body on a phone: two complete layers of text drawn in the same
+ * space, unreadable, on every scroll position past the top of the page. A real
+ * device screenshot caught it. Nothing in CI did.
+ *
+ * The cause was `position: sticky` declared on `.toc` unconditionally. The
+ * sidebar layout it was written for only exists at 64rem and up; below that the
+ * TOC is a full-width block in a single column, and Chrome lets a sticky grid
+ * item travel past its own grid area, so it pins itself over the prose
+ * scrolling underneath. The fix is that sticky belongs inside the media query
+ * that creates the sidebar.
+ *
+ * A NOTE ON MEASURING THIS, because the first version of this check passed
+ * against the broken build and nearly certified the bug as fixed:
+ * `html { scroll-behavior: smooth }` makes `window.scrollTo` animate. Reading
+ * rectangles a hundred milliseconds later measures a page that has barely
+ * moved, and an unscrolled page has no overlap. The scroll behaviour is forced
+ * to `auto` below and the check waits for `scrollY` to actually arrive. Without
+ * those two lines this file is decoration.
+ */
+"use strict";
+
+const fs = require("fs");
+const http = require("http");
+const path = require("path");
+
+const ROOT = path.join(__dirname, "..");
+const DIST = path.join(ROOT, "web/dist");
+
+const ROUTES = ["/wiki/", "/roadmap/"];
+const WIDTHS = [360, 390, 430, 1280];
+const SCROLLS = [0, 600, 1400, 2600];
+
+let pass = 0,
+  fail = 0;
+const ok = (name, cond, detail = "") => {
+  if (cond) {
+    pass++;
+    console.log(`PASS  ${name}`);
+  } else {
+    fail++;
+    console.log(`FAIL  ${name}${detail ? "  [" + detail + "]" : ""}`);
+  }
+};
+
+if (!fs.existsSync(DIST)) {
+  console.log(`SKIP  doc-layout: ${path.relative(ROOT, DIST)} not built.`);
+  process.exit(0);
+}
+
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css",
+  ".js": "text/javascript",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".avif": "image/avif",
+  ".xml": "application/xml",
+  ".txt": "text/plain",
+};
+
+const server = http.createServer((req, res) => {
+  let urlPath = decodeURIComponent(req.url.split("?")[0]);
+  if (urlPath.endsWith("/")) urlPath += "index.html";
+  const file = path.join(DIST, urlPath);
+  if (
+    !file.startsWith(DIST) ||
+    !fs.existsSync(file) ||
+    fs.statSync(file).isDirectory()
+  ) {
+    res.writeHead(404);
+    res.end("not found");
+    return;
+  }
+  res.writeHead(200, {
+    "Content-Type": MIME[path.extname(file)] || "application/octet-stream",
+  });
+  fs.createReadStream(file).pipe(res);
+});
+
+(async () => {
+  let chromium;
+  try {
+    ({ chromium } = require("playwright-core"));
+  } catch {
+    try {
+      ({ chromium } = require("playwright"));
+    } catch {
+      console.log("SKIP  doc-layout: no playwright available.");
+      finish();
+      return;
+    }
+  }
+
+  const exe = [
+    "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "/opt/pw-browsers/chromium/chrome-linux/chrome",
+  ].find(fs.existsSync);
+
+  const port = 4419;
+  await new Promise((r) => server.listen(port, "127.0.0.1", r));
+  const browser = await chromium.launch({
+    ...(exe ? { executablePath: exe } : {}),
+    args: ["--no-sandbox"],
+  });
+
+  for (const route of ROUTES) {
+    for (const width of WIDTHS) {
+      const page = await browser.newPage({ viewport: { width, height: 844 } });
+      await page.goto(`http://localhost:${port}${route}`, {
+        waitUntil: "load",
+      });
+      await page.waitForTimeout(300);
+      await page.evaluate(() => {
+        document.documentElement.style.scrollBehavior = "auto";
+      });
+
+      let worst = 0;
+      let worstAt = 0;
+      for (const y of SCROLLS) {
+        await page.evaluate((yy) => window.scrollTo(0, yy), y);
+        await page
+          .waitForFunction(
+            (yy) => {
+              const max =
+                document.documentElement.scrollHeight - window.innerHeight;
+              return (
+                Math.abs(window.scrollY - Math.min(yy, Math.max(0, max))) < 2
+              );
+            },
+            y,
+            { timeout: 5000 },
+          )
+          .catch(() => {});
+        await page.waitForTimeout(60);
+
+        const area = await page.evaluate(() => {
+          const toc = document.querySelector(".toc");
+          const prose = document.querySelector(".prose");
+          if (!toc || !prose) return -1;
+          const a = toc.getBoundingClientRect();
+          const b = prose.getBoundingClientRect();
+          const x = Math.max(
+            0,
+            Math.min(a.right, b.right) - Math.max(a.left, b.left),
+          );
+          const yy = Math.max(
+            0,
+            Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top),
+          );
+          return Math.round(x * yy);
+        });
+
+        if (area < 0) {
+          worst = -1;
+          break;
+        }
+        if (area > worst) {
+          worst = area;
+          worstAt = y;
+        }
+      }
+
+      if (worst < 0) {
+        ok(
+          `${route} @${width}: has a contents list and a body`,
+          false,
+          "selector missing",
+        );
+      } else {
+        ok(
+          `${route} @${width}: contents never overlaps the body`,
+          worst === 0,
+          `${worst}px² at scrollY ${worstAt}`,
+        );
+      }
+
+      await page.close();
+    }
+  }
+
+  // The disclosure must not be a trap: a reader who opens it on a phone has to
+  // be able to close it again, and it must be open where it is the sidebar.
+  {
+    const phone = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+    });
+    await phone.goto(`http://localhost:${port}/wiki/`, { waitUntil: "load" });
+    await phone.waitForTimeout(300);
+    const collapsed = await phone.evaluate(() => {
+      const t = document.querySelector("[data-toc]");
+      return t
+        ? { open: t.open, h: Math.round(t.getBoundingClientRect().height) }
+        : null;
+    });
+    ok(
+      "wiki contents is collapsed on a phone",
+      collapsed !== null && collapsed.open === false,
+    );
+    ok(
+      "collapsed contents costs under 80px",
+      collapsed !== null && collapsed.h > 0 && collapsed.h < 80,
+      collapsed ? `${collapsed.h}px` : "",
+    );
+    await phone.close();
+
+    const desk = await browser.newPage({
+      viewport: { width: 1280, height: 900 },
+    });
+    await desk.goto(`http://localhost:${port}/wiki/`, { waitUntil: "load" });
+    await desk.waitForTimeout(300);
+    const open = await desk.evaluate(() => {
+      const t = document.querySelector("[data-toc]");
+      if (!t) return null;
+      return { open: t.open, links: t.querySelectorAll("a").length };
+    });
+    ok(
+      "wiki contents is open and complete in the sidebar",
+      open !== null && open.open === true && open.links > 10,
+      open ? `open=${open.open} links=${open.links}` : "",
+    );
+    await desk.close();
+  }
+
+  await browser.close();
+  await new Promise((r) => server.close(r));
+  finish();
+})().catch((e) => {
+  console.error("verify-doc-layout: " + ((e && e.stack) || e));
+  try {
+    server.close();
+  } catch {}
+  process.exit(1);
+});
+
+function finish() {
+  console.log(`\n${pass}/${pass + fail} passed`);
+  process.exit(fail ? 1 : 0);
+}

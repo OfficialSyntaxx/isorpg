@@ -29,9 +29,10 @@
   "social": [
     { "id": "discord", "label": "Discord", "url": null, "cta": "Join the Discord" },
     {
+      "$comment": "null on purpose. The repository is where the game is built, not something players are pointed at, and linking it hands the public every source path, script name and internal document in one click. Filling this in re-renders the link on /press and /legal/terms.",
       "id": "github",
       "label": "GitHub",
-      "url": "https://github.com/OfficialSyntaxx/isorpg",
+      "url": null,
       "cta": "Source on GitHub"
     },
     { "id": "youtube", "label": "YouTube", "url": null, "cta": "Watch on YouTube" },

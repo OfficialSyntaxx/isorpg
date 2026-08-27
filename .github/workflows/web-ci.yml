@@ -106,6 +106,26 @@ jobs:
       - name: Verify the persistent chrome
         run: node ../scripts/verify-chrome.cjs
 
+      # A long document's contents list must not paint over the document. This
+      # shipped once: /wiki and /roadmap were two layers of overlapping text on
+      # a phone, caught by a real device screenshot rather than by CI.
+      - name: Verify the long-document layout
+        run: node ../scripts/verify-doc-layout.cjs
+
+      # The site must not publish anything written for whoever builds the game:
+      # source paths, build scripts, tool commands, the repository, asset
+      # vendors or what they cost. /devlog and /roadmap rendered the internal
+      # changelog and roadmap verbatim until this check existed.
+      - name: Verify no repository internals are published
+        run: node ../scripts/verify-no-internals.cjs
+
+      # The hero runs a continuous animation loop, which is a promise about
+      # someone's battery: it must animate, stop when scrolled out of view, and
+      # under prefers-reduced-motion still PAINT the world while holding it
+      # still rather than bailing out and leaving an empty canvas.
+      - name: Verify the hero animates and yields
+        run: node ../scripts/verify-hero.cjs
+
       - name: Fail if the landing _headers went missing
         run: |
           # compose-site.cjs merges this into the root _headers. If Astro stops

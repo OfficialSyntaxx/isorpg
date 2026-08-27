@@ -74,9 +74,15 @@ const path = Astro.url.pathname;
     }
   }
 
-  /* Condensed: less vertical cost once the reader has committed to the page. */
+  /* Condensed: less vertical cost once the reader has committed to the page.
+     It also stops being glass. Translucency over the hero is the effect; over a
+     wall of body text it is a legibility problem, and it degrades badly —
+     wherever backdrop-filter is unavailable or disabled, 0.72 alpha with no
+     blur behind it leaves headings legible straight through the bar. */
   .site-header[data-condensed] {
     padding-block: var(--space-2xs);
+    background: var(--surface-raised);
+    border-bottom-color: var(--border-strong);
   }
 
   .site-header__inner {

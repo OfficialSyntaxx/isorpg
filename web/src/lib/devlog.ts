@@ -1,9 +1,25 @@
 /**
- * Reads UPDATES.md at build time and turns it into devlog entries.
+ * Reads the public devlog at build time and turns it into devlog entries.
  *
- * UPDATES.md stays the authoring surface — nobody writes devlog content inside
- * web/. One source, one truth, the same discipline the root ci.yml already
- * enforces for its other generated files.
+ * WHY THIS NO LONGER READS UPDATES.md
+ * It used to, on the principle that there should be one authoring surface and
+ * no devlog copy written inside web/. The principle was right; the file was
+ * wrong. UPDATES.md is the engineering changelog — it names source files, build
+ * scripts, tool commands, asset vendors and what they cost — and rendering it
+ * verbatim published all of that. Measured on the built site before this
+ * changed: 102 pages carrying script filenames, repository paths, vendor names
+ * and per-asset spend.
+ *
+ * Scrubbing that with patterns was the obvious alternative and the wrong one. A
+ * missed pattern is a leak that ships silently, and the source keeps growing.
+ * So the public devlog is its own file, written for players, and UPDATES.md
+ * stays internal. The authoring-surface discipline is intact — there is still
+ * exactly one place devlog copy is written — it just is not the same file the
+ * engineering log lives in.
+ *
+ * scripts/verify-no-internals.cjs scans the built HTML and fails the build if
+ * anything repository-shaped reaches a public page. That is the backstop; the
+ * rule is the note at the top of the content file.
  *
  * STRICTNESS
  * A heading that matches neither known shape throws and fails the build. A
@@ -23,7 +39,7 @@ import path from "node:path";
 import { marked } from "marked";
 
 /**
- * Finds UPDATES.md by walking up from the working directory.
+ * Finds the public devlog by walking up from the working directory.
  *
  * Deliberately not resolved from `import.meta.url`: this module is bundled
  * before it runs, so at build time that URL points at the bundle's location in
@@ -31,23 +47,25 @@ import { marked } from "marked";
  * up from cwd works whether the build is invoked from web/ or from the repo
  * root, and fails loudly rather than silently producing an empty devlog.
  */
-function findUpdates(): string {
+function findDevlog(): string {
   let dir = process.cwd();
   for (let i = 0; i < 6; i++) {
-    const candidate = path.join(dir, "UPDATES.md");
-    if (fs.existsSync(candidate)) return candidate;
+    for (const rel of ["content/devlog.md", "web/content/devlog.md"]) {
+      const candidate = path.join(dir, rel);
+      if (fs.existsSync(candidate)) return candidate;
+    }
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
   throw new Error(
-    `Could not find UPDATES.md walking up from ${process.cwd()}. ` +
-      `The devlog section reads it at build time; without it the section would ` +
-      `render empty, so the build stops instead.`,
+    `Could not find the public devlog (content/devlog.md) walking up from ` +
+      `${process.cwd()}. The devlog section reads it at build time; without it ` +
+      `the section would render empty, so the build stops instead.`,
   );
 }
 
-const UPDATES = findUpdates();
+const UPDATES = findDevlog();
 
 export interface DevlogEntry {
   /** "2026-08-26" or "2026-08". Sorts correctly as a string, see `recent()`. */
