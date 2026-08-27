@@ -50,6 +50,7 @@ writeFile(path.join(SITE, "index.html"), "<!doctype html><title>Isoperia</title>
 writeFile(path.join(SITE, "devlog/index.html"), "<!doctype html><title>Devlog</title>");
 writeFile(path.join(SITE, "_headers"), [
   "/*",
+  "  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' https://fonts.googleapis.com; object-src 'none'",
   "  X-Frame-Options: DENY",
   "  Referrer-Policy: strict-origin-when-cross-origin",
   "",
@@ -57,7 +58,16 @@ writeFile(path.join(SITE, "_headers"), [
 
 // A minimal stand-in for unity/WebGLBuild. The names match what Unity emits and
 // what verify-pwa-template.cjs already assumes.
-writeFile(path.join(GAME, "index.html"), "<!doctype html><title>Isoperia</title>");
+// A realistic stand-in for the Unity template: it ships ONE inline <script>
+// and ONE inline <style>, and the script embeds the build id, so its hash
+// changes every build. That is the whole reason the hashes are computed at
+// compose time rather than written down.
+writeFile(
+  path.join(GAME, "index.html"),
+  '<!doctype html><html><head><style>body{margin:0}</style></head>' +
+    '<body><script>var buildVersion="20260827-test";</script>' +
+    '<script src="Build/web.loader.js"></script></body></html>',
+);
 writeFile(path.join(GAME, "ServiceWorker.js"), "// isoperia-20260827-test");
 writeFile(path.join(GAME, "manifest.webmanifest"), '{"name":"Isoperia","scope":"./"}');
 writeFile(path.join(GAME, "Build/web.wasm.br"), "\0fake-wasm");
@@ -98,6 +108,42 @@ ok("exactly one _headers in the tree", (function () {
   })(OUT, "");
   return found.length === 1 && found[0] === "_headers";
 })());
+
+// --- CSP hashes for the game's inline blocks --------------------------------
+// The first deployed run of verify-deployed-play.cjs failed with
+// "script-src-elem blocked inline" and a loader that never advanced: Unity's
+// template has inline blocks and `script-src 'self'` blocks them. These
+// assertions keep the fix in place.
+{
+  const merged = read("_headers");
+  const scriptSrc = /^\s*Content-Security-Policy:.*?script-src ([^;]+)/im.exec(merged);
+  const styleSrc = /^\s*Content-Security-Policy:.*?style-src ([^;]+)/im.exec(merged);
+
+  ok(
+    "the game's inline <script> is allowed by hash",
+    !!scriptSrc && /'sha256-[A-Za-z0-9+/=]+'/.test(scriptSrc[1]),
+    scriptSrc ? scriptSrc[1] : "no script-src",
+  );
+  ok(
+    "the game's inline <style> is allowed by hash",
+    !!styleSrc && /'sha256-[A-Za-z0-9+/=]+'/.test(styleSrc[1]),
+    styleSrc ? styleSrc[1] : "no style-src",
+  );
+  ok(
+    "adding hashes did not introduce 'unsafe-inline'",
+    !/Content-Security-Policy:[^\n]*'unsafe-inline'/i.test(merged),
+  );
+  // Two CSP headers on one response are enforced as their INTERSECTION, which
+  // would block wasm and hang the loader. There must be exactly one.
+  ok(
+    "exactly one Content-Security-Policy is declared",
+    (merged.match(/^\s*Content-Security-Policy:/gim) || []).length === 1,
+    String((merged.match(/^\s*Content-Security-Policy:/gim) || []).length),
+  );
+  // A script that is loaded by src needs no hash; only inline blocks do.
+  const hashCount = (scriptSrc ? scriptSrc[1].match(/'sha256-/g) || [] : []).length;
+  ok("only the inline script is hashed, not the external one", hashCount === 1, String(hashCount));
+}
 
 // --- the headers themselves --------------------------------------------------
 const headers = read("_headers");

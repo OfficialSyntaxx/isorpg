@@ -44,6 +44,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const ROOT = path.join(__dirname, "..");
 
@@ -188,6 +189,79 @@ function mergeHeaders({ siteHeaders, gameHeaders, prefix }) {
   return parts.join("\n");
 }
 
+// --- CSP hashes for the game's inline blocks ---------------------------------
+/**
+ * The Unity WebGL template is not ours to restructure the way the Astro site
+ * was: it ships one inline <script> and one inline <style>, and Unity's loader
+ * depends on them. Under `script-src 'self'` the browser blocks both and the
+ * game never starts — verified, not assumed: the first run of
+ * verify-deployed-play.cjs caught exactly this, with "script-src-elem blocked
+ * inline" and a progress bar that never advanced.
+ *
+ * So those two blocks are allowed by sha256 hash.
+ *
+ * WHY THIS IS NOT THE STALE-HASH FOOTGUN THE SITE AVOIDS ELSEWHERE
+ * The site's own scripts are external precisely so no hash has to be
+ * maintained. These hashes are different in kind: they are computed HERE, at
+ * compose time, from the exact bytes about to be deployed, in the same step
+ * that deploys them. They cannot drift, because there is no interval during
+ * which they could. The template's inline script even embeds __BUILD_ID__, so
+ * its hash genuinely changes every build — a hand-written hash would be wrong
+ * immediately, and a generated one is right by construction.
+ *
+ * One policy still covers the whole site (see _headers): a hash is additive and
+ * harmless on pages that have no inline blocks, which avoids the two-policy
+ * intersection hazard that would silently re-break the loader.
+ */
+function inlineHashes(html) {
+  const sha = (content) =>
+    `'sha256-${crypto.createHash("sha256").update(content, "utf8").digest("base64")}'`;
+
+  const scripts = [];
+  const styles = [];
+
+  // Inline only: a <script src=...> is covered by 'self'.
+  for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/gi)) {
+    if (m[1].trim() !== "") scripts.push(sha(m[1]));
+  }
+  for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) {
+    if (m[1].trim() !== "") styles.push(sha(m[1]));
+  }
+
+  return { scripts: [...new Set(scripts)], styles: [...new Set(styles)] };
+}
+
+/** Adds the hashes to script-src and style-src of an existing CSP header. */
+function injectCspHashes(headersText, { scripts, styles }) {
+  if (scripts.length === 0 && styles.length === 0) return headersText;
+
+  let touched = false;
+  const out = headersText.replace(
+    /^(\s*Content-Security-Policy:\s*)(.+)$/gim,
+    (_full, prefix, policy) => {
+      touched = true;
+      let p = policy;
+      if (scripts.length > 0) {
+        p = p.replace(/script-src ([^;]+)/i, (_m, v) => `script-src ${v.trim()} ${scripts.join(" ")}`);
+      }
+      if (styles.length > 0) {
+        p = p.replace(/style-src ([^;]+)/i, (_m, v) => `style-src ${v.trim()} ${styles.join(" ")}`);
+      }
+      return prefix + p;
+    },
+  );
+
+  if (!touched) {
+    fatal(
+      "the game has inline <script>/<style> blocks but the landing site's " +
+        "_headers declares no Content-Security-Policy to add their hashes to.\n" +
+        "  Publishing would either block the loader (if a CSP appears later) or " +
+        "ship the game with no policy at all.",
+    );
+  }
+  return out;
+}
+
 // --- copying -----------------------------------------------------------------
 function copyTree(from, to) {
   fs.mkdirSync(to, { recursive: true });
@@ -233,6 +307,7 @@ function compose(argv) {
 
   let gameHeaders = null;
   let rewritten = 0;
+  let cspHashes = { scripts: [], styles: [] };
   if (hasGame) {
     const mount = path.join(outDir, opts.prefix);
     if (fs.existsSync(mount)) {
@@ -262,6 +337,15 @@ function compose(argv) {
       );
     }
 
+    // The game's inline blocks must be hashed into the site's CSP, or the
+    // loader is blocked and the page hangs on the progress bar.
+    const gameIndex = path.join(mount, "index.html");
+    if (fs.existsSync(gameIndex) && siteHeaders !== null) {
+      const hashes = inlineHashes(fs.readFileSync(gameIndex, "utf8"));
+      cspHashes = hashes;
+      siteHeaders = injectCspHashes(siteHeaders, hashes);
+    }
+
     // vercel.json ships in the Unity template for a host we do not use. It is
     // dead weight at the root of a Netlify deploy and its rules would confuse
     // anyone reading the tree.
@@ -279,6 +363,8 @@ function compose(argv) {
     files: countFiles(outDir),
     game: hasGame ? `/${opts.prefix}` : "ABSENT",
     headerRulesRewritten: rewritten,
+    cspScriptHashes: cspHashes.scripts.length,
+    cspStyleHashes: cspHashes.styles.length,
   };
   console.log("compose-site: composed publish directory");
   for (const [k, v] of Object.entries(summary)) console.log(`  ${k}: ${v}`);
@@ -287,4 +373,4 @@ function compose(argv) {
 
 if (require.main === module) compose(process.argv.slice(2));
 
-module.exports = { compose, prefixHeaderRules, mergeHeaders };
+module.exports = { compose, prefixHeaderRules, mergeHeaders, inlineHashes, injectCspHashes };
