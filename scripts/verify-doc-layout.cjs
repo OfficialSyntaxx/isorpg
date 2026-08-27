@@ -29,6 +29,7 @@
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
+const { requireBrowser } = require("./lib/browser.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const DIST = path.join(ROOT, "web/dist");
@@ -87,28 +88,12 @@ const server = http.createServer((req, res) => {
 });
 
 (async () => {
-  let chromium;
-  try {
-    ({ chromium } = require("playwright-core"));
-  } catch {
-    try {
-      ({ chromium } = require("playwright"));
-    } catch {
-      console.log("SKIP  doc-layout: no playwright available.");
-      finish();
-      return;
-    }
-  }
-
-  const exe = [
-    "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-    "/opt/pw-browsers/chromium/chrome-linux/chrome",
-  ].find(fs.existsSync);
+  const { chromium, executablePath } = requireBrowser("doc-layout");
 
   const port = 4419;
   await new Promise((r) => server.listen(port, "127.0.0.1", r));
   const browser = await chromium.launch({
-    ...(exe ? { executablePath: exe } : {}),
+    executablePath,
     args: ["--no-sandbox"],
   });
 

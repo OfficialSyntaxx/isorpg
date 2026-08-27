@@ -31,6 +31,7 @@
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
+const { requireBrowser } = require("./lib/browser.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const HEADERS_FILE = path.join(ROOT, "web/public/_headers");
@@ -188,20 +189,12 @@ function allRoutes() {
 }
 
 (async () => {
-  let chromium;
-  try { ({ chromium } = require("playwright-core")); }
-  catch { console.log("\nSKIP  browser pass: playwright-core not installed."); finish(); return; }
-
-  const exe = [
-    "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-    "/opt/pw-browsers/chromium/chrome-linux/chrome",
-  ].find(fs.existsSync);
-  if (!exe) { console.log("\nSKIP  browser pass: no chromium binary."); finish(); return; }
+  const { chromium, executablePath } = requireBrowser("csp browser pass");
 
   const port = 4413;
   await new Promise((r) => server.listen(port, "127.0.0.1", r));
 
-  const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox"] });
+  const browser = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
 
   // The full route list is ~108 pages; the devlog entries are all built from one
   // template, so a sample of them plus every distinct route covers every

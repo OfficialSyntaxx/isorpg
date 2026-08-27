@@ -63,16 +63,26 @@ fi
 # The deploy tool is PINNED, and that is not caution for its own sake.
 #
 # This was `npx netlify-cli`, unpinned, which resolves to whatever is newest at
-# the moment the job runs. On 2026-08-27 that became 27.4.0, which declares a
-# dependency on @netlify/ai@^1.0.1 — a version that has never been published.
-# Every deploy then failed at install with ETARGET, having published nothing.
+# the moment the job runs. On 2026-08-27 every deploy started failing at install:
 #
-# The outage was somebody else's bad release, but the exposure was ours: an
-# unpinned tool in the release path means any third party can stop this project
-# shipping, at a time of their choosing, with no change on our side. 27.3.1 is
-# the last release that installs. Raise it deliberately, after checking that the
-# new one resolves.
-NETLIFY_CLI="${NETLIFY_CLI:-netlify-cli@27.3.1}"
+#   npm error notarget No matching version found for @netlify/ai@^1.0.1.
+#
+# @netlify/ai has never published a 1.0.1; the registry's highest is 1.0.0. The
+# requirement is transitive, not declared by the CLI itself — netlify-cli asks
+# for ^1.0.0, which resolves — so reading the CLI's own manifest does not show
+# it, and the whole 27.2.x/27.3.x/27.4.x range is affected. Resolution was
+# tested version by version: 27.2.0, 27.3.0, 27.3.1 and 27.4.0 all fail;
+# 27.1.2 installs, and supports every flag used below (--dir, --prod,
+# --no-build).
+#
+# The outage was somebody else's bad release. The exposure was ours: an unpinned
+# tool in the release path lets any third party stop this project shipping, at a
+# time of their choosing, with no change on our side.
+#
+# Raise this deliberately, and only after checking the new version actually
+# installs — `npm install --dry-run netlify-cli@<version>` in an empty directory
+# is the whole test.
+NETLIFY_CLI="${NETLIFY_CLI:-netlify-cli@27.1.2}"
 
 if [ -z "$SITE" ]; then
   # DEPLOY_PROD=0 publishes a draft instead of production. The /play cutover

@@ -32,10 +32,16 @@ const { spawn } = require("child_process");
 const ROOT = path.join(__dirname, "..");
 const SCRIPT = path.join(ROOT, "scripts/deploy-report.sh");
 
-let pass = 0, fail = 0;
+let pass = 0,
+  fail = 0;
 const ok = (name, cond, detail = "") => {
-  if (cond) { pass++; console.log(`PASS  ${name}`); }
-  else { fail++; console.log(`FAIL  ${name}${detail ? "  [" + detail + "]" : ""}`); }
+  if (cond) {
+    pass++;
+    console.log(`PASS  ${name}`);
+  } else {
+    fail++;
+    console.log(`FAIL  ${name}${detail ? "  [" + detail + "]" : ""}`);
+  }
 };
 
 // --- fixture: a stand-in for unity/WebGLBuild -------------------------------
@@ -59,7 +65,9 @@ const server = http.createServer((req, res) => {
   }
   const headers = {};
   if (mode === "correct") {
-    headers["Content-Type"] = wantWasm ? "application/wasm" : "application/octet-stream";
+    headers["Content-Type"] = wantWasm
+      ? "application/wasm"
+      : "application/octet-stream";
     headers["Content-Encoding"] = "br";
   } else if (mode === "wrong-type") {
     // What Netlify serves when no _headers rule matches — the exact symptom of
@@ -67,7 +75,9 @@ const server = http.createServer((req, res) => {
     headers["Content-Type"] = "text/plain";
     headers["Content-Encoding"] = "br";
   } else if (mode === "no-encoding") {
-    headers["Content-Type"] = wantWasm ? "application/wasm" : "application/octet-stream";
+    headers["Content-Type"] = wantWasm
+      ? "application/wasm"
+      : "application/octet-stream";
   }
   res.writeHead(200, headers);
   res.end("x");
@@ -100,7 +110,9 @@ function runCheck({ gamePrefix }) {
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
-    child.stdout.on("data", (d) => { stdout += d; });
+    child.stdout.on("data", (d) => {
+      stdout += d;
+    });
     child.stderr.on("data", () => {});
     child.on("error", reject);
     child.on("close", (status) => {
@@ -116,36 +128,79 @@ function runCheck({ gamePrefix }) {
   // 1. Correct headers, game under /play.
   mode = "correct";
   let r = await runCheck({ gamePrefix: "play" });
-  ok("correct headers under /play -> OK", /VERDICT: OK/.test(r.text) && !/VERDICT: FAIL/.test(r.text),
-     r.text.match(/VERDICT.*/g)?.join(" | "));
-  ok("check actually requested the prefixed url", /localhost:\d+\/play\/Build\//.test(r.text) || /VERDICT: OK/.test(r.text));
+  ok(
+    "correct headers under /play -> OK",
+    /VERDICT: OK/.test(r.text) && !/VERDICT: FAIL/.test(r.text),
+    r.text.match(/VERDICT.*/g)?.join(" | "),
+  );
+  ok(
+    "check actually requested the prefixed url",
+    /localhost:\d+\/play\/Build\//.test(r.text) || /VERDICT: OK/.test(r.text),
+  );
 
   // 2. Wrong content-type — the "no rule matched" symptom.
   mode = "wrong-type";
   r = await runCheck({ gamePrefix: "play" });
-  ok("wrong content-type -> FAIL", /VERDICT: FAIL/.test(r.text),
-     r.text.match(/VERDICT.*/g)?.join(" | "));
-  ok("FAIL is the exact string unity-webgl.yml greps for",
-     /VERDICT: FAIL/.test(r.text) && !/VERDICT: WRONG/.test(r.text));
+  ok(
+    "wrong content-type -> FAIL",
+    /VERDICT: FAIL/.test(r.text),
+    r.text.match(/VERDICT.*/g)?.join(" | "),
+  );
+  ok(
+    "FAIL is the exact string unity-webgl.yml greps for",
+    /VERDICT: FAIL/.test(r.text) && !/VERDICT: WRONG/.test(r.text),
+  );
 
   // 3. Missing content-encoding — the loader hangs on this one.
   mode = "no-encoding";
   r = await runCheck({ gamePrefix: "play" });
-  ok("missing content-encoding -> FAIL", /VERDICT: FAIL/.test(r.text),
-     r.text.match(/VERDICT.*/g)?.join(" | "));
+  ok(
+    "missing content-encoding -> FAIL",
+    /VERDICT: FAIL/.test(r.text),
+    r.text.match(/VERDICT.*/g)?.join(" | "),
+  );
 
   // 4. The regression this change is guarding: the game moved to /play but the
   //    check still points at the root. Everything 404s and it must fail.
   mode = "correct";
   r = await runCheck({ gamePrefix: "" });
-  ok("checking the root while the game is at /play -> FAIL", /VERDICT: FAIL/.test(r.text),
-     r.text.match(/VERDICT.*/g)?.join(" | "));
+  ok(
+    "checking the root while the game is at /play -> FAIL",
+    /VERDICT: FAIL/.test(r.text),
+    r.text.match(/VERDICT.*/g)?.join(" | "),
+  );
 
   // 5. Prefix normalisation: "/play" and "play/" must behave like "play".
   mode = "correct";
   for (const p of ["/play", "play/", "/play/"]) {
     r = await runCheck({ gamePrefix: p });
-    ok(`prefix "${p}" normalises`, /VERDICT: OK/.test(r.text) && !/VERDICT: FAIL/.test(r.text));
+    ok(
+      `prefix "${p}" normalises`,
+      /VERDICT: OK/.test(r.text) && !/VERDICT: FAIL/.test(r.text),
+    );
+  }
+
+  // 6. The deploy tool stays pinned.
+  //
+  // It was `npx netlify-cli`, unpinned, until a broken upstream release stopped
+  // every deploy dead — an unpublished transitive dependency, nothing to do with
+  // this project, and no way to ship until it was pinned. Reverting to an
+  // unpinned invocation hands that switch back to a third party, so it is worth
+  // one offline assertion.
+  {
+    const src = fs.readFileSync(
+      path.join(ROOT, "scripts/deploy-report.sh"),
+      "utf8",
+    );
+    ok(
+      "the Netlify CLI is pinned to an exact version",
+      /NETLIFY_CLI="\$\{NETLIFY_CLI:-netlify-cli@\d+\.\d+\.\d+\}"/.test(src),
+      "expected NETLIFY_CLI to default to netlify-cli@<x.y.z>",
+    );
+    ok(
+      "no unpinned `npx netlify-cli` invocation remains",
+      !/npx\s+(--yes\s+)?netlify-cli\s/.test(src),
+    );
   }
 
   await new Promise((r2) => server.close(r2));
@@ -155,6 +210,8 @@ function runCheck({ gamePrefix }) {
   process.exit(fail ? 1 : 0);
 })().catch((e) => {
   console.error("verify-deploy-report: " + ((e && e.stack) || e));
-  try { server.close(); } catch {}
+  try {
+    server.close();
+  } catch {}
   process.exit(1);
 });

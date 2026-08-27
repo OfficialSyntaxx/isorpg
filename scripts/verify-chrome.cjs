@@ -20,6 +20,7 @@
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
+const { requireBrowser } = require("./lib/browser.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const DIST = path.join(ROOT, "web/dist");
@@ -65,19 +66,11 @@ const headerHeight = (page) =>
   });
 
 (async () => {
-  let chromium;
-  try { ({ chromium } = require("playwright-core")); }
-  catch { console.log("SKIP  chrome: playwright-core not installed."); finish(); return; }
-
-  const exe = [
-    "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-    "/opt/pw-browsers/chromium/chrome-linux/chrome",
-  ].find(fs.existsSync);
-  if (!exe) { console.log("SKIP  chrome: no chromium binary."); finish(); return; }
+  const { chromium, executablePath } = requireBrowser("chrome");
 
   const port = 4417;
   await new Promise((r) => server.listen(port, "127.0.0.1", r));
-  const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox"] });
+  const browser = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
 
   const routes = ["/", "/features/", "/wiki/", "/devlog/"];
 

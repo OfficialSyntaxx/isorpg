@@ -54,6 +54,16 @@ jobs:
 
       - run: npm ci
 
+      # The browser-driven checks below live at the repository root and import
+      # playwright-core from the ROOT's node_modules. Installing only web/ left
+      # that unresolvable, so every one of them printed SKIP and exited 0 — the
+      # steps took under a second, reported "0/0 passed", and the job went green
+      # having tested nothing. scripts/lib/browser.cjs now makes that a failure
+      # under CI; this is the install that stops it happening in the first place.
+      - name: Install root dependencies (for the browser checks)
+        working-directory: .
+        run: npm ci
+
       # Regenerates web/src/styles/tokens.css from tokens.json. Also runs as a
       # prebuild step, but doing it explicitly makes a generator failure legible
       # rather than showing up as a missing-import error.
@@ -93,6 +103,12 @@ jobs:
       # through a browser collecting securitypolicyviolation events. This is the
       # measurement §8.1 asks for, done exhaustively instead of sampled from
       # real traffic. Needs dist/, so it runs after the build.
+      # Proves the guard above is live: if a browser cannot be found under CI
+      # these checks must fail rather than skip. Cheap, and it is the reason the
+      # rest of this section can be trusted.
+      - name: Verify the browser-check guard
+        run: node ../scripts/verify-browser-guard.cjs
+
       - name: Verify the Content Security Policy
         run: |
           npx playwright install --with-deps chromium
