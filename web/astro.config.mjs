@@ -19,9 +19,22 @@ export default defineConfig({
   // this dist with the Unity build before deploy.
   output: "static",
 
-  // Emit /about/index.html rather than /about.html so paths work without
-  // relying on host-level extension stripping.
-  build: { format: "directory" },
+  build: {
+    // Emit /about/index.html rather than /about.html so paths work without
+    // relying on host-level extension stripping.
+    format: "directory",
+
+    // Never inline stylesheets or scripts into the HTML.
+    //
+    // This is a SECURITY decision, not a performance one. Blueprint §8.1 bans
+    // 'unsafe-inline' in script-src, and the alternative — pinning a sha256
+    // hash per inline block — goes stale the moment the code changes and
+    // eventually ships a blocked script and a broken page. External files need
+    // only 'self', which never goes stale.
+    //
+    // The cost is a few extra requests; they are same-origin, cached, and tiny.
+    inlineStylesheets: "never",
+  },
 
   // Astro's own accessibility audits during dev. Blueprint §9.2 makes a11y a
   // gate, and catching it in dev is cheaper than catching it in Lighthouse.
@@ -29,6 +42,9 @@ export default defineConfig({
 
   vite: {
     build: {
+      // Same reasoning as build.inlineStylesheets above: keep everything in
+      // external files so `script-src 'self'` is sufficient.
+      assetsInlineLimit: 0,
       // Blueprint §9.1 budgets first-load JS at <60 KB gzip. Warn well before
       // that so a heavy import is noticed when it lands, not at audit time.
       chunkSizeWarningLimit: 150,

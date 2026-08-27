@@ -11,8 +11,8 @@
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
 **Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 1, 2,
-3, 5 and 6 done; Phase 4 built with its Lighthouse gate still open. Merged to
-`main`. The site is 108 pages.
+3, 5, 6 and 7 done; Phase 4 built with its Lighthouse gate still open. Merged to
+`main`. The site is 110 pages with an enforcing CSP.
 
 **Phase 1 gate closed 2026-08-27.** Run
 [33080016719](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33080016719)
@@ -43,7 +43,7 @@ Update the Status column as phases move.
 | 4 | Landing page build | Opus 5 | 🟡 Built; Lighthouse gate open | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
 | 5 | Animation layer | Opus 5 | ✅ Done | Motion spec implemented; `prefers-reduced-motion` verified |
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 ×2 + Opus 5 | ✅ Done | Feeds render from repo markdown; RSS valid |
-| 7 | Security hardening | Opus 5 | ⬜ Not started | CSP enforced with zero console violations; headers audit passes |
+| 7 | Security hardening | Opus 5 | ✅ Done | CSP enforced with zero console violations; headers audit passes |
 | 8 | Netlify cutover | Opus 5 | ⬜ Not started | Landing at `/`, game at `/play`, no regression in `deploy-report.txt` |
 | 9 | Custom domain | Sonnet 5 | ⬜ Not started | DNS live, HTTPS, canonical + redirects correct |
 | 10 | Backend Phase B1 (forms) | Sonnet 5 | ⬜ Not started | Newsletter + contact functions live, rate-limited, spam-guarded |
@@ -1160,13 +1160,80 @@ groundwork, or tell agents explicitly to rebase onto the branch tip first.
 Agent reports are a starting point, not evidence. Both were independently
 re-verified after merge.
 
-### Phase 7 — Security ⬜
+### Phase 7 — Security ✅
 
-- [ ] CSP in report-only; collect violations from the preview deploy.
-- [ ] Resolve every violation; switch to enforce.
-- [ ] Full header set applied and verified with an external scanner.
-- [ ] Dependabot + `npm audit` gate.
-- [ ] `/legal/privacy`, `/legal/terms`.
+- [x] **CSP shipped enforcing, with no `'unsafe-inline'` and no `'unsafe-eval'`
+      anywhere.** That was only possible after making Astro stop inlining:
+      `inlineStylesheets: "never"` and `assetsInlineLimit: 0` mean every script
+      and stylesheet is an external same-origin file, so `script-src 'self'`
+      suffices. The alternative was pinning a sha256 per inline block, which
+      goes stale on the next edit and eventually ships a blocked script and a
+      silently broken page.
+- [x] Violations measured, not assumed — `scripts/verify-csp.cjs` serves the
+      real build with the real `_headers` and drives every distinct route
+      through a browser collecting `securitypolicyviolation` events.
+      **Zero violations across 13 routes.** Mutation-tested three ways
+      (removing `'self'` from `script-src`, dropping Google Fonts from
+      `style-src`, sneaking in `'unsafe-inline'`) — each is caught.
+- [x] Full header set: HSTS, `X-Frame-Options: DENY`, `nosniff`,
+      `Referrer-Policy`, a 13-entry `Permissions-Policy`, COOP and CORP. The
+      script also asserts the policy statically, so a well-meaning edit cannot
+      quietly weaken it.
+- [x] Dependabot for three ecosystems — root npm, `web/` npm, and GitHub
+      Actions — with dev-tooling grouped so a routine week is one PR per
+      ecosystem rather than four. `npm audit --audit-level=high` already gates
+      `web-ci.yml`.
+- [x] `/legal/privacy` and `/legal/terms`, written to be **accurate** rather
+      than boilerplate: `localStorage` is not a cookie and is named as such, so
+      there is no cookie banner because there are no cookies; saves never leave
+      the device and the save-loss risk is stated plainly; and the Google Fonts
+      request is disclosed as what it is — the one third party, which learns
+      your IP. Both say they have not been reviewed by a lawyer and should be
+      before any data is collected.
+- [x] Linked from the footer, and `verify:csp` wired into `web-ci.yml`.
+
+#### Why `'wasm-unsafe-eval'` is on `/*` and not scoped to `/play/*`
+
+The obvious move is a strict policy on `/*` and a second, looser one on
+`/play/*`. It is a trap. If Netlify emits **both** CSP headers for a `/play`
+request, the browser enforces the **intersection** of the two policies — wasm
+gets blocked and the loader hangs, which is precisely the dead-site failure this
+project has already shipped once. One policy applied everywhere cannot do that.
+
+The cost is real but small: `'wasm-unsafe-eval'` permits WebAssembly compilation
+and nothing else, it is far narrower than `'unsafe-eval'`, and with `script-src`
+locked to `'self'` and no inline execution there is no way to inject the script
+that would exploit it.
+
+#### COEP is deliberately absent
+
+`Cross-Origin-Embedder-Policy: require-corp` would enable `SharedArrayBuffer`
+for Unity threading, but it blocks every cross-origin subresource that does not
+opt in — Google Fonts included — and the Unity build is not configured for
+threads. Revisit only as its own spike, with the fonts self-hosted first.
+
+#### What this phase did NOT prove
+
+- **`/play` under the CSP.** The Unity build is 50 MB, gitignored, and needs a
+  licensed job to produce, so it is not present locally and the harness cannot
+  load it. The policy keeps `'wasm-unsafe-eval'` for it and the reasoning is
+  sound, but **someone must open `/play` on a preview deploy and confirm the
+  game still boots before the Phase 8 production cutover.** This is the single
+  highest-value manual check outstanding.
+- **An external header scanner.** Outbound requests to the deployed site are
+  blocked from this environment. The header set is asserted locally against the
+  same file Netlify reads, which is close, but a third-party scan against the
+  live origin is still worth running once.
+
+#### A note on self-hosting the fonts
+
+Google Fonts is the only external host the CSP permits, and the privacy page
+discloses that it reveals visitors' IP addresses to Google. Self-hosting the two
+families would remove the third party, remove the only non-`'self'` entry from
+`style-src` and `font-src`, remove a render-blocking cross-origin round trip,
+and unblock a future COEP spike. It is the clearest remaining security and
+privacy improvement, and it is not hard — it is recorded here rather than done
+because it is a Phase 9/10-sized change to the font pipeline, not a Phase 7 one.
 
 ### Phase 8 — Cutover ⬜
 

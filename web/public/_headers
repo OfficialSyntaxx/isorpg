@@ -2,14 +2,82 @@
 #
 # scripts/compose-site.cjs merges this with the Unity build's rules (rewritten
 # under /play) into ONE root _headers, because Netlify reads only the root file.
-# The site's broad rules go first so the game's specific ones win on overlap.
+# The site's broad rules go first so the game's specific Content-Type and
+# Content-Encoding rules win on overlap.
 #
-# CSP IS DELIBERATELY ABSENT. Blueprint Phase 7 owns it, and §8.1 requires it to
-# ship in report-only first: enforcing an unmeasured policy over a Unity WebGL
-# payload is how you publish a blank page. The headers below cannot break a
-# working page, so they land now.
+# Verified by scripts/verify-csp.cjs, which serves the built site with these
+# exact headers and drives every route through a real browser collecting
+# `securitypolicyviolation` events. It runs in CI.
+
 /*
+  # ---- Content Security Policy -------------------------------------------
+  #
+  # No 'unsafe-inline' and no 'unsafe-eval' anywhere. That is only possible
+  # because astro.config.mjs sets `inlineStylesheets: "never"` and
+  # `assetsInlineLimit: 0`, so every script and stylesheet is an external
+  # same-origin file. Pinning a sha256 per inline block was the alternative and
+  # it rots: the hash goes stale on the next edit and eventually ships a
+  # blocked script and a page that silently stops working.
+  #
+  # 'wasm-unsafe-eval' is REQUIRED by the Unity WebGL build at /play. It is
+  # much narrower than 'unsafe-eval' — it permits WebAssembly compilation and
+  # nothing else, and with script-src locked to 'self' there is no way to
+  # inject the script that would exploit it.
+  #
+  # It is deliberately NOT scoped to /play/* with a second, stricter policy on
+  # /*. If Netlify emitted both CSP headers for a /play request the browser
+  # would enforce the INTERSECTION of the two policies, wasm would be blocked,
+  # and the loader would hang — the exact dead-site failure this project has
+  # already shipped once. One policy, applied everywhere, cannot do that.
+  #
+  # Google Fonts is the only external host permitted, and it needs two: the
+  # stylesheet comes from fonts.googleapis.com and the font files it references
+  # come from fonts.gstatic.com.
+  #
+  # blob: in worker-src and img-src is for the Unity build, which creates both.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; child-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+
+  # ---- Transport ----------------------------------------------------------
+  # Two years, subdomains included, preload-eligible. Only safe to send once
+  # the custom domain is settled (Phase 9) — an HSTS header on a hostname you
+  # later abandon is harmless, but preloading one is hard to undo.
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+
+  # ---- Framing and sniffing ----------------------------------------------
+  # frame-ancestors above is the modern control; X-Frame-Options is kept for
+  # older agents. Both say the same thing: this site is not embeddable. Browser
+  # games get scraped into ad-wrapped portal iframes, and that is the block.
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
+
+  # ---- Privacy ------------------------------------------------------------
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
+  Permissions-Policy: accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), xr-spatial-tracking=()
+
+  # ---- Cross-origin isolation -------------------------------------------
+  # COOP severs the window reference an opener could otherwise keep.
+  #
+  # COEP: require-corp is deliberately ABSENT. It would enable
+  # SharedArrayBuffer (Unity threading) but would also block every
+  # cross-origin subresource that does not opt in — Google Fonts included —
+  # and the Unity build is not configured for threads. Revisit only as its own
+  # spike, with the fonts self-hosted first.
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+# The service worker must never be cached: a stale worker cannot ship a fix.
+# The game's own _headers sets this for /play/ServiceWorker.js; this covers a
+# worker at the site root if one is ever added.
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Astro fingerprints these filenames, so they are safe to cache hard.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/devlog/rss.xml
+  Content-Type: application/rss+xml; charset=utf-8
+  Cache-Control: public, max-age=3600

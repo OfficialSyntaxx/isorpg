@@ -22,6 +22,11 @@ const pages = [
   { href: "/press/", label: "Press kit" },
   { href: "/devlog/rss.xml", label: "RSS" },
 ];
+
+const legal = [
+  { href: "/legal/privacy/", label: "Privacy" },
+  { href: "/legal/terms/", label: "Terms" },
+];
 const year = new Date().getFullYear();
 ---
 
@@ -46,6 +51,10 @@ const year = new Date().getFullYear();
         </nav>
       )
     }
+
+    <nav class="footer__legal" aria-label="Legal">
+      {legal.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
 
     <p class="footer__fine">
       © {year}{" "}{site.name}. Built in the open.
@@ -73,6 +82,13 @@ const year = new Date().getFullYear();
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
+  }
+
+  .footer__legal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    font-size: var(--text-xs);
   }
 
   .footer__fine {

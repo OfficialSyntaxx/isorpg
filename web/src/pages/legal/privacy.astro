@@ -1,0 +1,147 @@
+---
+/**
+ * /legal/privacy — required before Phase 10's forms collect anything (§8.3).
+ *
+ * The single most important property of a privacy policy is that it is TRUE, so
+ * this describes what the site actually does today rather than boilerplate:
+ * localStorage is not a cookie, saves never leave the device, analytics is off,
+ * and the Google Fonts request genuinely does disclose an IP address to Google.
+ * That last one is a real trade-off and is named rather than glossed over.
+ *
+ * Not legal advice, and it says so. It needs a review before any data is
+ * collected.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { site, analyticsEnabled } from "../../lib/site";
+
+const updated = "27 August 2026";
+---
+
+<BaseLayout
+  title="Privacy"
+  pathname="/legal/privacy/"
+  description="What Isoperia does and does not collect. No accounts, no cookies, saves stay on your device."
+>
+  <section class="doc">
+    <div class="wrap">
+      <h1>Privacy</h1>
+      <p class="updated">Last updated {updated}</p>
+
+      <div class="prose">
+        <h2 id="short">The short version</h2>
+        <p>
+          {site.name} has no accounts, sets no cookies, and does not transmit your game saves
+          anywhere. The site is static. What follows is the detail, including the one third-party
+          request the site does make.
+        </p>
+
+        <h2 id="saves">Your game saves</h2>
+        <p>
+          Saves are stored in your browser — <code>localStorage</code> with an IndexedDB backup
+          — and are never uploaded. Nobody, including us, can read them. That is why there is
+          no account to create.
+        </p>
+        <p>
+          The flip side is real and worth stating plainly: because the save lives only in
+          your browser, clearing your site data, using a different browser, or a private
+          window with no stored data will lose it. The game can export a save to a file,
+          and you should do that for anything you would miss.
+        </p>
+
+        <h2 id="storage">Browser storage, not cookies</h2>
+        <p>
+          The site stores one preference — your light or dark theme choice — under the key <code
+            >isoperia-theme</code
+          >. This uses
+          <code>localStorage</code>, which is not a cookie: it is never attached to a
+          network request and never leaves your device. That is also why there is no
+          cookie banner; there are no cookies to consent to.
+        </p>
+
+        <h2 id="analytics">Analytics</h2>
+        {
+          analyticsEnabled() ? (
+            <p>
+              A cookieless analytics service records page views in aggregate. It sets no
+              cookies, assigns no identifier, and does not track you between sites or
+              sessions.
+            </p>
+          ) : (
+            <p>
+              There is currently <strong>no analytics on this site at all</strong> — no
+              page-view counter, no session recording, nothing. If that changes it will be
+              a cookieless service that sets no cookies and assigns no cross-site
+              identifier, and this page will be updated before it goes live.
+            </p>
+          )
+        }
+
+        <h2 id="fonts">Fonts, and the one third party</h2>
+        <p>
+          The site loads its typefaces from Google Fonts. That means your browser makes a
+          request to <code>fonts.googleapis.com</code> and
+          <code>fonts.gstatic.com</code>, and those requests necessarily disclose your IP
+          address and user-agent to Google, as any request to any server does.
+        </p>
+        <p>
+          This is the only external host the site contacts — its content security policy
+          blocks everything else — but it is still a third party, and self-hosting the
+          fonts would remove it entirely. That is a known improvement, not a settled
+          position.
+        </p>
+
+        <h2 id="hosting">Hosting</h2>
+        <p>
+          The site is served by Netlify, which keeps standard server access logs (IP
+          address, requested URL, timestamp, user-agent) as part of operating any web
+          server. We do not add to those logs or use them for anything beyond diagnosing
+          faults.
+        </p>
+
+        <h2 id="not-here">What the site does not do</h2>
+        <ul>
+          <li>No advertising, and no ad networks.</li>
+          <li>No third-party trackers, pixels, or fingerprinting.</li>
+          <li>No embedded social widgets, comment systems, or chat.</li>
+          <li>No selling or sharing of data, because there is none to sell.</li>
+          <li>No email address is collected anywhere on the site today.</li>
+        </ul>
+
+        <h2 id="children">Children</h2>
+        <p>
+          The site collects nothing from anyone, so there is nothing collected from
+          children either.
+        </p>
+
+        <h2 id="changes">Changes</h2>
+        <p>
+          If the site starts collecting anything — a newsletter signup, for instance —
+          this page will say so before that goes live, and the date at the top will
+          change.
+        </p>
+
+        <blockquote>
+          <p>
+            This page is written to be accurate rather than to be legally comprehensive,
+            and it has not been reviewed by a lawyer. It should be reviewed before the
+            site collects any personal data.
+          </p>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .doc {
+    padding-block: var(--space-3xl) var(--space-4xl);
+  }
+
+  .updated {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+    margin-top: var(--space-2xs);
+    margin-bottom: var(--space-xl);
+  }
+</style>

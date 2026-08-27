@@ -89,6 +89,15 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Serves the built site with the real _headers and drives every route
+      # through a browser collecting securitypolicyviolation events. This is the
+      # measurement §8.1 asks for, done exhaustively instead of sampled from
+      # real traffic. Needs dist/, so it runs after the build.
+      - name: Verify the Content Security Policy
+        run: |
+          npx playwright install --with-deps chromium
+          node ../scripts/verify-csp.cjs
+
       - name: Fail if the landing _headers went missing
         run: |
           # compose-site.cjs merges this into the root _headers. If Astro stops

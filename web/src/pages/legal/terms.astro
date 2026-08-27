@@ -1,0 +1,132 @@
+---
+/**
+ * /legal/terms — the companion to the privacy page (§8.3).
+ *
+ * Written to be honest about a free, in-development game rather than to be
+ * maximally protective: the save-loss warning and the "this is unfinished"
+ * statement are the two things a player actually needs to know before they
+ * invest hours.
+ *
+ * Not legal advice, and it says so.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { site, socials } from "../../lib/site";
+
+const updated = "27 August 2026";
+const github = socials().find((s) => s.id === "github");
+---
+
+<BaseLayout
+  title="Terms"
+  pathname="/legal/terms/"
+  description="Terms for using Isoperia: free, in development, provided as-is, and your saves live on your device."
+>
+  <section class="doc">
+    <div class="wrap">
+      <h1>Terms</h1>
+      <p class="updated">Last updated {updated}</p>
+
+      <div class="prose">
+        <h2 id="short">The short version</h2>
+        <p>
+          {site.name} is free, unfinished, and provided as-is. Your saves live in your browser
+          and can be lost. Play it, enjoy it, do not rely on it.
+        </p>
+
+        <h2 id="free">It is free, and there is nothing to buy</h2>
+        <p>
+          There is no purchase, no subscription, no currency, and no advertising. Nothing
+          on this site or in the game takes payment, and nothing ever asks for card
+          details. If you encounter something that does, it is not us.
+        </p>
+
+        <h2 id="development">It is in development</h2>
+        <p>
+          The game is actively being built and the devlog documents that honestly,
+          including the regressions. Systems change, content is replaced, and behaviour
+          that works today may be reworked. Nothing here is a commitment to a feature, a
+          date, or a final design.
+        </p>
+
+        <h2 id="saves">Saves can be lost</h2>
+        <p>
+          This is the one that matters. Saves are stored only in your browser. Clearing
+          site data, browsing privately, switching browser or device, or a browser
+          deciding to evict storage will lose your progress, and there is no server-side
+          copy to restore from because there is no server.
+        </p>
+        <p>
+          The game can export a save to a file. Use it. We cannot recover a lost save for
+          you.
+        </p>
+
+        <h2 id="asis">Provided as-is</h2>
+        <p>
+          The game and this site are provided without warranty of any kind, to the extent
+          permitted by law. They may be unavailable, may contain faults, and may lose
+          data. Do not use them for anything that matters beyond playing a game.
+        </p>
+
+        <h2 id="conduct">Reasonable use</h2>
+        <p>
+          Please do not attempt to disrupt the site for other people, or redistribute the
+          game embedded in a page that misrepresents its origin. The site sends headers
+          that prevent it being framed elsewhere, which is the same request in
+          machine-readable form.
+        </p>
+        <p>
+          Modifying your own save file is explicitly fine — the game ships import and
+          export, so it is a feature rather than a loophole. There are no leaderboards, so
+          there is nothing to be unfair to.
+        </p>
+
+        <h2 id="ip">Ownership and third-party work</h2>
+        <p>
+          The game's code, art, and writing belong to the project except where noted. Some
+          shipped assets are third-party work used under CC0 — a Poly Haven terrain
+          texture and a subset of Kenney's Fantasy Town Kit. Every shipped asset's owner,
+          source, and licence status is recorded in the repository's asset credits file.
+        </p>
+        {
+          github && (
+            <p>
+              The source is public:{" "}
+              <a href={github.url} rel="noopener noreferrer">
+                {github.url}
+              </a>
+              . Its licence, where one is stated, governs the code.
+            </p>
+          )
+        }
+
+        <h2 id="changes">Changes</h2>
+        <p>
+          These terms may change as the project does. The date at the top will change with
+          them.
+        </p>
+
+        <blockquote>
+          <p>
+            This page is written to be clear rather than to be legally comprehensive, and
+            it has not been reviewed by a lawyer. It should be reviewed before the project
+            takes payment, collects personal data, or launches publicly at scale.
+          </p>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .doc {
+    padding-block: var(--space-3xl) var(--space-4xl);
+  }
+
+  .updated {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+    margin-top: var(--space-2xs);
+    margin-bottom: var(--space-xl);
+  }
+</style>

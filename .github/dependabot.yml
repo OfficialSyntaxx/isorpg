@@ -1,0 +1,39 @@
+# Dependency updates (blueprint §8.2 T3).
+#
+# Two npm ecosystems, deliberately separate: the game's root toolchain and the
+# website's. They have different lockfiles and different risk profiles, and a
+# website bump has no business landing in the same PR as a game one.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(game)"
+    groups:
+      # One PR for the dev toolchain rather than four. A security fix still
+      # arrives on its own, because Dependabot never groups those.
+      dev-tooling:
+        dependency-type: development
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: npm
+    directory: "/web"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(web)"
+    groups:
+      dev-tooling:
+        dependency-type: development
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps(actions)"
