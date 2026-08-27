@@ -117,6 +117,18 @@ jobs:
           REPORT: preview-report.txt
         run: scripts/deploy-report.sh
 
+      # Headers being right is not the same as the game starting. A CSP that
+      # blocks WebAssembly returns perfectly correct headers and then hangs on
+      # the progress bar. This runner can reach the deploy, so it checks what
+      # actually matters: the loader advances, WebAssembly.compile is permitted,
+      # and no CSP violation fires.
+      - name: Verify the deployed game boots under the CSP
+        run: |
+          SITE=$(grep -m1 '^url: ' preview-report.txt | cut -d' ' -f2)
+          echo "checking $SITE"
+          npx --yes playwright@1.62.1 install --with-deps chromium
+          PLAY_SCREENSHOT=play-under-csp.png node scripts/verify-deployed-play.cjs "$SITE"
+
       - name: Report
         run: cat preview-report.txt >> "$GITHUB_STEP_SUMMARY"
 
@@ -130,6 +142,9 @@ jobs:
           fi
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: site-preview-report
-          path: preview-report.txt
+          path: |
+            preview-report.txt
+            play-under-csp.png
