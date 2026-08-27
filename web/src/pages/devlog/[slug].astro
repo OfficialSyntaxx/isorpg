@@ -1,0 +1,145 @@
+---
+/**
+ * /devlog/[slug]/ — one page per UPDATES.md entry.
+ *
+ * getStaticPaths() enumerates every entry once at build time; there is no
+ * client-side routing here, just static generation.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { all, formatDate, withNeighbours } from "../../lib/devlog";
+
+export function getStaticPaths() {
+  return all().map((entry) => ({
+    params: { slug: entry.slug },
+    props: { slug: entry.slug },
+  }));
+}
+
+const { slug } = Astro.props;
+const found = withNeighbours(slug);
+if (!found) {
+  throw new Error(`devlog/[slug]: no entry for slug ${JSON.stringify(slug)}`);
+}
+const { entry, prev, next } = found;
+---
+
+<BaseLayout
+  title={entry.title}
+  pathname={`/devlog/${entry.slug}/`}
+  description={entry.summary}
+>
+  <article class="wrap devlog-entry">
+    <p class="devlog-entry__back"><a href="/devlog/">&larr; All entries</a></p>
+    <span class="card__meta">{formatDate(entry)}</span>
+    <h1 data-reveal>{entry.title}</h1>
+
+    <div class="prose" set:html={entry.html} />
+
+    <nav class="devlog-entry__nav" aria-label="Adjacent devlog entries">
+      {
+        prev ? (
+          <a
+            class="devlog-entry__nav-link devlog-entry__nav-link--prev"
+            href={`/devlog/${prev.slug}/`}
+          >
+            <span class="devlog-entry__nav-label">&larr; Previous</span>
+            <span class="devlog-entry__nav-title">{prev.title}</span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        next ? (
+          <a
+            class="devlog-entry__nav-link devlog-entry__nav-link--next"
+            href={`/devlog/${next.slug}/`}
+          >
+            <span class="devlog-entry__nav-label">Next &rarr;</span>
+            <span class="devlog-entry__nav-title">{next.title}</span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+    </nav>
+  </article>
+</BaseLayout>
+
+<style>
+  .devlog-entry {
+    padding-block: var(--space-2xl) var(--space-3xl);
+  }
+
+  .devlog-entry__back {
+    margin-bottom: var(--space-md);
+  }
+
+  .devlog-entry__back a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: var(--text-sm);
+  }
+
+  .devlog-entry__back a:hover {
+    color: var(--accent);
+  }
+
+  h1 {
+    margin-top: var(--space-2xs);
+    margin-bottom: var(--space-lg);
+  }
+
+  .devlog-entry__nav {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-subtle);
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .devlog-entry__nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+    padding: var(--space-md);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color var(--dur-quick) var(--ease-out),
+      background-color var(--dur-quick) var(--ease-out);
+  }
+
+  .devlog-entry__nav-link:hover {
+    border-color: var(--accent);
+    background: var(--surface-sunken);
+  }
+
+  .devlog-entry__nav-link--next {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .devlog-entry__nav-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .devlog-entry__nav-title {
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    color: var(--text-strong);
+  }
+
+  @media (max-width: 40rem) {
+    .devlog-entry__nav {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

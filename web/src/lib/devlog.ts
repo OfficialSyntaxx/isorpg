@@ -20,6 +20,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { marked } from "marked";
 
 /**
  * Finds UPDATES.md by walking up from the working directory.
@@ -57,6 +58,12 @@ export interface DevlogEntry {
   slug: string;
   /** First paragraph of the entry body, flattened to one line. */
   summary: string;
+  /**
+   * The entry's full body, rendered from markdown to HTML at build time.
+   * Every `<table>` the renderer emits is wrapped in `<div class="table-wrap">`
+   * so a wide table scrolls in its own container instead of the page.
+   */
+  html: string;
   /** Position in the file. Later means newer — the log appends. */
   index: number;
 }
@@ -109,6 +116,18 @@ function firstParagraph(body: string[]): string {
     .trim();
 }
 
+/**
+ * Renders an entry body to HTML, wrapping every emitted `<table>` in
+ * `<div class="table-wrap">` — see the `.prose .table-wrap` rule in
+ * components.css, which is the CSS half of the same contract.
+ */
+function renderBody(body: string[]): string {
+  const html = marked.parse(body.join("\n"), { async: false, gfm: true }) as string;
+  return html
+    .replace(/<table>/g, '<div class="table-wrap"><table>')
+    .replace(/<\/table>/g, "</table></div>");
+}
+
 let cache: DevlogEntry[] | null = null;
 
 export function all(): DevlogEntry[] {
@@ -129,6 +148,7 @@ export function all(): DevlogEntry[] {
       title: current.title,
       slug: slugify(current.date, current.title),
       summary: firstParagraph(current.body),
+      html: renderBody(current.body),
       index: entries.length,
     });
   };
@@ -176,6 +196,25 @@ export function recent(count: number): DevlogEntry[] {
   return [...all()]
     .sort((a, b) => (a.date === b.date ? b.index - a.index : a.date < b.date ? 1 : -1))
     .slice(0, count);
+}
+
+/**
+ * One entry plus its chronological neighbours (`all()` is already file order,
+ * oldest first, so the previous/next entry is simply the adjacent index).
+ */
+export function withNeighbours(slug: string): {
+  entry: DevlogEntry;
+  prev: DevlogEntry | null;
+  next: DevlogEntry | null;
+} | null {
+  const entries = all();
+  const i = entries.findIndex((e) => e.slug === slug);
+  if (i === -1) return null;
+  return {
+    entry: entries[i] as DevlogEntry,
+    prev: i > 0 ? (entries[i - 1] as DevlogEntry) : null,
+    next: i < entries.length - 1 ? (entries[i + 1] as DevlogEntry) : null,
+  };
 }
 
 /** Human-readable date. Month-only entries render without a day. */
