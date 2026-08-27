@@ -52,13 +52,15 @@ const { html, headings } = renderDoc("ROADMAP.md");
 </BaseLayout>
 
 <style>
+  /* Page-local only. The shared .prose, .toc, .table-wrap and .doc-grid rules
+     live in src/styles/components.css — this file must not restate them, or the
+     two drift and a change in one place stops taking effect. */
   .doc {
-    padding-block: var(--space-2xl) var(--space-3xl);
+    padding-block: var(--space-3xl) var(--space-4xl);
   }
 
   .doc__intro {
-    max-width: var(--measure-prose);
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-xl);
   }
 
   .doc__intro p {
@@ -66,146 +68,12 @@ const { html, headings } = renderDoc("ROADMAP.md");
     margin-top: var(--space-sm);
   }
 
-  /* Two columns on wide screens: a sticky table of contents beside the prose.
-     Falls back to a single column — the TOC first, then the document — on
-     narrow screens where there is no room for a rail. */
-  .doc-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-2xl);
-    align-items: start;
-  }
-
-  @media (min-width: 60rem) {
-    .doc-grid {
-      grid-template-columns: 15rem minmax(0, 1fr);
-    }
-  }
-
-  .toc {
-    order: -1;
-    padding: var(--space-md);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    background: var(--surface-raised);
-  }
-
-  @media (min-width: 60rem) {
-    .toc {
-      position: sticky;
-      top: var(--space-lg);
-      max-height: calc(100svh - var(--space-2xl));
-      overflow-y: auto;
-    }
-  }
-
   .toc__title {
+    font-family: var(--font-mono);
     font-size: var(--text-2xs);
-    font-weight: 650;
-    text-transform: uppercase;
     letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
     color: var(--text-muted);
-    margin-bottom: var(--space-sm);
-  }
-
-  .toc ul {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
-  }
-
-  .toc__item a {
-    display: block;
-    padding: var(--space-2xs) var(--space-xs);
-    border-radius: var(--radius-sm);
-    color: var(--text-body);
-    font-size: var(--text-sm);
-    text-decoration: none;
-  }
-
-  .toc__item a:hover {
-    background: var(--surface-sunken);
-    color: var(--accent);
-  }
-
-  .toc__item--sub a {
-    padding-left: var(--space-md);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  /* --- prose: the rendered markdown ---------------------------------------- */
-  .prose {
-    min-width: 0;
-    max-width: var(--measure-prose);
-  }
-
-  .prose :global(h2) {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--border-subtle);
-    scroll-margin-top: var(--space-lg);
-  }
-
-  .prose :global(h2:first-child) {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
-  }
-
-  .prose :global(h3) {
-    margin-top: var(--space-xl);
-    scroll-margin-top: var(--space-lg);
-  }
-
-  .prose :global(p) {
-    margin-top: var(--space-md);
-  }
-
-  .prose :global(ul),
-  .prose :global(ol) {
-    margin-top: var(--space-md);
-    padding-left: var(--space-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
-  }
-
-  .prose :global(li) {
-    max-width: var(--measure-prose);
-  }
-
-  .prose :global(blockquote) {
-    margin-top: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    border-left: 3px solid var(--accent);
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    color: var(--text-muted);
-  }
-
-  .prose :global(blockquote p) {
-    margin-top: 0;
-  }
-
-  .prose :global(strong) {
-    color: var(--text-strong);
-  }
-
-  .prose :global(a) {
-    color: var(--accent);
-  }
-
-  .prose :global(.table-wrap) {
-    margin-top: var(--space-md);
-    max-width: 100%;
-  }
-
-  .prose :global(hr) {
-    margin-block: var(--space-2xl);
-    border: 0;
-    border-top: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-xs);
   }
 </style>

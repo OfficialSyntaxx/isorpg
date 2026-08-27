@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
+import sitemap from "@astrojs/sitemap";
 import site from "./site.config.json" with { type: "json" };
 
 // The canonical origin. Null until the custom domain exists (blueprint D4 /
@@ -8,6 +9,10 @@ const origin = site.origin.canonical ?? site.origin.current;
 
 export default defineConfig({
   site: origin,
+
+  // Blueprint §9.3. Needs `site` set, which it is above — without an absolute
+  // origin the sitemap would emit relative URLs and be ignored.
+  integrations: [sitemap()],
 
   // Static output. There is no server: Netlify is a dumb host receiving a
   // finished directory (docs/CI_DEPLOY.md), and scripts/compose-site.cjs merges

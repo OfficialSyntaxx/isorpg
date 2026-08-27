@@ -49,6 +49,12 @@ const canonical = absolute(pathname);
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${site.name} devlog`}
+      href="/devlog/rss.xml"
+    />
     {noindex && <meta name="robots" content="noindex" />}
 
     {

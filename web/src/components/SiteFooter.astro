@@ -11,6 +11,17 @@
 import { site, socials } from "../lib/site";
 
 const links = socials();
+
+/** Secondary routes: real pages that do not need to crowd the header. */
+const pages = [
+  { href: "/features/", label: "Features" },
+  { href: "/world/", label: "World" },
+  { href: "/devlog/", label: "Devlog" },
+  { href: "/wiki/", label: "Wiki" },
+  { href: "/roadmap/", label: "Roadmap" },
+  { href: "/press/", label: "Press kit" },
+  { href: "/devlog/rss.xml", label: "RSS" },
+];
 const year = new Date().getFullYear();
 ---
 
@@ -19,6 +30,10 @@ const year = new Date().getFullYear();
     <p class="footer__blurb">
       <strong>{site.name}</strong> — {site.shortDescription}
     </p>
+
+    <nav class="footer__links" aria-label="Pages">
+      {pages.map((p) => <a href={p.href}>{p.label}</a>)}
+    </nav>
 
     {
       links.length > 0 && (

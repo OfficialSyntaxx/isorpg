@@ -7,10 +7,16 @@
 import ThemeToggle from "./ThemeToggle.astro";
 import { site, gamePath } from "../lib/site";
 
+/**
+ * Primary navigation. Only routes that exist are listed — a nav entry pointing
+ * at a 404 is worse than no entry. Secondary routes (roadmap, press) live in
+ * the footer rather than crowding this row on a phone.
+ */
 const nav: { href: string; label: string }[] = [
-  // { href: "/features/", label: "Features" },  // Phase 6
-  // { href: "/world/",    label: "World" },     // Phase 6
-  // { href: "/devlog/",   label: "Devlog" },    // Phase 6
+  { href: "/features/", label: "Features" },
+  { href: "/world/", label: "World" },
+  { href: "/devlog/", label: "Devlog" },
+  { href: "/wiki/", label: "Wiki" },
 ];
 
 const path = Astro.url.pathname;

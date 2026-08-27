@@ -1,0 +1,9 @@
+# Blueprint §9.3.
+User-agent: *
+Allow: /
+
+# /play is the Unity WebGL build: a ~50 MB app, not a search result. Indexing it
+# instead of the landing page is a common own-goal.
+Disallow: /play/
+
+Sitemap: https://inspiring-tarsier-8973d6.netlify.app/sitemap-index.xml
