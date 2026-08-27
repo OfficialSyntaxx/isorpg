@@ -1,0 +1,114 @@
+---
+/**
+ * /devlog/ — the full, reverse-chronological development log.
+ *
+ * UPDATES.md has ~101 entries; grouping them by month keeps a page this long
+ * scannable. Each group heading is itself just a formatted year-month, derived
+ * from the entry's `date` string rather than re-parsed from its title.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { all, formatDate, type DevlogEntry } from "../../lib/devlog";
+
+const entries = [...all()].sort((a, b) =>
+  a.date === b.date ? b.index - a.index : a.date < b.date ? 1 : -1,
+);
+
+function monthLabel(entry: DevlogEntry): string {
+  const [y, m] = entry.date.split("-");
+  const d = new Date(`${y}-${m}-01T00:00:00Z`);
+  return d.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+const groups: { label: string; items: DevlogEntry[] }[] = [];
+for (const entry of entries) {
+  const label = monthLabel(entry);
+  const last = groups[groups.length - 1];
+  if (last && last.label === label) {
+    last.items.push(entry);
+  } else {
+    groups.push({ label, items: [entry] });
+  }
+}
+---
+
+<BaseLayout
+  title="Devlog"
+  pathname="/devlog/"
+  description={`${entries.length} dated entries of real development history, built in the open.`}
+>
+  <section class="wrap devlog-index">
+    <p class="eyebrow">Built in the open</p>
+    <h1 data-reveal>Devlog</h1>
+    <p class="devlog-index__lede">
+      {entries.length} entries, newest first. Every build, every regression, every corrective
+      pass — written down as it happened.
+    </p>
+
+    {
+      groups.map((group) => (
+        <div class="devlog-index__group">
+          <h2 class="devlog-index__month">{group.label}</h2>
+          <ul class="devlog-index__list">
+            {group.items.map((e) => (
+              <li data-reveal>
+                <a class="card" href={`/devlog/${e.slug}/`}>
+                  <span class="card__meta">{formatDate(e)}</span>
+                  <span class="card__title">{e.title}</span>
+                  <p class="devlog-index__summary">{e.summary}</p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .devlog-index {
+    padding-block: var(--space-2xl) var(--space-3xl);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .devlog-index__lede {
+    color: var(--text-muted);
+    margin-block: var(--space-sm) var(--space-2xl);
+    max-width: var(--measure-prose);
+  }
+
+  .devlog-index__group + .devlog-index__group {
+    margin-top: var(--space-2xl);
+  }
+
+  .devlog-index__month {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: var(--text-strong);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .devlog-index__list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+
+  .devlog-index__summary {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    max-width: none;
+  }
+</style>
