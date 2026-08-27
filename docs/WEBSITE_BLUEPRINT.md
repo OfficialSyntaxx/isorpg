@@ -169,8 +169,16 @@ Unity build without rebuilding it. `unity/WebGLBuild/` is gitignored
 
 - **Option A (recommended): retained GitHub Actions artifact.** The Unity lane
   already uploads `WebGLBuild/`. The web lane downloads the most recent
-  successful one via `actions/download-artifact` with `run-id`. Costs a ~50 MB
-  download per landing deploy. Simple, no new infrastructure.
+  successful one via `actions/download-artifact` with `run-id`. Costs a ~18 MB
+  zipped download per landing deploy. Simple, no new infrastructure.
+
+  ⚠️ **Retention is the catch.** The `WebGLBuild` artifact from run #129 expires
+  **14 days** after upload, not 90. So a landing-only deploy more than two weeks
+  after the last Unity build has nothing to source the game from, and
+  `compose-site.cjs` will (correctly) refuse rather than publish a site with no
+  `/play`. Before Phase 8 goes to production, set `retention-days: 90` on the
+  `WebGLBuild` upload in `unity-webgl.yml`. Until then the preview lane simply
+  fails loudly, which is the right behaviour for a spike.
 - **Option B: Netlify proxy rewrite.** Keep the game on its own untouched
   Netlify site and proxy `/play/*` to it with a 200 rewrite. Attractive because
   it touches nothing that currently works — but a proxy re-terminating the
@@ -855,6 +863,8 @@ that now fails too.
 
 ### Phase 8 — Cutover ⬜
 
+- [ ] Set `retention-days: 90` on the `WebGLBuild` artifact upload in
+      `unity-webgl.yml` (default is 14 — see §2.4 Option A).
 - [ ] Final preview verification of `/` **and** `/play`.
 - [ ] Publish. Confirm `deploy-report.txt` `VERDICT: PASS`.
 - [ ] Verify a returning visitor with an old service worker still updates
