@@ -40,40 +40,70 @@ function expand(pattern) {
     const candidate = path.join(dir, entry) + tail;
     if (fs.existsSync(candidate)) out.push(candidate);
   }
-  // Newest build number last; take the highest.
-  return out.sort();
+  // Newest build number last, compared as numbers: a plain string sort puts
+  // "chromium-999" after "chromium-1234".
+  const rev = (p) => {
+    const m = /-(\d+)[/\\]/.exec(p);
+    return m ? Number(m[1]) : 0;
+  };
+  return out.sort((a, b) => rev(a) - rev(b));
 }
+
+/**
+ * Browser roots Playwright is known to unpack into.
+ *
+ * The layout inside them is not stable across versions and that is the whole
+ * reason this is a list rather than one path. The sandbox this project is
+ * developed in has `chromium-1194/chrome-linux/chrome`; a GitHub runner running
+ * a current Playwright has `chromium-1234/chrome-linux64/chrome`, because the
+ * Chrome-for-Testing archives unpack into `chrome-linux64`. A resolver that
+ * knew only the first layout found nothing on CI — which the guard below
+ * correctly reported as a failure, and which is why this list exists.
+ */
+const BROWSER_ROOTS = () =>
+  [
+    process.env.PLAYWRIGHT_BROWSERS_PATH,
+    "/opt/pw-browsers",
+    path.join(os.homedir(), ".cache/ms-playwright"),
+  ].filter(Boolean);
+
+const LAYOUTS = [
+  "chromium-*/chrome-linux64/chrome",
+  "chromium-*/chrome-linux/chrome",
+  "chromium/chrome-linux64/chrome",
+  "chromium/chrome-linux/chrome",
+  "chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
+  "chromium_headless_shell-*/chrome-linux/headless_shell",
+];
 
 /**
  * Locates a Chromium the checks can drive.
  *
- * The sandbox this project is developed in pre-installs one under
- * /opt/pw-browsers; a GitHub runner puts it in the Playwright cache after
- * `playwright install chromium`. Both are searched, plus an explicit override
- * for anything else.
+ * Playwright is asked first, because it knows exactly where it put things —
+ * but only when the answer is actually on disk. `chromium.executablePath()`
+ * reports where THIS playwright-core's revision would live, which is a
+ * different directory from the one an older or newer install created, so it
+ * confidently names a path that does not exist. Hence the check, and hence the
+ * search that follows it.
  */
-function findChromium() {
-  const home = os.homedir();
-  const patterns = [
-    process.env.PLAYWRIGHT_CHROMIUM,
-    "/opt/pw-browsers/chromium-*/chrome-linux/chrome",
-    "/opt/pw-browsers/chromium/chrome-linux/chrome",
-    path.join(home, ".cache/ms-playwright/chromium-*/chrome-linux/chrome"),
-    path.join(
-      home,
-      ".cache/ms-playwright/chromium_headless_shell-*/chrome-linux/headless_shell",
-    ),
-    process.env.PLAYWRIGHT_BROWSERS_PATH
-      ? path.join(
-          process.env.PLAYWRIGHT_BROWSERS_PATH,
-          "chromium-*/chrome-linux/chrome",
-        )
-      : null,
-  ].filter(Boolean);
+function findChromium(pw) {
+  const explicit = process.env.PLAYWRIGHT_CHROMIUM;
+  if (explicit && fs.existsSync(explicit)) return explicit;
 
-  for (const pattern of patterns) {
-    const found = expand(pattern);
-    if (found.length > 0) return found[found.length - 1];
+  if (pw && pw.chromium && typeof pw.chromium.executablePath === "function") {
+    try {
+      const p = pw.chromium.executablePath();
+      if (p && fs.existsSync(p)) return p;
+    } catch {
+      /* not installed under this playwright-core; fall through to the search */
+    }
+  }
+
+  for (const root of BROWSER_ROOTS()) {
+    for (const layout of LAYOUTS) {
+      const found = expand(path.join(root, layout));
+      if (found.length > 0) return found[found.length - 1];
+    }
   }
   return null;
 }

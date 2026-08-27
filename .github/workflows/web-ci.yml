@@ -109,10 +109,19 @@ jobs:
       - name: Verify the browser-check guard
         run: node ../scripts/verify-browser-guard.cjs
 
-      - name: Verify the Content Security Policy
+      # The browser is installed with the SAME Playwright version as the root's
+      # playwright-core, so the two agree on where it lives. An unpinned
+      # `npx playwright install` fetches the newest release, which unpacks a
+      # different revision into a different directory layout — the checks then
+      # cannot find it, and (correctly, now) fail rather than skip.
+      - name: Install the browser the checks drive
         run: |
-          npx playwright install --with-deps chromium
-          node ../scripts/verify-csp.cjs
+          PW=$(node -p "require('../node_modules/playwright-core/package.json').version")
+          echo "installing chromium for playwright $PW"
+          npx --yes "playwright@$PW" install --with-deps chromium
+
+      - name: Verify the Content Security Policy
+        run: node ../scripts/verify-csp.cjs
 
       # Measures how much of a phone viewport the sticky chrome consumes. The
       # header once shipped 208px tall — a quarter of the screen, on every page
