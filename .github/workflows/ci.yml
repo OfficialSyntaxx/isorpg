@@ -64,6 +64,16 @@ jobs:
           npm run verify:separators
           npm run verify:pwa
 
+      # The website composition, checked without Unity and without a deploy.
+      # Moving the game off the site root breaks its _headers silently — the
+      # build passes, the deploy passes, and the wasm goes out with no
+      # Content-Encoding. verify:compose runs the real template's _headers
+      # through the composer and asserts no root-anchored rule survives;
+      # verify:deploy-report drives the header check against a live local
+      # server serving both good and bad headers. Neither needs a licence.
+      - name: Verify the website composition
+        run: npm run verify:site
+
       # The generated files must match what is committed, or the wiki and the
       # manifest silently drift from the data they claim to describe.
       - name: Check generated files are up to date

@@ -1,0 +1,130 @@
+name: Site preview (landing + game at /play)
+
+# The Phase 1 gate from docs/WEBSITE_BLUEPRINT.md, made runnable.
+#
+# WHAT THIS PROVES
+# That the Unity WebGL build still loads when it is served from /play instead
+# of the site root. That is not obvious and it is not safe: the build's
+# _headers anchors its Brotli rules at /Build/*, so moving the game silently
+# strips Content-Encoding from the wasm and kills the loader. See the blueprint
+# §2.3 and scripts/compose-site.cjs.
+#
+# WHY IT IS MANUAL AND WHY IT NEVER TOUCHES PRODUCTION
+# The cutover (blueprint Phase 8) is a separate, deliberate act. This workflow
+# publishes a DRAFT deploy (DEPLOY_PROD=0) and reports the header verdict
+# against that draft's own URL. Production keeps serving the game at the root
+# until someone decides otherwise.
+#
+# It reuses an existing Unity artifact rather than building. A WebGL build is
+# 10-30 minutes and needs a licence; nothing about the composition changes
+# between builds, so re-running one to test a path prefix is waste.
+
+on:
+  workflow_dispatch:
+    inputs:
+      unity_run_id:
+        description: "Run ID of a successful 'Unity WebGL' run to take the build from. Blank = most recent successful run."
+        required: false
+        type: string
+      prefix:
+        description: "Path to mount the game at."
+        required: false
+        default: "play"
+        type: string
+
+concurrency:
+  group: site-preview
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fail here rather than after a 50 MB download if the composition logic
+      # itself is broken.
+      - name: Verify the composition logic
+        run: npm run verify:site
+
+      - name: Resolve the Unity build artifact
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN_ID="${{ inputs.unity_run_id }}"
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list --workflow unity-webgl.yml --status success \
+                       --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "::error::No successful Unity WebGL run found. Run that workflow first, or pass a run id."
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "Using Unity build from run $RUN_ID"
+
+      - name: Download the Unity build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p unity/WebGLBuild
+          gh run download "${{ steps.resolve.outputs.run_id }}" \
+            --name WebGLBuild --dir unity/WebGLBuild
+          test -f unity/WebGLBuild/index.html \
+            || { echo "::error::Artifact did not contain index.html"; exit 1; }
+
+      - name: Generate the interim holding page
+        run: npm run site:holding
+
+      # Refuses to produce a tree with no game in it, so a broken artifact
+      # download cannot become a deploy that quietly drops /play.
+      - name: Compose the publish directory
+        run: |
+          node scripts/compose-site.cjs \
+            --site web/holding \
+            --game unity/WebGLBuild \
+            --out dist-site \
+            --prefix "${{ inputs.prefix }}"
+
+      - name: Deploy a DRAFT preview and verify headers
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          DEPLOY_PROD: "0"
+          DEPLOY_DIR: dist-site
+          GAME_DIR: unity/WebGLBuild
+          GAME_PREFIX: ${{ inputs.prefix }}
+          REPORT: preview-report.txt
+        run: scripts/deploy-report.sh
+
+      - name: Report
+        run: cat preview-report.txt >> "$GITHUB_STEP_SUMMARY"
+
+      # Same gate as the production workflow. A preview that serves the wasm as
+      # text/plain has disproved the approach and must not read as a pass.
+      - name: Fail on a bad header verdict
+        run: |
+          if grep -q 'VERDICT: FAIL' preview-report.txt; then
+            echo "::error::Preview serves the game with wrong headers at /${{ inputs.prefix }} — the loader will hang."
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-preview-report
+          path: preview-report.txt

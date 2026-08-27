@@ -31,7 +31,12 @@
     "verify:world": "node scripts/verify-world-golden.cjs",
     "verify:shaders": "node scripts/verify-always-included-shaders.cjs",
     "verify:models": "node scripts/verify-model-budget.cjs",
-    "verify:separators": "node scripts/verify-no-digit-separators.cjs"
+    "verify:separators": "node scripts/verify-no-digit-separators.cjs",
+    "site:holding": "node scripts/gen-holding-page.cjs",
+    "site:compose": "node scripts/compose-site.cjs",
+    "verify:compose": "node scripts/verify-compose.cjs",
+    "verify:deploy-report": "node scripts/verify-deploy-report.cjs",
+    "verify:site": "npm run verify:compose && npm run verify:deploy-report"
   },
   "dependencies": {
     "three": "^0.170.0"

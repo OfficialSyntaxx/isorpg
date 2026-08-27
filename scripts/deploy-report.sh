@@ -9,14 +9,43 @@
 #
 # Usage:   scripts/deploy-report.sh                 # deploy, then verify
 #          scripts/deploy-report.sh https://site    # skip deploy, verify only
+#
+# Environment:
+#   DEPLOY_DIR   directory handed to Netlify.       (default: unity/WebGLBuild)
+#   GAME_DIR     where Build/* filenames are read.  (default: unity/WebGLBuild)
+#   GAME_PREFIX  URL path the game is served under. (default: none, i.e. root)
+#
+# Once the landing site owns the root, the deploy publishes the COMPOSED tree
+# and the game moves to a subdirectory:
+#
+#   DEPLOY_DIR=dist-site GAME_PREFIX=play scripts/deploy-report.sh
+#
+# The header check has to follow the game. Checking $SITE/Build/... after the
+# game has moved to /play would report PASS against a 404 — a green run for a
+# dead site, which is the precise thing this script exists to prevent.
 set -uo pipefail
 
-BUILD_DIR="unity/WebGLBuild"
-REPORT="unity/deploy-report.txt"
+BUILD_DIR="${GAME_DIR:-unity/WebGLBuild}"
+DEPLOY_DIR="${DEPLOY_DIR:-unity/WebGLBuild}"
+GAME_PREFIX="${GAME_PREFIX:-}"
+# Overridable so the test harness can exercise this without dirtying the
+# committed report (CI fails on a stale generated file).
+REPORT="${REPORT:-unity/deploy-report.txt}"
 SITE="${1:-}"
+
+# Normalise "play", "/play" and "play/" to "/play" so the URL below never ends
+# up with a doubled or missing slash.
+if [ -n "$GAME_PREFIX" ]; then
+  GAME_PREFIX="/$(echo "$GAME_PREFIX" | sed 's#^/*##; s#/*$##')"
+fi
 
 if [ ! -d "$BUILD_DIR" ]; then
   echo "error: $BUILD_DIR does not exist. Run the WebGL build first." >&2
+  exit 1
+fi
+
+if [ ! -d "$DEPLOY_DIR" ]; then
+  echo "error: $DEPLOY_DIR does not exist. Run the compose step first." >&2
   exit 1
 fi
 
@@ -27,11 +56,21 @@ fi
   echo "deployed_at_utc: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
   echo "build_dir_size:  $(du -sh "$BUILD_DIR" | cut -f1)"
   echo "build_subdir:    $(du -sh "$BUILD_DIR/Build" 2>/dev/null | cut -f1 || echo 'MISSING')"
+  echo "deploy_dir:      $DEPLOY_DIR"
+  echo "game_prefix:     ${GAME_PREFIX:-/ (site root)}"
 } > "$REPORT"
 
 if [ -z "$SITE" ]; then
-  echo "==> deploying $BUILD_DIR"
-  DEPLOY_LOG=$(npx netlify-cli deploy --dir "$BUILD_DIR" --prod --no-build 2>&1)
+  # DEPLOY_PROD=0 publishes a draft instead of production. The /play cutover
+  # has to be provable before it is live, and a spike that can reach production
+  # is not a spike. Default stays 1 so the existing release path is unchanged.
+  if [ "${DEPLOY_PROD:-1}" = "1" ]; then
+    echo "==> deploying $DEPLOY_DIR (PRODUCTION)"
+    DEPLOY_LOG=$(npx netlify-cli deploy --dir "$DEPLOY_DIR" --prod --no-build 2>&1)
+  else
+    echo "==> deploying $DEPLOY_DIR (draft preview, NOT production)"
+    DEPLOY_LOG=$(npx netlify-cli deploy --dir "$DEPLOY_DIR" --no-build 2>&1)
+  fi
   echo "$DEPLOY_LOG"
 
   # Netlify prints two URLs: an immutable per-deploy one
@@ -40,8 +79,16 @@ if [ -z "$SITE" ]; then
   # actually get shared, the one the PWA installs under, and the only one that
   # keeps working after the next deploy. Round 3 captured the per-deploy URL,
   # which verified a real deploy but not the address anyone would use.
-  SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9-]+\.netlify\.app' | grep -v -- '--' | tail -1)
-  [ -z "$SITE" ] && SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9.-]+\.netlify\.app' | tail -1)
+  #
+  # A draft deploy inverts that: production is NOT updated, so the per-deploy
+  # URL is the only one that describes what was just published. Checking headers
+  # against production after a draft deploy would report on the OLD site.
+  if [ "${DEPLOY_PROD:-1}" = "1" ]; then
+    SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9-]+\.netlify\.app' | grep -v -- '--' | tail -1)
+    [ -z "$SITE" ] && SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9.-]+\.netlify\.app' | tail -1)
+  else
+    SITE=$(echo "$DEPLOY_LOG" | grep -oE 'https://[a-zA-Z0-9.-]+--[a-zA-Z0-9-]+\.netlify\.app' | tail -1)
+  fi
 
   if [ -z "$SITE" ]; then
     echo "url: COULD NOT PARSE FROM DEPLOY OUTPUT -- paste it in by hand" >> "$REPORT"
@@ -67,9 +114,18 @@ DATA=$(ls "$BUILD_DIR/Build" | grep -E '\.data\.(br|gz)$' | head -1)
 
 check() {
   local file="$1" expect_type="$2"
-  [ -z "$file" ] && { echo "  (no matching file in Build/)" >> "$REPORT"; return; }
+  # A build with no matching payload used to return quietly, emitting no
+  # VERDICT at all — so the run stayed green while there was nothing to serve.
+  if [ -z "$file" ]; then
+    {
+      echo "### (no matching file in $BUILD_DIR/Build)"
+      echo "VERDICT: FAIL -- expected a $expect_type payload and found none."
+    } >> "$REPORT"
+    echo >> "$REPORT"
+    return
+  fi
 
-  local url="$SITE/Build/$file"
+  local url="$SITE$GAME_PREFIX/Build/$file"
   local hdrs
   hdrs=$(curl -sSI --max-time 30 "$url" 2>&1)
 
@@ -82,11 +138,24 @@ check() {
   ctype=$(echo "$hdrs" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')
   cenc=$(echo "$hdrs" | grep -i '^content-encoding:' | tr -d '\r' | awk '{print $2}')
 
+  local status
+  status=$(echo "$hdrs" | grep -i '^HTTP/' | tail -1 | tr -d '\r')
+
+  # The string here MUST stay "VERDICT: FAIL". unity-webgl.yml greps for exactly
+  # that to turn a bad header into a failed run, and docs/CI_DEPLOY.md documents
+  # it. This previously said "VERDICT: WRONG", which matched neither — so the
+  # workflow's fail-gate could never fire and a wasm served as text/plain would
+  # have been reported as a successful deploy. That is the one failure this
+  # whole script exists to catch.
   if [ "$ctype" = "$expect_type" ] && [ -n "$cenc" ]; then
     echo "VERDICT: OK" >> "$REPORT"
   else
     {
-      echo "VERDICT: WRONG -- expected content-type: $expect_type plus a content-encoding."
+      echo "VERDICT: FAIL -- expected content-type: $expect_type plus a content-encoding."
+      echo "         got status:           ${status:-<no response>}"
+      echo "         got content-type:     ${ctype:-<none>}"
+      echo "         got content-encoding: ${cenc:-<none>}"
+      echo "         checked url:          $url"
       echo "         The loader will hang or throw \"Unable to parse\"."
       echo "         Fix the host config before touching Unity."
     } >> "$REPORT"

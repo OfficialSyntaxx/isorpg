@@ -1,0 +1,58 @@
+{
+  "$comment": [
+    "Single source of truth for the website's identity and outbound links.",
+    "",
+    "Phase 3 (Astro scaffold) imports this rather than hardcoding anything, so",
+    "there is one place to fill in the domain and the socials when they exist.",
+    "",
+    "A link with \"url\": null is a PLACEHOLDER and is not rendered. That is",
+    "deliberate: a half-filled config should produce a missing link, never a",
+    "dead one. Fill in the url and it appears; leave it null and it stays out.",
+    "See docs/WEBSITE_BLUEPRINT.md §13 for the open questions behind the nulls."
+  ],
+
+  "name": "Isoperia",
+  "tagline": "A settlement-builder RPG. Chop, mine, craft, build a village, and fight your way into the deep wilds.",
+  "shortDescription": "A 3D open-world settlement-builder RPG that runs in your browser.",
+
+  "origin": {
+    "$comment": "canonical is null until the custom domain exists (blueprint D4/Phase 9). Until then current is canonical.",
+    "current": "https://inspiring-tarsier-8973d6.netlify.app",
+    "canonical": null
+  },
+
+  "paths": {
+    "$comment": "gamePrefix must match --prefix in scripts/compose-site.cjs and GAME_PREFIX in scripts/deploy-report.sh.",
+    "gamePrefix": "play"
+  },
+
+  "social": [
+    { "id": "discord", "label": "Discord", "url": null, "cta": "Join the Discord" },
+    { "id": "github", "label": "GitHub", "url": "https://github.com/OfficialSyntaxx/isorpg", "cta": "Source on GitHub" },
+    { "id": "youtube", "label": "YouTube", "url": null, "cta": "Watch on YouTube" },
+    { "id": "bluesky", "label": "Bluesky", "url": null, "cta": "Follow on Bluesky" },
+    { "id": "mastodon", "label": "Mastodon", "url": null, "cta": "Follow on Mastodon" },
+    { "id": "x", "label": "X", "url": null, "cta": "Follow on X" },
+    { "id": "reddit", "label": "Reddit", "url": null, "cta": "r/Isoperia" },
+    { "id": "itch", "label": "itch.io", "url": null, "cta": "Play on itch.io" },
+    { "id": "steam", "label": "Steam", "url": null, "cta": "Wishlist on Steam" }
+  ],
+
+  "contact": {
+    "$comment": "press is shown on /press. Use a role address, not a personal one, before this goes public.",
+    "press": null,
+    "support": null
+  },
+
+  "newsletter": {
+    "$comment": "Blueprint Phase 10. provider is null until chosen (§13 Q2); the form is not rendered while it is null.",
+    "provider": null,
+    "endpoint": "/api/subscribe"
+  },
+
+  "analytics": {
+    "$comment": "Blueprint §10 — cookieless only. null disables the snippet entirely.",
+    "provider": null,
+    "domain": null
+  }
+}

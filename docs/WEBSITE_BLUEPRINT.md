@@ -10,8 +10,13 @@
 > Those live in `ROADMAP.md`, `docs/ART_BIBLE.md`, `docs/WORLD_LAYOUT.md`, and
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
-**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Blueprint
-approved, implementation not started.
+**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phase 1
+implemented and tested; blocked on one step that needs a real Unity build.
+
+**Rollback anchor (§2.5).** The production deploy serving the game at the root
+before any cutover is Netlify deploy `6a8f04e32a032f122bbaba51` on site
+`8e151e1b-5592-45b7-b272-1910dba25184` (`inspiring-tarsier-8973d6`). Republishing
+that deploy restores the pre-website world exactly.
 
 ---
 
@@ -22,7 +27,7 @@ Update the Status column as phases move. Nothing here is started yet.
 | # | Phase | Owner model | Status | Gate to exit |
 |---|---|---|---|---|
 | 0 | Decisions & constraints | — | ✅ Done | All four architecture decisions locked (§1) |
-| 1 | Deploy composition spike | Opus 5 | ⬜ Not started | Game verified loading at `/play/` with correct Brotli headers |
+| 1 | Deploy composition spike | Opus 5 | 🟡 Code done, gate open | Game verified loading at `/play/` with correct Brotli headers |
 | 2 | Design system & tokens | Opus 5 | ⬜ Not started | Token file + type scale + motion scale reviewed against `docs/ART_BIBLE.md` |
 | 3 | Astro workspace scaffold | Sonnet 5 | ⬜ Not started | `npm run build` in `web/` green; CI runs it |
 | 4 | Landing page build | Opus 5 → Sonnet 5 | ⬜ Not started | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
@@ -173,8 +178,10 @@ Unity build without rebuilding it. `unity/WebGLBuild/` is gitignored
   scope/offline story through a proxy is unproven. **Do not adopt without
   measuring the wasm headers through the proxy first.**
 
-Phase 1 is a spike precisely to settle A vs B with evidence rather than
-preference.
+**Settled (2026-08-27): Option A.** Implemented in
+`.github/workflows/site-preview.yml`. Option B was left unmeasured rather than
+dismissed — see the Phase 1 checklist in §12 for what could not be tested and
+why.
 
 ### 2.5 Rollback
 
@@ -182,6 +189,25 @@ Netlify keeps every deploy immutable and addressable. Before the Phase 8
 cutover, record the current production deploy ID. Rollback is a one-click
 "Publish deploy" on that ID and restores the game-at-root world exactly.
 Write the ID into `unity/deploy-report.txt` as part of the cutover commit.
+
+---
+
+### 2.6 Tooling built for this (Phase 1)
+
+| Path | Does |
+|---|---|
+| `scripts/compose-site.cjs` | Merges landing output + Unity build into one publish dir; rewrites and merges `_headers`. Refuses unsafe inputs. |
+| `scripts/verify-compose.cjs` | 23 assertions over the real template `_headers`. `npm run verify:compose` |
+| `scripts/verify-deploy-report.cjs` | 9 assertions driving the header check against a live local server. `npm run verify:deploy-report` |
+| `scripts/gen-holding-page.cjs` | Interim root page from `web/site.config.json`. `npm run site:holding` |
+| `web/site.config.json` | Single source of truth for domain, socials, contact, newsletter, analytics. A `null` url is a placeholder and is **not rendered** — a half-filled config yields a missing link, never a dead one. |
+| `.github/workflows/site-preview.yml` | Manual dispatch. Composes and publishes a **draft** deploy, then gates on the header verdict. Cannot reach production. |
+
+`npm run verify:site` runs both guards; `ci.yml` runs it on every push.
+
+**Filling in a social link:** set its `url` in `web/site.config.json` and it
+appears. Discord, YouTube, Bluesky, Mastodon, X, Reddit, itch.io and Steam are
+stubbed as `null` today; GitHub is live.
 
 ---
 
@@ -698,24 +724,80 @@ the target is unambiguous. Haiku 4.5 for mechanical, verifiable passes.
 
 ## 12. Phase plan
 
-### Phase 1 — Deploy composition spike ⬜
+### Phase 1 — Deploy composition spike 🟡
 
-- [ ] Measure Option B: proxy `/play/*` to the existing site, verify
-      `Content-Type: application/wasm` **and** `Content-Encoding: br` survive
-      the rewrite. Record the result either way.
-- [ ] If B fails (expected), implement Option A: artifact reuse.
-- [ ] Parameterise the WebGL template `_headers` with a path-prefix macro.
-- [ ] Write the compose script: Astro `dist` + Unity build → `dist/play`,
-      merging `_headers`, deleting the nested copy.
-- [ ] Extend `scripts/verify-pwa-template.cjs` to reject root-anchored header
-      rules when a prefix is set.
-- [ ] Repoint the `scripts/deploy-report.sh` header check at `$SITE/play/`.
-- [ ] Deploy to a Netlify **preview** (never prod) and confirm the game loads
-      end-to-end at `/play/`, including service-worker registration and scope.
-- [ ] Record the current prod deploy ID for rollback (§2.5).
+- [x] **Option A chosen: artifact reuse.** Implemented in
+      `.github/workflows/site-preview.yml`, which pulls `WebGLBuild` from the
+      most recent successful `unity-webgl.yml` run instead of rebuilding.
+- [ ] **Option B (proxy rewrite) not measured.** It cannot be measured from a
+      sandboxed session: outbound requests to `netlify.app` are blocked by the
+      agent proxy, so no header can be read back. Left explicitly unmeasured
+      rather than assumed. Reasoning for preferring A regardless: a proxy
+      re-terminates the response, putting `Content-Encoding: br` passthrough at
+      risk for a 50 MB payload, and it bills the transfer twice. Revisit only
+      if A proves painful.
+- [x] ~~Parameterise the WebGL template `_headers` with a path-prefix macro.~~
+      **Superseded — see the deviation note below.** The prefixing happens at
+      compose time in `scripts/compose-site.cjs` instead.
+- [x] Compose script — `scripts/compose-site.cjs`. Merges the landing output
+      and the Unity build, rewrites the game's header rules under the prefix,
+      merges them into a single root `_headers`, and deletes the nested copy.
+      Refuses to compose a tree with no game, no `Build/` payload, no
+      `_headers`, a multi-segment prefix, or a mount-point collision.
+- [x] Header-rule guard — `scripts/verify-compose.cjs` (23 assertions). Written
+      as its own script rather than added to `verify-pwa-template.cjs`, because
+      that one skips itself when no browser is present and this check must never
+      be skippable. It runs the **real** template `_headers` through the
+      composer, so a future root-anchored rule fails CI. Mutation-tested:
+      disabling the rewrite fails 7 assertions.
+- [x] `scripts/deploy-report.sh` header check follows the game — `GAME_PREFIX`,
+      plus `DEPLOY_DIR`/`GAME_DIR` so the composed tree is what gets published.
+      Covered by `scripts/verify-deploy-report.cjs` (9 assertions) against a
+      live local server serving correct and broken headers.
+- [x] Both guards wired into `ci.yml` as `npm run verify:site`. Neither needs
+      Unity, a licence, or a browser.
+- [x] Interim holding page so there is something at the root to compose
+      against — `scripts/gen-holding-page.cjs`, generated from
+      `web/site.config.json`. Not the landing page; Phase 4 replaces it.
+- [x] Record the current prod deploy ID for rollback (§2.5) — at the top of
+      this document.
+- [ ] **OPEN — needs a real Unity build.** Run
+      `.github/workflows/site-preview.yml` (manual dispatch) and confirm the
+      game loads end-to-end at `/play/`, including service-worker registration
+      and scope. Requires `NETLIFY_AUTH_TOKEN` / `NETLIFY_SITE_ID` and one
+      successful `unity-webgl.yml` run to source the artifact from. This step
+      publishes a **draft** deploy (`DEPLOY_PROD=0`) and cannot reach
+      production.
 
 **Exit gate:** a preview URL where `/play/` boots to the Isoperia start screen
-with zero console errors and a `VERDICT: PASS` header report.
+with zero console errors and a `VERDICT: OK` header report.
+
+#### Deviation from the original plan, and why
+
+The blueprint proposed parameterising the Unity template's `_headers` with a
+path-prefix macro. Implementation showed a better option. `IsoperiaBuild.cs`
+copies `_headers` verbatim and only substitutes `__BUILD_ID__` post-build, so a
+macro would have meant a C# change that cannot be compiled or tested without a
+Unity licence and a 10–30 minute build per iteration.
+
+Doing the rewrite in the compose step instead:
+
+- needs no C# change, and is fully testable in Node on every push;
+- leaves the Unity build independently deployable at the root, which keeps the
+  §2.5 rollback path working unchanged;
+- keeps one owner for the prefixing, which the CI guard can assert against.
+
+#### Pre-existing bug found and fixed
+
+`scripts/deploy-report.sh` wrote `VERDICT: WRONG`, while `unity-webgl.yml:166`
+greps for `VERDICT: FAIL` and `docs/CI_DEPLOY.md:104` documents `VERDICT: FAIL`.
+**The workflow's header fail-gate could never fire.** A wasm served as
+`text/plain` — the exact dead-site failure that check exists to catch, and the
+one T8 depends on — would have been reported as a successful deploy. Now
+corrected to `VERDICT: FAIL`, with the failing status, content-type,
+content-encoding and URL printed alongside it, and regression-tested. A build
+with no matching payload also used to return silently with no verdict at all;
+that now fails too.
 
 ### Phase 2 — Design system ⬜
 
