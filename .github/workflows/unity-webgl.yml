@@ -87,7 +87,7 @@ jobs:
       # Library/ is not version-controlled and reimporting from cold costs most
       # of the build time. Keyed on the things whose change actually invalidates
       # an import.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: unity/Library
           key: Library-WebGL-${{ hashFiles('unity/Packages/packages-lock.json', 'unity/ProjectSettings/**') }}
