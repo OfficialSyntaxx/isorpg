@@ -1,89 +1,28 @@
 ---
 /**
- * Home — INTERIM.
+ * Home — the landing page (blueprint Phase 4, §5).
  *
- * Phase 3's job is a working, typechecked, buildable scaffold, so this page
- * exists to prove the layout, the token layer, the component primitives and the
- * theme handling all work end to end. It is deliberately not the landing page:
- * blueprint Phase 4 replaces it with the eight designed sections, and building
- * those now would preempt design work that has not happened yet.
+ * Eight sections, each with a job: hero, pitch + trust row, the five systems,
+ * the mainland map, the progression curve, the devlog, the closing CTA, and the
+ * footer (supplied by BaseLayout).
+ *
+ * This page composes; it does not style. Everything visual comes from the Phase
+ * 2 token and component layers or from the sections themselves.
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { site, gamePath } from "../lib/site";
+import Hero from "../components/sections/Hero.astro";
+import Pillars from "../components/sections/Pillars.astro";
+import WorldMap from "../components/sections/WorldMap.astro";
+import Progression from "../components/sections/Progression.astro";
+import Devlog from "../components/sections/Devlog.astro";
+import PlayCta from "../components/sections/PlayCta.astro";
 ---
 
 <BaseLayout title="Home" pathname="/" isHome>
-  <section class="hero">
-    <div class="wrap">
-      <p class="hero__eyebrow">2.5D settlement-builder RPG</p>
-      <h1 class="hero__title">{site.name}</h1>
-      <p class="hero__lede">{site.tagline}</p>
-
-      <div class="hero__actions">
-        <a class="btn btn--lg" href={gamePath}>Play in your browser</a>
-      </div>
-
-      <p class="hero__weight">
-        Runs in the browser · installable · offline-capable · first load downloads roughly
-        50&nbsp;MB
-      </p>
-    </div>
-  </section>
-
-  <section class="wrap section">
-    <div class="callout">
-      <span class="callout__icon" aria-hidden="true">🧭</span>
-      <span class="callout__title">This is a scaffold, not the site</span>
-      <div class="callout__body">
-        <p>
-          The design system is in place and verified. The full landing page — the
-          procedural hero, the mainland map, the progression curve, the devlog feed — is
-          the next phase of work.
-        </p>
-      </div>
-    </div>
-  </section>
+  <Hero />
+  <Pillars />
+  <WorldMap />
+  <Progression />
+  <Devlog />
+  <PlayCta />
 </BaseLayout>
-
-<style>
-  .hero {
-    padding-block: var(--space-4xl) var(--space-2xl);
-  }
-
-  .hero__eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    letter-spacing: var(--tracking-caps);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: var(--space-xs);
-  }
-
-  .hero__title {
-    font-size: var(--text-4xl);
-    margin-bottom: var(--space-sm);
-  }
-
-  .hero__lede {
-    font-size: var(--text-lg);
-    color: var(--text-muted);
-    max-width: var(--measure-narrow);
-    margin-bottom: var(--space-xl);
-  }
-
-  .hero__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
-
-  .hero__weight {
-    margin-top: var(--space-md);
-    color: var(--text-muted);
-    font-size: var(--text-xs);
-  }
-
-  .section {
-    padding-block: var(--space-xl) var(--space-4xl);
-  }
-</style>

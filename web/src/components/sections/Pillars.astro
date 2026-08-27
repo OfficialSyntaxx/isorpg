@@ -1,0 +1,146 @@
+---
+/**
+ * §5.2 + §5.3 — the pitch, the trust row, and the five systems.
+ *
+ * Every claim here is one the project can actually back:
+ *   - offline/installable: README.md documents a localStorage + IndexedDB save
+ *     with offline idle progression, and the PWA is real.
+ *   - the skills and buildings named are the ones in src/data/.
+ * Nothing aspirational. A landing page that oversells is found out in one click.
+ *
+ * Deliberately NOT a feature-card grid of outline icons — that is the exact
+ * indie-landing-page default the blueprint's §3.1 rules out. These are five
+ * numbered steps through one loop, which is what the game actually is.
+ */
+const pillars = [
+  {
+    n: "01",
+    name: "Gather",
+    body: "Woodcutting, Mining and Fishing on an OSRS-style XP curve. Per-item mastery earns double drops and faster swings; nodes deplete and respawn.",
+    district: "wildwood",
+  },
+  {
+    n: "02",
+    name: "Craft",
+    body: "Cooking, Smithing and Carpentry on a 600ms tick. Mastery preserves materials and speeds the work — and the recipes need the matching building.",
+    district: "cinder",
+  },
+  {
+    n: "03",
+    name: "Build",
+    body: "Place a Town Hall, Storehouse, Sawmill, Smelter and Granary on validated tiles. They yield passively: logs to planks, ore to bars, food, gold.",
+    district: "miregate",
+  },
+  {
+    n: "04",
+    name: "Fight",
+    body: "Tick-based combat with OSRS-style damage rolls, auto-eat, weighted drop tables, boss kill-counts and pets. Monsters respawn; the wilds do not forgive.",
+    district: "frostwatch",
+  },
+  {
+    n: "05",
+    name: "Explore",
+    body: "Four outer districts and a dungeon, reached by landmark-led routes. Travel lamps and waystones mark the way out — and the way home.",
+    district: "wildwood",
+  },
+];
+---
+
+<section class="pitch" id="systems">
+  <div class="wrap">
+    <p class="pitch__lede">
+      A settlement builder and a character RPG in one loop: gather to craft, craft to
+      build, build to go further out.
+    </p>
+
+    <ul class="trust" aria-label="What you need to play">
+      <li class="tag">Browser</li>
+      <li class="tag">Installable</li>
+      <li class="tag">Offline-capable</li>
+      <li class="tag">No account</li>
+      <li class="tag">Free</li>
+    </ul>
+  </div>
+
+  <div class="wrap pillars">
+    <h2 class="pillars__title">One loop, five ways in</h2>
+    <ol class="pillars__list">
+      {
+        pillars.map((p) => (
+          <li class="pillar">
+            <span class={`pillar__n chip-district chip-district--${p.district}`}>
+              {p.n}
+            </span>
+            <h3 class="pillar__name">{p.name}</h3>
+            <p class="pillar__body">{p.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .pitch {
+    padding-block: var(--space-3xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .pitch__lede {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: var(--text-strong);
+    max-width: 34ch;
+    line-height: var(--leading-snug);
+  }
+
+  .trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-lg);
+  }
+
+  .pillars {
+    margin-top: var(--space-3xl);
+  }
+
+  .pillars__title {
+    margin-bottom: var(--space-lg);
+  }
+
+  .pillars__list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  }
+
+  .pillar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-lg);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+  }
+
+  .pillar__n {
+    align-self: flex-start;
+    font-family: var(--font-mono);
+  }
+
+  .pillar__name {
+    font-size: var(--text-lg);
+  }
+
+  .pillar__body {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    max-width: none;
+  }
+</style>

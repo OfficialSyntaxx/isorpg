@@ -11,8 +11,8 @@
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
 **Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 2 and 3
-done. Phase 1 implemented and tested, with one gate open that needs a real Unity
-build.
+done; Phase 4 built. Two gates open, both needing something this environment
+cannot provide — see Phase 1 and Phase 4 in §12.
 
 **Rollback anchor (§2.5).** The production deploy serving the game at the root
 before any cutover is Netlify deploy `6a8f04e32a032f122bbaba51` on site
@@ -31,7 +31,7 @@ Update the Status column as phases move.
 | 1 | Deploy composition spike | Opus 5 | 🟡 Code done, gate open | Game verified loading at `/play/` with correct Brotli headers |
 | 2 | Design system & tokens | Opus 5 | ✅ Done | Token file + type scale + motion scale reviewed against `docs/ART_BIBLE.md` |
 | 3 | Astro workspace scaffold | Opus 5 | ✅ Done | `npm run build` in `web/` green; CI runs it |
-| 4 | Landing page build | Opus 5 → Sonnet 5 | ⬜ Not started | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
+| 4 | Landing page build | Opus 5 | 🟡 Built; Lighthouse gate open | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
 | 5 | Animation layer | Opus 5 | ⬜ Not started | Motion spec implemented; `prefers-reduced-motion` verified |
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 | ⬜ Not started | Feeds render from repo markdown; RSS valid |
 | 7 | Security hardening | Opus 5 | ⬜ Not started | CSP enforced with zero console violations; headers audit passes |
@@ -941,12 +941,56 @@ this plan keeps guarding against, so it was removed and `site-preview.yml` now
 builds the real site. The current home page is still an interim scaffold — Phase
 4 replaces it with the eight designed sections.
 
-### Phase 4 — Landing page ⬜
+### Phase 4 — Landing page 🟡
 
-- [ ] Sections 1–8 per §5, static first (no motion yet).
-- [ ] Responsive 360 → 1920.
-- [ ] `/404`.
-- [ ] Lighthouse ≥ 95/100/100/100 **before** animation lands.
+- [x] All eight sections per §5. Hero (generative), pitch + trust row, five
+      systems, mainland map, progression curve, devlog, closing CTA, footer.
+- [x] **The hero genuinely generates.** `src/scripts/hero-terrain.ts` builds
+      isometric terrain from seeded value noise at load, echoing the game's own
+      zero-asset approach rather than shipping a picture of it. Deterministic
+      seed, so the frame is reviewable. Palette read from the live CSS custom
+      properties, so it follows the theme and inherits the Phase 2 audit.
+- [x] **Every number on the page is real.** The XP curve is the game's own
+      table (`verify:xp` asserts parity, 7 assertions), the devlog is the three
+      newest entries parsed from `UPDATES.md`, the districts are the spatial
+      contract in `docs/WORLD_LAYOUT.md`, and the systems copy names the skills
+      and buildings actually in `src/data/`.
+- [x] Responsive 360 → 1920, verified at six widths: **zero horizontal overflow
+      at every one**. Minimum touch target 44px.
+- [x] `/404` — in-world, reusing the map's survey language rather than a
+      one-off illustration. `noindex`.
+- [x] Reduced motion verified as a designed state: the canvas is skipped
+      entirely and the authored gradient composition carries the hero, with the
+      headline and CTAs untouched. Also skipped on `save-data`.
+- [x] Keyboard/AT path on the map verified — the buttons drive it, `aria-expanded`
+      and the map highlight both track.
+- [x] **First load: 15.4 KB gzipped total** (9.8 KB HTML with inlined module
+      scripts, 5.1 KB CSS, 0.8 KB theme init) against a 60 KB JS / 400 KB total
+      budget (§9.1). No chart library, no animation library yet.
+- [ ] **OPEN — Lighthouse ≥ 95/100/100/100.** Not runnable here: this sandbox
+      has no Lighthouse and blocks the Google Fonts requests the real page
+      makes, so any score it produced would be measuring a different page.
+      Verified proxies in the meantime: no console errors, no layout overflow at
+      any width, one `h1` per page, semantic landmarks, `alt` on every image,
+      audited contrast, and the transfer sizes above. Run it against the
+      preview deploy once Phase 1's gate is closed.
+
+#### Bugs found and fixed during the visual review
+
+Four, all invisible to the typecheck and the automated checks:
+
+- **The hero left two empty triangles.** The paint loop iterated a rectangle of
+  *grid* coordinates, but an isometric projection maps a grid rectangle to a
+  screen *diamond* — so the viewport's corners were never drawn. It now projects
+  each screen corner back into grid space and iterates that bounding box.
+- **`costs13,034,431 experience`** and **`© 2026Isoperia`** — Prettier moved an
+  expression onto its own line and Astro then dropped the newline between
+  adjacent text and expression. Both now pin the space explicitly.
+- **Cinder Hollow sat outside the map frame** and read as a clipped blob. The
+  frame was widened and it became a proper region with the longest route on the
+  map leading to it.
+- A card that was a link rendered its whole body as underlined accent text
+  (fixed in Phase 2, found the same way).
 
 ### Phase 5 — Animation ⬜
 

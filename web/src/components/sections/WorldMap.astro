@@ -1,0 +1,355 @@
+---
+/**
+ * §5.4 — the mainland.
+ *
+ * Content is the spatial contract in docs/WORLD_LAYOUT.md, not invented
+ * geography: a safe settlement at the centre, four outer regions whose terrain
+ * and resource loop reinforce one another, and a high-risk destination east.
+ * District colours are the in-game route-anchor colours (UPDATES.md 2026-08-26).
+ *
+ * ACCESSIBILITY — WHY THE BUTTONS ARE THE INTERACTIVE LAYER
+ * Blueprint §9.2 is explicit that an SVG map which only works with a mouse
+ * fails. Rather than bolt tabindex and roles onto SVG paths — which is fragile
+ * and announces badly — the real interactive layer is a list of ordinary
+ * buttons. The SVG is decorative and reacts to them.
+ *
+ * That has three consequences worth keeping: keyboard and screen-reader support
+ * come free from the button element; the list is itself the text equivalent the
+ * blueprint requires, so there is no separate "accessible version" to maintain;
+ * and hovering the map is a nice-to-have rather than the only way in.
+ */
+const districts = [
+  {
+    id: "hearthvale",
+    name: "Hearthvale",
+    role: "Safe home and construction",
+    body: "An open plaza, a market, a campfire and the build plots. Buildings sit around a walkable square rather than ringing you in.",
+    mod: "",
+  },
+  {
+    id: "wildwood",
+    name: "Wildwood",
+    role: "First gathering route",
+    body: "Northwest forest. Normal and oak trees, a shrine ruin as the arrival landmark, and the early wildlife that teaches you to watch your health.",
+    mod: "wildwood",
+  },
+  {
+    id: "frostwatch",
+    name: "Frostwatch",
+    role: "Mining progression",
+    body: "Northeast highlands. Copper and tin near the road, iron and coal deeper in, with a mine and snow-crag silhouette visible from the route.",
+    mod: "frostwatch",
+  },
+  {
+    id: "miregate",
+    name: "Miregate",
+    role: "Mid-game route",
+    body: "Southwest mire. Willow stands, fishing water, bog husks, and hazardous paths where the crossing matters more than the fight.",
+    mod: "miregate",
+  },
+  {
+    id: "sunmere",
+    name: "Sunmere",
+    role: "Food and town growth",
+    body: "Southeast lowlands. Farm plots and fishing feeding the cooking and carpentry loop, with mills and a granary anchoring the shoreline.",
+    mod: "wildwood",
+  },
+  {
+    id: "cinder",
+    name: "Cinder Hollow",
+    role: "High-risk destination",
+    body: "Outer east. The dungeon approach and a boss clearing, lit in pools. Every route is a loop back to town — this one you earn.",
+    mod: "cinder",
+  },
+] as const;
+---
+
+<section class="world" id="world">
+  <div class="wrap">
+    <p class="eyebrow">The mainland</p>
+    <h2>One place, six ways it changes</h2>
+    <p class="world__lede">
+      A safe centre, landmark-led roads, and four outer regions whose terrain, resources
+      and danger reinforce one another. Every route loops back to town.
+    </p>
+
+    <div class="world__grid">
+      <!-- Decorative: every region below is reachable as a button. -->
+      <svg
+        class="world__map"
+        viewBox="0 0 720 540"
+        role="img"
+        aria-label="Stylised survey map of the Isoperia mainland: a central settlement, four outer regions, and a dungeon to the east."
+        data-map
+      >
+        <defs>
+          <pattern id="survey" width="24" height="24" patternUnits="userSpaceOnUse">
+            <path
+              d="M24 0H0v24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="0.5"
+              opacity="0.18"></path>
+          </pattern>
+        </defs>
+
+        <!-- Frame. Sized to enclose every region including Cinder Hollow:
+             previously the eastern lobe sat outside it and read as a clipped
+             blob rather than a place. -->
+        <rect
+          x="28"
+          y="28"
+          width="664"
+          height="484"
+          rx="10"
+          fill="url(#survey)"
+          stroke="currentColor"
+          stroke-width="1.5"
+          opacity="0.85"></rect>
+
+        <!-- Regions. Fills are the map-mark colours, which the Phase 2 audit
+             marks as NOT text-safe — every label here is real HTML, not SVG
+             text on a fill. -->
+        <g class="rgn" data-rgn="wildwood">
+          <rect x="42" y="42" width="252" height="222" rx="6" fill="var(--mark-wildwood)"
+          ></rect>
+        </g>
+        <g class="rgn" data-rgn="frostwatch">
+          <rect
+            x="304"
+            y="42"
+            width="252"
+            height="222"
+            rx="6"
+            fill="var(--mark-frostwatch)"></rect>
+        </g>
+        <g class="rgn" data-rgn="miregate">
+          <rect x="42" y="276" width="252" height="222" rx="6" fill="var(--mark-miregate)"
+          ></rect>
+        </g>
+        <g class="rgn" data-rgn="sunmere">
+          <rect x="304" y="276" width="252" height="222" rx="6" fill="var(--mark-gold)"
+          ></rect>
+        </g>
+
+        <!-- Cinder Hollow: its own strip on the far east, separated by the
+             longest route on the map. Reads as "further out", which is what it
+             is. -->
+        <g class="rgn" data-rgn="cinder">
+          <rect x="586" y="180" width="92" height="180" rx="10" fill="var(--mark-cinder)"
+          ></rect>
+        </g>
+
+        <!-- Routes: drawn before the settlement so the plaza sits on top. -->
+        <g
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-dasharray="6 7"
+          fill="none"
+          opacity="0.75"
+        >
+          <path d="M299 270 L168 153"></path>
+          <path d="M299 270 L430 153"></path>
+          <path d="M299 270 L168 387"></path>
+          <path d="M299 270 L430 387"></path>
+          <path d="M299 270 L586 270"></path>
+        </g>
+
+        <g class="rgn" data-rgn="hearthvale">
+          <circle
+            cx="299"
+            cy="270"
+            r="52"
+            fill="var(--surface-raised)"
+            stroke="currentColor"
+            stroke-width="2.5"></circle>
+          <circle cx="299" cy="270" r="12" fill="var(--mark-gold)"></circle>
+        </g>
+      </svg>
+
+      <ul class="world__list">
+        {
+          districts.map((d) => (
+            <li>
+              <button
+                class="district"
+                type="button"
+                data-district={d.id}
+                aria-expanded="false"
+              >
+                <span
+                  class={
+                    d.mod ? `chip-district chip-district--${d.mod}` : "chip-district"
+                  }
+                >
+                  {d.name}
+                </span>
+                <span class="district__role">{d.role}</span>
+              </button>
+              <p class="district__body" data-body={d.id} hidden>
+                {d.body}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .world {
+    padding-block: var(--space-3xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .world__lede {
+    color: var(--text-muted);
+    margin-block: var(--space-sm) var(--space-xl);
+  }
+
+  .world__grid {
+    display: grid;
+    gap: var(--space-xl);
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  @media (min-width: 62rem) {
+    .world__grid {
+      grid-template-columns: 1.35fr 1fr;
+    }
+  }
+
+  .world__map {
+    width: 100%;
+    height: auto;
+    /* currentColor drives the survey grid, the frame and the routes, so the
+       whole map follows the theme from one declaration. */
+    color: var(--text-muted);
+  }
+
+  /* Regions dim when any sibling is active, so the highlighted one reads
+     without needing a colour nobody else has. */
+  .world__map .rgn {
+    opacity: 0.55;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .world__map[data-active] .rgn {
+    opacity: 0.28;
+  }
+
+  .world__map .rgn.is-active {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.015);
+  }
+
+  .world__list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .district {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    text-align: left;
+    padding: var(--space-xs);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    transition:
+      background-color var(--dur-quick) var(--ease-out),
+      border-color var(--dur-quick) var(--ease-out);
+  }
+
+  .district:hover,
+  .district[aria-expanded="true"] {
+    background: var(--surface-raised);
+    border-color: var(--border-subtle);
+  }
+
+  .district__role {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .district__body {
+    color: var(--text-body);
+    font-size: var(--text-sm);
+    padding: 0 var(--space-xs) var(--space-sm) calc(var(--space-xs) + var(--space-sm));
+    max-width: none;
+  }
+</style>
+
+<script>
+  const map = document.querySelector<SVGElement>("[data-map]");
+  const buttons = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".district[data-district]"),
+  );
+
+  function setActive(id: string | null): void {
+    map?.querySelectorAll(".rgn").forEach((g) => {
+      g.classList.toggle("is-active", id !== null && g.getAttribute("data-rgn") === id);
+    });
+    if (map) {
+      if (id) map.setAttribute("data-active", "");
+      else map.removeAttribute("data-active");
+    }
+  }
+
+  function open(id: string | null): void {
+    for (const btn of buttons) {
+      const mine = btn.dataset.district === id;
+      btn.setAttribute("aria-expanded", String(mine));
+      const body = document.querySelector<HTMLElement>(
+        `[data-body="${btn.dataset.district}"]`,
+      );
+      if (body) body.hidden = !mine;
+    }
+    setActive(id);
+  }
+
+  for (const btn of buttons) {
+    const id = btn.dataset.district ?? null;
+
+    // Click toggles the description. Hover and keyboard focus only highlight
+    // the map — moving focus through the list should not expand six paragraphs.
+    btn.addEventListener("click", () => {
+      const isOpen = btn.getAttribute("aria-expanded") === "true";
+      open(isOpen ? null : id);
+    });
+
+    btn.addEventListener("mouseenter", () => {
+      if (!document.querySelector('.district[aria-expanded="true"]')) setActive(id);
+    });
+    btn.addEventListener("focus", () => {
+      if (!document.querySelector('.district[aria-expanded="true"]')) setActive(id);
+    });
+    btn.addEventListener("mouseleave", () => {
+      if (!document.querySelector('.district[aria-expanded="true"]')) setActive(null);
+    });
+  }
+
+  // Open the settlement by default: an empty panel beside a dimmed map looks
+  // broken, and Hearthvale is where the game actually starts.
+  open("hearthvale");
+</script>

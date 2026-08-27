@@ -1,0 +1,65 @@
+---
+/**
+ * §5.7 — the closing call to action.
+ *
+ * States the download weight and the save model plainly. Local-only saves are a
+ * genuine differentiator (no account, works on a plane) and also a real
+ * constraint (clear your site data and it is gone). Saying both is what makes
+ * the first claim believable.
+ */
+import { gamePath } from "../../lib/site";
+---
+
+<section class="cta">
+  <div class="wrap panel cta__panel">
+    <div>
+      <h2 class="cta__title">Start in Hearthvale.</h2>
+      <p class="cta__body">
+        No install, no account, no launcher. Add it to your home screen and it runs
+        offline — saves live on your device, and you can export them.
+      </p>
+    </div>
+
+    <div class="cta__actions">
+      <a class="btn btn--lg" href={gamePath}>Play in your browser</a>
+      <span class="cta__weight">~50&nbsp;MB first load · then cached</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    padding-block: var(--space-3xl) var(--space-4xl);
+  }
+
+  .cta__panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xl);
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cta__title {
+    font-size: var(--text-xl);
+    margin-bottom: var(--space-xs);
+  }
+
+  .cta__body {
+    color: var(--text-muted);
+    max-width: 44ch;
+  }
+
+  .cta__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: flex-start;
+  }
+
+  .cta__weight {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+  }
+</style>

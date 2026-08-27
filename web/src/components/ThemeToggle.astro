@@ -25,8 +25,10 @@
   .theme-toggle {
     display: inline-grid;
     place-items: center;
-    width: 2.4rem;
-    height: 2.4rem;
+    /* 44px. WCAG 2.2 AA only requires 24px (2.5.8), but this is a mobile-first
+       project and 44px is the size a thumb actually hits. */
+    width: 2.75rem;
+    height: 2.75rem;
     padding: 0;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);

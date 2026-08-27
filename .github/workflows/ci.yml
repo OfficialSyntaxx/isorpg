@@ -64,7 +64,9 @@ jobs:
           npm run verify:separators
           npm run verify:pwa
 
-      # The website composition, checked without Unity and without a deploy.
+      # The website's guards: design-token contrast, the XP-curve parity between
+      # the game's table and the website's copy of it, and the deploy
+      # composition — all without Unity and without a deploy.
       # Moving the game off the site root breaks its _headers silently — the
       # build passes, the deploy passes, and the wasm goes out with no
       # Content-Encoding. verify:compose runs the real template's _headers

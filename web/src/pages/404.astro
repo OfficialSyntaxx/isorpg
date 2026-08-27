@@ -1,0 +1,125 @@
+---
+/**
+ * 404 — in-world, not a stack trace (§5, route table).
+ *
+ * Reuses the map's survey language rather than inventing a one-off illustration:
+ * a route that runs off the edge of the surveyed area. Same primitives, so it
+ * costs nothing to keep consistent with §5.4.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { gamePath } from "../lib/site";
+---
+
+<BaseLayout title="Off the map" pathname="/404/" noindex>
+  <section class="nf">
+    <div class="wrap nf__inner">
+      <svg
+        class="nf__art"
+        viewBox="0 0 320 160"
+        role="img"
+        aria-label="A survey route running off the edge of the mapped area."
+      >
+        <defs>
+          <pattern id="nf-survey" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path
+              d="M20 0H0v20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="0.5"
+              opacity="0.2"></path>
+          </pattern>
+        </defs>
+        <rect
+          x="8"
+          y="16"
+          width="200"
+          height="128"
+          rx="8"
+          fill="url(#nf-survey)"
+          stroke="currentColor"
+          stroke-width="1.5"
+          opacity="0.7"></rect>
+        <circle
+          cx="70"
+          cy="80"
+          r="14"
+          fill="var(--surface-raised)"
+          stroke="currentColor"
+          stroke-width="2"></circle>
+        <circle cx="70" cy="80" r="4" fill="var(--mark-gold)"></circle>
+        <path
+          d="M84 80 L204 80"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-dasharray="6 6"
+          fill="none"
+          opacity="0.8"></path>
+        <path
+          d="M212 80 L300 80"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-dasharray="3 9"
+          fill="none"
+          opacity="0.35"></path>
+        <circle cx="300" cy="80" r="3" fill="var(--danger)"></circle>
+      </svg>
+
+      <p class="nf__code">404</p>
+      <h1 class="nf__title">This route runs off the map.</h1>
+      <p class="nf__body">
+        Nothing surveyed at that address. The road back to Hearthvale is short.
+      </p>
+
+      <div class="nf__actions">
+        <a class="btn" href="/">Back to the start</a>
+        <a class="btn btn--secondary" href={gamePath}>Play instead</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .nf {
+    display: grid;
+    place-items: center;
+    min-height: 70svh;
+    padding-block: var(--space-3xl);
+  }
+
+  .nf__inner {
+    text-align: center;
+  }
+
+  .nf__art {
+    width: min(320px, 80vw);
+    height: auto;
+    margin: 0 auto var(--space-lg);
+    color: var(--text-muted);
+  }
+
+  .nf__code {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .nf__title {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-sm);
+  }
+
+  .nf__body {
+    color: var(--text-muted);
+    margin: 0 auto var(--space-xl);
+    max-width: 40ch;
+  }
+
+  .nf__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: center;
+  }
+</style>

@@ -1,0 +1,92 @@
+---
+/**
+ * §5.6 — built in the open.
+ *
+ * The credibility section, and it costs nothing to maintain because it is
+ * generated: UPDATES.md is 123 KB of dated, real development history, and this
+ * reads the three newest entries straight out of it at build time.
+ *
+ * Most indie sites have to invent a devlog. This one already had one.
+ */
+import { recent, formatDate } from "../../lib/devlog";
+import { all } from "../../lib/devlog";
+
+const entries = recent(3);
+const total = all().length;
+---
+
+<section class="devlog" id="devlog">
+  <div class="wrap">
+    <p class="eyebrow">Built in the open</p>
+    <h2>{total} entries, and counting</h2>
+    <p class="devlog__lede">
+      Every build, every regression, every corrective pass — written down as it happened.
+      These are the three most recent.
+    </p>
+
+    <ul class="devlog__list">
+      {
+        entries.map((e) => (
+          <li class="card">
+            <span class="card__meta">{formatDate(e)}</span>
+            <span class="card__title">{e.title}</span>
+            <p class="devlog__summary">{e.summary}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="devlog__note">
+      The full log lives in <code>UPDATES.md</code>. Browsable entries land with the
+      devlog route.
+    </p>
+  </div>
+</section>
+
+<style>
+  .devlog {
+    padding-block: var(--space-3xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .devlog__lede {
+    color: var(--text-muted);
+    margin-block: var(--space-sm) var(--space-xl);
+  }
+
+  .devlog__list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+
+  .devlog__summary {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    max-width: none;
+    /* Entries vary wildly in length; clamping keeps the row of cards even
+       without truncating the data at build time. */
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .devlog__note {
+    margin-top: var(--space-lg);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+</style>

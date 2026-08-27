@@ -1,0 +1,377 @@
+---
+/**
+ * §5.5 — the XP curve, made visual.
+ *
+ * The data is the game's own table, verified element-for-element against
+ * src/data/XPTable.ts by scripts/verify-xp-parity.cjs. A chart of invented
+ * numbers would defeat the point of the section.
+ *
+ * FORM
+ * One series, magnitude over an ordered scale — a line. Linear y, deliberately:
+ * the curve is exponential, so a log axis would flatten the one thing worth
+ * showing, which is how much of the grind lives in the last twenty levels. The
+ * shape IS the story.
+ *
+ * No chart library. An inline SVG path plus ~40 lines of hover handling costs a
+ * fraction of the <60 KB first-load JS budget (§9.1), and a charting dependency
+ * for a single static line would be most of it.
+ *
+ * Per the visualization method: single series so no legend (the heading names
+ * it), selective direct labels rather than one per point, recessive axes, a
+ * hover layer, and a table view so the numbers are readable without the chart.
+ */
+import { curve, MILESTONES, shortXp, fullXp } from "../../lib/xp";
+
+const points = curve();
+const maxXp = points[points.length - 1]!.xp;
+
+// Plot geometry. Padding leaves room for axis labels without a transform.
+const W = 720;
+const H = 340;
+const PAD = { top: 24, right: 24, bottom: 40, left: 60 };
+const plotW = W - PAD.left - PAD.right;
+const plotH = H - PAD.top - PAD.bottom;
+
+const x = (level: number) => PAD.left + ((level - 1) / 98) * plotW;
+const y = (xp: number) => PAD.top + plotH - (xp / maxXp) * plotH;
+
+const line = points
+  .map((p) => `${x(p.level).toFixed(2)},${y(p.xp).toFixed(2)}`)
+  .join(" ");
+const area = `${PAD.left},${PAD.top + plotH} ${line} ${PAD.left + plotW},${PAD.top + plotH}`;
+
+const milestones = MILESTONES.map((lvl) => {
+  const p = points.find((q) => q.level === lvl)!;
+  return { ...p, cx: x(p.level), cy: y(p.xp) };
+});
+
+// Four gridlines. More would compete with the curve for attention.
+const yTicks = [0.25, 0.5, 0.75, 1].map((f) => ({
+  value: maxXp * f,
+  y: PAD.top + plotH - f * plotH,
+}));
+
+const xTicks = [1, 20, 40, 60, 80, 99];
+
+// The share of total XP that sits above level 92 — the number that makes the
+// curve's point in words, for anyone who does not read charts.
+const at92 = points.find((p) => p.level === 92)!.xp;
+const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
+---
+
+<section class="prog" id="progression">
+  <div class="wrap">
+    <p class="eyebrow">Progression</p>
+    <h2>Level 92 is halfway. Level 99 is the other half.</h2>
+    <p class="prog__lede">
+      The OSRS-style curve, drawn from the game's own XP table. Reaching 99 costs{" "}
+      {fullXp(maxXp)} experience — and <strong>{tailShare}%</strong> of it is spent after level
+      92.
+    </p>
+
+    <figure class="prog__figure">
+      <svg
+        class="prog__chart"
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label={`Line chart: cumulative experience required per level, rising from 0 at level 1 to ${fullXp(maxXp)} at level 99. The curve is nearly flat until roughly level 70 and then rises steeply.`}
+        data-chart
+      >
+        <!-- Gridlines and axes, recessive: they orient, they do not compete. -->
+        <g class="grid">
+          {
+            yTicks.map((t) => (
+              <line x1={PAD.left} x2={PAD.left + plotW} y1={t.y} y2={t.y} />
+            ))
+          }
+        </g>
+
+        <g class="axis-label axis-label--y">
+          {
+            yTicks.map((t) => (
+              <text x={PAD.left - 10} y={t.y + 4} text-anchor="end">
+                {shortXp(t.value)}
+              </text>
+            ))
+          }
+        </g>
+
+        <g class="axis-label">
+          {
+            xTicks.map((lvl) => (
+              <text x={x(lvl)} y={PAD.top + plotH + 24} text-anchor="middle">
+                {lvl}
+              </text>
+            ))
+          }
+        </g>
+
+        <polygon class="fill" points={area}></polygon>
+        <polyline class="line" points={line}></polyline>
+
+        <!-- Selective direct labels. Never one per point. -->
+        <g class="milestones">
+          {
+            milestones.map((m) => (
+              <>
+                <circle class="dot" cx={m.cx} cy={m.cy} r="4.5" />
+                <text
+                  class="dot-label"
+                  x={m.cx}
+                  y={m.cy - 12}
+                  text-anchor={m.level > 90 ? "end" : "middle"}
+                >
+                  {shortXp(m.xp)}
+                </text>
+              </>
+            ))
+          }
+        </g>
+
+        <!-- Hover layer -->
+        <line
+          class="crosshair"
+          y1={PAD.top}
+          y2={PAD.top + plotH}
+          x1="0"
+          x2="0"
+          data-crosshair></line>
+        <circle class="cursor-dot" r="5" data-cursor></circle>
+        <rect
+          x={PAD.left}
+          y={PAD.top}
+          width={plotW}
+          height={plotH}
+          fill="transparent"
+          data-hit></rect>
+      </svg>
+
+      <output class="prog__readout" data-readout aria-live="polite">
+        Level 99 · {fullXp(maxXp)} XP
+      </output>
+
+      <figcaption class="prog__caption">
+        Cumulative experience to reach each level. Source:
+        <code>src/data/XPTable.ts</code>.
+      </figcaption>
+    </figure>
+
+    <details class="prog__table">
+      <summary>Show the milestone numbers</summary>
+      <div class="scroll-x">
+        <table class="table">
+          <thead>
+            <tr
+              ><th>Level</th><th class="num">XP to reach</th><th class="num"
+                >Share of 99</th
+              ></tr
+            >
+          </thead>
+          <tbody>
+            {
+              milestones.map((m) => (
+                <tr>
+                  <td>{m.level}</td>
+                  <td class="num">{fullXp(m.xp)}</td>
+                  <td class="num">{Math.round((m.xp / maxXp) * 100)}%</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</section>
+
+<style>
+  .prog {
+    padding-block: var(--space-3xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .prog__lede {
+    color: var(--text-muted);
+    margin-block: var(--space-sm) var(--space-xl);
+  }
+
+  .prog__lede strong {
+    color: var(--text-strong);
+  }
+
+  .prog__figure {
+    margin: 0;
+    padding: var(--space-lg);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+  }
+
+  .prog__chart {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .grid line {
+    stroke: var(--border-subtle);
+    stroke-width: 1;
+  }
+
+  /* Text wears text tokens, never the series colour. */
+  .axis-label text {
+    fill: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .fill {
+    fill: var(--accent);
+    opacity: 0.12;
+  }
+
+  .line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .dot {
+    fill: var(--accent);
+    /* A surface ring so a dot never merges into the curve behind it. */
+    stroke: var(--surface-raised);
+    stroke-width: 2;
+  }
+
+  .dot-label {
+    fill: var(--text-body);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* Hidden by default via CSS rather than the `hidden` attribute: the DOM
+     reflects `hidden` on every element, but neither TypeScript nor Astro's
+     SVGAttributes types it on SVG. A class is typed, and starting hidden in CSS
+     means no flash of a stray crosshair before the script runs. */
+  .crosshair,
+  .cursor-dot {
+    visibility: hidden;
+  }
+
+  .crosshair.is-on,
+  .cursor-dot.is-on {
+    visibility: visible;
+  }
+
+  .crosshair {
+    stroke: var(--text-muted);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+  }
+
+  .cursor-dot {
+    fill: var(--warn);
+    stroke: var(--surface-raised);
+    stroke-width: 2;
+  }
+
+  [data-hit] {
+    cursor: crosshair;
+  }
+
+  .prog__readout {
+    display: block;
+    margin-top: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--text-strong);
+  }
+
+  .prog__caption {
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .prog__table {
+    margin-top: var(--space-lg);
+  }
+
+  .prog__table summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: var(--text-sm);
+  }
+</style>
+
+<script>
+  import { curve, fullXp } from "../../lib/xp";
+
+  const chart = document.querySelector<SVGSVGElement>("[data-chart]");
+  const hit = chart?.querySelector<SVGRectElement>("[data-hit]");
+  const cross = chart?.querySelector<SVGLineElement>("[data-crosshair]");
+  const cursor = chart?.querySelector<SVGCircleElement>("[data-cursor]");
+  const readout = document.querySelector<HTMLElement>("[data-readout]");
+
+  if (chart && hit && cross && cursor && readout) {
+    const points = curve();
+    const maxXp = points[points.length - 1]!.xp;
+
+    // Must match the frontmatter geometry. Read from the rect rather than
+    // duplicating the numbers, so the two cannot drift.
+    const PAD_LEFT = Number(hit.getAttribute("x"));
+    const PAD_TOP = Number(hit.getAttribute("y"));
+    const plotW = Number(hit.getAttribute("width"));
+    const plotH = Number(hit.getAttribute("height"));
+
+    const xOf = (level: number) => PAD_LEFT + ((level - 1) / 98) * plotW;
+    const yOf = (xp: number) => PAD_TOP + plotH - (xp / maxXp) * plotH;
+
+    const defaultText = `Level 99 · ${fullXp(maxXp)} XP`;
+
+    function show(clientX: number): void {
+      // Convert viewport px to viewBox units — the SVG scales with the page, so
+      // offsetX is in the wrong coordinate space.
+      const box = chart!.getBoundingClientRect();
+      const vb = chart!.viewBox.baseVal;
+      const vx = ((clientX - box.left) / box.width) * vb.width;
+
+      const level = Math.max(
+        1,
+        Math.min(99, Math.round(((vx - PAD_LEFT) / plotW) * 98 + 1)),
+      );
+      const p = points[level - 1]!;
+
+      cross!.setAttribute("x1", String(xOf(level)));
+      cross!.setAttribute("x2", String(xOf(level)));
+      cursor!.setAttribute("cx", String(xOf(level)));
+      cursor!.setAttribute("cy", String(yOf(p.xp)));
+      cross!.classList.add("is-on");
+      cursor!.classList.add("is-on");
+      readout!.textContent = `Level ${level} · ${fullXp(p.xp)} XP`;
+    }
+
+    function hide(): void {
+      cross!.classList.remove("is-on");
+      cursor!.classList.remove("is-on");
+      readout!.textContent = defaultText;
+    }
+
+    hit.addEventListener("pointermove", (e) => show(e.clientX));
+    hit.addEventListener("pointerdown", (e) => show(e.clientX));
+    hit.addEventListener("pointerleave", hide);
+  }
+</script>

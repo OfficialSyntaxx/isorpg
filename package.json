@@ -35,10 +35,11 @@
     "site:tokens": "node scripts/gen-tokens.cjs",
     "site:specimen": "npm run site:tokens && node scripts/gen-specimen.cjs",
     "verify:tokens": "node scripts/verify-tokens.cjs",
+    "verify:xp": "node scripts/verify-xp-parity.cjs",
     "site:compose": "node scripts/compose-site.cjs",
     "verify:compose": "node scripts/verify-compose.cjs",
     "verify:deploy-report": "node scripts/verify-deploy-report.cjs",
-    "verify:site": "npm run verify:tokens && npm run verify:compose && npm run verify:deploy-report"
+    "verify:site": "npm run verify:tokens && npm run verify:xp && npm run verify:compose && npm run verify:deploy-report"
   },
   "dependencies": {
     "three": "^0.170.0"
