@@ -1,0 +1,168 @@
+---
+/**
+ * /world — the mainland (blueprint §4.1).
+ *
+ * Reuses the landing page's WorldMap section rather than building a second map.
+ * One map, one set of district copy, one accessibility story to maintain — a
+ * duplicate would drift within a week.
+ *
+ * The added value over the landing section is the layout rules: WHY the world is
+ * arranged as it is, taken from docs/WORLD_LAYOUT.md's stated contract.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import WorldMap from "../components/sections/WorldMap.astro";
+import { gamePath } from "../lib/site";
+
+/**
+ * The layout rules, quoted in substance from docs/WORLD_LAYOUT.md. These are
+ * design constraints the world is actually built against, not marketing lines —
+ * which is what makes them worth reading.
+ */
+const rules = [
+  {
+    title: "The settlement stays open",
+    body: "Buildings sit around a walkable square, never as an opaque ring around where you spawn. You should be able to see out of your own town.",
+  },
+  {
+    title: "Every biome has a front door",
+    body: "One obvious landmark at each entrance, with a road or bridge that makes the intended route visible before you commit to it.",
+  },
+  {
+    title: "Function clusters",
+    body: "Forge and smelter near the quarry route, campfire and market by the square, farm structures beside fields and water. You learn the map by learning what things are for.",
+  },
+  {
+    title: "Density grows outward",
+    body: "Resource nodes thicken away from the settlement, but paths stay clear and there is room left for NPCs, combat clearings and quest objects.",
+  },
+  {
+    title: "Boundaries are visible",
+    body: "Water, cliffs, bridges and gates mark progression instead of invisible blockers. If you cannot go somewhere, you can see why.",
+  },
+  {
+    title: "Every route is a loop",
+    body: "Each road leads back to town rather than dead-ending. Going out is never a commitment to retracing your steps.",
+  },
+];
+---
+
+<BaseLayout
+  title="The world"
+  pathname="/world/"
+  description="The Isoperia mainland: a safe settlement at the centre, four outer regions, and the layout rules the world is built against."
+>
+  <section class="head">
+    <div class="wrap">
+      <p class="eyebrow">The mainland</p>
+      <h1 data-reveal>A world you can hold in your head.</h1>
+      <p class="lede" data-reveal>
+        One settlement at the centre, four outer regions whose terrain and resource loop
+        reinforce one another, and a dungeon east that you earn. Below is the map — and
+        then the rules it was built against.
+      </p>
+    </div>
+  </section>
+
+  <WorldMap />
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>Six rules the world is held to</h2>
+      <p class="note" data-reveal>
+        These are the actual layout constraints from the project's world document, not a
+        wishlist. They exist because a readable world is a design problem before it is an
+        art problem.
+      </p>
+
+      <ol class="rules">
+        {
+          rules.map((r, i) => (
+            <li class="rule" data-reveal>
+              <span class="rule__n">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <h3 class="rule__title">{r.title}</h3>
+                <p class="rule__body">{r.body}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+
+      <p class="cta-row" data-reveal>
+        <a class="btn btn--lg" href={gamePath} data-exit>Walk it yourself</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .head {
+    padding-block: var(--space-3xl) 0;
+  }
+
+  .lede {
+    font-size: var(--text-lg);
+    color: var(--text-muted);
+    margin-top: var(--space-sm);
+  }
+
+  .block {
+    padding-block: var(--space-2xl) var(--space-4xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .note {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-block: var(--space-sm) var(--space-xl);
+  }
+
+  .rules {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+
+  /* Numbered because these are a real ordered set of constraints, applied in
+     this order when a region is composed — not decoration. */
+  .rule {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+  }
+
+  .rule__n {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--accent);
+    padding-top: 0.2em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rule__title {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .rule__body {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    max-width: none;
+  }
+
+  .cta-row {
+    margin-top: var(--space-2xl);
+    max-width: none;
+  }
+</style>

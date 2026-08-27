@@ -1,0 +1,269 @@
+---
+/**
+ * /features — the systems deep-dive (blueprint §4.1).
+ *
+ * Every number and every name on this page is read from the game's own content
+ * export at build time (src/lib/gamedata.ts), not written into the copy. A
+ * features page that says "12 skills" as prose is a claim that rots the moment
+ * someone adds a thirteenth.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { gamePath } from "../lib/site";
+import {
+  counts,
+  skillGroups,
+  skillName,
+  resourceNodes,
+  buildingRows,
+  nodeLabel,
+} from "../lib/gamedata";
+
+const groups = skillGroups();
+const nodes = resourceNodes();
+const buildings = buildingRows();
+
+const stats = [
+  { n: counts.skills, label: "skills" },
+  { n: counts.items, label: "items" },
+  { n: counts.recipes, label: "recipes" },
+  { n: counts.monsters, label: "monsters" },
+  { n: counts.buildings, label: "buildings" },
+  { n: counts.achievements, label: "achievements" },
+];
+---
+
+<BaseLayout
+  title="Features"
+  pathname="/features/"
+  description="The systems behind Isoperia: skills on an OSRS-style curve, tick-based combat, settlement building, and per-item mastery."
+>
+  <section class="head">
+    <div class="wrap">
+      <p class="eyebrow">Systems</p>
+      <h1 data-reveal>Everything here is a number the game actually uses.</h1>
+      <p class="lede" data-reveal>
+        Isoperia is a settlement builder and a character RPG sharing one loop. The counts
+        below are read from the game's own content export when this page is built, so they
+        cannot drift from what you'll play.
+      </p>
+
+      <ul class="stats" data-reveal>
+        {
+          stats.map((s) => (
+            <li class="stat">
+              <span class="stat__n">{s.n}</span>
+              <span class="stat__label">{s.label}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>The {counts.skills} skills</h2>
+      <p class="note" data-reveal>
+        Every skill runs on the same OSRS-style curve — 13,034,431 experience to reach 99,
+        and half of that sits above level 92.
+      </p>
+
+      <div class="groups">
+        {
+          groups.map((g) => (
+            <article class="card" data-reveal>
+              <span class="card__title">{g.label}</span>
+              <p class="note">{g.note}</p>
+              <ul class="chips">
+                {g.ids.map((id) => (
+                  <li class="tag">{skillName(id)}</li>
+                ))}
+              </ul>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>What you can gather</h2>
+      <p class="note" data-reveal>
+        Nodes deplete after a set number of uses and respawn. Per-item mastery raises your
+        double-drop chance and shortens the action.
+      </p>
+
+      <div class="scroll-x" data-reveal>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Node</th>
+              <th>Skill</th>
+              <th class="num">Level</th>
+              <th class="num">Ticks / action</th>
+              <th class="num">Uses before depleted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              nodes.map((n) => (
+                <tr>
+                  <td>{nodeLabel(n.id)}</td>
+                  <td>{n.skill}</td>
+                  <td class="num">{n.levelReq}</td>
+                  <td class="num">{n.ticksPerAction}</td>
+                  <td class="num">{n.maxUses}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="note note--after">
+        One tick is 600&nbsp;ms — the same tick the combat engine runs on.
+      </p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>What you can build</h2>
+      <p class="note" data-reveal>
+        Buildings go on validated tiles and yield passively, each up to level
+        {counts.maxBuildLevel}. Smithing and Carpentry recipes stay locked until the
+        matching building exists.
+      </p>
+
+      <div class="scroll-x" data-reveal>
+        <table class="table">
+          <thead>
+            <tr><th>Building</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            {
+              buildings.map((b) => (
+                <tr>
+                  <td>{b.name}</td>
+                  <td>{b.effect}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="callout" data-reveal>
+        <span class="callout__icon" aria-hidden="true">💾</span>
+        <span class="callout__title">Your save is yours</span>
+        <div class="callout__body">
+          <p>
+            Saves live in your browser — <code>localStorage</code> with an IndexedDB backup,
+            sanitised import/export, and rollback recovery. No account, and it works offline.
+            The flip side is honest too: clear your site data and it's gone, so export anything
+            you'd miss.
+          </p>
+        </div>
+      </div>
+
+      <p class="cta-row" data-reveal>
+        <a class="btn btn--lg" href={gamePath} data-exit>Play in your browser</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .head {
+    padding-block: var(--space-3xl) var(--space-xl);
+  }
+
+  .lede {
+    font-size: var(--text-lg);
+    color: var(--text-muted);
+    margin-top: var(--space-sm);
+  }
+
+  .stats {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-xl);
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+    padding: var(--space-md);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+  }
+
+  .stat__n {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: 1;
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat__label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .block {
+    padding-block: var(--space-2xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .note {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-block: var(--space-sm) var(--space-lg);
+  }
+
+  .note--after {
+    margin-top: var(--space-sm);
+    margin-bottom: 0;
+  }
+
+  .groups {
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  }
+
+  .chips {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-top: auto;
+  }
+
+  .cta-row {
+    margin-top: var(--space-xl);
+    max-width: none;
+  }
+</style>

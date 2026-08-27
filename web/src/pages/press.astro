@@ -1,0 +1,252 @@
+---
+/**
+ * /press — the press kit (blueprint §4.1).
+ *
+ * Two honesty constraints shape this page:
+ *
+ * 1. The press contact in site.config.json is null. A press page whose contact
+ *    is a dead mailto: is worse than one that says where to reach the project
+ *    instead, so the block renders conditionally and falls back to the repo.
+ * 2. Attribution is an obligation, not a courtesy. docs/ASSET_CREDITS.md is the
+ *    project's licence acceptance record and this page summarises it and links
+ *    to it rather than quietly omitting third-party CC0 work.
+ *
+ * Images are imported from docs/ and processed by astro:assets, so the 3 MB
+ * concept PNG ships as a sized, modern-format, lazy-loaded asset instead of a
+ * 3 MB PNG.
+ */
+import { Image } from "astro:assets";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { site, origin, gamePath, socials } from "../lib/site";
+import { counts } from "../lib/gamedata";
+
+import townShot from "../../../docs/screenshots/unity-town-runtime-2026-08-23.jpg";
+import roadShot from "../../../docs/screenshots/hearthvale-east-road-local-props-2026-08-25.png";
+import overworld from "../../../docs/concepts/isoperia-overworld-layout-v1.png";
+
+const github = socials().find((s) => s.id === "github");
+
+const facts: { k: string; v: string }[] = [
+  { k: "Title", v: site.name },
+  { k: "Genre", v: "Settlement builder / character-centric RPG" },
+  { k: "Platform", v: "Browser (WebGL), installable as a PWA, offline-capable" },
+  { k: "Price", v: "Free" },
+  { k: "Engine", v: "Unity 6 (WebGL); an earlier prototype ran on three.js" },
+  { k: "Status", v: "In development, playable" },
+  { k: "Accounts", v: "None — saves are local, with import and export" },
+  { k: "First load", v: "~50 MB Brotli-compressed, then cached" },
+  {
+    k: "Content",
+    v: `${counts.skills} skills · ${counts.items} items · ${counts.recipes} recipes · ${counts.monsters} monsters · ${counts.buildings} buildings`,
+  },
+];
+
+const shots = [
+  {
+    src: townShot,
+    alt: "The Hearthvale settlement at runtime, seen from the third-person follow camera: a plaza, timber buildings and villagers.",
+    caption: "Hearthvale at runtime",
+  },
+  {
+    src: roadShot,
+    alt: "The east road out of Hearthvale, with travel lanterns and a supply crate grounded to the terrain.",
+    caption: "The east road, with route anchors",
+  },
+  {
+    src: overworld,
+    alt: "Top-down concept layout of the Isoperia overworld, showing the central settlement and the surrounding regions.",
+    caption: "Overworld layout concept",
+  },
+];
+---
+
+<BaseLayout
+  title="Press kit"
+  pathname="/press/"
+  description="Press kit for Isoperia: logline, factsheet, screenshots, and licence information."
+>
+  <section class="head">
+    <div class="wrap">
+      <p class="eyebrow">Press kit</p>
+      <h1 data-reveal>{site.name}</h1>
+      <p class="logline" data-reveal>{site.tagline}</p>
+      <p class="note" data-reveal>
+        Everything on this page may be reproduced for coverage. Screenshots are from real
+        builds, not mock-ups.
+      </p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>Factsheet</h2>
+      <div class="scroll-x" data-reveal>
+        <table class="table">
+          <tbody>
+            {
+              facts.map((f) => (
+                <tr>
+                  <th scope="row">{f.k}</th>
+                  <td>{f.v}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="note note--after">
+        The content counts are read from the game's own data export when this page is
+        built, so they cannot drift from the build you'd play.
+      </p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>Screenshots</h2>
+      <p class="note" data-reveal>
+        Right-click to save. Higher-resolution originals live in the repository under <code
+          >docs/</code
+        >.
+      </p>
+
+      <div class="shots">
+        {
+          shots.map((s) => (
+            <figure class="shot" data-reveal>
+              <Image src={s.src} alt={s.alt} widths={[480, 960, 1440]} loading="lazy" />
+              <figcaption>{s.caption}</figcaption>
+            </figure>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>Licence and attribution</h2>
+      <div class="callout" data-reveal>
+        <span class="callout__icon" aria-hidden="true">📜</span>
+        <span class="callout__title">Most art is original; some is CC0</span>
+        <div class="callout__body">
+          <p>
+            The great majority of Isoperia's models are original project art, authored in
+            Blender. Two third-party sources are used, both CC0: a Poly Haven terrain
+            texture and a curated subset of Kenney's Fantasy Town Kit. The full acceptance
+            record — owner, source, licence status and technical review for every shipped
+            asset — is kept in
+            <code>docs/ASSET_CREDITS.md</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>Contact</h2>
+      {
+        /* site.config.json's press address is null. Rather than render a dead
+           mailto:, point at the places that genuinely reach the project. */
+      }
+      <p class="note" data-reveal>
+        There is no dedicated press address yet. The most reliable way to reach the
+        project is through the repository — issues and discussions are read.
+      </p>
+      <p class="cta-row" data-reveal>
+        {
+          github && (
+            <a class="btn btn--secondary" href={github.url} rel="noopener noreferrer">
+              {github.cta}
+            </a>
+          )
+        }
+        <a class="btn" href={gamePath} data-exit>Play in your browser</a>
+      </p>
+      <p class="note note--after">
+        Canonical URL: <code>{origin}</code>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .head {
+    padding-block: var(--space-3xl) var(--space-xl);
+  }
+
+  .logline {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: var(--text-strong);
+    line-height: var(--leading-snug);
+    margin-top: var(--space-sm);
+    max-width: 34ch;
+  }
+
+  .block {
+    padding-block: var(--space-2xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .note {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-block: var(--space-sm) var(--space-lg);
+  }
+
+  .note--after {
+    margin-top: var(--space-sm);
+    margin-bottom: 0;
+  }
+
+  /* Row headers in the factsheet are <th scope="row">, so they need the label
+     treatment rather than the column-header treatment .table gives them. */
+  .table th[scope="row"] {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: var(--text-sm);
+    width: 12rem;
+    color: var(--text-muted);
+  }
+
+  .shots {
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+
+  .shot {
+    margin: 0;
+  }
+
+  .shot :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .shot figcaption {
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    max-width: none;
+  }
+</style>

@@ -9,7 +9,7 @@
 import "../styles/global.css";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
-import { site, absolute } from "../lib/site";
+import { site, absolute, analytics, analyticsEnabled } from "../lib/site";
 
 interface Props {
   /** Page title. The site name is appended, except on the home page. */
@@ -88,6 +88,30 @@ const canonical = absolute(pathname);
         prevent. */
     }
     <script is:inline src="/theme-init.js"></script>
+
+    {
+      /* Blueprint §10 — cookieless analytics, and only if one is configured.
+         `defer` because no page behaviour depends on it, and nothing here sets
+         a cookie or reads one. */
+      analyticsEnabled() && analytics.provider === "plausible" && (
+        <script
+          is:inline
+          defer
+          data-domain={analytics.domain}
+          src="https://plausible.io/js/script.js"
+        />
+      )
+    }
+    {
+      analyticsEnabled() && analytics.provider === "umami" && (
+        <script
+          is:inline
+          defer
+          data-website-id={analytics.domain}
+          src="https://cloud.umami.is/script.js"
+        />
+      )
+    }
   </head>
 
   <body>

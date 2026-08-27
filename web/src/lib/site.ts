@@ -45,6 +45,35 @@ export const site = {
   shortDescription: raw.shortDescription,
 } as const;
 
+export interface Analytics {
+  /** "plausible" | "umami" — or null, which disables analytics entirely. */
+  provider: string | null;
+  /** The site/website identifier the provider expects. */
+  domain: string | null;
+}
+
+/**
+ * Analytics configuration.
+ *
+ * Blueprint §10: cookieless and privacy-preserving only. Deliberately NOT
+ * Google Analytics — it needs a cookie banner, weakens `connect-src`, and buys
+ * nothing this project needs.
+ *
+ * `provider: null` means no snippet is emitted at all, which is the current
+ * state. Turning it on also requires adding the provider's host to `script-src`
+ * and `connect-src` in the CSP (blueprint §8.1, Phase 7) — a snippet with no
+ * CSP entry is a blocked request and a silently broken integration.
+ */
+export const analytics: Analytics = {
+  provider: raw.analytics.provider,
+  domain: raw.analytics.domain,
+};
+
+/** Whether a snippet should be rendered at all. */
+export function analyticsEnabled(): boolean {
+  return typeof analytics.provider === "string" && typeof analytics.domain === "string";
+}
+
 /**
  * Absolute URL for a site-relative path. Open Graph and canonical tags require
  * absolute URLs — a relative one is silently ignored by most crawlers.
