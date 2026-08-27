@@ -126,12 +126,16 @@ jobs:
         with:
           name: WebGLBuild
           path: unity/WebGLBuild
-          retention-days: 14
+          # Raised from 14. The website deploy lane reuses this artifact rather
+          # than rebuilding Unity, so at 14 days a landing-copy change more than
+          # a fortnight after the last game build would have nothing to compose
+          # against and would (correctly) refuse to deploy.
+          retention-days: 90
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     if: github.event_name == 'push' || inputs.deploy
     steps:
       - uses: actions/checkout@v4
@@ -148,11 +152,42 @@ jobs:
       # path rather than two that can drift. It deploys, then re-fetches the
       # wasm and the data file and checks Content-Type and Content-Encoding —
       # the single thing separating "deployed" from "actually loads".
+      # The site root is the landing page and the game lives at /play, so every
+      # deploy must publish the FULL composed tree. Netlify's --dir deploy
+      # replaces the whole site: publishing only the Unity build here would
+      # delete the website.
+      - name: Build the landing site
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      # Refuses to compose without the game, so a broken artifact cannot become
+      # a deploy that silently drops /play.
+      - name: Compose the publish directory
+        run: |
+          node scripts/compose-site.cjs \
+            --site web/dist \
+            --game unity/WebGLBuild \
+            --out dist-site \
+            --prefix play
+
       - name: Deploy and verify headers
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          DEPLOY_DIR: dist-site
+          GAME_DIR: unity/WebGLBuild
+          GAME_PREFIX: play
         run: scripts/deploy-report.sh
+
+      # Headers being right is not the same as the game starting. This is the
+      # check that caught the CSP blocking Unity's inline loader.
+      - name: Verify the deployed game boots
+        run: |
+          SITE=$(grep -m1 '^url: ' unity/deploy-report.txt | cut -d' ' -f2)
+          npx --yes playwright@1.62.1 install --with-deps chromium
+          node scripts/verify-deployed-play.cjs "$SITE"
 
       - name: Deploy report
         run: cat unity/deploy-report.txt >> "$GITHUB_STEP_SUMMARY"

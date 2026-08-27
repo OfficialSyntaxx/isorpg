@@ -44,7 +44,7 @@ Update the Status column as phases move.
 | 5 | Animation layer | Opus 5 | ✅ Done | Motion spec implemented; `prefers-reduced-motion` verified |
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 ×2 + Opus 5 | ✅ Done | Feeds render from repo markdown; RSS valid |
 | 7 | Security hardening | Opus 5 | ✅ Done | CSP enforced with zero console violations; headers audit passes |
-| 8 | Netlify cutover | Opus 5 | ⬜ Not started | Landing at `/`, game at `/play`, no regression in `deploy-report.txt` |
+| 8 | Netlify cutover | Opus 5 | 🟡 Ready; one guarded dispatch away | Landing at `/`, game at `/play`, no regression in `deploy-report.txt` |
 | 9 | Custom domain | Sonnet 5 | ⬜ Not started | DNS live, HTTPS, canonical + redirects correct |
 | 10 | Backend Phase B1 (forms) | Sonnet 5 | ⬜ Not started | Newsletter + contact functions live, rate-limited, spam-guarded |
 | 11 | Backend Phase B2 (accounts) | Opus 5 | ⬜ Blocked on B1 | Design doc only until greenlit |
@@ -1235,17 +1235,62 @@ and unblock a future COEP spike. It is the clearest remaining security and
 privacy improvement, and it is not hard — it is recorded here rather than done
 because it is a Phase 9/10-sized change to the font pipeline, not a Phase 7 one.
 
-### Phase 8 — Cutover ⬜
+### Phase 8 — Cutover 🟡
 
-- [ ] Set `retention-days: 90` on the `WebGLBuild` artifact upload in
-      `unity-webgl.yml` (default is 14 — see §2.4 Option A).
-- [ ] Final preview verification of `/` **and** `/play`.
-- [ ] Publish. Confirm `deploy-report.txt` `VERDICT: PASS`.
+- [x] `retention-days: 90` on the `WebGLBuild` upload in `unity-webgl.yml`
+      (was 14; the web lane reuses that artifact).
+- [x] **Both production lanes now publish the composed tree.**
+      `unity-webgl.yml` builds Unity, then builds the landing site, composes and
+      deploys; `web-deploy.yml` rebuilds only the website and reuses the most
+      recent Unity artifact. Netlify's `--dir` deploy replaces the whole site,
+      so a lane that published half of it would delete the other half.
+      `compose-site.cjs` refuses to compose without the game, making that a
+      stopped workflow rather than a silent outage.
+- [x] **`/play` under the CSP is verified, not assumed.** `verify-deployed-play.cjs`
+      runs on the CI runner against the real deploy: the Unity loader appears
+      and advances, `WebAssembly.compile` succeeds under the policy, and no
+      `securitypolicyviolation` fires. **11/11 on run 33097514078.** Both
+      production lanes run it after deploying.
+- [x] Final preview verification of `/` and `/play` — the same run above.
+- [ ] **Publish to production.** Deliberately left as one guarded action:
+      dispatch `web-deploy.yml` and type `CUTOVER` in the confirmation field.
+      Anything else publishes a draft. Until that runs, production keeps serving
+      the game at the site root exactly as before.
 - [ ] Verify a returning visitor with an old service worker still updates
-      (regression check on T7).
+      (regression check on T7). The build-id-stamped URLs and cache version
+      handle this, but it needs a real browser that already holds the old cache.
 - [ ] Device sweep: install to home screen, fullscreen launch, safe areas,
-      audio-after-tap, save durability.
-- [ ] Record the rollback deploy ID in `UPDATES.md`.
+      audio-after-tap, save durability. `docs/CI_DEPLOY.md` is explicit that CI
+      does not remove this.
+- [x] Rollback: `web-deploy.yml` writes the Netlify deploys link into its run
+      summary, so a rollback does not depend on anyone having noted an id.
+      Republishing any earlier deploy restores it.
+
+#### The CSP nearly took the game down, and the check caught it
+
+Worth recording in full, because it is the clearest vindication of the
+"prove it, do not reason about it" discipline this plan keeps insisting on.
+
+Phase 7 shipped an enforcing CSP with `script-src 'self'`, verified against all
+13 landing routes with zero violations. The reasoning about `/play` was sound:
+`'wasm-unsafe-eval'` was present, the header check passed, the game's assets
+were served correctly. Every piece of available evidence said it was fine.
+
+The first run of the deployed check said:
+
+```
+FAIL  the Unity loader appears and its progress bar advances
+FAIL  no CSP violations on /play
+      [style-src-elem blocked inline | script-src-elem blocked inline]
+```
+
+Unity's WebGL template ships one inline `<script>` and one inline `<style>`, and
+its loader depends on them — obvious in hindsight, invisible to every check that
+existed. Cutting over would have replaced a working game with a page that hangs
+on the progress bar, while `deploy-report.txt` reported a healthy deploy.
+
+The fix is in `compose-site.cjs`: it hashes those inline blocks at compose time
+and adds the hashes to the policy. Re-verified 11/11.
 
 ### Phase 9 — Custom domain ⬜
 
