@@ -23,7 +23,9 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -42,7 +44,12 @@ body {
 }
 
 /* --- headings ------------------------------------------------------------- */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
   color: var(--text-strong);
   font-weight: 600;
@@ -51,13 +58,25 @@ h1, h2, h3, h4, h5, h6 {
   text-wrap: balance;
 }
 
-h1 { font-size: var(--text-4xl); }
-h2 { font-size: var(--text-2xl); }
-h3 { font-size: var(--text-xl); }
-h4 { font-size: var(--text-lg); }
-h5, h6 { font-size: var(--text-md); }
+h1 {
+  font-size: var(--text-4xl);
+}
+h2 {
+  font-size: var(--text-2xl);
+}
+h3 {
+  font-size: var(--text-xl);
+}
+h4 {
+  font-size: var(--text-lg);
+}
+h5,
+h6 {
+  font-size: var(--text-md);
+}
 
-p, li {
+p,
+li {
   text-wrap: pretty;
 }
 
@@ -80,14 +99,20 @@ a:hover {
 }
 
 /* --- media ---------------------------------------------------------------- */
-img, svg, video, canvas {
+img,
+svg,
+video,
+canvas {
   display: block;
   max-width: 100%;
   height: auto;
 }
 
 /* --- forms ---------------------------------------------------------------- */
-input, button, textarea, select {
+input,
+button,
+textarea,
+select {
   font: inherit;
   color: inherit;
 }

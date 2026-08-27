@@ -32,7 +32,6 @@
     "verify:shaders": "node scripts/verify-always-included-shaders.cjs",
     "verify:models": "node scripts/verify-model-budget.cjs",
     "verify:separators": "node scripts/verify-no-digit-separators.cjs",
-    "site:holding": "node scripts/gen-holding-page.cjs",
     "site:tokens": "node scripts/gen-tokens.cjs",
     "site:specimen": "npm run site:tokens && node scripts/gen-specimen.cjs",
     "verify:tokens": "node scripts/verify-tokens.cjs",

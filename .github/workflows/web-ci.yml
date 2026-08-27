@@ -1,0 +1,102 @@
+name: Web CI
+
+# The website workspace, checked on its own.
+#
+# WHY A SEPARATE WORKFLOW
+# web/ is an isolated npm project with its own lockfile and its own toolchain
+# (Astro, TypeScript 5, ESLint 10). The root ci.yml builds the game and must
+# stay untouched by it — the game's toolchain is not the website's, and a
+# website dependency bump has no business failing a Unity port check.
+#
+# The design-token audit is NOT duplicated here. It lives in the root
+# `npm run verify:site`, because tokens.json is consumed by generators outside
+# web/ as well (the specimen page), and one owner is better than two.
+
+on:
+  push:
+    paths:
+      - "web/**"
+      - "scripts/gen-tokens.cjs"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "scripts/gen-tokens.cjs"
+      - ".github/workflows/web-ci.yml"
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      # "22" resolves to the latest 22.x on the runner. astro-eslint-parser
+      # declares engines >=22.22.3 and prints a warning below that, but it was
+      # verified to run correctly on 22.22.2 — so this is deliberately NOT
+      # pinned to an exact patch, which would fail the whole job if that exact
+      # release were unavailable on the runner.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+
+      # Regenerates web/src/styles/tokens.css from tokens.json. Also runs as a
+      # prebuild step, but doing it explicitly makes a generator failure legible
+      # rather than showing up as a missing-import error.
+      - name: Generate design tokens
+        run: npm run tokens
+
+      # astro check is the real typechecker: it covers .astro frontmatter and
+      # templates, which tsc alone does not see.
+      - name: Typecheck
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Build
+        run: npm run build
+
+      # The blueprint budgets first-load JS at <60 KB gzip (§9.1). This is not
+      # that gate — Phase 4 owns Lighthouse — but it surfaces the number on
+      # every run so a regression is visible when it lands.
+      - name: Report build size
+        run: |
+          {
+            echo "### Web build output"
+            echo
+            echo '```'
+            du -ah dist | sort -k2 | tail -40
+            echo
+            echo "total: $(du -sh dist | cut -f1)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if the landing _headers went missing
+        run: |
+          # compose-site.cjs merges this into the root _headers. If Astro stops
+          # copying it, the site silently loses its security headers.
+          test -f dist/_headers || {
+            echo "::error::dist/_headers is missing — public/_headers was not copied."
+            exit 1
+          }
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high

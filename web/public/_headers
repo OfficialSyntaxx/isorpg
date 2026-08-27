@@ -1,0 +1,15 @@
+# Landing-site headers.
+#
+# scripts/compose-site.cjs merges this with the Unity build's rules (rewritten
+# under /play) into ONE root _headers, because Netlify reads only the root file.
+# The site's broad rules go first so the game's specific ones win on overlap.
+#
+# CSP IS DELIBERATELY ABSENT. Blueprint Phase 7 owns it, and §8.1 requires it to
+# ship in report-only first: enforcing an unmeasured policy over a Unity WebGL
+# payload is how you publish a blank page. The headers below cannot break a
+# working page, so they land now.
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()

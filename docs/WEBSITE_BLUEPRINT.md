@@ -10,8 +10,9 @@
 > Those live in `ROADMAP.md`, `docs/ART_BIBLE.md`, `docs/WORLD_LAYOUT.md`, and
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
-**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phase 2 done.
-Phase 1 implemented and tested, with one gate open that needs a real Unity build.
+**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 2 and 3
+done. Phase 1 implemented and tested, with one gate open that needs a real Unity
+build.
 
 **Rollback anchor (§2.5).** The production deploy serving the game at the root
 before any cutover is Netlify deploy `6a8f04e32a032f122bbaba51` on site
@@ -29,7 +30,7 @@ Update the Status column as phases move.
 | 0 | Decisions & constraints | — | ✅ Done | All four architecture decisions locked (§1) |
 | 1 | Deploy composition spike | Opus 5 | 🟡 Code done, gate open | Game verified loading at `/play/` with correct Brotli headers |
 | 2 | Design system & tokens | Opus 5 | ✅ Done | Token file + type scale + motion scale reviewed against `docs/ART_BIBLE.md` |
-| 3 | Astro workspace scaffold | Sonnet 5 | ⬜ Not started | `npm run build` in `web/` green; CI runs it |
+| 3 | Astro workspace scaffold | Opus 5 | ✅ Done | `npm run build` in `web/` green; CI runs it |
 | 4 | Landing page build | Opus 5 → Sonnet 5 | ⬜ Not started | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
 | 5 | Animation layer | Opus 5 | ⬜ Not started | Motion spec implemented; `prefers-reduced-motion` verified |
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 | ⬜ Not started | Feeds render from repo markdown; RSS valid |
@@ -207,7 +208,10 @@ Write the ID into `unity/deploy-report.txt` as part of the cutover commit.
 | `scripts/compose-site.cjs` | Merges landing output + Unity build into one publish dir; rewrites and merges `_headers`. Refuses unsafe inputs. |
 | `scripts/verify-compose.cjs` | 23 assertions over the real template `_headers`. `npm run verify:compose` |
 | `scripts/verify-deploy-report.cjs` | 9 assertions driving the header check against a live local server. `npm run verify:deploy-report` |
-| `scripts/gen-holding-page.cjs` | Interim root page from `web/site.config.json`. `npm run site:holding` |
+| `web/` | The Astro workspace (Phase 3). Own lockfile and toolchain, isolated from the game's. |
+| `web/src/lib/site.ts` | Typed access to `site.config.json`. Filters out `null` socials so a placeholder is never a dead link. |
+| `web/public/theme-init.js` | Applies the saved theme before first paint. External and blocking so it needs only `script-src 'self'`. |
+| `.github/workflows/web-ci.yml` | Typecheck, lint, format, build, size report, `npm audit` on `web/**`. |
 | `web/src/styles/tokens.json` | **Design token source of truth** (Phase 2). Colour, type, space, motion, plus the contrast contract. |
 | `scripts/gen-tokens.cjs` | Emits `tokens.css` from the JSON. `npm run site:tokens` |
 | `scripts/verify-tokens.cjs` | 54 contrast/structure assertions over both themes. `npm run verify:tokens` |
@@ -881,14 +885,61 @@ Numbers alone would have shipped both of these:
   so the page lied about itself. It now renders both palettes at once with
   literal values, which is more useful for review anyway.
 
-### Phase 3 — Astro workspace ⬜
+### Phase 3 — Astro workspace ✅
 
-- [ ] `web/` workspace, isolated from the root `package.json` so the game's
-      toolchain is untouched.
-- [ ] TypeScript strict, ESLint, Prettier.
-- [ ] Base layout, theme handling, tokens wired.
-- [ ] `web-ci.yml`: build + typecheck + `npm audit` on `web/**`.
-- [ ] Confirm the root `ci.yml` is unaffected.
+- [x] `web/` workspace with its own `package.json` and lockfile, isolated from
+      the root. The root `package.json` declares no npm workspaces, so the two
+      trees never resolve into each other. Root `npm test` and `npm run build`
+      both re-verified unaffected.
+- [x] Astro 7 + TypeScript 5 strict (`astro/tsconfigs/strict` plus
+      `noUnusedLocals`, `noUnusedParameters`, `verbatimModuleSyntax`), ESLint 10
+      flat config, Prettier with the Astro plugin. Clean rebuild from an empty
+      `dist`: **0 errors, 0 warnings, 0 hints**; lint, format check and
+      `npm audit --audit-level=high` all clean.
+- [x] `BaseLayout.astro` — head, canonical, Open Graph, per-theme
+      `theme-color`, skip link, header, footer. `SiteHeader`, `SiteFooter`,
+      `ThemeToggle`. Tokens wired via `src/styles/global.css`; the layout owns
+      no colours of its own.
+- [x] Theme handling verified end to end in a real browser: light and dark both
+      correct from the OS preference, the toggle round-trips, the choice
+      persists across reload, and `data-theme` is applied **before first paint**
+      so there is no flash. `aria-pressed` and the screen-reader label track the
+      state.
+- [x] `web-ci.yml` — typecheck (`astro check`, which covers `.astro`
+      frontmatter that `tsc` alone does not see), lint, format check, build,
+      build-size report to the run summary, and a guard that `dist/_headers`
+      still exists (Astro silently dropping it would cost the site its security
+      headers).
+- [x] Verified at 1280px and 390px, both themes: no console errors, no
+      horizontal overflow.
+- [x] End-to-end integration: the real `web/dist` composes with a game fixture
+      into `dist-site` with the landing `/*` rules first and all 12 game rules
+      rewritten under `/play/`.
+
+#### Toolchain findings
+
+Two version constraints that are worth recording, because both would otherwise
+be rediscovered painfully:
+
+- **TypeScript 7 is unusable here.** `typescript-eslint@8` declares
+  `typescript >=4.8.4 <6.1.0`. TS 5.9 is pinned instead, which also matches the
+  root repo's `^5.6.3` and keeps one TS major across the repository.
+- **`eslint-plugin-jsx-a11y` is omitted deliberately.** `eslint-plugin-astro@3`
+  requires ESLint 10, but its own optional peer `jsx-a11y@6.10.2` supports only
+  up to ESLint 9 — an unsatisfiable pair mid-migration. Rather than force a
+  knowingly-broken tree with `--legacy-peer-deps`, it is left out; `jsx-a11y` is
+  a *peerOptional*, so the install is clean without it. Accessibility is still
+  covered by Astro's dev-time audits and, decisively, by the Lighthouse 100 gate
+  in Phase 4. Revisit when `jsx-a11y` supports ESLint 10.
+
+#### The interim holding page is gone
+
+`scripts/gen-holding-page.cjs` existed only so Phase 1 had something at the root
+to compose against before Astro existed. `web/src/pages/index.astro` now fills
+that role, and keeping two generators for "the root page" is exactly the drift
+this plan keeps guarding against, so it was removed and `site-preview.yml` now
+builds the real site. The current home page is still an interim scaffold — Phase
+4 replaces it with the eight designed sections.
 
 ### Phase 4 — Landing page ⬜
 

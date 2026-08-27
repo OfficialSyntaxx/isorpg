@@ -15,10 +15,10 @@ dist/
 .netlify/
 unity/Data/
 
-# Website build output. web/holding is generated from web/site.config.json by
-# scripts/gen-holding-page.cjs; dist-site is the composed publish directory
-# (landing + unity/WebGLBuild) produced by scripts/compose-site.cjs.
-web/holding/
+# Website build output. tokens.css is generated from tokens.json by
+# scripts/gen-tokens.cjs; dist-site is the composed publish directory
+# (web/dist + unity/WebGLBuild) produced by scripts/compose-site.cjs.
+web/.astro/
 web/specimen/
 web/src/styles/tokens.css
 web/dist/

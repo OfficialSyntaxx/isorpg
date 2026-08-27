@@ -1,0 +1,111 @@
+---
+/**
+ * Light/dark override.
+ *
+ * tokens.css follows the OS by default and lets [data-theme] win in both
+ * directions, so this only has to set that attribute and remember the choice.
+ *
+ * Accessibility: it is a real <button> with aria-pressed reflecting whether an
+ * override is active, and the icon is aria-hidden with the state in text for
+ * screen readers.
+ */
+---
+
+<button
+  class="theme-toggle"
+  type="button"
+  aria-pressed="false"
+  title="Switch between light and dark"
+>
+  <span class="theme-toggle__icon" aria-hidden="true"></span>
+  <span class="visually-hidden">Switch to dark theme</span>
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--text-body);
+    transition:
+      background-color var(--dur-quick) var(--ease-out),
+      border-color var(--dur-quick) var(--ease-out),
+      transform var(--dur-instant) var(--ease-out);
+  }
+
+  .theme-toggle:hover {
+    background: var(--surface-sunken);
+    border-color: var(--border-strong);
+  }
+
+  .theme-toggle:active {
+    transform: scale(0.94);
+  }
+
+  /* Drawn in CSS rather than shipped as two icons: a filled disc for light, a
+     crescent (a disc with a bite taken out via box-shadow) for dark. */
+  .theme-toggle__icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--warn);
+    box-shadow: inset 0 0 0 2px var(--surface-raised);
+    transition: background-color var(--dur-base) var(--ease-out);
+  }
+
+  :root[data-theme="dark"] .theme-toggle__icon,
+  .theme-toggle[aria-pressed="true"] .theme-toggle__icon {
+    background: var(--accent);
+  }
+</style>
+
+<script>
+  // Kept in a module script (not is:inline) so it stays under script-src 'self'
+  // with no hash to maintain. The no-flash work already happened in
+  // /theme-init.js before paint; this only handles the click.
+  const KEY = "isoperia-theme";
+
+  function currentIsDark(): boolean {
+    const explicit = document.documentElement.getAttribute("data-theme");
+    if (explicit === "dark") return true;
+    if (explicit === "light") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  function syncLabel(btn: HTMLButtonElement): void {
+    const dark = currentIsDark();
+    btn.setAttribute("aria-pressed", String(dark));
+    const label = btn.querySelector(".visually-hidden");
+    if (label) {
+      label.textContent = dark ? "Switch to light theme" : "Switch to dark theme";
+    }
+  }
+
+  document.querySelectorAll<HTMLButtonElement>(".theme-toggle").forEach((btn) => {
+    syncLabel(btn);
+
+    btn.addEventListener("click", () => {
+      const next = currentIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try {
+        window.localStorage.setItem(KEY, next);
+      } catch {
+        // Storage can be unavailable or full. The theme still applies for this
+        // page view; it just will not be remembered. Failing the click over
+        // that would be worse.
+      }
+      syncLabel(btn);
+    });
+
+    // Someone who has not overridden the theme should still follow the OS if it
+    // changes mid-session.
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (!document.documentElement.hasAttribute("data-theme")) syncLabel(btn);
+    });
+  });
+</script>

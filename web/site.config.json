@@ -28,7 +28,12 @@
 
   "social": [
     { "id": "discord", "label": "Discord", "url": null, "cta": "Join the Discord" },
-    { "id": "github", "label": "GitHub", "url": "https://github.com/OfficialSyntaxx/isorpg", "cta": "Source on GitHub" },
+    {
+      "id": "github",
+      "label": "GitHub",
+      "url": "https://github.com/OfficialSyntaxx/isorpg",
+      "cta": "Source on GitHub"
+    },
     { "id": "youtube", "label": "YouTube", "url": null, "cta": "Watch on YouTube" },
     { "id": "bluesky", "label": "Bluesky", "url": null, "cta": "Follow on Bluesky" },
     { "id": "mastodon", "label": "Mastodon", "url": null, "cta": "Follow on Mastodon" },

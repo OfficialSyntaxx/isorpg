@@ -1,0 +1,101 @@
+---
+/**
+ * The page shell every route uses: head, theme bootstrap, skip link, header,
+ * footer.
+ *
+ * Owns nothing visual beyond layout — the look comes entirely from the Phase 2
+ * token and component layers, so a palette change is one edit in tokens.json.
+ */
+import "../styles/global.css";
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import { site, absolute } from "../lib/site";
+
+interface Props {
+  /** Page title. The site name is appended, except on the home page. */
+  title: string;
+  description?: string;
+  /** Path of this page, for the canonical URL. */
+  pathname: string;
+  /** Suppress indexing — used for /play and interim pages. */
+  noindex?: boolean;
+  /** Home sets its own <h1> and omits the appended site name. */
+  isHome?: boolean;
+}
+
+const {
+  title,
+  description = site.tagline,
+  pathname,
+  noindex = false,
+  isHome = false,
+} = Astro.props;
+
+const fullTitle = isHome
+  ? `${site.name} — ${site.shortDescription}`
+  : `${title} · ${site.name}`;
+const canonical = absolute(pathname);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+
+    {
+      /* Matches --surface-page in each theme so the browser chrome does not
+        fight the page on mobile. */
+    }
+    <meta name="theme-color" content="#F7F2E6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={site.name} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {
+      /* Google Fonts is the only external host the §8.1 CSP permits. preconnect
+        because the stylesheet request chains to a second host for the font
+        files themselves. */
+    }
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Inter:wght@400..700&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1220'/%3E%3Cpath d='M16 5l10 6-10 6-10-6z' fill='%236aa8ff'/%3E%3Cpath d='M6 13l10 6 10-6v6l-10 6-10-6z' fill='%237cd992'/%3E%3C/svg%3E"
+    />
+
+    {
+      /* Must stay blocking and must stay in <head>: it applies the saved theme
+        before first paint. Deferring it reintroduces the flash it exists to
+        prevent. */
+    }
+    <script is:inline src="/theme-init.js"></script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <SiteHeader />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>

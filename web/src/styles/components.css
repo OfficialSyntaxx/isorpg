@@ -203,10 +203,22 @@ a.card:hover,
   background: var(--chip-mark, currentColor);
 }
 
-.chip-district--wildwood   { color: var(--district-wildwood);   --chip-mark: var(--mark-wildwood); }
-.chip-district--frostwatch { color: var(--district-frostwatch); --chip-mark: var(--mark-frostwatch); }
-.chip-district--miregate   { color: var(--district-miregate);   --chip-mark: var(--mark-miregate); }
-.chip-district--cinder     { color: var(--district-cinder);     --chip-mark: var(--mark-cinder); }
+.chip-district--wildwood {
+  color: var(--district-wildwood);
+  --chip-mark: var(--mark-wildwood);
+}
+.chip-district--frostwatch {
+  color: var(--district-frostwatch);
+  --chip-mark: var(--mark-frostwatch);
+}
+.chip-district--miregate {
+  color: var(--district-miregate);
+  --chip-mark: var(--mark-miregate);
+}
+.chip-district--cinder {
+  color: var(--district-cinder);
+  --chip-mark: var(--mark-cinder);
+}
 
 /* --- nav ------------------------------------------------------------------ */
 .nav {
@@ -223,8 +235,9 @@ a.card:hover,
   text-decoration: none;
   font-weight: 600;
   font-size: var(--text-sm);
-  transition: background-color var(--dur-quick) var(--ease-out),
-              color var(--dur-quick) var(--ease-out);
+  transition:
+    background-color var(--dur-quick) var(--ease-out),
+    color var(--dur-quick) var(--ease-out);
 }
 
 .nav__link:hover {
@@ -344,7 +357,9 @@ pre code {
   grid-column: 2;
 }
 
-.callout__body > p { max-width: none; }
+.callout__body > p {
+  max-width: none;
+}
 
 .callout__icon {
   grid-row: 1 / -1;
@@ -352,9 +367,15 @@ pre code {
   line-height: 1.2;
 }
 
-.callout--success { border-left-color: var(--success); }
-.callout--warn    { border-left-color: var(--warn); }
-.callout--danger  { border-left-color: var(--danger); }
+.callout--success {
+  border-left-color: var(--success);
+}
+.callout--warn {
+  border-left-color: var(--warn);
+}
+.callout--danger {
+  border-left-color: var(--danger);
+}
 
 /* --- reveal --------------------------------------------------------------- */
 /* Blueprint M6: 12px rise + fade on scroll, staggered.

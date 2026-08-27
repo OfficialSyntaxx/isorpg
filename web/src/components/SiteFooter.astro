@@ -1,0 +1,68 @@
+---
+/**
+ * Site footer.
+ *
+ * Renders only the socials that have a url in site.config.json — an unfilled
+ * placeholder produces a missing link, never a dead one (see lib/site.ts).
+ *
+ * The asset-credits line is an obligation, not a courtesy: the project uses CC0
+ * and licensed assets recorded in docs/ASSET_CREDITS.md.
+ */
+import { site, socials } from "../lib/site";
+
+const links = socials();
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <p class="footer__blurb">
+      <strong>{site.name}</strong> — {site.shortDescription}
+    </p>
+
+    {
+      links.length > 0 && (
+        <nav class="footer__links" aria-label="Elsewhere">
+          {links.map((s) => (
+            <a href={s.url} rel="noopener noreferrer">
+              {s.label}
+            </a>
+          ))}
+        </nav>
+      )
+    }
+
+    <p class="footer__fine">
+      © {year}
+      {site.name}. Built in the open.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer__inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .footer__blurb {
+    max-width: var(--measure-prose);
+  }
+
+  .footer__blurb strong {
+    font-family: var(--font-display);
+    color: var(--text-strong);
+  }
+
+  .footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .footer__fine {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+</style>

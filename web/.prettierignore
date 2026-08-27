@@ -1,0 +1,5 @@
+dist
+node_modules
+.astro
+# Generated from tokens.json by scripts/gen-tokens.cjs.
+src/styles/tokens.css

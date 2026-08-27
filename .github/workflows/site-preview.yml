@@ -49,7 +49,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
           cache: npm
 
       - run: npm ci
@@ -88,15 +88,20 @@ jobs:
           test -f unity/WebGLBuild/index.html \
             || { echo "::error::Artifact did not contain index.html"; exit 1; }
 
-      - name: Generate the interim holding page
-        run: npm run site:holding
+      # The real Astro site. Its prebuild step regenerates the design tokens,
+      # and `astro check` typechecks before anything is published.
+      - name: Build the landing site
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
 
       # Refuses to produce a tree with no game in it, so a broken artifact
       # download cannot become a deploy that quietly drops /play.
       - name: Compose the publish directory
         run: |
           node scripts/compose-site.cjs \
-            --site web/holding \
+            --site web/dist \
             --game unity/WebGLBuild \
             --out dist-site \
             --prefix "${{ inputs.prefix }}"

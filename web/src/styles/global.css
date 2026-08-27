@@ -1,0 +1,10 @@
+/* The single stylesheet entry point.
+ *
+ * Order matters: tokens define the custom properties, base consumes them for
+ * element defaults, components build on both. tokens.css is GENERATED from
+ * tokens.json by scripts/gen-tokens.cjs (npm run tokens, which runs as a
+ * pre-step for dev and build) and is gitignored.
+ */
+@import "./tokens.css";
+@import "./base.css";
+@import "./components.css";
