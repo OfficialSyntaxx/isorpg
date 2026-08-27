@@ -79,7 +79,7 @@ const districts = [
         class="world__map"
         viewBox="0 0 720 540"
         role="img"
-        aria-label="Stylised survey map of the Isoperia mainland: a central settlement, four outer regions, and a dungeon to the east."
+        aria-label="Stylised survey map of the Isoperia mainland: a forested northwest, highlands northeast, a mire southwest, farmland southeast, a central settlement, and a dungeon on the far east."
         data-map
       >
         <defs>
@@ -93,9 +93,6 @@ const districts = [
           </pattern>
         </defs>
 
-        <!-- Frame. Sized to enclose every region including Cinder Hollow:
-             previously the eastern lobe sat outside it and read as a clipped
-             blob rather than a place. -->
         <rect
           x="28"
           y="28"
@@ -107,37 +104,84 @@ const districts = [
           stroke-width="1.5"
           opacity="0.85"></rect>
 
-        <!-- Regions. Fills are the map-mark colours, which the Phase 2 audit
-             marks as NOT text-safe — every label here is real HTML, not SVG
-             text on a fill. -->
+        <!-- Regions.
+             Each carries a symbolic glyph, because four flat rectangles read as
+             a bar chart rather than a place — real device feedback, and fair.
+             Glyphs are drawn in translucent black so they sit legibly on every
+             mark colour in both themes without needing their own palette.
+             Labels stay in the button list: the mark colours are audited as NOT
+             text-safe, and at phone size map text would be ~6px anyway. -->
+
+        <!-- Northwest: forest -->
         <g class="rgn" data-rgn="wildwood">
-          <rect x="42" y="42" width="252" height="222" rx="6" fill="var(--mark-wildwood)"
+          <rect x="42" y="42" width="252" height="222" rx="26" fill="var(--mark-wildwood)"
           ></rect>
+          <g class="glyph">
+            <path d="M132 176 l22-42 22 42 z"></path>
+            <rect x="150" y="176" width="8" height="16" rx="2"></rect>
+            <path d="M170 186 l26-50 26 50 z"></path>
+            <rect x="192" y="186" width="8" height="18" rx="2"></rect>
+            <path d="M112 196 l18-34 18 34 z"></path>
+            <rect x="126" y="196" width="7" height="14" rx="2"></rect>
+          </g>
         </g>
+
+        <!-- Northeast: highland crag -->
         <g class="rgn" data-rgn="frostwatch">
           <rect
             x="304"
             y="42"
             width="252"
             height="222"
-            rx="6"
+            rx="26"
             fill="var(--mark-frostwatch)"></rect>
-        </g>
-        <g class="rgn" data-rgn="miregate">
-          <rect x="42" y="276" width="252" height="222" rx="6" fill="var(--mark-miregate)"
-          ></rect>
-        </g>
-        <g class="rgn" data-rgn="sunmere">
-          <rect x="304" y="276" width="252" height="222" rx="6" fill="var(--mark-gold)"
-          ></rect>
+          <g class="glyph">
+            <path d="M368 194 l44-76 44 76 z"></path>
+            <path d="M430 194 l34-58 34 58 z"></path>
+          </g>
+          <g class="glyph glyph--light">
+            <path d="M398 142 l14-24 14 24 -14 -7 z"></path>
+          </g>
         </g>
 
-        <!-- Cinder Hollow: its own strip on the far east, separated by the
-             longest route on the map. Reads as "further out", which is what it
-             is. -->
-        <g class="rgn" data-rgn="cinder">
-          <rect x="586" y="180" width="92" height="180" rx="10" fill="var(--mark-cinder)"
+        <!-- Southwest: mire -->
+        <g class="rgn" data-rgn="miregate">
+          <rect
+            x="42"
+            y="276"
+            width="252"
+            height="222"
+            rx="26"
+            fill="var(--mark-miregate)"></rect>
+          <g class="glyph glyph--stroke">
+            <path d="M104 372 q22-16 44 0 t44 0 t44 0"></path>
+            <path d="M104 404 q22-16 44 0 t44 0 t44 0"></path>
+            <path d="M104 436 q22-16 44 0 t44 0 t44 0"></path>
+          </g>
+        </g>
+
+        <!-- Southeast: farmland -->
+        <g class="rgn" data-rgn="sunmere">
+          <rect x="304" y="276" width="252" height="222" rx="26" fill="var(--mark-gold)"
           ></rect>
+          <g class="glyph">
+            <rect x="352" y="358" width="156" height="12" rx="6"></rect>
+            <rect x="352" y="386" width="156" height="12" rx="6"></rect>
+            <rect x="352" y="414" width="156" height="12" rx="6"></rect>
+            <rect x="352" y="442" width="104" height="12" rx="6"></rect>
+          </g>
+        </g>
+
+        <!-- Far east: the dungeon. Its own strip, reached by the longest road. -->
+        <g class="rgn" data-rgn="cinder">
+          <rect x="586" y="180" width="92" height="180" rx="18" fill="var(--mark-cinder)"
+          ></rect>
+          <g class="glyph">
+            <path d="M612 300 v-44 a20 20 0 0 1 40 0 v44 z"></path>
+          </g>
+          <g class="glyph glyph--light">
+            <path d="M632 292 q-11-10 0-24 q11 10 0 24 z"></path>
+          </g>
         </g>
 
         <!-- Routes: drawn before the settlement so the plaza sits on top. -->
@@ -159,15 +203,21 @@ const districts = [
             data-draw-duration="1200"></path>
         </g>
 
+        <!-- Centre: the settlement itself, as buildings around a hearth. -->
         <g class="rgn" data-rgn="hearthvale">
           <circle
             cx="299"
             cy="270"
-            r="52"
+            r="54"
             fill="var(--surface-raised)"
             stroke="currentColor"
             stroke-width="2.5"></circle>
-          <circle cx="299" cy="270" r="12" fill="var(--mark-gold)"></circle>
+          <g class="glyph glyph--town">
+            <path d="M272 268 l12-11 12 11 v14 h-24 z"></path>
+            <path d="M302 262 l11-10 11 10 v20 h-22 z"></path>
+            <path d="M285 288 l10-9 10 9 v11 h-20 z"></path>
+          </g>
+          <circle cx="299" cy="246" r="7" fill="var(--mark-gold)"></circle>
         </g>
       </svg>
 
@@ -242,10 +292,33 @@ const districts = [
     color: var(--text-muted);
   }
 
+  /* Glyphs. Translucent black reads on every mark colour in both themes, which
+     a fixed palette colour would not. */
+  .world__map .glyph {
+    fill: rgb(0 0 0 / 0.34);
+  }
+
+  .world__map .glyph--light {
+    fill: rgb(255 255 255 / 0.7);
+  }
+
+  .world__map .glyph--stroke {
+    fill: none;
+    stroke: rgb(0 0 0 / 0.34);
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+
+  /* The settlement sits on a surface plate rather than a mark colour, so its
+     buildings use the text token and stay legible in both themes. */
+  .world__map .glyph--town {
+    fill: var(--text-muted);
+  }
+
   /* Regions dim when any sibling is active, so the highlighted one reads
      without needing a colour nobody else has. */
   .world__map .rgn {
-    opacity: 0.55;
+    opacity: 0.72;
     transition:
       opacity var(--dur-base) var(--ease-out),
       transform var(--dur-base) var(--ease-out);
@@ -253,8 +326,10 @@ const districts = [
     transform-origin: center;
   }
 
+  /* Dimmed, but not so far that the glyphs stop reading — they carry the
+     meaning of each region, which flat colour did not. */
   .world__map[data-active] .rgn {
-    opacity: 0.28;
+    opacity: 0.45;
   }
 
   .world__map .rgn.is-active {

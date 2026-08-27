@@ -24,9 +24,17 @@ import { site, gamePath } from "../../lib/site";
     <canvas class="hero__canvas" aria-hidden="true" data-hero-terrain></canvas>
   </div>
 
-  <!-- M1, second half: a very slow day/night wash over the terrain. 90s and
-       low amplitude — it should be noticed only if you stay a while, which is
-       what "ambient" has to mean to avoid becoming a distraction. -->
+  <!-- Ambient life over the generated terrain.
+       Three drifting cloud shadows at different speeds and sizes, plus a slow
+       day/night wash. All of it is compositor-only (transform and opacity), so
+       it costs no layout, no repaint and no permanent requestAnimationFrame —
+       the terrain underneath is still painted exactly once. -->
+  <div class="hero__sky" aria-hidden="true">
+    <span class="hero__cloud hero__cloud--a"></span>
+    <span class="hero__cloud hero__cloud--b"></span>
+    <span class="hero__cloud hero__cloud--c"></span>
+    <span class="hero__sun"></span>
+  </div>
   <div class="hero__wash" aria-hidden="true"></div>
 
   <div class="hero__scrim"></div>
@@ -72,6 +80,112 @@ import { site, gamePath } from "../../lib/site";
     will-change: transform;
   }
 
+  .hero__sky {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Soft shadows drifting across the land. Sized in vmax so they stay
+     proportionate from a phone to an ultrawide. */
+  .hero__cloud {
+    position: absolute;
+    border-radius: 50%;
+    /* A cloud shadow darkens; it does not tint. */
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgb(0 0 0 / 0.28) 0%,
+      rgb(0 0 0 / 0.14) 45%,
+      transparent 70%
+    );
+    filter: blur(18px);
+    will-change: transform;
+  }
+
+  .hero__cloud--a {
+    width: 62vmax;
+    height: 34vmax;
+    top: -6%;
+    left: -30%;
+    animation: drift-a 78s linear infinite;
+  }
+
+  .hero__cloud--b {
+    width: 44vmax;
+    height: 24vmax;
+    top: 28%;
+    left: -40%;
+    opacity: 0.75;
+    animation: drift-b 116s linear infinite;
+  }
+
+  .hero__cloud--c {
+    width: 80vmax;
+    height: 40vmax;
+    top: 52%;
+    left: -55%;
+    opacity: 0.55;
+    animation: drift-c 152s linear infinite;
+  }
+
+  /* A single warm highlight that breathes, so the scene has a light source
+     rather than just moving darkness. */
+  .hero__sun {
+    position: absolute;
+    top: -18%;
+    right: -10%;
+    width: 58vmax;
+    height: 58vmax;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--mark-gold) 26%, transparent) 0%,
+      transparent 62%
+    );
+    animation: breathe 42s var(--ease-in-out) infinite alternate;
+  }
+
+  /* Diagonal travel, matching the isometric grain of the terrain so the
+     shadows look like they belong to the same world. */
+  @keyframes drift-a {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(190vmax, 26vmax, 0);
+    }
+  }
+
+  @keyframes drift-b {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(200vmax, -18vmax, 0);
+    }
+  }
+
+  @keyframes drift-c {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(220vmax, 14vmax, 0);
+    }
+  }
+
+  @keyframes breathe {
+    from {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0.95;
+      transform: scale(1.12);
+    }
+  }
+
   .hero__wash {
     position: absolute;
     inset: 0;
@@ -95,10 +209,28 @@ import { site, gamePath } from "../../lib/site";
     }
   }
 
+  /* Reduced motion keeps the composition and stops the movement. The clouds
+     and the sun remain as static light and shade, so the scene still reads as
+     a lit world rather than losing a layer. */
   @media (prefers-reduced-motion: reduce) {
-    .hero__wash {
+    .hero__wash,
+    .hero__cloud,
+    .hero__sun {
       animation: none;
+    }
+
+    .hero__wash {
       opacity: 0.4;
+    }
+
+    .hero__cloud--a {
+      transform: translate3d(40vmax, 6vmax, 0);
+    }
+    .hero__cloud--b {
+      transform: translate3d(70vmax, -4vmax, 0);
+    }
+    .hero__cloud--c {
+      transform: translate3d(55vmax, 4vmax, 0);
     }
   }
 

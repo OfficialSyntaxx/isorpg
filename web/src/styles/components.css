@@ -65,6 +65,14 @@
   box-shadow: var(--shadow-md);
 }
 
+/* Header-sized. The default button's padding is right for a page CTA and too
+   generous for a persistent sticky bar. */
+.btn--compact {
+  padding: var(--space-2xs) var(--space-sm);
+  font-size: var(--text-sm);
+  min-height: 2.25rem;
+}
+
 .btn--secondary {
   --btn-bg: transparent;
   --btn-fg: var(--text-strong);

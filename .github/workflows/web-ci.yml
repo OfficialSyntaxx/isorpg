@@ -98,6 +98,14 @@ jobs:
           npx playwright install --with-deps chromium
           node ../scripts/verify-csp.cjs
 
+      # Measures how much of a phone viewport the sticky chrome consumes. The
+      # header once shipped 208px tall — a quarter of the screen, on every page
+      # — and every other check in this repo missed it because they all measure
+      # horizontal overflow rather than vertical cost. It took a screenshot
+      # from a real phone.
+      - name: Verify the persistent chrome
+        run: node ../scripts/verify-chrome.cjs
+
       - name: Fail if the landing _headers went missing
         run: |
           # compose-site.cjs merges this into the root _headers. If Astro stops

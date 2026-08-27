@@ -121,6 +121,15 @@ button {
   cursor: pointer;
 }
 
+/* --- anchor targets ------------------------------------------------------- */
+/* The header is sticky, so an in-page jump would otherwise put the thing you
+   asked for underneath it. The wiki's table of contents has 51 such links.
+   Sized for the condensed header, which is what is on screen after a jump. */
+:where(h1, h2, h3, h4, h5, h6)[id],
+:target {
+  scroll-margin-top: 5.5rem;
+}
+
 /* --- focus ---------------------------------------------------------------- */
 /* A designed ring, not `outline: none`. border-strong and focus are both
    audited at >= 3:1 against page and card surfaces, so this is visible

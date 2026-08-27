@@ -332,7 +332,63 @@ export function initExitTransition(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Header — condense on scroll
+// ---------------------------------------------------------------------------
+/**
+ * Shrinks the sticky header once the reader has scrolled, and on phones
+ * collapses its nav row when scrolling down.
+ *
+ * WHY THIS EARNS ITS PLACE
+ * The header is sticky on every page. On a phone it cost 208px — a quarter of
+ * the viewport — before the layout was fixed, and even corrected it is chrome
+ * that is present for the entire visit. Condensing gives the content back
+ * roughly 30px, and hiding the nav row while scrolling down gives back another
+ * 40px, which on a 844px screen is worth having.
+ *
+ * The nav is never unreachable: it returns on any upward scroll, and it is
+ * always fully present at the top of the page and on wide screens.
+ */
+export function initHeader(): void {
+  const header = document.querySelector<HTMLElement>("[data-header]");
+  if (!header) return;
+
+  const CONDENSE_AT = 64;
+  // Enough that a small thumb wobble does not toggle the nav row.
+  const DIRECTION_THRESHOLD = 12;
+
+  let lastY = window.scrollY;
+  let queued = false;
+
+  const apply = (): void => {
+    queued = false;
+    const y = window.scrollY;
+
+    if (y > CONDENSE_AT) header.setAttribute("data-condensed", "");
+    else header.removeAttribute("data-condensed");
+
+    const delta = y - lastY;
+    if (Math.abs(delta) > DIRECTION_THRESHOLD) {
+      // Never hide while near the top: the first thing a reader sees should be
+      // the complete header.
+      if (delta > 0 && y > CONDENSE_AT * 2) header.setAttribute("data-hidden-nav", "");
+      else header.removeAttribute("data-hidden-nav");
+      lastY = y;
+    }
+  };
+
+  const onScroll = (): void => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(apply);
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  apply();
+}
+
+// ---------------------------------------------------------------------------
 export function initMotion(): void {
+  initHeader();
   initReveals();
   initPathDraw();
   initParallax();

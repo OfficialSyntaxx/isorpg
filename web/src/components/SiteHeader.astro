@@ -1,17 +1,25 @@
 ---
 /**
- * Site header. Routes that do not exist yet are deliberately absent rather than
- * present-and-dead — a nav link to a 404 is worse than no link. Phase 6 adds
- * the content routes and they appear here then.
+ * Site header.
+ *
+ * MOBILE LAYOUT — the bug this replaces
+ * The nav used to sit between the brand and the actions in one flex row with
+ * `flex-wrap: wrap`. At phone widths there was no room, so each link wrapped
+ * onto its own line and the header grew to 208px — a quarter of the viewport,
+ * pinned to the top of every page. Measured on a real device before it was
+ * caught here, which is why verify-chrome.cjs now asserts header height.
+ *
+ * Now the nav is its own full-width row below the brand on narrow screens, and
+ * it scrolls horizontally rather than wrapping. `flex-wrap: nowrap` on the nav
+ * is the load-bearing declaration.
+ *
+ * CONDENSING — motion.ts drives `data-condensed` and `data-hidden-nav` from
+ * scroll position. Routes that do not exist are still deliberately absent: a
+ * nav link to a 404 is worse than no link.
  */
 import ThemeToggle from "./ThemeToggle.astro";
 import { site, gamePath } from "../lib/site";
 
-/**
- * Primary navigation. Only routes that exist are listed — a nav entry pointing
- * at a 404 is worse than no entry. Secondary routes (roadmap, press) live in
- * the footer rather than crowding this row on a phone.
- */
 const nav: { href: string; label: string }[] = [
   { href: "/features/", label: "Features" },
   { href: "/world/", label: "World" },
@@ -22,11 +30,16 @@ const nav: { href: string; label: string }[] = [
 const path = Astro.url.pathname;
 ---
 
-<header class="site-header">
+<header class="site-header" data-header>
   <div class="wrap site-header__inner">
     <a class="site-header__brand" href="/">{site.name}</a>
 
-    <nav class="nav" aria-label="Primary">
+    <div class="site-header__actions">
+      <ThemeToggle />
+      <a class="btn btn--compact" href={gamePath} data-exit>Play</a>
+    </div>
+
+    <nav class="nav site-header__nav" aria-label="Primary">
       {
         nav.map((item) => (
           <a
@@ -39,11 +52,6 @@ const path = Astro.url.pathname;
         ))
       }
     </nav>
-
-    <div class="site-header__actions">
-      <ThemeToggle />
-      <a class="btn" href={gamePath} data-exit>Play</a>
-    </div>
   </div>
 </header>
 
@@ -56,6 +64,8 @@ const path = Astro.url.pathname;
     border-bottom: 1px solid var(--border-subtle);
     backdrop-filter: blur(10px) saturate(1.2);
     -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    transition: padding-block var(--dur-base) var(--ease-out);
+    padding-block: var(--space-sm);
   }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -64,11 +74,18 @@ const path = Astro.url.pathname;
     }
   }
 
+  /* Condensed: less vertical cost once the reader has committed to the page. */
+  .site-header[data-condensed] {
+    padding-block: var(--space-2xs);
+  }
+
   .site-header__inner {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding-block: var(--space-sm);
+    gap: var(--space-sm);
+    /* The row itself may wrap so the nav can drop to a second line; the NAV
+       must not. See the nav rules below. */
+    flex-wrap: wrap;
   }
 
   .site-header__brand {
@@ -78,6 +95,11 @@ const path = Astro.url.pathname;
     color: var(--text-strong);
     text-decoration: none;
     letter-spacing: var(--tracking-tight);
+    transition: font-size var(--dur-base) var(--ease-out);
+  }
+
+  .site-header[data-condensed] .site-header__brand {
+    font-size: var(--text-md);
   }
 
   .site-header__actions {
@@ -85,5 +107,77 @@ const path = Astro.url.pathname;
     align-items: center;
     gap: var(--space-xs);
     margin-left: auto;
+  }
+
+  /* --- the nav --------------------------------------------------------- */
+  .site-header__nav {
+    /* Full-width second row on phones. */
+    flex: 0 0 100%;
+    /* Load-bearing: without this the links wrap one-per-line and the header
+       becomes 208px tall. */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    /* Bleed to the gutter edges so the scroll affordance reaches the screen
+       edge instead of stopping inside the padding. */
+    margin-inline: calc(var(--layout-gutter) * -1);
+    padding-inline: var(--layout-gutter);
+    gap: var(--space-3xs);
+    transition:
+      max-height var(--dur-base) var(--ease-out),
+      opacity var(--dur-base) var(--ease-out),
+      margin-block var(--dur-base) var(--ease-out);
+    max-height: 3rem;
+    opacity: 1;
+  }
+
+  .site-header__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-header__nav .nav__link {
+    white-space: nowrap;
+    flex: none;
+    /* Tighter than a page nav: this row is present on every screen of every
+       page, so its vertical cost is paid constantly. */
+    padding-block: var(--space-3xs);
+  }
+
+  /* Scrolling down on a phone collapses the nav row entirely; scrolling up
+     brings it back. The links stay reachable — they are one flick away — and
+     the header drops to roughly 56px while reading. */
+  .site-header[data-hidden-nav] .site-header__nav {
+    max-height: 0;
+    opacity: 0;
+    margin-block: 0;
+    overflow: hidden;
+  }
+
+  /* From 48rem there is room for one row, so the nav returns to the middle and
+     never collapses. */
+  @media (min-width: 48rem) {
+    .site-header__nav {
+      flex: 0 1 auto;
+      order: -1;
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow-x: visible;
+      margin-left: var(--space-md);
+    }
+
+    .site-header[data-hidden-nav] .site-header__nav {
+      max-height: 3rem;
+      opacity: 1;
+      overflow: visible;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-header,
+    .site-header__brand,
+    .site-header__nav {
+      transition: none;
+    }
   }
 </style>

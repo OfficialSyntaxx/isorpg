@@ -37,11 +37,12 @@
     "verify:tokens": "node scripts/verify-tokens.cjs",
     "verify:xp": "node scripts/verify-xp-parity.cjs",
     "verify:csp": "node scripts/verify-csp.cjs",
+    "verify:chrome": "node scripts/verify-chrome.cjs",
     "site:compose": "node scripts/compose-site.cjs",
     "verify:compose": "node scripts/verify-compose.cjs",
     "verify:deploy-report": "node scripts/verify-deploy-report.cjs",
     "verify:site": "npm run verify:tokens && npm run verify:xp && npm run verify:compose && npm run verify:deploy-report",
-    "verify:security": "node scripts/verify-csp.cjs"
+    "verify:security": "node scripts/verify-csp.cjs && node scripts/verify-chrome.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"
