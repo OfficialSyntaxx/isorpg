@@ -117,6 +117,22 @@ jobs:
           REPORT: preview-report.txt
         run: scripts/deploy-report.sh
 
+      # The URL is the whole point of a preview run, and it was buried: the
+      # deploy step's log is followed by ~150 lines of browser-download progress
+      # bars, so reading it back after the fact meant paging through the log.
+      # A notice annotation and a summary heading put it where it is one click
+      # away, and readable through the API without fetching any log at all.
+      - name: Publish the preview URL
+        run: |
+          SITE=$(grep -m1 '^url: ' preview-report.txt | cut -d' ' -f2)
+          echo "::notice title=Preview URL::$SITE"
+          {
+            echo "## Preview"
+            echo
+            echo "<$SITE>"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # Headers being right is not the same as the game starting. A CSP that
       # blocks WebAssembly returns perfectly correct headers and then hangs on
       # the progress bar. This runner can reach the deploy, so it checks what

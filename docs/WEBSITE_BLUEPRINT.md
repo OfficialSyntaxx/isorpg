@@ -11,8 +11,9 @@
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
 **Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 1, 2,
-3, 5, 6 and 7 done; Phase 4 built with its Lighthouse gate still open. Merged to
-`main`. The site is 110 pages with an enforcing CSP.
+3, 5, 6, 7 and 8 done; Phase 4 built with its Lighthouse gate still open. Merged
+to `main` and **live in production** — landing page at `/`, game at `/play`. The
+site is 110 pages with an enforcing CSP.
 
 **Phase 1 gate closed 2026-08-27.** Run
 [33080016719](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33080016719)
@@ -27,6 +28,29 @@ Draft: `https://6a9043b4c38ae6fd0b2a82ba--inspiring-tarsier-8973d6.netlify.app`
 before any cutover is Netlify deploy `6a8f04e32a032f122bbaba51` on site
 `8e151e1b-5592-45b7-b272-1910dba25184` (`inspiring-tarsier-8973d6`). Republishing
 that deploy restores the pre-website world exactly.
+
+**The cutover happened as a side effect, not by the guarded dispatch — read
+this before trusting the gate.** Commit `38495fa` edited
+`.github/workflows/unity-webgl.yml` and `scripts/deploy-report.sh`. Both paths
+are in that workflow's `push` trigger, so merging it to `main` ran the Unity
+lane, and that lane's deploy job composes the full tree and publishes with
+`DEPLOY_PROD` unset — which defaults to `1`. Run
+[33097907370](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33097907370)
+therefore published production deploy `6a9074df0e68128d59adb4b8` at
+2026-08-27T17:33Z: landing page at `/`, game at `/play`, 17 header rules, and
+`verify-deployed-play.cjs` green against it.
+
+So `web-deploy.yml`'s typed `CUTOVER` confirmation guards only that one lane.
+It never guarded the Unity lane, and the Unity lane is the one that fires on a
+push. The commit message for `38495fa` claiming production "keeps serving the
+game at the site root exactly as it has all along" was wrong the moment it
+merged. Anyone reasoning about what production serves should look at the last
+successful **Unity WebGL** run, not at whether anyone typed `CUTOVER`.
+
+Nothing was lost — the composed tree is the intended end state and the game
+still boots — but the gate is weaker than §2.5 and Phase 8 describe it as.
+Closing that properly means making the Unity lane's production publish opt-in
+too; it is filed as R11 in §14.
 
 ---
 
@@ -44,7 +68,7 @@ Update the Status column as phases move.
 | 5 | Animation layer | Opus 5 | ✅ Done | Motion spec implemented; `prefers-reduced-motion` verified |
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 ×2 + Opus 5 | ✅ Done | Feeds render from repo markdown; RSS valid |
 | 7 | Security hardening | Opus 5 | ✅ Done | CSP enforced with zero console violations; headers audit passes |
-| 8 | Netlify cutover | Opus 5 | 🟡 Ready; one guarded dispatch away | Landing at `/`, game at `/play`, no regression in `deploy-report.txt` |
+| 8 | Netlify cutover | Opus 5 | ✅ Done — production serves `/` and `/play` | Landing at `/`, game at `/play`, no regression in `deploy-report.txt` |
 | 9 | Custom domain | Sonnet 5 | ⬜ Not started | DNS live, HTTPS, canonical + redirects correct |
 | 10 | Backend Phase B1 (forms) | Sonnet 5 | ⬜ Not started | Newsletter + contact functions live, rate-limited, spam-guarded |
 | 11 | Backend Phase B2 (accounts) | Opus 5 | ⬜ Blocked on B1 | Design doc only until greenlit |
@@ -1252,10 +1276,19 @@ because it is a Phase 9/10-sized change to the font pipeline, not a Phase 7 one.
       `securitypolicyviolation` fires. **11/11 on run 33097514078.** Both
       production lanes run it after deploying.
 - [x] Final preview verification of `/` and `/play` — the same run above.
-- [ ] **Publish to production.** Deliberately left as one guarded action:
-      dispatch `web-deploy.yml` and type `CUTOVER` in the confirmation field.
-      Anything else publishes a draft. Until that runs, production keeps serving
-      the game at the site root exactly as before.
+- [x] **Production serves the landing page at `/` and the game at `/play`.**
+      Not by the guarded dispatch, though — see the note at the top of this
+      document. Merging `38495fa` touched two paths in `unity-webgl.yml`'s push
+      trigger, that lane deploys with `DEPLOY_PROD` unset (default `1`), and so
+      run [33097907370](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33097907370)
+      published production deploy `6a9074df0e68128d59adb4b8` at 17:33Z with
+      `verify-deployed-play.cjs` green against it. The typed `CUTOVER`
+      confirmation guards `web-deploy.yml` only; it never guarded the lane that
+      actually fires on a push. Making the Unity lane's production publish
+      opt-in is R11 in §14.
+- [x] Production brought level with `main` (the region-journey and animation
+      work in `f21197d`) by dispatching `web-deploy.yml` with `CUTOVER`.
+      Rollback anchor for that publish: `6a9074df0e68128d59adb4b8`.
 - [ ] Verify a returning visitor with an old service worker still updates
       (regression check on T7). The build-id-stamped URLs and cache version
       handle this, but it needs a real browser that already holds the old cache.
@@ -1343,3 +1376,4 @@ Answer these when they become relevant — none block Phase 1.
 | Content parser silently drops devlog entries | Medium | Strict parser, fails the build (§4.2). |
 | Two toolchains in one repo drift | Low | `web/` is isolated; the root `ci.yml` is untouched. |
 | Scope creep into B2/B3 | Medium | They are explicitly blocked in §12. |
+| **R11: the Unity lane publishes to production unguarded** | Medium | `unity-webgl.yml`'s deploy job runs `deploy-report.sh` with `DEPLOY_PROD` unset, and the script defaults it to `1`. Any push to `main` touching `unity/**`, that workflow, or `deploy-report.sh` publishes production — which is how the Phase 8 cutover happened without anyone typing `CUTOVER`. Not an outage risk today (the composed tree is the intended state and `verify-deployed-play.cjs` gates it), but "production only changes deliberately" is not currently true. Fix: make the publish explicit in that lane too — `DEPLOY_PROD` set from an input, defaulting to a draft on `workflow_dispatch` and to `1` only on `push` — so the default is stated rather than inherited from a shell default. |

@@ -127,6 +127,19 @@ jobs:
           REPORT: web-deploy-report.txt
         run: scripts/deploy-report.sh
 
+      # Same reason as in site-preview.yml: the deploy log is followed by a
+      # browser download, so the one line anybody actually wants gets buried.
+      - name: Publish the deployed URL
+        run: |
+          SITE=$(grep -m1 '^url: ' web-deploy-report.txt | cut -d' ' -f2)
+          echo "::notice title=Deployed URL::$SITE"
+          {
+            echo "## Deployed"
+            echo
+            echo "<$SITE>"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Report
         run: cat web-deploy-report.txt >> "$GITHUB_STEP_SUMMARY"
 
