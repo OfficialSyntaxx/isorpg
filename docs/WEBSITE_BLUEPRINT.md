@@ -1288,7 +1288,10 @@ because it is a Phase 9/10-sized change to the font pipeline, not a Phase 7 one.
       opt-in is R11 in §14.
 - [x] Production brought level with `main` (the region-journey and animation
       work in `f21197d`) by dispatching `web-deploy.yml` with `CUTOVER`.
-      Rollback anchor for that publish: `6a9074df0e68128d59adb4b8`.
+      Run [33099322698](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33099322698),
+      all 15 steps green including `verify-deployed-play.cjs` against the live
+      production URL. Live deploy `6a90761877062393a07475bb`; the deploy to
+      republish to undo it is `6a9074df0e68128d59adb4b8`.
 - [ ] Verify a returning visitor with an old service worker still updates
       (regression check on T7). The build-id-stamped URLs and cache version
       handle this, but it needs a real browser that already holds the old cache.
