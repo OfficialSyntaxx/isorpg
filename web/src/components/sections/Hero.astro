@@ -21,14 +21,23 @@ import { site, gamePath } from "../../lib/site";
   <!-- M2: the terrain drifts against the scroll. 0.5 of the 40px cap, so it
        reads as depth rather than as a parallax demo. -->
   <div class="hero__layer" data-parallax="0.5">
-    <!-- Two canvases, deliberately.
-         The terrain is painted once and never repainted; only the life on top
-         of it — water, windows, birds — is redrawn. One canvas meant blitting
-         the whole terrain back every frame just to clear what moved, which
-         measured 62ms per frame on a throttled phone profile. -->
-    <canvas class="hero__canvas" aria-hidden="true" data-hero-terrain></canvas>
-    <canvas class="hero__canvas hero__canvas--life" aria-hidden="true" data-hero-life
-    ></canvas>
+    <!-- M11 — the departure.
+         A second, nested transform holder. It exists because the camera move
+         below is driven by a scroll TIMELINE while the parallax above is driven
+         by a scroll HANDLER writing an inline transform, and a CSS animation
+         overrides an inline style: applied to the same element, the camera move
+         would silently delete the parallax. Nested, the two transforms compose
+         — drift within lift — which is also what they mean. -->
+    <div class="hero__depth" data-hero-depth>
+      <!-- Two canvases, deliberately.
+           The terrain is painted once and never repainted; only the life on top
+           of it — water, windows, birds — is redrawn. One canvas meant blitting
+           the whole terrain back every frame just to clear what moved, which
+           measured 62ms per frame on a throttled phone profile. -->
+      <canvas class="hero__canvas" aria-hidden="true" data-hero-terrain></canvas>
+      <canvas class="hero__canvas hero__canvas--life" aria-hidden="true" data-hero-life
+      ></canvas>
+    </div>
   </div>
 
   <!-- Ambient life over the generated terrain.
@@ -46,7 +55,14 @@ import { site, gamePath } from "../../lib/site";
 
   <div class="hero__scrim"></div>
 
-  <div class="wrap hero__content">
+  <!-- The two layers that only exist during the departure. Both are
+       opacity-only, so at rest they cost a composited layer and nothing else.
+       Dusk darkens the land you are leaving; the horizon is the light you are
+       leaving it for, and it meets the seam at the top of the next section. -->
+  <div class="hero__dusk" aria-hidden="true" data-hero-dusk></div>
+  <div class="hero__horizon" aria-hidden="true" data-hero-horizon></div>
+
+  <div class="wrap hero__content" data-hero-content>
     <p class="eyebrow" data-reveal>
       Settlement builder · Character RPG · Runs in the browser
     </p>
@@ -87,11 +103,192 @@ import { site, gamePath } from "../../lib/site";
     will-change: transform;
   }
 
+  .hero__depth {
+    position: absolute;
+    inset: 0;
+    /* Growth pushes down and outward past the viewer rather than away from a
+       centre point, which is what makes the move read as descending into the
+       land instead of the land being zoomed. */
+    transform-origin: 50% 30%;
+  }
+
   .hero__sky {
     position: absolute;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
+  }
+
+  /* ---------------------------------------------------------------------
+     M11 — THE DEPARTURE
+     ---------------------------------------------------------------------
+     The signature scroll moment: leaving the hero is a camera move, not a
+     section scrolling off.
+
+     Three things happen at different rates, which is the whole effect. The
+     words go first and clear the frame. The land keeps going a moment longer,
+     growing and settling as you drop into it. And dusk closes over it while a
+     warm horizon opens underneath — arriving at the seam that starts the next
+     section, so the join reads as cresting a rise rather than as a boundary
+     between two blocks of a page.
+
+     WHY IT IS BUILT THIS WAY
+
+     It is driven by a scroll TIMELINE, not a scroll handler. The animations run
+     on the compositor, so they stay smooth while the main thread is busy — and
+     the main thread here is busy, generating a world. A JavaScript version
+     would add a fifth scroll listener and put a camera move on the same thread
+     as the terrain generator, which is exactly the trade that cost this hero
+     6,951ms once already.
+
+     It costs 356 bytes of gzipped CSS and no JavaScript at all — measured, by
+     building with and without this block. There is no library and no new
+     script; the machinery is CSS the browser already ships.
+
+     Everything is transform and opacity. No layout, no repaint, no CLS.
+
+     PROGRESSIVE ENHANCEMENT IS THE POINT, NOT A CAVEAT
+     Support is broad but not universal — Firefox still has this behind a flag.
+     So the whole block is inside @supports, and every property it touches has a
+     resting value that is already correct. A browser without scroll timelines
+     does not get a degraded hero; it gets today's hero, unchanged, and nothing
+     in the markup hints that it is missing anything.
+
+     Durations are deliberately absent. A timeline-driven animation needs
+     `animation-duration: auto`, and the `animation` shorthand would reset it to
+     0s and silently freeze every keyframe on its first frame. Longhands only,
+     for that reason.
+
+     REDUCED MOTION NEEDS AN EXPLICIT BLOCK HERE
+     Elsewhere in this project the duration tokens collapse under the media
+     query and that is enough. Scroll-driven animations have no duration to
+     collapse: their progress comes from the scroll position, so they would run
+     at full strength regardless. The media query below is load-bearing, not
+     ceremonial. */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .hero__content {
+        animation-name: hero-depart;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: scroll(root block);
+        /* Ends as the last line clears the top of the viewport. Text that
+           fades while still comfortably readable feels like a fault. */
+        animation-range: 4svh 62svh;
+      }
+
+      .hero__depth {
+        animation-name: hero-lift;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 100svh;
+      }
+
+      .hero__dusk {
+        animation-name: hero-dusk;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: scroll(root block);
+        animation-range: 8svh 96svh;
+      }
+
+      .hero__horizon {
+        animation-name: hero-horizon;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: scroll(root block);
+        animation-range: 12svh 88svh;
+      }
+    }
+  }
+
+  @keyframes hero-depart {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(0, -7%, 0);
+    }
+  }
+
+  /* 1.12, not 1.4. §6.2 caps displacement because large parallax on a marketing
+     page is the single most common tell that a template is underneath. The same
+     restraint applies to a camera move: this should be felt, not watched. */
+  @keyframes hero-lift {
+    from {
+      transform: scale(1) translate3d(0, 0, 0);
+    }
+    to {
+      transform: scale(1.12) translate3d(0, 3%, 0);
+    }
+  }
+
+  @keyframes hero-dusk {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.62;
+    }
+  }
+
+  @keyframes hero-horizon {
+    from {
+      opacity: 0;
+      transform: scaleY(0.35);
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  .hero__dusk {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    /* A literal, not a token. Dusk has to fall in BOTH themes — every dark
+       surface token in this project inverts, and --surface-sunken in the light
+       theme is a warm cream, so a tokenised version of this layer would
+       brighten the page instead of darkening it. This is the dark theme's page
+       colour, used deliberately as a colour rather than as a role. */
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, #0b1220 40%, transparent) 55%,
+      color-mix(in srgb, #0b1220 78%, transparent) 100%
+    );
+  }
+
+  .hero__horizon {
+    position: absolute;
+    inset-inline: -10%;
+    bottom: -1px;
+    height: 34%;
+    pointer-events: none;
+    opacity: 0;
+    transform-origin: 50% 100%;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--mark-gold) 16%, transparent) 48%,
+      color-mix(in srgb, var(--mark-gold) 52%, transparent) 86%,
+      color-mix(in srgb, var(--mark-gold) 22%, transparent) 100%
+    );
+    filter: blur(18px);
+  }
+
+  /* Both layers are pure light. Without color-mix they would be flat blocks of
+     gold and ink across the bottom of the hero, so they simply do not appear. */
+  @supports not (background: color-mix(in srgb, red 50%, blue)) {
+    .hero__dusk,
+    .hero__horizon {
+      display: none;
+    }
   }
 
   /* Soft shadows drifting across the land. Sized in vmax so they stay

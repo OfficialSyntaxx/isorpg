@@ -545,6 +545,7 @@ prescriptive. The goal is motion that reads as *craft*, not as *effects*.
 | M8 | `/play` | Hand-off transition into the game | Ink layer wipes over, hold, then navigate — hides the Unity loader's first blank frame |
 | M9 | Global | Page transitions | Astro View Transitions API, native, no JS framework cost |
 | M10 | `/404` | An in-world "off the map" scene | Reuses M4's route-drawing primitives |
+| M11 | `/` | **The departure** — leaving the hero as a camera move | Native CSS scroll-driven animation, compositor-only, no JS |
 
 ### 6.4 Library choice
 
@@ -740,7 +741,7 @@ Images: AVIF with WebP fallback, `loading="lazy"` below the fold, explicit
 - Full keyboard operability, visible focus rings that survive the design
   (a designed focus ring, not `outline: none`).
 - Semantic landmarks; one `h1` per route; heading order never skips.
-- `prefers-reduced-motion` honoured across every M1–M10 set piece (§6.1.5).
+- `prefers-reduced-motion` honoured across every M1–M11 set piece (§6.1.5).
 - Every image has meaningful alt text; decorative ones get `alt=""`.
 - The interactive map (§5.4) needs a keyboard path and a text equivalent —
   an SVG map that only works with a mouse fails.
@@ -1064,6 +1065,7 @@ Four, all invisible to the typecheck and the automated checks:
 - [x] **M9** page transitions via the **native CSS** `@view-transition`, zero
       JS.
 - [x] **M10** the 404's route draws itself, reusing M4's primitive.
+- [x] **M11** the hero departs as a camera move — see Phase 13b.
 - [x] `prefers-reduced-motion` verified on every set piece: 16/16 reveals
       visible, path draws left untouched, parallax untransformed, the horizontal
       run reverted to a scrollable row with all five pillars reachable, the hero
@@ -1090,6 +1092,7 @@ M6/M7. Implemented set piece by set piece, **not one of them needed a library**:
 | M7 | CSS |
 | M8 | one CSS transition and a click handler |
 | M9 | the native CSS view transition |
+| M11 | `animation-timeline: scroll(root block)` with `animation-range`, inside `@supports` |
 
 GSAP would have been roughly 30 KB gzipped to do what 2.3 KB of native code
 does, on a page whose entire first load was 15 KB. `@view-transition` also beats
@@ -1754,6 +1757,63 @@ The other half of the contract is checked too, and matters more: under
 holds still, and no path is left waiting to be drawn. Reveals default to their
 offset state in CSS, so a reduced-motion path that merely did nothing would obey
 the setting by deleting the content.
+
+#### Phase 13b — M11, the departure
+
+**The first of three commissioned pieces: a signature scroll moment on the
+hero.** Leaving the hero is now a camera move rather than a section scrolling
+off. Four layers on one scroll timeline, at four different rates — which is the
+whole effect:
+
+1. **The words go first.** `.hero__content` lifts 7% and fades out over
+   `4svh → 62svh`, clearing the frame while the land is still there.
+2. **The land keeps travelling.** The generated terrain grows to 1.12 and
+   settles 3% downward over `0 → 100svh`, from a `transform-origin` above
+   centre, so it reads as descending into the world rather than a zoom.
+3. **Dusk closes** over the land you are leaving.
+4. **A warm horizon opens** underneath it, dissolving the hero's hard bottom
+   edge and arriving at the `.seam` that starts the next section — so the join
+   reads as cresting a rise, not as a boundary between two blocks of a page.
+
+**Native CSS scroll-driven animation** — `animation-timeline: scroll(root
+block)` with explicit `animation-range` — chosen over JavaScript and over GSAP
+for three reasons. It runs on the compositor, so it stays smooth while the main
+thread is busy, and the main thread here is busy generating a world. It adds no
+scroll listener to a page that already has four. And it is cheap: **measured at
+356 bytes of gzipped CSS and zero JavaScript**, by building with and without the
+block. GSAP with ScrollTrigger would have been ~30 KB to do the same job, on a
+page whose entire script payload is 7 KB.
+
+Two implementation details worth keeping:
+
+- **The camera move is on a nested element, not on the parallax layer.** The
+  parallax is a scroll handler writing an inline transform; a CSS animation
+  overrides an inline style, so putting both on one element would silently
+  delete the parallax. Nested, they compose — drift within lift — which is also
+  what they mean.
+- **Longhands, never the `animation` shorthand.** A timeline-driven animation
+  needs `animation-duration: auto`; the shorthand resets it to `0s` and freezes
+  every keyframe on its first frame.
+
+**Progressive enhancement is the design, not a caveat.** The whole block sits
+inside `@supports (animation-timeline: scroll())` and every property it touches
+already has a correct resting value, so a browser without scroll timelines —
+Firefox still has this behind a flag — gets today's hero unchanged rather than a
+degraded one.
+
+**`prefers-reduced-motion` needs an explicit block here, and that is a real
+trap.** Everywhere else in this project the duration tokens collapse under the
+media query and that is sufficient. A scroll-driven animation has no duration to
+collapse — its progress comes from the scroll position — so it would run at full
+strength regardless.
+
+Verified: `verify-motion.cjs` grew from 15 to 21 assertions, including that the
+hero rests undeparted at the top, that the departure composes with the parallax
+rather than cancelling it, and that reduced motion cancels it entirely. Both
+failure modes were reproduced first — removing the reduced-motion guard, and
+moving the camera onto the parallax element — and each turns the suite red.
+Lighthouse on `/` after the change: mobile 96, desktop 100, median of three runs,
+with accessibility, best practices and SEO at 100.
 
 ---
 

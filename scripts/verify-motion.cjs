@@ -27,6 +27,9 @@
  *   - the counters climb to the real numbers in the markup;
  *   - the ambient tint changes region as you travel down the page;
  *   - the header condenses;
+ *   - the hero's departure runs on its scroll timeline — text first, then the
+ *     land, then dusk and the horizon — and composes with the parallax handler
+ *     underneath it rather than overriding it;
  *   - and a floor on the number of motion hooks per route, which is the
  *     assertion that would have caught the deleted routes.
  *
@@ -280,6 +283,103 @@ const url = (r) => `http://localhost:${PORT}${r}`;
     await page.close();
   }
 
+  // -------------------------------------------------- M11, the departure
+  //
+  // The signature scroll moment: the hero leaves as a camera move rather than a
+  // section scrolling off. Four layers on one scroll timeline, at four rates.
+  //
+  // This is the assertion that is easiest to lose. The whole effect lives
+  // inside `@supports (animation-timeline: scroll())`, and a browser without
+  // support is SUPPOSED to render the hero exactly as it did before — so
+  // "nothing moved" is a correct result there and a silent failure everywhere
+  // else. The support state is therefore established first and reported out
+  // loud, rather than inferred from the measurements.
+  {
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 900 },
+    });
+    await page.goto(url("/"), { waitUntil: "load" });
+    await page.evaluate(() => {
+      document.documentElement.style.scrollBehavior = "auto";
+    });
+    await page.waitForTimeout(1600);
+
+    const supported = await page.evaluate(() =>
+      CSS.supports("animation-timeline", "scroll()"),
+    );
+
+    const sample = () =>
+      page.evaluate(() => {
+        const g = (sel, prop) => {
+          const el = document.querySelector(sel);
+          return el ? getComputedStyle(el)[prop] : null;
+        };
+        return {
+          contentOpacity: Number(g("[data-hero-content]", "opacity")),
+          contentTransform: g("[data-hero-content]", "transform"),
+          depth: g("[data-hero-depth]", "transform"),
+          dusk: Number(g("[data-hero-dusk]", "opacity")),
+          horizon: Number(g("[data-hero-horizon]", "opacity")),
+        };
+      });
+
+    const top = await sample();
+    ok(
+      "the hero rests undeparted at the top of the page",
+      top.contentOpacity === 1 && top.dusk === 0 && top.horizon === 0,
+      `content ${top.contentOpacity}, dusk ${top.dusk}, horizon ${top.horizon}`,
+    );
+
+    await page.evaluate(() => window.scrollTo(0, 700));
+    await page.waitForTimeout(400);
+    const gone = await sample();
+
+    if (!supported) {
+      console.log(
+        "SKIP  the hero departure: this browser has no scroll timelines, so the " +
+          "hero is expected to be unchanged. Support is required to test it.",
+      );
+      ok(
+        "without scroll timelines the hero is left exactly as it was",
+        gone.contentOpacity === 1 && gone.dusk === 0 && gone.horizon === 0,
+        "the @supports guard is not holding",
+      );
+    } else {
+      ok(
+        "the hero text departs first",
+        gone.contentOpacity < 0.2 &&
+          gone.contentTransform !== top.contentTransform,
+        `opacity ${top.contentOpacity} -> ${gone.contentOpacity}`,
+      );
+      ok(
+        "the land keeps travelling after the text has gone",
+        gone.depth !== top.depth && gone.depth !== "none",
+        `${top.depth} -> ${gone.depth}`,
+      );
+      ok(
+        "dusk closes and the horizon opens",
+        gone.dusk > 0.25 && gone.horizon > 0.5,
+        `dusk ${gone.dusk.toFixed(2)}, horizon ${gone.horizon.toFixed(2)}`,
+      );
+
+      // The camera move and the parallax are two different mechanisms — a
+      // timeline and a scroll handler — on nested elements. Put on the same
+      // element the animation would override the inline transform and delete
+      // the parallax silently, which is the failure this pins down.
+      const parallax = await page.evaluate(
+        () =>
+          getComputedStyle(document.querySelector("[data-parallax]")).transform,
+      );
+      ok(
+        "the departure and the parallax compose rather than cancel",
+        parallax !== "none" && parallax !== gone.depth,
+        `layer ${parallax} vs depth ${gone.depth}`,
+      );
+    }
+
+    await page.close();
+  }
+
   // ---------------------------------------------------------------- counters
   {
     const page = await browser.newPage({
@@ -374,6 +474,36 @@ const url = (r) => `http://localhost:${PORT}${r}`;
       "reduced motion leaves the paths drawn rather than animating them",
       undrawn === 0,
       `${undrawn} paths were prepared for drawing`,
+    );
+
+    // The departure needs its own reduced-motion assertion, and it is the one
+    // most likely to rot. Every other animation in this project is built on the
+    // duration tokens, which tokens.css collapses to 0.01ms under this media
+    // query — so they are covered by construction. A scroll-driven animation
+    // has no duration to collapse: its progress comes from the scroll position,
+    // so it runs at full strength unless a media query explicitly says
+    // otherwise. Delete that block and nothing else in this file notices.
+    await page.evaluate(() => window.scrollTo(0, 700));
+    await page.waitForTimeout(400);
+    const held = await page.evaluate(() => {
+      const g = (sel, prop) => {
+        const el = document.querySelector(sel);
+        return el ? getComputedStyle(el)[prop] : null;
+      };
+      return {
+        content: Number(g("[data-hero-content]", "opacity")),
+        depth: g("[data-hero-depth]", "transform"),
+        dusk: Number(g("[data-hero-dusk]", "opacity")),
+        horizon: Number(g("[data-hero-horizon]", "opacity")),
+      };
+    });
+    ok(
+      "reduced motion cancels the hero departure entirely",
+      held.content === 1 &&
+        held.depth === "none" &&
+        held.dusk === 0 &&
+        held.horizon === 0,
+      `content ${held.content}, depth ${held.depth}, dusk ${held.dusk}, horizon ${held.horizon}`,
     );
 
     await page.close();
