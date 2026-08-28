@@ -109,7 +109,7 @@ import { site, gamePath } from "../../lib/site";
          bookmark a URL they never chose is a bigger liberty than the feature is
          worth. */
     }
-    <p class="hero__world" data-hero-world hidden></p>
+    <p class="hero__world" data-hero-world></p>
   </div>
 </section>
 
@@ -555,12 +555,36 @@ import { site, gamePath } from "../../lib/site";
     font-size: var(--text-xs);
   }
 
+  /* The space is reserved before there is anything to put in it.
+     This shipped as `hidden` and filled in once the generator returned a seed,
+     which added a line of text to the hero a second or two after load and took
+     cumulative layout shift on the landing page from 0.005 to 0.307 - enough to
+     cost 16 points of mobile performance. Caught by the production Lighthouse
+     gate, not by looking at it, because a shift that happens before you scroll
+     is invisible unless you are measuring.
+
+     min-height reserves exactly one line and the reveal is opacity only, so the
+     box never changes size. */
   .hero__world {
     margin-top: var(--space-2xs);
+    min-height: 1lh;
     color: var(--text-muted);
     font-size: var(--text-2xs);
     font-family: var(--font-mono);
     letter-spacing: var(--tracking-caps);
+    opacity: 0;
+    transition: opacity var(--dur-slow) var(--ease-out);
+  }
+
+  .hero__world[data-named] {
+    opacity: 1;
+  }
+
+  /* 1lh is recent. Without it, one line at this size and line-height. */
+  @supports not (min-height: 1lh) {
+    .hero__world {
+      min-height: 1.4em;
+    }
   }
 
   .hero__world :global(a) {
@@ -748,7 +772,7 @@ import { site, gamePath } from "../../lib/site";
       link.href = `?world=${id}`;
       link.textContent = `#${id}`;
       slot.append("This world: ", link);
-      slot.hidden = false;
+      slot.dataset.named = "";
     };
     const schedule = () => {
       if ("requestIdleCallback" in window) {

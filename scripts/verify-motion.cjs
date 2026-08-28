@@ -321,6 +321,61 @@ const url = (r) => `http://localhost:${PORT}${r}`;
     await page.close();
   }
 
+  // ---------------------------------------------- layout shift, every route
+  //
+  // WHY THIS IS IN THE MOTION CHECK
+  // Because every regression it has caught was a motion feature. A2 named the
+  // hero's world in a paragraph that shipped `hidden` and was filled in once the
+  // generator returned a seed — a line of text added to the hero a second after
+  // load, which took cumulative layout shift on the landing page from 0.005 to
+  // 0.307 and cost 16 points of mobile performance. The production Lighthouse
+  // gate caught it; nothing here did, and nothing visible did either, because a
+  // shift that happens before you scroll is invisible unless it is measured.
+  //
+  // verify-doc-layout.cjs already measures CLS on the two document routes. This
+  // covers the rest, which is where the animated work actually lands.
+  {
+    const ROUTES = [
+      "/",
+      "/world/",
+      "/features/",
+      "/bestiary/",
+      "/calculator/",
+      "/save/",
+    ];
+    for (const route of ROUTES) {
+      const page = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+      });
+      await page.addInitScript(() => {
+        window.__cls = 0;
+        try {
+          new PerformanceObserver((l) => {
+            for (const e of l.getEntries())
+              if (!e.hadRecentInput) window.__cls += e.value;
+          }).observe({ type: "layout-shift", buffered: true });
+        } catch {
+          window.__cls = -1;
+        }
+      });
+      await page.goto(url(route), { waitUntil: "load" });
+      // Long enough to include the hero's generator, which starts on an idle
+      // callback with a 1200ms timeout and is the slowest thing that can shift.
+      await page.waitForTimeout(3200);
+      const cls = await page.evaluate(() => window.__cls);
+      if (cls < 0) {
+        console.log(`SKIP  ${route}: no layout-shift observer.`);
+      } else {
+        ok(
+          `${route} @390: cumulative layout shift under 0.1`,
+          cls < 0.1,
+          `CLS ${cls.toFixed(3)}`,
+        );
+      }
+      await page.close();
+    }
+  }
+
   // ------------------------------------- the page works when scripts do not
   //
   // This is first because it is the one that was actually broken.
