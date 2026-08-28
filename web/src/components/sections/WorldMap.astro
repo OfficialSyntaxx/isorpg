@@ -54,6 +54,8 @@ const districts = [
     body: "Northwest forest. Normal and oak stands, the standing-stone ruin as the arrival landmark, and the early wildlife that teaches you to watch your health.",
     mod: "wildwood",
     at: { cx: 21, cy: 16, rx: 17, ry: 14 },
+    /** Where the road bends, taken off the bridge or pass in the artwork. */
+    via: { x: 34, y: 29 },
   },
   {
     id: "frostwatch",
@@ -62,6 +64,8 @@ const districts = [
     body: "Northeast highlands. Copper and tin near the road, iron and coal deeper in. The mine head and the snow line are both visible from the route, so you can see how far up you are choosing to go.",
     mod: "frostwatch",
     at: { cx: 79, cy: 14, rx: 19, ry: 13 },
+    /** Where the road bends, taken off the bridge or pass in the artwork. */
+    via: { x: 62, y: 28 },
   },
   {
     id: "miregate",
@@ -70,6 +74,8 @@ const districts = [
     body: "Southwest mire. Willow stands, fishing water, bog husks, and hazardous paths where finding the crossing matters more than winning the fight.",
     mod: "miregate",
     at: { cx: 19, cy: 74, rx: 17, ry: 15 },
+    /** Where the road bends, taken off the bridge or pass in the artwork. */
+    via: { x: 34, y: 61 },
   },
   {
     id: "sunmere",
@@ -78,6 +84,8 @@ const districts = [
     body: "Southeast lowlands. Farm plots and fishing feed the cooking and carpentry loop; the mill and granary anchor the shoreline and mark how far the town has grown.",
     mod: "wildwood",
     at: { cx: 78, cy: 76, rx: 19, ry: 16 },
+    /** Where the road bends, taken off the bridge or pass in the artwork. */
+    via: { x: 63, y: 61 },
   },
   {
     id: "cinder",
@@ -86,6 +94,8 @@ const districts = [
     body: "The far east ruin, lit in pools. The longest road on the map and the only one that is not a gentle loop — this is the route you earn.",
     mod: "cinder",
     at: { cx: 86, cy: 45, rx: 11, ry: 10 },
+    /** Where the road bends, taken off the bridge or pass in the artwork. */
+    via: { x: 67, y: 44 },
   },
 ] as const;
 ---
@@ -154,6 +164,36 @@ const districts = [
               height="100"
               mask="url(#atlas-spot)"
               fill="#05070e"></rect>
+
+            {
+              /* The roads, drawn on first view.
+                 These are the routes the copy keeps referring to — "every route
+                 is a loop back to town" — and until you watch them leave the
+                 settlement, that sentence is only a claim. They bend outward to
+                 follow the bridges and passes in the artwork rather than cutting
+                 straight across water.
+
+                 initPathDraw measures each path and animates stroke-dashoffset;
+                 data-draw-delay staggers the departures. The eastern road takes
+                 longer on purpose — it is the one route that is not a gentle
+                 loop, and it should feel like the longer walk it is. */
+            }
+            <g class="atlas__roads">
+              {
+                districts
+                  .filter((d) => "via" in d)
+                  .map((d, i) => (
+                    <path
+                      class="atlas__road"
+                      data-rgn={d.id}
+                      d={`M48 45 Q ${d.via.x} ${d.via.y} ${d.at.cx} ${d.at.cy}`}
+                      data-draw
+                      data-draw-delay={i * 120}
+                      data-draw-duration={d.id === "cinder" ? 1400 : 900}
+                    />
+                  ))
+              }
+            </g>
 
             {
               /* Route pins. Faint at rest so the map always looks surveyed
@@ -258,6 +298,25 @@ const districts = [
 
   /* Scaled rather than animated through the `r` attribute: CSS geometry
      properties are not universally supported, and a transform is composited. */
+  /* Roads sit under the scrim's logic but over the art: faint enough to read as
+     a surveyor's overlay, bright on the road you have chosen. */
+  .atlas__road {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 0.45;
+    stroke-linecap: round;
+    opacity: 0.26;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
+  .atlas[data-active] .atlas__road {
+    opacity: 0.16;
+  }
+
+  .atlas[data-active] .atlas__road.is-active {
+    opacity: 0.85;
+  }
+
   .atlas__ring {
     fill: none;
     stroke: #fff;
@@ -348,7 +407,7 @@ const districts = [
   );
 
   function setActive(id: string | null): void {
-    map?.querySelectorAll(".atlas__hole, .atlas__pin").forEach((el) => {
+    map?.querySelectorAll(".atlas__hole, .atlas__pin, .atlas__road").forEach((el) => {
       el.classList.toggle("is-active", id !== null && el.getAttribute("data-rgn") === id);
     });
     if (map) {

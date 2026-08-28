@@ -159,6 +159,14 @@ jobs:
       - name: Verify the hero animates and yields
         run: node ../scripts/verify-hero.cjs
 
+      # A broken animation is not an error. Nothing throws, nothing 404s, no
+      # score moves — the page just quietly becomes a static document. Rewriting
+      # the world map deleted five self-drawing route paths and every other
+      # check stayed green, so this one asserts the motion layer actually moves,
+      # and that reduced motion still shows every element.
+      - name: Verify the motion layer moves
+        run: node ../scripts/verify-motion.cjs
+
       - name: Fail if the landing _headers went missing
         run: |
           # compose-site.cjs merges this into the root _headers. If Astro stops

@@ -1719,6 +1719,42 @@ the LCP element.
 are not worth designing against a slot. They come after the first capture, not
 before it.
 
+#### Phase 13a — the regression the map rewrite caused, and the check that now catches it
+
+Replacing the drawn SVG map **silently deleted five self-drawing route paths.**
+Every other check stayed green: the build passed, the CSP passed, accessibility
+stayed at 100, and Lighthouse performance went *up*. A documented animation had
+simply stopped existing and nothing in the repository could tell the difference
+between "the routes draw themselves" and "there are no routes".
+
+That is the general shape of the problem, and it is worth stating plainly
+because it will recur: **a broken animation is not an error.** Nothing throws,
+nothing 404s, no score moves — the page quietly becomes a static document, and
+the only detector is a person who remembers what it used to do. Motion is the
+one part of this site with no natural alarm.
+
+The routes are back, and better placed than before: they are hand-fitted to the
+bridges and passes visible in the artwork rather than radiating as straight
+lines, they draw in sequence out of the settlement on first view, and the
+eastern road takes longer to draw because it is the one route that is not a
+gentle loop.
+
+**`scripts/verify-motion.cjs`** is the alarm — 15 assertions in a real browser
+against the built site, asserting behaviour rather than the presence of source
+that would produce it: reveals start hidden and *every* one arrives; the paths
+prepare and finish drawn; the parallax layer moves; the pillar run travels
+sideways; the counters climb and land on the real numbers in the markup; the
+ambient tint changes region down the page; the header condenses; and a floor on
+the motion hooks per route, which is the assertion that would have caught the
+deleted routes. Proven against the regression: removing the roads again fails it
+with `[data-draw] 1 < 6` on `/` and `0 < 5` on `/world/`.
+
+The other half of the contract is checked too, and matters more: under
+`prefers-reduced-motion` every element is revealed anyway, the parallax layer
+holds still, and no path is left waiting to be drawn. Reveals default to their
+offset state in CSS, so a reduced-motion path that merely did nothing would obey
+the setting by deleting the content.
+
 ---
 
 ## 13. Open questions
