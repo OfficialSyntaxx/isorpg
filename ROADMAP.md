@@ -25,6 +25,14 @@
 5. Capture a third-person screenshot and reject/rework the slice until it
    meets the screenshot gate before expanding the world.
 
+### Character workstream (runs alongside Phase 1)
+
+1. Follow `docs/CHARACTER_PIPELINE.md` for every NPC and monster source.
+2. Establish one original humanoid rig, then derive villager and guard variants.
+3. Establish one quadruped and one humanoid-monster rig before adding further
+   creature types.
+4. Keep unreviewed source assets outside the live world.
+
 ## 3D open-world roadmap — active
 
 > **Direction change (2026-08-23):** the fixed isometric tile view was a
