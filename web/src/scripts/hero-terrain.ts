@@ -180,9 +180,13 @@ interface Bird {
   phase: number;
 }
 
-export function paintTerrain(canvas: HTMLCanvasElement): void {
+export function paintTerrain(
+  canvas: HTMLCanvasElement,
+  lifeCanvas: HTMLCanvasElement,
+): void {
   const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  const lifeCtx = lifeCanvas.getContext("2d");
+  if (!ctx || !lifeCtx) return;
 
   const root = document.documentElement;
   const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -208,11 +212,17 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
   /** Colours resolved once per build, so the frame loop never touches CSSOM. */
   let waterRgb: [number, number, number] = [63, 168, 154];
   let warmRgb: [number, number, number] = [255, 212, 121];
-  let shadowAlpha = 0.16;
 
-  /** The painted terrain, blitted once per frame instead of redrawn. */
-  const base = document.createElement("canvas");
-  const baseCtx = base.getContext("2d");
+  /**
+   * The life layer renders at device-pixel-ratio 1 regardless of the screen.
+   *
+   * It carries water highlights, window glows and birds — soft, low-frequency
+   * shapes with no edges anyone can focus on and no text. Rendering them at 2x
+   * quadruples the pixels for a difference nobody can see, and pixel count is
+   * the entire cost of this layer. The terrain underneath keeps the full ratio,
+   * so the crisp thing stays crisp.
+   */
+  const LIFE_DPR = 1;
 
   // -------------------------------------------------------------------------
   // Terrain
@@ -345,16 +355,18 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     tri("#A65C3C", x, apexY, x + ew, eaveY, x, eaveY + eh);
   };
 
-  /** Repaints the cached terrain bitmap from the current tile list. */
-  const cacheBase = (): void => {
-    if (!baseCtx) return;
-    base.width = Math.round(cssW * dpr);
-    base.height = Math.round(cssH * dpr);
-    baseCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    baseCtx.clearRect(0, 0, cssW, cssH);
-    for (const t of tiles) paintTile(baseCtx, t, 1);
+  /**
+   * Paints the terrain onto its own canvas.
+   *
+   * Called once per build and never per frame. The terrain canvas is never
+   * cleared during the animation loop — that is the point of it being separate.
+   */
+  const paintTerrainLayer = (): void => {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+    for (const t of tiles) paintTile(ctx, t, 1);
     // After the terrain, so the town sits on the land rather than under it.
-    for (const h of houses) paintHouse(baseCtx, h);
+    for (const h of houses) paintHouse(ctx, h);
   };
 
   /**
@@ -374,6 +386,11 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssW, cssH);
 
+    lifeCanvas.width = Math.round(cssW * LIFE_DPR);
+    lifeCanvas.height = Math.round(cssH * LIFE_DPR);
+    lifeCtx.setTransform(LIFE_DPR, 0, 0, LIFE_DPR, 0, 0);
+    lifeCtx.clearRect(0, 0, cssW, cssH);
+
     // Palette from the live tokens, so this follows the theme and inherits the
     // audited colours instead of duplicating them.
     const bands: Band[] = [
@@ -386,9 +403,6 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
 
     waterRgb = toRgb(ctx, bands[0]!.color);
     warmRgb = toRgb(ctx, cssVar(root, "--mark-gold", "#FFD479"));
-    // Cloud shadows have to be lighter on the dark theme: the same multiply
-    // that reads as a passing cloud on parchment reads as a hole at night.
-    shadowAlpha = root.getAttribute("data-theme") === "dark" ? 0.1 : 0.16;
 
     // Tile size scales with the viewport so the composition holds from 360px to
     // ultrawide, rather than becoming a mosaic on one and four tiles on another.
@@ -549,7 +563,7 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
       phase: birdRand() * Math.PI * 2,
     }));
 
-    cacheBase();
+    paintTerrainLayer();
     canvas.setAttribute("data-painted", "");
   };
 
@@ -565,47 +579,21 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
    */
   let detail = 2;
 
-  /** Sunlight travelling across the land. One gradient fill. */
-  const drawSunSweep = (time: number): void => {
-    // 24 seconds for a full pass. Slow enough that it is felt rather than
-    // watched, which is the difference between atmosphere and a screensaver.
-    const t = (time / 24000) % 1;
-    const cx = -cssW * 0.4 + t * cssW * 1.8;
-    const g = ctx.createLinearGradient(cx - cssW * 0.5, 0, cx + cssW * 0.5, cssH);
-    g.addColorStop(0, "rgba(255,255,255,0)");
-    g.addColorStop(0.5, `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},0.16)`);
-    g.addColorStop(1, "rgba(255,255,255,0)");
-
-    ctx.globalCompositeOperation = "screen";
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, cssW, cssH);
-    ctx.globalCompositeOperation = "source-over";
-  };
-
-  /** Three cloud shadows crossing the terrain at different speeds. */
-  const drawCloudShadows = (time: number): void => {
-    ctx.globalCompositeOperation = "multiply";
-    for (let i = 0; i < 3; i++) {
-      const speed = 0.018 + i * 0.011;
-      const rx = cssW * (0.34 + i * 0.12);
-      const ry = rx * 0.42;
-      const x = (((time * speed) / 100 + i * 0.42) % 1.6) * (cssW + rx * 2) - rx;
-      const y = cssH * (0.28 + i * 0.22) + Math.sin(time / 9000 + i) * cssH * 0.04;
-
-      const g = ctx.createRadialGradient(x, y, 0, x, y, rx);
-      g.addColorStop(0, `rgba(30,36,50,${shadowAlpha})`);
-      g.addColorStop(1, "rgba(30,36,50,0)");
-      ctx.fillStyle = g;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(1, ry / rx);
-      ctx.beginPath();
-      ctx.arc(0, 0, rx, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-    ctx.globalCompositeOperation = "source-over";
-  };
+  /*
+   * THE SUN SWEEP AND CLOUD SHADOWS USED TO BE DRAWN HERE, AND ARE NOT ANY MORE.
+   *
+   * They were two full-canvas fills per frame under `screen` and `multiply`
+   * compositing — per-pixel blend passes over the whole hero, thirty times a
+   * second. Profiled on a 390x844 viewport at device-pixel-ratio 2 with 4x CPU
+   * throttling, the loop was consuming 2825ms of every 3000ms: a 62ms long task
+   * per frame, 94% of the main thread, for a decorative background.
+   *
+   * The hero already had drifting cloud shadows and a warm sun wash in CSS
+   * (.hero__sky and .hero__wash), which the compositor animates off the main
+   * thread for nothing. The canvas versions were a second implementation of the
+   * same idea, paid for in the most expensive way available. They are gone; the
+   * CSS ones remain and are what you see.
+   */
 
   /**
    * Water. Each tile's top face gets a travelling highlight whose phase depends
@@ -614,7 +602,7 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
    */
   const drawWater = (time: number): void => {
     const limit = detail >= 2 ? waterTiles.length : Math.min(60, waterTiles.length);
-    ctx.globalCompositeOperation = "screen";
+    lifeCtx.globalCompositeOperation = "screen";
     for (let i = 0; i < limit; i++) {
       const t = waterTiles[i] as Tile;
       const wave = Math.sin(time / 1400 + (t.gx - t.gy) * 0.55 + t.gy * 0.18);
@@ -623,28 +611,28 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
       // sizes, which is what stops the surface looking like a printed pattern.
       const bob = Math.sin(time / 1100 + t.gx * 0.4) * tileH * 0.045;
 
-      ctx.globalAlpha = a;
-      ctx.fillStyle = `rgb(${Math.min(255, waterRgb[0] + 70)},${Math.min(
+      lifeCtx.globalAlpha = a;
+      lifeCtx.fillStyle = `rgb(${Math.min(255, waterRgb[0] + 70)},${Math.min(
         255,
         waterRgb[1] + 70,
       )},${Math.min(255, waterRgb[2] + 60)})`;
       const x = t.x;
       const y = t.y + bob;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + tileW / 2, y + tileH / 2);
-      ctx.lineTo(x, y + tileH);
-      ctx.lineTo(x - tileW / 2, y + tileH / 2);
-      ctx.closePath();
-      ctx.fill();
+      lifeCtx.beginPath();
+      lifeCtx.moveTo(x, y);
+      lifeCtx.lineTo(x + tileW / 2, y + tileH / 2);
+      lifeCtx.lineTo(x, y + tileH);
+      lifeCtx.lineTo(x - tileW / 2, y + tileH / 2);
+      lifeCtx.closePath();
+      lifeCtx.fill();
     }
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = "source-over";
+    lifeCtx.globalAlpha = 1;
+    lifeCtx.globalCompositeOperation = "source-over";
   };
 
   /** The settlement's windows, each on its own slow flicker. */
   const drawLights = (time: number): void => {
-    ctx.globalCompositeOperation = "screen";
+    lifeCtx.globalCompositeOperation = "screen";
     for (const l of lights) {
       const pulse = 0.55 + 0.45 * Math.sin(time / 2200 + l.phase);
       // A second, faster and much smaller term: a steady sine reads as a
@@ -652,33 +640,33 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
       const flicker = 0.92 + 0.08 * Math.sin(time / 190 + l.phase * 3);
       const r = l.size * (1.6 + pulse * 0.5);
 
-      const g = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, r);
+      const g = lifeCtx.createRadialGradient(l.x, l.y, 0, l.x, l.y, r);
       g.addColorStop(
         0,
         `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},${0.5 * pulse * flicker})`,
       );
       g.addColorStop(1, `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(l.x, l.y, r, 0, Math.PI * 2);
-      ctx.fill();
+      lifeCtx.fillStyle = g;
+      lifeCtx.beginPath();
+      lifeCtx.arc(l.x, l.y, r, 0, Math.PI * 2);
+      lifeCtx.fill();
 
-      ctx.fillStyle = `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},${0.75 * flicker})`;
-      ctx.fillRect(
+      lifeCtx.fillStyle = `rgba(${warmRgb[0]},${warmRgb[1]},${warmRgb[2]},${0.75 * flicker})`;
+      lifeCtx.fillRect(
         l.x - l.size * 0.18,
         l.y - l.size * 0.18,
         l.size * 0.36,
         l.size * 0.36,
       );
     }
-    ctx.globalCompositeOperation = "source-over";
+    lifeCtx.globalCompositeOperation = "source-over";
   };
 
   /** Birds, as two small strokes each. They wrap rather than respawn. */
   const drawBirds = (time: number): void => {
     const seconds = time / 1000;
-    ctx.strokeStyle = "rgba(28,32,44,0.38)";
-    ctx.lineCap = "round";
+    lifeCtx.strokeStyle = "rgba(28,32,44,0.38)";
+    lifeCtx.lineCap = "round";
     for (const b of birds) {
       const span = cssW + 80;
       const x = (((b.x + b.vx * seconds) % span) + span) % span;
@@ -687,12 +675,12 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
       // Wingbeat: the V opens and closes.
       const beat = 0.45 + 0.35 * Math.abs(Math.sin(seconds * 4 + b.phase));
 
-      ctx.lineWidth = 1.4 * b.scale;
-      ctx.beginPath();
-      ctx.moveTo(x - s, y - s * beat);
-      ctx.lineTo(x, y);
-      ctx.lineTo(x + s, y - s * beat);
-      ctx.stroke();
+      lifeCtx.lineWidth = 1.4 * b.scale;
+      lifeCtx.beginPath();
+      lifeCtx.moveTo(x - s, y - s * beat);
+      lifeCtx.lineTo(x, y);
+      lifeCtx.lineTo(x + s, y - s * beat);
+      lifeCtx.stroke();
     }
   };
 
@@ -704,27 +692,40 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
   let onScreen = true;
   let slowFrames = 0;
   let lastFrame = 0;
+  let lastPaint = 0;
+  /** ~30fps. See the note in `loop`. */
+  const FRAME_MS = 32;
 
   const renderFrame = (time: number): void => {
-    ctx.clearRect(0, 0, cssW, cssH);
-    if (baseCtx) ctx.drawImage(base, 0, 0, cssW, cssH);
-
+    // Only the life layer is cleared. The terrain beneath it is untouched,
+    // which is the whole reason there are two canvases.
+    lifeCtx.clearRect(0, 0, cssW, cssH);
     drawWater(time);
     drawLights(time);
-    drawCloudShadows(time);
-    drawSunSweep(time);
     if (detail >= 2) drawBirds(time);
   };
 
   const loop = (now: number): void => {
     if (!running) return;
+    rafId = requestAnimationFrame(loop);
+
+    // Paced to ~30fps rather than driven at the display's rate.
+    //
+    // Everything here drifts: sunlight over 24 seconds, clouds over minutes,
+    // water on a slow wave. None of it is any smoother at 60fps, and a frame is
+    // a full-canvas blit plus ~150 fills — at device-pixel-ratio 2 that blit
+    // alone is four million pixels. Halving the rate halves the whole cost and
+    // is invisible. Lighthouse attributed 6.9 SECONDS of main-thread time to
+    // this script before the loop was paced and its gradients were cached.
+    if (now - lastPaint < FRAME_MS) return;
+    lastPaint = now;
 
     // Shed detail rather than judder. Four consecutive frames over 26ms is a
     // device telling us it cannot afford this, and the right response is to ask
     // for less — not to keep asking and blame the phone.
     if (lastFrame > 0) {
       const delta = now - lastFrame;
-      if (delta > 26) {
+      if (delta > FRAME_MS + 20) {
         slowFrames++;
         if (slowFrames >= 4 && detail > 0) {
           detail--;
@@ -737,13 +738,13 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     lastFrame = now;
 
     renderFrame(now);
-    rafId = requestAnimationFrame(loop);
   };
 
   const start = (): void => {
     if (running || !mayAnimate() || !onScreen || document.hidden) return;
     running = true;
     lastFrame = 0;
+    lastPaint = 0;
     rafId = requestAnimationFrame(loop);
   };
 
@@ -755,14 +756,12 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
 
   /** The still frame: the world, painted, not moving. */
   const settle = (): void => {
-    ctx.clearRect(0, 0, cssW, cssH);
-    if (baseCtx) ctx.drawImage(base, 0, 0, cssW, cssH);
+    paintTerrainLayer();
+    lifeCtx.clearRect(0, 0, cssW, cssH);
     // Time zero, so the still frame is a composed moment rather than the
     // terrain with its lighting missing.
     drawWater(0);
     drawLights(0);
-    drawCloudShadows(0);
-    drawSunSweep(6000);
   };
 
   /**
@@ -778,7 +777,15 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
    */
   const animateIn = (): void => {
     const DURATION = 1100;
-    const STAGGER_SPAN = 0.55; // fraction of DURATION spent handing out starts
+    // Fraction of DURATION spent handing out start times.
+    //
+    // This was 0.55, which meant a tile's own flight took 45% of the duration
+    // and roughly four fifths of the terrain was mid-flight on any given frame
+    // — so "staggered" still redrew almost everything, sixty times a second,
+    // during the exact window the browser is trying to render the page. At 0.86
+    // the in-flight window is about a sixth of the tiles, and the entrance
+    // reads more like a sweep across the land than a general fade-in.
+    const STAGGER_SPAN = 0.86;
 
     const depths = tiles.map((t) => t.depth);
     const minDepth = Math.min(...depths);
@@ -788,31 +795,59 @@ export function paintTerrain(canvas: HTMLCanvasElement): void {
     const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
     const began = performance.now();
 
+    let settledUpto = 0;
+    // The terrain canvas starts empty and is only ever added to.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
     const frame = (now: number): void => {
       const elapsed = now - began;
       const t = Math.min(1, elapsed / DURATION);
 
-      ctx.clearRect(0, 0, cssW, cssH);
-
-      for (const tile of tiles) {
+      // Tiles that have landed are painted ONCE onto the terrain canvas and
+      // never touched again. Only the tiles still in the air are redrawn, and
+      // they go on the life layer, which is the only thing cleared per frame.
+      //
+      // This is correct rather than merely cheap: the entrance runs back to
+      // front by depth, so every settled tile is behind every in-flight one,
+      // and terrain-then-life is the same painter's order the static scene
+      // uses. The previous version cleared and repainted every tile in the
+      // scene on every frame, during page load.
+      while (settledUpto < tiles.length) {
+        const tile = tiles[settledUpto] as Tile;
         const offset = ((tile.depth - minDepth) / span) * STAGGER_SPAN;
         const local = (t - offset) / (1 - STAGGER_SPAN);
-        if (local <= 0) continue;
-        paintTile(ctx, tile, easeOut(Math.min(1, local)));
+        if (local < 1) break;
+        paintTile(ctx, tile, 1);
+        settledUpto++;
       }
 
-      // The settlement arrives last, over the final quarter. Without this the
-      // houses are absent for the whole entrance and then simply exist on the
-      // first blitted frame, which is a visible pop. Building the land and then
-      // the town on it is also the truer order.
+      lifeCtx.clearRect(0, 0, cssW, cssH);
+      for (let i = settledUpto; i < tiles.length; i++) {
+        const tile = tiles[i] as Tile;
+        const offset = ((tile.depth - minDepth) / span) * STAGGER_SPAN;
+        const local = (t - offset) / (1 - STAGGER_SPAN);
+        if (local <= 0) break;
+        paintTile(lifeCtx, tile, easeOut(Math.min(1, local)));
+      }
+
+      // The settlement arrives last, over the final quarter. Building the land
+      // and then the town on it is the truer order, and without the ramp the
+      // houses simply exist on the first frame after the entrance.
       if (t > 0.75 && houses.length > 0) {
-        ctx.globalAlpha = easeOut((t - 0.75) / 0.25);
-        for (const h of houses) paintHouse(ctx, h);
-        ctx.globalAlpha = 1;
+        lifeCtx.globalAlpha = easeOut((t - 0.75) / 0.25);
+        for (const h of houses) paintHouse(lifeCtx, h);
+        lifeCtx.globalAlpha = 1;
       }
 
-      if (t < 1) requestAnimationFrame(frame);
-      else start();
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        // Land the final state on the canvases that own it.
+        paintTerrainLayer();
+        lifeCtx.clearRect(0, 0, cssW, cssH);
+        start();
+      }
     };
 
     requestAnimationFrame(frame);

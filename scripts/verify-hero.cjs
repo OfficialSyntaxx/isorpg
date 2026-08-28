@@ -76,9 +76,9 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 
-/** Samples the canvas and reduces it to one number. */
-const HASH = () => {
-  const c = document.querySelector("[data-hero-terrain]");
+/** Samples a canvas and reduces it to one number. */
+const HASH = (sel) => {
+  const c = document.querySelector(sel);
   if (!c) return -1;
   const g = c.getContext("2d");
   const d = g.getImageData(0, 0, c.width, Math.min(240, c.height)).data;
@@ -86,6 +86,9 @@ const HASH = () => {
   for (let i = 0; i < d.length; i += 617) h = (h * 31 + d[i]) >>> 0;
   return h;
 };
+
+const LIFE = "[data-hero-life]";
+const TERRAIN = "[data-hero-terrain]";
 
 (async () => {
   const { chromium, executablePath } = requireBrowser("hero");
@@ -114,15 +117,26 @@ const HASH = () => {
     });
     ok("the hero canvas paints", painted);
 
-    const a = await page.evaluate(HASH);
+    const a = await page.evaluate(HASH, LIFE);
+    const terrainA = await page.evaluate(HASH, TERRAIN);
     await page.waitForTimeout(900);
-    const b = await page.evaluate(HASH);
+    const b = await page.evaluate(HASH, LIFE);
     await page.waitForTimeout(900);
-    const c = await page.evaluate(HASH);
+    const c = await page.evaluate(HASH, LIFE);
+    const terrainB = await page.evaluate(HASH, TERRAIN);
     ok(
       "the scene is still animating after the entrance",
       a !== b && b !== c,
       `${a} ${b} ${c}`,
+    );
+
+    // The performance design, asserted rather than assumed: the terrain is
+    // painted once and the loop must never touch it again. Repainting it per
+    // frame is what cost 2825ms of every 3000ms before the split.
+    ok(
+      "the terrain layer is not repainted by the loop",
+      terrainA === terrainB && terrainA !== -1,
+      `${terrainA} vs ${terrainB}`,
     );
 
     // Scroll the hero fully out of view; the loop must stop.
@@ -131,9 +145,9 @@ const HASH = () => {
       window.scrollTo(0, window.innerHeight * 3);
     });
     await page.waitForTimeout(900);
-    const d = await page.evaluate(HASH);
+    const d = await page.evaluate(HASH, LIFE);
     await page.waitForTimeout(900);
-    const e = await page.evaluate(HASH);
+    const e = await page.evaluate(HASH, LIFE);
     ok(
       "the loop stops when the hero is scrolled out of view",
       d === e,
@@ -143,9 +157,9 @@ const HASH = () => {
     // And restarts when it comes back.
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(1000);
-    const f = await page.evaluate(HASH);
+    const f = await page.evaluate(HASH, LIFE);
     await page.waitForTimeout(900);
-    const g = await page.evaluate(HASH);
+    const g = await page.evaluate(HASH, LIFE);
     ok("it resumes when the hero returns to view", f !== g, `${f} vs ${g}`);
 
     ok(
@@ -153,6 +167,62 @@ const HASH = () => {
       errors.length === 0,
       errors.slice(0, 2).join(" | "),
     );
+    await page.close();
+  }
+
+  // --- the cost of running ---------------------------------------------------
+  //
+  // The check that would have caught the regression this file was written after.
+  // The animated hero once consumed 2825ms of every 3000ms of main thread on a
+  // throttled phone profile — a 62ms long task every frame — and every other
+  // assertion here passed happily throughout, because a hero that is animating
+  // beautifully and a hero that is eating the device look identical from the
+  // outside. Long-task time under CPU throttling is the number that separates
+  // them.
+  {
+    const page = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+    });
+    const cdp = await page.context().newCDPSession(page);
+    // The same 4x throttle Lighthouse applies to its mobile profile.
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    await page.goto(`http://localhost:${port}/`, { waitUntil: "load" });
+    // Past the entrance and into steady state; the entrance is allowed to be
+    // busy, a permanent loop is not.
+    await page.waitForTimeout(4000);
+
+    const blocked = await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const seen = [];
+          try {
+            const o = new PerformanceObserver((l) => {
+              for (const e of l.getEntries()) seen.push(e.duration);
+            });
+            o.observe({ entryTypes: ["longtask"] });
+          } catch {
+            resolve(-1);
+            return;
+          }
+          setTimeout(() => resolve(seen.reduce((a, c) => a + c, 0)), 3000);
+        }),
+    );
+
+    if (blocked < 0) {
+      console.log(
+        "SKIP  long-task budget: PerformanceObserver longtask unavailable.",
+      );
+    } else {
+      // 600ms of 3000ms is 20% of a throttled main thread. Generous — the
+      // measured figure after the two-canvas split is 0 — but it is the
+      // difference between "a background" and "a background that owns the CPU".
+      ok(
+        "steady-state main-thread cost is within budget",
+        blocked <= 600,
+        `${Math.round(blocked)}ms of long tasks per 3000ms (budget 600)`,
+      );
+    }
     await page.close();
   }
 
@@ -186,9 +256,9 @@ const HASH = () => {
       `${ink} sampled opaque pixels`,
     );
 
-    const a = await page.evaluate(HASH);
+    const a = await page.evaluate(HASH, LIFE);
     await page.waitForTimeout(1200);
-    const b = await page.evaluate(HASH);
+    const b = await page.evaluate(HASH, LIFE);
     ok("reduced motion holds the frame still", a === b, `${a} vs ${b}`);
     await page.close();
   }

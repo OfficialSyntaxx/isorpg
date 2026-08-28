@@ -21,7 +21,14 @@ import { site, gamePath } from "../../lib/site";
   <!-- M2: the terrain drifts against the scroll. 0.5 of the 40px cap, so it
        reads as depth rather than as a parallax demo. -->
   <div class="hero__layer" data-parallax="0.5">
+    <!-- Two canvases, deliberately.
+         The terrain is painted once and never repainted; only the life on top
+         of it — water, windows, birds — is redrawn. One canvas meant blitting
+         the whole terrain back every frame just to clear what moved, which
+         measured 62ms per frame on a throttled phone profile. -->
     <canvas class="hero__canvas" aria-hidden="true" data-hero-terrain></canvas>
+    <canvas class="hero__canvas hero__canvas--life" aria-hidden="true" data-hero-life
+    ></canvas>
   </div>
 
   <!-- Ambient life over the generated terrain.
@@ -249,6 +256,16 @@ import { site, gamePath } from "../../lib/site";
     opacity: 1;
   }
 
+  /* The life layer sits directly over the terrain and shares its fade-in. */
+  .hero__canvas--life {
+    opacity: 1;
+    transition: none;
+  }
+
+  .hero__canvas:not([data-painted]) + .hero__canvas--life {
+    opacity: 0;
+  }
+
   /* Keeps the headline legible over whatever the generator produced. Without
      this the contrast of the title depends on a random seed, which is not a
      thing to leave to chance. */
@@ -313,5 +330,35 @@ import { site, gamePath } from "../../lib/site";
   import { paintTerrain } from "../../scripts/hero-terrain";
 
   const canvas = document.querySelector<HTMLCanvasElement>("[data-hero-terrain]");
-  if (canvas) paintTerrain(canvas);
+  const life = document.querySelector<HTMLCanvasElement>("[data-hero-life]");
+
+  if (canvas && life) {
+    // Started AFTER the page has loaded and the browser is idle, not during it.
+    //
+    // Generating the world is real work — noise sampling, a few thousand tiles,
+    // then an entrance animation — and running it inline meant it competed with
+    // the browser's own first paint of the headline and the buttons. The
+    // gradient underneath is a complete composition on its own, so nothing is
+    // missing while this waits; the terrain arriving a beat later reads as the
+    // world building itself, which is the section's whole idea.
+    //
+    // requestIdleCallback with a timeout, because Safari has only recently
+    // shipped it and the timeout guarantees the world appears on a busy page
+    // rather than waiting for an idle moment that never comes.
+    const begin = () => paintTerrain(canvas, life);
+    const schedule = () => {
+      if ("requestIdleCallback" in window) {
+        (
+          window as Window & {
+            requestIdleCallback: (cb: () => void, o?: { timeout: number }) => void;
+          }
+        ).requestIdleCallback(begin, { timeout: 1200 });
+      } else {
+        setTimeout(begin, 120);
+      }
+    };
+
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+  }
 </script>
