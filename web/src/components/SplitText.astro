@@ -1,0 +1,275 @@
+---
+/**
+ * M12 — a headline that arrives a letter at a time.
+ *
+ * The effect libraries sell as "SplitText": the line is broken into words and
+ * characters, each character rises out of a mask on its own beat, and the
+ * sentence assembles itself rather than appearing. On a page whose headline is
+ * "The world builds itself", a headline that builds itself is the one piece of
+ * decoration that is actually an argument.
+ *
+ * SPLIT AT BUILD TIME, NOT IN THE BROWSER
+ * Every implementation of this ships a script that finds the element, reads its
+ * text, and rewrites its DOM on load. That costs bytes, runs during the most
+ * contended moment of the page's life, and gives you a frame of unsplit text
+ * before it takes effect. This is a static site: the split can happen when the
+ * page is generated and ship as ordinary markup. The result animates with no
+ * JavaScript at all — the entrance is CSS the browser already has, so it plays
+ * for a reader whose scripts failed, were blocked, or never arrived.
+ *
+ * THE STAGGER, WITHOUT INLINE STYLES
+ * The obvious way to stagger is a per-character `style="--i: 7"`, and the
+ * content security policy forbids exactly that — `style-src-attr` blocks style
+ * attributes in markup, and this project has no 'unsafe-inline'. So the index
+ * comes from `:nth-child` rules that set a custom property, and because custom
+ * properties inherit, a character can read its word's beat and add its own
+ * offset to it:
+ *
+ *     delay = (word index x WORD_BEAT) + (char index x CHAR_BEAT)
+ *
+ * Two short rule sets rather than one long one, and the rhythm is better for
+ * it: words land as beats, letters flick within them.
+ *
+ * ACCESSIBILITY — THE SPLIT TEXT IS NOT THE TEXT
+ * A heading chopped into forty spans is a hazard: some screen readers announce
+ * per-character runs a letter at a time, and the reading order of a masked
+ * layout is not something to leave to chance. So the real sentence ships once,
+ * visually hidden, as the only thing assistive technology sees; the visible
+ * letters are `aria-hidden`. The heading's accessible name is the sentence, not
+ * a pile of glyphs.
+ *
+ * The hidden copy is `user-select: none` so that selecting and copying the
+ * headline yields the sentence once rather than twice.
+ */
+interface Props {
+  /** The line to split. Plain text — no markup. */
+  text: string;
+  class?: string;
+}
+
+const { text, class: className } = Astro.props;
+
+/*
+ * The caps.
+ *
+ * The stagger is driven by :nth-child rules, so there is a finite number of
+ * them and a longer line would silently lose its beat — every character past
+ * the last rule would land at the same time as the one before it. That failure
+ * is invisible in review and impossible to notice in a screenshot, so the
+ * component refuses to build instead. Raising a cap means adding rules below;
+ * the error says so.
+ */
+const MAX_WORDS = 16;
+const MAX_CHARS = 16;
+
+const words = text.trim().split(/\s+/);
+
+if (words.length > MAX_WORDS) {
+  throw new Error(
+    `SplitText: "${text}" has ${words.length} words; the stagger rules cover ${MAX_WORDS}. ` +
+      `Add the missing .split__word:nth-child() rules in SplitText.astro, or shorten the line.`,
+  );
+}
+
+const tooLong = words.find((w) => [...w].length > MAX_CHARS);
+if (tooLong) {
+  throw new Error(
+    `SplitText: "${tooLong}" is ${[...tooLong].length} characters; the stagger rules cover ${MAX_CHARS}. ` +
+      `Add the missing .split__char:nth-child() rules in SplitText.astro, or shorten the word.`,
+  );
+}
+
+/* Split by code point, so an accented letter or an emoji stays one character
+   rather than becoming two halves that animate apart. */
+const split = words.map((w) => [...w]);
+---
+
+<span class:list={["split", className]}>
+  <span class="split__true">{text}</span>
+  <span class="split__glyphs" aria-hidden="true">
+    {
+      split.map((chars, w) => (
+        <>
+          {w > 0 && " "}
+          <span class="split__word">
+            {chars.map((c) => (
+              <span class="split__char">{c}</span>
+            ))}
+          </span>
+        </>
+      ))
+    }
+  </span>
+</span>
+
+<style>
+  .split {
+    display: inline;
+  }
+
+  /* The sentence itself: the only copy assistive technology reads, and the only
+     one that survives a copy-paste. Not .visually-hidden, because that utility
+     is a global and this needs user-select: none on top of it. */
+  .split__true {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+    user-select: none;
+  }
+
+  /* Each word is the mask its letters rise out of.
+     The padding/negative-margin pair gives descenders somewhere to live: a bare
+     overflow: hidden would shave the tail off a "g" or a "y" for the entire
+     life of the page, which is a permanent bug in exchange for a 700ms effect.
+     vertical-align keeps the inline-block sitting on the text baseline instead
+     of the box bottom. */
+  .split__word {
+    display: inline-block;
+    overflow: hidden;
+    padding-bottom: 0.16em;
+    margin-bottom: -0.16em;
+    vertical-align: bottom;
+    white-space: nowrap;
+  }
+
+  .split__char {
+    display: inline-block;
+    /* Resting state is ARRIVED. The offset is applied by the animation's
+       `backwards` fill only where the animation actually runs, so a browser
+       that ignores the block below — or a reader with reduced motion — sees a
+       finished headline rather than an empty mask. */
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .split__char {
+      animation-name: split-rise;
+      animation-duration: 760ms;
+      animation-timing-function: var(--ease-out);
+      animation-fill-mode: backwards;
+      /* The beat. Words are the rhythm; letters are the flourish inside it.
+         120ms of lead-in so the line starts after the page has painted rather
+         than competing with it. */
+      animation-delay: calc(
+        120ms + (var(--split-word, 0) * 78ms) + (var(--split-char, 0) * 24ms)
+      );
+    }
+  }
+
+  @keyframes split-rise {
+    from {
+      transform: translateY(105%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  /* The stagger indices.
+     Two short ladders instead of one long one: a character inherits its word's
+     beat through the custom property and adds its own offset. Repetitive by
+     nature, and it compresses to almost nothing. */
+  .split__word:nth-child(1) {
+    --split-word: 0;
+  }
+  .split__word:nth-child(2) {
+    --split-word: 1;
+  }
+  .split__word:nth-child(3) {
+    --split-word: 2;
+  }
+  .split__word:nth-child(4) {
+    --split-word: 3;
+  }
+  .split__word:nth-child(5) {
+    --split-word: 4;
+  }
+  .split__word:nth-child(6) {
+    --split-word: 5;
+  }
+  .split__word:nth-child(7) {
+    --split-word: 6;
+  }
+  .split__word:nth-child(8) {
+    --split-word: 7;
+  }
+  .split__word:nth-child(9) {
+    --split-word: 8;
+  }
+  .split__word:nth-child(10) {
+    --split-word: 9;
+  }
+  .split__word:nth-child(11) {
+    --split-word: 10;
+  }
+  .split__word:nth-child(12) {
+    --split-word: 11;
+  }
+  .split__word:nth-child(13) {
+    --split-word: 12;
+  }
+  .split__word:nth-child(14) {
+    --split-word: 13;
+  }
+  .split__word:nth-child(15) {
+    --split-word: 14;
+  }
+  .split__word:nth-child(16) {
+    --split-word: 15;
+  }
+
+  .split__char:nth-child(1) {
+    --split-char: 0;
+  }
+  .split__char:nth-child(2) {
+    --split-char: 1;
+  }
+  .split__char:nth-child(3) {
+    --split-char: 2;
+  }
+  .split__char:nth-child(4) {
+    --split-char: 3;
+  }
+  .split__char:nth-child(5) {
+    --split-char: 4;
+  }
+  .split__char:nth-child(6) {
+    --split-char: 5;
+  }
+  .split__char:nth-child(7) {
+    --split-char: 6;
+  }
+  .split__char:nth-child(8) {
+    --split-char: 7;
+  }
+  .split__char:nth-child(9) {
+    --split-char: 8;
+  }
+  .split__char:nth-child(10) {
+    --split-char: 9;
+  }
+  .split__char:nth-child(11) {
+    --split-char: 10;
+  }
+  .split__char:nth-child(12) {
+    --split-char: 11;
+  }
+  .split__char:nth-child(13) {
+    --split-char: 12;
+  }
+  .split__char:nth-child(14) {
+    --split-char: 13;
+  }
+  .split__char:nth-child(15) {
+    --split-char: 14;
+  }
+  .split__char:nth-child(16) {
+    --split-char: 15;
+  }
+</style>

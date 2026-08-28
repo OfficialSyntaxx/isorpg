@@ -163,6 +163,14 @@ const url = (r) => `http://localhost:${PORT}${r}`;
     });
     await page.waitForTimeout(600);
 
+    // Measured as computed OPACITY, not as the absence of a class.
+    //
+    // An earlier version of this counted elements carrying .is-revealed, which
+    // only proves the observer has not fired yet. Deleting the [data-js] flag
+    // that gates the offset state would leave every element permanently visible
+    // — the entire scroll-reveal effect gone — and that class-based assertion
+    // passed against exactly that, tested. Opacity is the thing a reader sees,
+    // so opacity is the thing to assert.
     const before = await page.evaluate(() => {
       const els = [...document.querySelectorAll("[data-reveal]")];
       const below = els.filter(
@@ -170,14 +178,15 @@ const url = (r) => `http://localhost:${PORT}${r}`;
       );
       return {
         below: below.length,
-        revealedBelow: below.filter((e) => e.classList.contains("is-revealed"))
-          .length,
+        visibleBelow: below.filter(
+          (e) => Number(getComputedStyle(e).opacity) > 0.99,
+        ).length,
       };
     });
     ok(
       "reveals below the fold start hidden",
-      before.below > 0 && before.revealedBelow === 0,
-      `${before.revealedBelow}/${before.below} already revealed`,
+      before.below > 0 && before.visibleBelow === 0,
+      `${before.visibleBelow}/${before.below} already at full opacity`,
     );
 
     const parallax0 = await page.evaluate(
@@ -278,6 +287,155 @@ const url = (r) => `http://localhost:${PORT}${r}`;
         drew.prepared === drew.total &&
         drew.drawn === drew.total,
       `${drew.drawn} drawn / ${drew.prepared} prepared / ${drew.total} total`,
+    );
+
+    await page.close();
+  }
+
+  // ------------------------------------- the page works when scripts do not
+  //
+  // This is first because it is the one that was actually broken.
+  //
+  // The reveal primitive hides [data-reveal] and waits for a module script to
+  // un-hide it. When that script did not run, the landing page rendered a
+  // COMPLETELY BLANK hero — no headline, no lede, no buttons — and the comment
+  // above the CSS asserted the opposite, which is why it survived review. The
+  // offset state is now gated on [data-js], set by theme-init.js before first
+  // paint, so a document that cannot animate never hides anything.
+  //
+  // HOW THIS IS MEASURED, AND WHY NOT THE OBVIOUS WAY
+  // The obvious way is a context with javaScriptEnabled: false. Do not use it
+  // here. With page scripting off there is no page.evaluate, so a computed
+  // style cannot be read, and what is left to measure does not discriminate:
+  // innerText happily returns text from an element at opacity 0, and a hero
+  // screenshot is mostly gradient either way. The first draft of this check
+  // asserted exactly those two things and PASSED against the bug when it was
+  // deliberately reintroduced — it was decoration.
+  //
+  // Blocking every script at the network layer reproduces the same state — no
+  // theme-init.js, so no [data-js], so nothing hidden — while leaving page
+  // scripting available to measure it. It is also the more common real-world
+  // case: a blocked request, a failed CDN, an extension.
+  {
+    const ctx = await browser.newContext({
+      viewport: { width: 1280, height: 900 },
+    });
+    await ctx.route(/\.js(\?.*)?$/, (route) => route.abort());
+    const page = await ctx.newPage();
+    await page.goto(url("/"), { waitUntil: "load" });
+    await page.waitForTimeout(400);
+
+    const state = await page.evaluate(() => {
+      const all = [...document.querySelectorAll("[data-reveal]")];
+      const h1 = document.querySelector("h1");
+      return {
+        scriptRan: document.documentElement.hasAttribute("data-js"),
+        total: all.length,
+        hidden: all.filter((e) => Number(getComputedStyle(e).opacity) < 0.99)
+          .length,
+        headlineVisible: Number(getComputedStyle(h1).opacity) > 0.99,
+        headlineWidth: Math.round(h1.getBoundingClientRect().width),
+      };
+    });
+
+    ok(
+      "the scripts really were blocked",
+      state.scriptRan === false,
+      "theme-init.js ran anyway, so the next two assertions prove nothing",
+    );
+    ok(
+      "no content is hidden when the scripts do not run",
+      state.total > 0 && state.hidden === 0,
+      `${state.hidden}/${state.total} elements left at opacity 0`,
+    );
+    ok(
+      "the headline still renders when the scripts do not run",
+      state.headlineVisible && state.headlineWidth > 200,
+      `visible=${state.headlineVisible} width=${state.headlineWidth}`,
+    );
+    await ctx.close();
+  }
+
+  // -------------------------------------------------- M12, the split headline
+  //
+  // The headline is split into words and characters at BUILD time and animated
+  // by CSS, so there is no script to check — only markup that must exist and an
+  // animation that must run. Both are asserted, because the split is invisible
+  // in a settled screenshot: a headline that never animates and a headline that
+  // finished animating look identical.
+  {
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 900 },
+    });
+    // `commit` rather than `load`: the entrance starts at first paint, and
+    // waiting for load would routinely miss it.
+    await page.goto(url("/"), { waitUntil: "commit" });
+    await page.waitForTimeout(160);
+
+    const rising = await page.evaluate(() => {
+      const chars = [...document.querySelectorAll(".split__char")];
+      const offsets = chars.map((c) => {
+        const m = new DOMMatrixReadOnly(getComputedStyle(c).transform);
+        return Math.round(m.f);
+      });
+      return {
+        n: chars.length,
+        displaced: offsets.filter((y) => y !== 0).length,
+      };
+    });
+    ok(
+      "the headline is split into characters and starts below its mask",
+      rising.n >= 15 && rising.displaced === rising.n,
+      `${rising.displaced}/${rising.n} displaced`,
+    );
+
+    await page.waitForTimeout(2200);
+    const settled = await page.evaluate(() => {
+      const chars = [...document.querySelectorAll(".split__char")];
+      return chars.filter((c) => {
+        const m = new DOMMatrixReadOnly(getComputedStyle(c).transform);
+        return Math.round(m.f) !== 0;
+      }).length;
+    });
+    ok("every character lands", settled === 0, `${settled} still displaced`);
+
+    // The stagger is what separates this from a single fade. If the custom
+    // properties stopped inheriting — or the nth-child ladder were deleted —
+    // every character would carry the same delay and nothing would look wrong
+    // in a still.
+    const delays = await page.evaluate(() => [
+      ...new Set(
+        [...document.querySelectorAll(".split__char")].map(
+          (c) => getComputedStyle(c).animationDelay,
+        ),
+      ),
+    ]);
+    ok(
+      "characters are staggered rather than moving as one",
+      delays.length >= 8,
+      `${delays.length} distinct delays`,
+    );
+
+    // The accessible name must be the sentence, once — not a run of glyphs and
+    // not the sentence twice. Read from the accessibility tree, because
+    // textContent counts the aria-hidden copy and would pass either way.
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Accessibility.enable");
+    const { nodes } = await cdp.send("Accessibility.getFullAXTree");
+    const h1 = nodes.find(
+      (n) =>
+        n.role &&
+        n.role.value === "heading" &&
+        (n.properties || []).some(
+          (p) => p.name === "level" && p.value.value === 1,
+        ),
+    );
+    ok(
+      "the split headline's accessible name is the sentence, once",
+      h1 && h1.name && h1.name.value === "The world builds itself.",
+      h1 && h1.name
+        ? JSON.stringify(h1.name.value)
+        : "no level-1 heading found",
     );
 
     await page.close();
@@ -497,6 +655,22 @@ const url = (r) => `http://localhost:${PORT}${r}`;
         horizon: Number(g("[data-hero-horizon]", "opacity")),
       };
     });
+    const stillSplit = await page.evaluate(() => {
+      const chars = [...document.querySelectorAll(".split__char")];
+      return {
+        n: chars.length,
+        displaced: chars.filter((c) => {
+          const m = new DOMMatrixReadOnly(getComputedStyle(c).transform);
+          return Math.round(m.f) !== 0;
+        }).length,
+      };
+    });
+    ok(
+      "reduced motion shows the headline already assembled",
+      stillSplit.n > 0 && stillSplit.displaced === 0,
+      `${stillSplit.displaced}/${stillSplit.n} still below the mask`,
+    );
+
     ok(
       "reduced motion cancels the hero departure entirely",
       held.content === 1 &&

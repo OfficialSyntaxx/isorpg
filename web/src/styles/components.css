@@ -395,12 +395,22 @@ pre code {
 /* --- reveal --------------------------------------------------------------- */
 /* Blueprint M6: 12px rise + fade on scroll, staggered.
  *
- * The final state is the DEFAULT and the offset state is opt-in via
- * [data-reveal]. So content is visible if the observer never runs — a broken
- * or blocked script must not leave the page blank, which is the standard
- * failure of scroll-reveal implementations.
+ * THE OFFSET STATE IS GATED ON [data-js], AND THAT GATE IS THE WHOLE POINT.
+ *
+ * This rule used to be unconditional, under a comment claiming the opposite —
+ * "content is visible if the observer never runs". It was not. With scripting
+ * disabled, initReveals never added .is-revealed, so every [data-reveal]
+ * element stayed at opacity 0 and the landing page rendered a COMPLETELY BLANK
+ * hero: no headline, no lede, no buttons. Verified in a real browser with
+ * JavaScript off, against the live build. It is the exact standard failure the
+ * comment said had been avoided, and the wrong comment is why nobody looked.
+ *
+ * theme-init.js sets [data-js] on <html> before first paint. So a document that
+ * cannot run the reveal script never hides anything, and the fix cannot drift
+ * back: deleting that line makes the whole site render un-animated rather than
+ * silently blank.
  */
-[data-reveal] {
+[data-js] [data-reveal] {
   opacity: 0;
   transform: translateY(12px);
   transition:
@@ -409,7 +419,7 @@ pre code {
   transition-delay: calc(var(--reveal-index, 0) * var(--stagger));
 }
 
-[data-reveal].is-revealed {
+[data-js] [data-reveal].is-revealed {
   opacity: 1;
   transform: none;
 }
@@ -417,7 +427,7 @@ pre code {
 /* Under reduced motion the durations are already ~0, but the offset would
    still apply for a frame. Remove it entirely: everything arrives in place. */
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal] {
+  [data-js] [data-reveal] {
     opacity: 1;
     transform: none;
   }

@@ -546,6 +546,7 @@ prescriptive. The goal is motion that reads as *craft*, not as *effects*.
 | M9 | Global | Page transitions | Astro View Transitions API, native, no JS framework cost |
 | M10 | `/404` | An in-world "off the map" scene | Reuses M4's route-drawing primitives |
 | M11 | `/` | **The departure** — leaving the hero as a camera move | Native CSS scroll-driven animation, compositor-only, no JS |
+| M12 | `/` | **The headline assembles itself**, a letter at a time | Split at BUILD time; CSS mask reveal; zero JS |
 
 ### 6.4 Library choice
 
@@ -741,7 +742,7 @@ Images: AVIF with WebP fallback, `loading="lazy"` below the fold, explicit
 - Full keyboard operability, visible focus rings that survive the design
   (a designed focus ring, not `outline: none`).
 - Semantic landmarks; one `h1` per route; heading order never skips.
-- `prefers-reduced-motion` honoured across every M1–M11 set piece (§6.1.5).
+- `prefers-reduced-motion` honoured across every M1–M12 set piece (§6.1.5).
 - Every image has meaningful alt text; decorative ones get `alt=""`.
 - The interactive map (§5.4) needs a keyboard path and a text equivalent —
   an SVG map that only works with a mouse fails.
@@ -1066,6 +1067,7 @@ Four, all invisible to the typecheck and the automated checks:
       JS.
 - [x] **M10** the 404's route draws itself, reusing M4's primitive.
 - [x] **M11** the hero departs as a camera move — see Phase 13b.
+- [x] **M12** the headline assembles itself — see Phase 13c.
 - [x] `prefers-reduced-motion` verified on every set piece: 16/16 reveals
       visible, path draws left untouched, parallax untransformed, the horizontal
       run reverted to a scrollable row with all five pillars reachable, the hero
@@ -1093,6 +1095,7 @@ M6/M7. Implemented set piece by set piece, **not one of them needed a library**:
 | M8 | one CSS transition and a click handler |
 | M9 | the native CSS view transition |
 | M11 | `animation-timeline: scroll(root block)` with `animation-range`, inside `@supports` |
+| M12 | build-time word/char split + `:nth-child` custom properties driving `animation-delay` |
 
 GSAP would have been roughly 30 KB gzipped to do what 2.3 KB of native code
 does, on a page whose entire first load was 15 KB. `@view-transition` also beats
@@ -1814,6 +1817,90 @@ failure modes were reproduced first — removing the reduced-motion guard, and
 moving the camera onto the parallax element — and each turns the suite red.
 Lighthouse on `/` after the change: mobile 96, desktop 100, median of three runs,
 with accessibility, best practices and SEO at 100.
+
+#### Phase 13c — M12, the headline assembles itself
+
+**The second commissioned piece: the effect the animation libraries sell as
+"SplitText".** The hero line breaks into words and characters, and each
+character rises out of its word's mask on its own beat, so the sentence
+assembles rather than appears. On a page whose headline is *"The world builds
+itself"*, a headline that builds itself is the one piece of decoration that is
+also an argument.
+
+**Split at build time, not in the browser.** Every library implementation ships
+a script that finds the element, reads its text and rewrites its DOM on load —
+bytes, work during the most contended moment of the page's life, and a frame of
+unsplit text before it takes effect. This is a static site, so the split happens
+when the page is generated and ships as ordinary markup. **Measured: ~470 bytes
+of gzipped CSS and zero JavaScript** — the landing page's script payload is
+unchanged at 7,137 bytes gzipped. GSAP's SplitText would have been the single
+plugin worth importing; it is not worth 30 KB for something the build can do for
+free.
+
+**The stagger, without inline styles.** The obvious approach is a per-character
+`style="--i: 7"`, which the content security policy forbids — `style-src-attr`
+blocks style attributes in markup and this project has no `'unsafe-inline'`. So
+the index comes from `:nth-child` rules that set a custom property, and because
+custom properties inherit, a character reads its word's beat and adds its own
+offset: `delay = word × 78ms + char × 24ms`. Two short ladders instead of one
+long one, and the rhythm is better for it — words land as beats, letters flick
+within them.
+
+**The split text is not the text.** A heading chopped into twenty-one spans is
+an accessibility hazard: some screen readers announce per-character runs a
+letter at a time. So the real sentence ships once, visually hidden, as the only
+thing assistive technology sees, and the visible letters are `aria-hidden`.
+Confirmed against the Chrome accessibility tree rather than `textContent` —
+which counts both copies and would have looked wrong while being right. The
+level-1 heading's accessible name is exactly `"The world builds itself."`. The
+hidden copy is `user-select: none`, so copying the headline yields the sentence
+once.
+
+Two details worth keeping: the word mask carries a `padding-bottom` and matching
+negative margin so descenders are not shaved off for the life of the page in
+exchange for a 760ms effect; and character splitting costs **1.2px of kerning
+across a 708px line — 0.17%**, measured against the same string unsplit, which
+is well inside what a display serif can absorb.
+
+#### Phase 13c.1 — the blank hero, found while building M12
+
+**With JavaScript disabled, the landing page rendered a completely blank hero.**
+No headline, no lede, no buttons — a gradient and nothing else. It was live.
+
+`[data-reveal]` set `opacity: 0` unconditionally and waited for `initReveals` to
+add `.is-revealed`. With no script, nothing ever did. The comment directly above
+that rule asserted the opposite — *"content is visible if the observer never
+runs — a broken or blocked script must not leave the page blank, which is the
+standard failure of scroll-reveal implementations"* — and it was the standard
+failure of scroll-reveal implementations. The claim was true of an earlier draft
+and became false without anyone touching the sentence, which is why it survived
+every review since.
+
+`theme-init.js` now sets `[data-js]` on `<html>` before first paint, and the
+offset state is scoped to it. A document that cannot run the reveal script never
+hides anything, and the fix cannot silently drift back: deleting that line makes
+the whole site render un-animated rather than blank.
+
+**The check for it was decoration on the first attempt, and that is the part
+worth recording.** It rendered the page with `javaScriptEnabled: false` and
+asserted on `innerText` and screenshot byte size. Neither discriminates —
+`innerText` returns text from an element at `opacity: 0`, and a hero screenshot
+is mostly gradient either way — so when the bug was deliberately reintroduced,
+the check passed. It now blocks every script at the network layer instead, which
+reproduces the same state while leaving page scripting available to measure it,
+and asserts computed opacity. Reintroducing the bug now fails it with
+`18/18 elements left at opacity 0`.
+
+Testing that also exposed a second weak assertion in the same file: *"reveals
+below the fold start hidden"* counted elements carrying `.is-revealed`, which
+only proves the observer has not fired yet. Deleting the `[data-js]` flag would
+remove the entire scroll-reveal effect site-wide, and that assertion passed
+against exactly that. It measures computed opacity now, and fails with
+`14/14 already at full opacity`.
+
+`verify-motion.cjs` is at 29 assertions. Four failure modes were each reproduced
+before being trusted: the un-gated reveal, the removed `[data-js]` flag, a
+flattened stagger, and a missing hidden sentence.
 
 ---
 
