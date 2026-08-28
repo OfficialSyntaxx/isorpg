@@ -1466,6 +1466,69 @@ negative control were worthless — one left the sandbox's own Chromium
 discoverable, the other read `$?` after a pipe and so reported `tail`'s exit
 status instead of `node`'s.
 
+### The Lighthouse gate, and the regression it caught on its first run ✅
+
+**The gate is runnable now.** `.github/workflows/lighthouse.yml` audits the
+deployed site on dispatch — URL, routes, device profile, run count and whether
+to enforce are all inputs — and `scripts/run-lighthouse.cjs` reports the median
+of N runs per page against the Phase 4 targets. It exists as CI rather than as
+something run by hand for the reason this gate stayed open all build: the
+development sandbox has no Chrome UI and blocks Google Fonts, which the real page
+requests, so a score measured there describes a page nobody is served.
+
+Two details that make it a measurement rather than a number. It takes the median
+of several runs, because a performance score varies by several points between
+runs on the same machine and a single run cannot support a threshold. And it
+resolves Chrome through `scripts/lib/browser.cjs`, the same resolver the other
+browser checks use, so there is one answer to "which browser" and no silent
+fallback to a different one. Lighthouse itself is pinned, for the reason
+`netlify-cli` now is.
+
+**Its first run failed, and it was right to.** The landing page scored **75** on
+performance, with **6951ms** of main-thread time attributed to the hero script —
+the animated world added earlier the same day. Profiling the steady state
+directly, at 390×844 and device-pixel-ratio 2 under the 4× CPU throttle
+Lighthouse emulates, gave the unambiguous figure: **2825ms of long tasks in a
+3000ms window**. A 62ms task every frame. 94% of the main thread, permanently,
+for a decorative background.
+
+Three causes, in descending order of cost:
+
+1. **Every frame repainted the whole canvas.** The terrain was blitted back just
+   to clear what had moved, then a full-canvas sun sweep was composited under
+   `screen` and three cloud shadows under `multiply`. At DPR 2 each of those is
+   over a million pixels, and blend modes are per-pixel work — three
+   full-canvas passes, thirty times a second.
+2. **The sun sweep and cloud shadows already existed in CSS.** `.hero__sky` and
+   `.hero__wash` drift and breathe on the compositor for nothing. The canvas
+   versions were a second implementation of the same idea, paid for in the most
+   expensive place available, stacked on top of the originals.
+3. **Four gradients were constructed inside the loop**, every frame, each
+   allocating and recomputing a ramp that never changed.
+
+**The fix.** The hero is two canvases now: the terrain is painted once onto its
+own and never touched again, and only the life above it — water, window glows,
+birds — is cleared and redrawn, at device-pixel-ratio 1, because none of it has
+an edge anyone can focus on. The canvas atmospherics are deleted; the CSS ones
+they duplicated are what you see. The loop is paced to ~30fps, invisible on
+motion measured in tens of seconds. The entrance paints each tile onto the
+terrain once as it lands and redraws only those still in the air, with the
+stagger widened from 0.55 to 0.86 so a sixth of the tiles are in flight at a
+time rather than four fifths. The whole thing starts on `requestIdleCallback`
+after load instead of competing with the browser's first paint.
+
+Measured after: long tasks **2825ms → 0ms**, Lighthouse performance **75 → 98**,
+total blocking time **730ms → 20ms**, LCP **2.3s → 1.6s**. Visually identical.
+
+**What this says about the other checks.** Every assertion in
+`verify-hero.cjs` passed throughout the regression. It painted, it animated, it
+stopped off-screen, it resumed, it held still under reduced motion — all true,
+all fine, while the page was unusable on a mid-range phone. A hero that animates
+beautifully and a hero that eats the device look identical from the outside. The
+file now also asserts that the terrain layer is never repainted by the loop, and
+that steady-state long-task time under 4× throttling stays within 600ms per
+3000ms.
+
 ### Phase 9 — Custom domain ⏸️
 
 **Deferred at the owner's request, 2026-08-27: no domain has been purchased, so
