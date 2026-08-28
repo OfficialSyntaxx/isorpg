@@ -14,6 +14,17 @@
 5. Rebuild one Hearthvale vertical slice from admitted assets only, then use
    its capture as the visual quality gate for the remaining regions.
 
+## Visual reset — Phase 1: Hearthvale vertical slice
+
+1. Apply the visual-direction rules in `docs/VISUAL_DIRECTION.md`.
+2. Review exactly one free Unity 6 URP nature pack in `AssetReview`; record
+   license, package footprint, performance, and rejected content.
+3. Establish the terrain, sky, fog, water, and lighting baseline for the
+   70 × 70 m Hearthvale slice.
+4. Integrate only admitted foliage, rocks, roads, and one landmark building.
+5. Capture a third-person screenshot and reject/rework the slice until it
+   meets the screenshot gate before expanding the world.
+
 ## 3D open-world roadmap — active
 
 > **Direction change (2026-08-23):** the fixed isometric tile view was a
