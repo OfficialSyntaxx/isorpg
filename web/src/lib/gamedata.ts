@@ -67,8 +67,15 @@ const skills = load<{
 }>("skills");
 
 const items = load<{ ITEMS: Record<string, unknown> }>("items");
+interface Monster {
+  name: string;
+  level: number;
+  hp: number;
+  maxHit: number;
+}
+
 const combat = load<{
-  MONSTERS: Record<string, unknown>;
+  MONSTERS: Record<string, Monster>;
   WEAPONS: Record<string, unknown>;
 }>("combat");
 const buildings = load<{ BUILDINGS: Record<string, Building>; MAX_BUILD_LEVEL: number }>(
@@ -189,4 +196,29 @@ export function nodeLabel(id: string): string {
   const what = rest.join(" ");
   const noun = kind === "water" ? "spot" : (kind ?? "");
   return `${what.charAt(0).toUpperCase()}${what.slice(1)} ${noun}`.trim();
+}
+
+/**
+ * One monster's public-facing numbers, straight out of the combat export.
+ *
+ * Throws on an unknown id rather than returning undefined. A creature card that
+ * silently rendered blank stats would look like a styling bug and survive
+ * review; a build that stops names the id nobody renamed.
+ */
+export interface MonsterFacts {
+  name: string;
+  level: number;
+  hp: number;
+  maxHit: number;
+}
+
+export function monster(id: string): MonsterFacts {
+  const m = combat.MONSTERS[id];
+  if (!m) {
+    throw new Error(
+      `No monster "${id}" in the combat export. The world page names it, so the ` +
+        `build stops rather than shipping a card with no numbers on it.`,
+    );
+  }
+  return { name: m.name, level: m.level, hp: m.hp, maxHit: m.maxHit };
 }

@@ -37,6 +37,10 @@ import type { ImageMetadata } from "astro";
 
 import roadShot from "../../../docs/screenshots/hearthvale-east-road-local-props-2026-08-25.png";
 import overworld from "../../../docs/concepts/isoperia-overworld-layout-v1.png";
+import direWolf from "../../../assets/concepts/dire_wolf.png";
+import frostImp from "../../../assets/concepts/frost_imp.png";
+import bogHusk from "../../../assets/concepts/bog_husk.png";
+import caveSlasher from "../../../assets/concepts/cave_slasher.png";
 
 export type Provenance = "capture" | "concept" | "art" | "placeholder";
 
@@ -96,6 +100,57 @@ export const media = {
     dated: "2026-08-20",
     alt: "Illustrated top-down map of an island: a walled settlement around a fountain at the centre, pine forest and a standing-stone circle northwest, snow-capped mountains and a mine northeast, a dead-tree bog southwest, ploughed fields and a windmill southeast, and a violet-lit ruin on the eastern shore.",
     caption: "The mainland layout the world is built against",
+  },
+
+  /*
+   * The bestiary.
+   *
+   * These are `art`, not `concept`, and the distinction was checked rather than
+   * assumed. Each one has a matching entry in the combat export and a matching
+   * .glb in the Unity build under the same id, committed on the same day as the
+   * render — so these are pictures of the creatures a player actually meets,
+   * photographed outside the game rather than drawn before it. The folder they
+   * live in is called "concepts", which is exactly the kind of thing that would
+   * have made this the wrong label if nobody looked.
+   *
+   * They share a deliberate look: a single figure on a pale studio backdrop.
+   * The site presents them on a light plate in both themes for that reason —
+   * see the `.threat__plate` note in WorldMap.astro.
+   */
+  "dire-wolf": {
+    id: "dire-wolf",
+    kind: "art",
+    src: direWolf,
+    dated: "2026-08-24",
+    alt: "A faceted low-polygon wolf in slate grey and white, snarling, head low and shoulders raised, with orange eyes.",
+    caption: "Dire Wolf",
+  },
+
+  "frost-imp": {
+    id: "frost-imp",
+    kind: "art",
+    src: frostImp,
+    dated: "2026-08-24",
+    alt: "A small pale-blue imp studded with translucent ice shards, with long ears, cyan eyes and a wide grin.",
+    caption: "Frost Imp",
+  },
+
+  "bog-husk": {
+    id: "bog-husk",
+    kind: "art",
+    src: bogHusk,
+    dated: "2026-08-24",
+    alt: "A hunched humanoid of brown bark and green moss, trailing roots from its face and limbs, with two glowing yellow eyes.",
+    caption: "Bog Husk",
+  },
+
+  "cave-slasher": {
+    id: "cave-slasher",
+    kind: "art",
+    src: caveSlasher,
+    dated: "2026-08-24",
+    alt: "A broad rock creature in dark teal and grey, its shoulders armoured in slabs, with pale slit eyes and long pale claws on both hands.",
+    caption: "Cave Slasher",
   },
 
   /*

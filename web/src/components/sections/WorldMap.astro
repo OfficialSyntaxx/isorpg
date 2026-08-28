@@ -36,6 +36,8 @@
  * needs no reflow rules — it is correct at every width by construction.
  */
 import MediaFigure from "../MediaFigure.astro";
+import { monster } from "../../lib/gamedata";
+import type { MediaId } from "../../lib/media";
 
 const districts = [
   {
@@ -44,6 +46,7 @@ const districts = [
     role: "Safe home and construction",
     body: "The walled centre. An open plaza around the fountain, a market, a campfire and the build plots — buildings sit around the square rather than ringing you in. Every road on the map starts here.",
     mod: "",
+    safe: "Nothing hunts you here. That is the point of a home.",
     /** Spotlight, in percent of the artwork. Placed against the illustration. */
     at: { cx: 48, cy: 45, rx: 15, ry: 13 },
   },
@@ -56,6 +59,7 @@ const districts = [
     at: { cx: 21, cy: 16, rx: 17, ry: 14 },
     /** Where the road bends, taken off the bridge or pass in the artwork. */
     via: { x: 34, y: 29 },
+    threat: { id: "dire_wolf", media: "dire-wolf" as MediaId },
   },
   {
     id: "frostwatch",
@@ -66,6 +70,7 @@ const districts = [
     at: { cx: 79, cy: 14, rx: 19, ry: 13 },
     /** Where the road bends, taken off the bridge or pass in the artwork. */
     via: { x: 62, y: 28 },
+    threat: { id: "frost_imp", media: "frost-imp" as MediaId },
   },
   {
     id: "miregate",
@@ -76,6 +81,7 @@ const districts = [
     at: { cx: 19, cy: 74, rx: 17, ry: 15 },
     /** Where the road bends, taken off the bridge or pass in the artwork. */
     via: { x: 34, y: 61 },
+    threat: { id: "bog_husk", media: "bog-husk" as MediaId },
   },
   {
     id: "sunmere",
@@ -83,6 +89,7 @@ const districts = [
     role: "Food and town growth",
     body: "Southeast lowlands. Farm plots and fishing feed the cooking and carpentry loop; the mill and granary anchor the shoreline and mark how far the town has grown.",
     mod: "wildwood",
+    safe: "Nothing hunts you here either — Sunmere is worked land, not wilderness.",
     at: { cx: 78, cy: 76, rx: 19, ry: 16 },
     /** Where the road bends, taken off the bridge or pass in the artwork. */
     via: { x: 63, y: 61 },
@@ -96,6 +103,7 @@ const districts = [
     at: { cx: 86, cy: 45, rx: 11, ry: 10 },
     /** Where the road bends, taken off the bridge or pass in the artwork. */
     via: { x: 67, y: 44 },
+    threat: { id: "cave_slasher", media: "cave-slasher" as MediaId },
   },
 ] as const;
 ---
@@ -232,9 +240,45 @@ const districts = [
                 </span>
                 <span class="district__role">{d.role}</span>
               </button>
-              <p class="district__body" data-body={d.id} hidden>
-                {d.body}
-              </p>
+              <div class="district__panel" data-body={d.id} hidden>
+                <p class="district__body">{d.body}</p>
+
+                {/* M13 — who lives there.
+                     The region copy has always named its wildlife; this is the
+                     wildlife. Every number beside the portrait is read from the
+                     combat export at build time, so a balance change moves the
+                     card and no one has to remember to. */}
+                {"threat" in d && d.threat ? (
+                  <div class="threat">
+                    <MediaFigure
+                      id={d.threat.media}
+                      class="threat__plate"
+                      compact
+                      widths={[160, 320]}
+                      sizes="120px"
+                    />
+                    <div class="threat__facts">
+                      <span class="threat__name">{monster(d.threat.id).name}</span>
+                      <dl class="threat__stats">
+                        <div>
+                          <dt>Level</dt>
+                          <dd>{monster(d.threat.id).level}</dd>
+                        </div>
+                        <div>
+                          <dt>Hitpoints</dt>
+                          <dd>{monster(d.threat.id).hp}</dd>
+                        </div>
+                        <div>
+                          <dt>Max hit</dt>
+                          <dd>{monster(d.threat.id).maxHit}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </div>
+                ) : (
+                  <p class="district__safe">{"safe" in d ? d.safe : ""}</p>
+                )}
+              </div>
             </li>
           ))
         }
@@ -392,11 +436,106 @@ const districts = [
     font-size: var(--text-xs);
   }
 
+  .district__panel {
+    padding: 0 var(--space-xs) var(--space-sm) calc(var(--space-xs) + var(--space-sm));
+  }
+
   .district__body {
     color: var(--text-body);
     font-size: var(--text-sm);
-    padding: 0 var(--space-xs) var(--space-sm) calc(var(--space-xs) + var(--space-sm));
     max-width: none;
+  }
+
+  .district__safe {
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    font-style: italic;
+    max-width: none;
+  }
+
+  /* The creature card.
+     A card rather than a bare thumbnail, because the numbers are the reason it
+     is here: "bog husks" as a noun in a paragraph tells you nothing, and
+     "Level 10, 44 hitpoints, max hit 5" beside a picture of one tells you
+     whether you are ready. */
+  .threat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    /* Arrives with the panel. Removing `hidden` moves the element from
+       display: none back into rendering, which restarts a CSS animation — so
+       the card animates every time a region is chosen, with no script and no
+       class to toggle. The duration is a token, so reduced motion collapses it
+       to nothing along with everything else. */
+    animation: threat-in var(--dur-base) var(--ease-out) both;
+    padding: var(--space-xs);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+  }
+
+  /* A light plate in BOTH themes, on purpose.
+     These renders are single figures on a pale studio backdrop. Left to inherit
+     the surface, the dark theme would put a bright grey square in the middle of
+     a dark card — which reads as a broken image rather than a specimen. Making
+     the plate deliberately light in both themes turns that backdrop into part
+     of the design: a bestiary plate. */
+  .threat__plate {
+    flex: 0 0 auto;
+    width: 6rem;
+    background: #eceef1;
+    border-radius: var(--radius-md);
+  }
+
+  .threat__plate :global(img) {
+    border-color: transparent;
+  }
+
+  @keyframes threat-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .threat__facts {
+    min-width: 0;
+  }
+
+  .threat__name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    color: var(--text-strong);
+    line-height: var(--leading-snug);
+  }
+
+  .threat__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-sm);
+    margin: var(--space-2xs) 0 0;
+  }
+
+  .threat__stats dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .threat__stats dd {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
   }
 </style>
 
@@ -452,4 +591,40 @@ const districts = [
   // Open the settlement by default: an empty panel beside an undimmed map looks
   // like a control that does nothing, and Hearthvale is where the game starts.
   open("hearthvale");
+
+  // Warm the creature portraits once the browser is idle.
+  //
+  // They live inside panels that ship `hidden`, so they are display: none and a
+  // lazy image inside display: none never intersects anything and never loads.
+  // That is the right default — nobody should pay for four portraits they may
+  // not open — but it means the first click waits on the network. Measured at
+  // 400kbps with 150ms latency: zero of the four loaded before a click, and
+  // 666ms of empty plate after it.
+  //
+  // Flipping `loading` from "lazy" to "eager" starts the fetch immediately, so
+  // doing it on an idle callback moves the whole wait off the click without
+  // putting it on the page's critical path. Measured after: 4 of 4 loaded
+  // before any click, one request each, and `currentSrc` unchanged when the
+  // panel is finally shown — so the portrait is decoded and ready rather than
+  // being re-fetched at a different size once it has a layout box.
+  //
+  // Without JavaScript nothing here runs and the images load on demand, which
+  // is correct, just slower.
+  const warm = (): void => {
+    document
+      .querySelectorAll<HTMLImageElement>('.threat__plate img[loading="lazy"]')
+      .forEach((img) => {
+        img.loading = "eager";
+      });
+  };
+
+  if ("requestIdleCallback" in window) {
+    (
+      window as Window & {
+        requestIdleCallback: (cb: () => void, o?: { timeout: number }) => void;
+      }
+    ).requestIdleCallback(warm, { timeout: 2500 });
+  } else {
+    setTimeout(warm, 1200);
+  }
 </script>

@@ -538,6 +538,130 @@ const url = (r) => `http://localhost:${PORT}${r}`;
     await page.close();
   }
 
+  // -------------------------------------------- M13, the creature cards
+  //
+  // Opening a region shows the creature that lives there, with its real numbers
+  // from the combat export. Three things can rot independently: the card can
+  // stop appearing, the numbers can stop matching the game, and the portraits
+  // can go back to loading on the click instead of ahead of it.
+  {
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 1000 },
+    });
+    await page.goto(url("/world/"), { waitUntil: "load" });
+    await page.waitForTimeout(2600);
+
+    // Warmed on idle. They live inside panels that ship `hidden`, so a lazy
+    // image never intersects anything and never loads — measured at zero of
+    // four before this warming existed.
+    const warmed = await page.evaluate(
+      () =>
+        [...document.querySelectorAll(".threat__plate img")].filter(
+          (i) => i.complete && i.naturalWidth > 0,
+        ).length,
+    );
+    ok(
+      "the creature portraits are fetched before anyone clicks",
+      warmed === 4,
+      `${warmed}/4 loaded`,
+    );
+
+    // The numbers must be the game's, not prose. Checked against the export
+    // that the page itself reads, so a balance change moves both together.
+    const combat = JSON.parse(
+      fs.readFileSync(
+        path.join(ROOT, "unity/Assets/Isoperia/Resources/Content/combat.json"),
+        "utf8",
+      ),
+    );
+    const expected = {
+      wildwood: "dire_wolf",
+      frostwatch: "frost_imp",
+      miregate: "bog_husk",
+      cinder: "cave_slasher",
+    };
+
+    const wrong = [];
+    for (const [region, id] of Object.entries(expected)) {
+      await page.click(`[data-district="${region}"]`);
+      await page.waitForTimeout(260);
+      const card = await page.evaluate((r) => {
+        const el = document.querySelector(`[data-body="${r}"] .threat`);
+        if (!el) return null;
+        const dd = [...el.querySelectorAll(".threat__stats dd")].map((d) =>
+          Number(d.textContent.trim()),
+        );
+        return {
+          name: el.querySelector(".threat__name").textContent.trim(),
+          level: dd[0],
+          hp: dd[1],
+          maxHit: dd[2],
+          badge: el.querySelector(".media__badge").textContent.trim(),
+          visible: el.getBoundingClientRect().height > 0,
+        };
+      }, region);
+
+      const m = combat.MONSTERS[id];
+      if (
+        !card ||
+        !card.visible ||
+        card.name !== m.name ||
+        card.level !== m.level ||
+        card.hp !== m.hp ||
+        card.maxHit !== m.maxHit
+      ) {
+        wrong.push(
+          `${region}: ${card ? JSON.stringify(card) : "no card"} vs ${m.name} L${m.level} ${m.hp}hp ${m.maxHit}max`,
+        );
+      } else if (card.badge !== "Project asset") {
+        wrong.push(`${region}: badge "${card.badge}"`);
+      }
+    }
+    ok(
+      "every region's creature card matches the combat export",
+      wrong.length === 0,
+      wrong.join(" | "),
+    );
+
+    // The badge is absolutely positioned over a thumbnail narrower than its own
+    // label. Unclipped it escaped the picture and painted over the level next to
+    // it — a card that silently lost a number. The figure clips now.
+    const overflow = await page.evaluate(() => {
+      const bad = [];
+      for (const fig of document.querySelectorAll(".threat__plate")) {
+        const f = fig.getBoundingClientRect();
+        const b = fig.querySelector(".media__badge").getBoundingClientRect();
+        if (b.right > f.right + 1 || b.bottom > f.bottom + 1) {
+          bad.push(Math.round(b.right - f.right));
+        }
+      }
+      return bad;
+    });
+    ok(
+      "the provenance badge stays inside its thumbnail",
+      overflow.length === 0,
+      `overflowing by ${overflow.join(", ")}px`,
+    );
+
+    // Hearthvale and Sunmere have no creature, and say so rather than showing an
+    // empty card.
+    const safe = await page.evaluate(() => {
+      const out = {};
+      for (const r of ["hearthvale", "sunmere"]) {
+        const p = document.querySelector(`[data-body="${r}"] .district__safe`);
+        out[r] = p ? p.textContent.trim().length : 0;
+      }
+      return out;
+    });
+    ok(
+      "the two safe regions say so instead of showing a blank card",
+      safe.hearthvale > 10 && safe.sunmere > 10,
+      JSON.stringify(safe),
+    );
+
+    await page.close();
+  }
+
   // ---------------------------------------------------------------- counters
   {
     const page = await browser.newPage({

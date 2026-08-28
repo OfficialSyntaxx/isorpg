@@ -547,6 +547,7 @@ prescriptive. The goal is motion that reads as *craft*, not as *effects*.
 | M10 | `/404` | An in-world "off the map" scene | Reuses M4's route-drawing primitives |
 | M11 | `/` | **The departure** — leaving the hero as a camera move | Native CSS scroll-driven animation, compositor-only, no JS |
 | M12 | `/` | **The headline assembles itself**, a letter at a time | Split at BUILD time; CSS mask reveal; zero JS |
+| M13 | `/`, `/world` | **The bestiary** — opening a region shows what lives there | Creature card animates in on disclosure; portraits warmed on idle |
 
 ### 6.4 Library choice
 
@@ -742,7 +743,7 @@ Images: AVIF with WebP fallback, `loading="lazy"` below the fold, explicit
 - Full keyboard operability, visible focus rings that survive the design
   (a designed focus ring, not `outline: none`).
 - Semantic landmarks; one `h1` per route; heading order never skips.
-- `prefers-reduced-motion` honoured across every M1–M12 set piece (§6.1.5).
+- `prefers-reduced-motion` honoured across every M1–M13 set piece (§6.1.5).
 - Every image has meaningful alt text; decorative ones get `alt=""`.
 - The interactive map (§5.4) needs a keyboard path and a text equivalent —
   an SVG map that only works with a mouse fails.
@@ -1068,6 +1069,7 @@ Four, all invisible to the typecheck and the automated checks:
 - [x] **M10** the 404's route draws itself, reusing M4's primitive.
 - [x] **M11** the hero departs as a camera move — see Phase 13b.
 - [x] **M12** the headline assembles itself — see Phase 13c.
+- [x] **M13** the region panels show their creature — see Phase 13d.
 - [x] `prefers-reduced-motion` verified on every set piece: 16/16 reveals
       visible, path draws left untouched, parallax untransformed, the horizontal
       run reverted to a scrollable row with all five pillars reachable, the hero
@@ -1096,6 +1098,7 @@ M6/M7. Implemented set piece by set piece, **not one of them needed a library**:
 | M9 | the native CSS view transition |
 | M11 | `animation-timeline: scroll(root block)` with `animation-range`, inside `@supports` |
 | M12 | build-time word/char split + `:nth-child` custom properties driving `animation-delay` |
+| M13 | a keyframe that restarts when `hidden` is removed — no class to toggle, no script |
 
 GSAP would have been roughly 30 KB gzipped to do what 2.3 KB of native code
 does, on a page whose entire first load was 15 KB. `@view-transition` also beats
@@ -1901,6 +1904,76 @@ against exactly that. It measures computed opacity now, and fails with
 `verify-motion.cjs` is at 29 assertions. Four failure modes were each reproduced
 before being trusted: the un-gated reveal, the removed `[data-js]` flag, a
 flattened stagger, and a missing hidden sentence.
+
+#### Phase 13d — M13, the bestiary
+
+**The third commissioned piece.** The region copy has always named its wildlife
+— *"bog husks"*, *"the early wildlife that teaches you to watch your health"* —
+and never showed any of it. Opening a region now reveals the creature that lives
+there, with its real numbers, and the card animates in with the panel.
+
+**The provenance turned out to be better than expected, and it was checked
+rather than assumed.** The four renders live in a folder called `concepts`,
+which would have made `concept` the obvious label. But each one has a matching
+entry in the combat export *and* a matching `.glb` in the Unity build under the
+same id, committed the same day as the render. These are pictures of creatures a
+player actually meets, so they ship as `art` — "a real project asset, shown
+outside the game" — which is a stronger and truer claim than the folder name
+would have produced.
+
+**Every number is read from the combat export at build time.** `gamedata.ts`
+gained a `monster()` accessor that throws on an unknown id rather than returning
+undefined, because a card that silently rendered blank stats would look like a
+styling bug and survive review. Level 5 / 22 hp / max hit 4 for the Dire Wolf is
+what the game will roll; a balance change moves the card with no one having to
+remember.
+
+**Hearthvale and Sunmere have no creature, and say so.** *"Nothing hunts you
+here. That is the point of a home."* An empty card would have read as a missing
+asset; the sentence is a design statement.
+
+**Three details worth keeping.**
+
+- **The plate is deliberately light in both themes.** The renders are single
+  figures on a pale studio backdrop. Inheriting the surface would have put a
+  bright grey square in the middle of a dark card, which reads as a broken
+  image. Committing to a light plate turns the backdrop into part of the
+  design: a bestiary specimen card.
+- **The card animates with no script and no class.** Removing `hidden` moves the
+  element from `display: none` back into rendering, which restarts a CSS
+  animation. The duration is a token, so reduced motion collapses it with
+  everything else.
+- **The portraits are warmed on idle.** They live inside panels that ship
+  `hidden`, so a lazy image never intersects anything and never loads —
+  measured at **0 of 4 loaded before a click, and 666ms of empty plate after
+  it** on a 400 kbps / 150 ms connection. Flipping `loading` to `eager` on an
+  idle callback gives **4 of 4 loaded before any click, one request each**, with
+  `currentSrc` unchanged when the panel is shown.
+
+**A bug found by looking, and the structural fix for it.** The compact
+provenance badge is absolutely positioned over a thumbnail narrower than its own
+label. Unclipped, it escaped the picture and painted over the value beside it —
+the Bog Husk card rendered *"Level ⟨covered⟩ / Hitpoints 44 / Max hit 5"*. The
+figure clips now and the badge is sized for a thumbnail, so the failure shows up
+on the badge instead of destroying whatever sits next to it.
+
+**And a wrong explanation caught before it shipped.** After warming, a
+measurement still showed ~423 ms between the click and the portrait being ready,
+and the obvious story was that the browser re-picks a larger `srcset` candidate
+once the panel has a layout box. That was wrong: `currentSrc` is identical
+before and after, and exactly one request is made per portrait. The remaining
+time was click actionability under throttling, not image loading. The comment in
+the code says the measured thing rather than the plausible one.
+
+`verify-motion.cjs` is at 33 assertions. Three more failure modes reproduced:
+removing the idle warming (`0/4 loaded`), hard-coding a stat instead of reading
+the export (all four regions mismatch), and un-clipping the badge (`overflowing
+by 21px` — the exact bug).
+
+Lighthouse mobile after: `/` 95, `/world/` 95, median of three runs, with
+accessibility, best practices and SEO at 100. Both are at the target rather than
+above it — earlier medians on the same pages were 95 and 96, so this is inside
+run-to-run variance, but there is now no headroom on the performance gate.
 
 ---
 

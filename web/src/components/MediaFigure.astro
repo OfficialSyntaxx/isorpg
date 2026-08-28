@@ -24,6 +24,15 @@ interface Props {
   sizes?: string;
   /** The first image on a page may want eager loading; everything else lazy. */
   eager?: boolean;
+  /**
+   * Compact: the provenance badge sits on the image as a small chip instead of
+   * on a caption line, and the caption text is dropped. For a thumbnail beside
+   * prose, where a full caption row would outweigh the picture.
+   *
+   * The badge itself is never optional. Dropping it is what got an editor
+   * screenshot published as gameplay.
+   */
+  compact?: boolean;
   class?: string;
 }
 
@@ -32,6 +41,7 @@ const {
   widths = [480, 960, 1440],
   sizes = "(min-width: 60rem) 60rem, 100vw",
   eager = false,
+  compact = false,
   class: className,
   ...rest
 } = Astro.props;
@@ -39,7 +49,7 @@ const {
 const item = media[id];
 ---
 
-<figure class:list={["media", className]} {...rest}>
+<figure class:list={["media", compact && "media--compact", className]} {...rest}>
   {
     item.kind === "placeholder" ? (
       <div class="media__slot" data-ratio={item.ratio}>
@@ -66,7 +76,7 @@ const item = media[id];
     <span class:list={["media__badge", `media__badge--${item.kind}`]}>
       {provenanceLabel[item.kind]}
     </span>
-    <span class="media__text">{item.caption}</span>
+    {!compact && <span class="media__text">{item.caption}</span>}
     <span class="visually-hidden">. {provenanceNote[item.kind]}</span>
   </figcaption>
 </figure>
@@ -74,6 +84,44 @@ const item = media[id];
 <style>
   .media {
     margin: 0;
+  }
+
+  /* Compact: the badge moves onto the picture. It keeps a solid plate behind it
+     because these thumbnails are renders on a pale backdrop, and a transparent
+     chip on pale grey is a contrast failure waiting for the first dark theme
+     screenshot. */
+  .media--compact .media__cap {
+    position: absolute;
+    inset-block-end: var(--space-2xs);
+    inset-inline-start: var(--space-2xs);
+    margin: 0;
+    z-index: 1;
+  }
+
+  /* overflow: hidden is the structural half of this.
+     The badge is absolutely positioned over a thumbnail that may be narrower
+     than the label. Unclipped, it escaped the picture and painted over the
+     value next to it — a creature card that silently lost its level. Clipping
+     makes that failure visible on the badge itself rather than destructive to
+     whatever happens to sit beside it. */
+  .media--compact {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+
+  /* Sized to sit on a thumbnail rather than under a figure: the shared tracking
+     and 2xs step are set for a caption line and are simply too wide here. */
+  .media--compact .media__badge {
+    background: var(--surface-page);
+    border-color: var(--border-subtle);
+    color: var(--text-muted);
+    font-size: 0.5625rem;
+    letter-spacing: 0.04em;
+    padding: 0.1em 0.35em;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .media__frame {
