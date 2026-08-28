@@ -125,8 +125,15 @@ const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
         </g>
 
         <polygon class="fill" points={area}></polygon>
-        <polyline class="line" points={line} data-draw data-draw-duration="1400"
-        ></polyline>
+        {
+          /* A4 — the curve is climbed, not played.
+             pathLength="1" normalises the polyline's length to 1, so the dash
+             offset can be animated in pure CSS without measuring anything. That
+             is what lets this run on a scroll timeline with no script at all —
+             initPathDraw measures with getTotalLength() and animates on a timer,
+             which cannot be scrubbed. */
+        }
+        <polyline class="line" points={line} pathLength="1"></polyline>
 
         <!-- Selective direct labels. Never one per point. -->
         <g class="milestones">
@@ -253,6 +260,86 @@ const tailShare = Math.round(((maxXp - at92) / maxXp) * 100);
     stroke-width: 2;
     stroke-linejoin: round;
     stroke-linecap: round;
+  }
+
+  /* ---------------------------------------------------------------------
+     A4 — THE CURVE IS CLIMBED
+     ---------------------------------------------------------------------
+     This used to draw itself once on entry, on a 1400ms timer. Which is fine,
+     and misses the point: the fact this section exists to land is that HALF the
+     experience to 99 sits above level 92, and a timed draw shows that at
+     whatever moment the observer happens to fire.
+
+     Scrubbed against scroll, the reader climbs it. The line advances with the
+     page, so the long flat stretch passes quickly and then the last seven
+     levels take up the rest of the section — the shape of the grind, performed
+     at the speed the reader chooses.
+
+     The milestone dots are on the same timeline, each arriving slightly after
+     the line reaches it. They are ranged by hand rather than derived, because
+     the curve is not linear in x: level 92 sits at 93% of the width and about
+     half the height, and a proportional range would land its dot early.
+
+     Resting state is DRAWN. `from` supplies the undrawn state and it only
+     applies inside the range, so a browser without scroll timelines — and
+     anyone with reduced motion — gets the finished curve, which is the whole
+     point of the chart. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .line {
+        animation-name: curve-climb;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: view();
+        animation-range: entry 30% cover 62%;
+      }
+
+      .milestones :global(circle),
+      .milestones :global(text) {
+        animation-name: milestone-arrive;
+        animation-timing-function: var(--ease-out);
+        animation-fill-mode: both;
+        animation-timeline: view();
+      }
+
+      /* Level 1, 50, 92, 99 — the four the chart labels. */
+      .milestones :global(circle:nth-of-type(1)),
+      .milestones :global(text:nth-of-type(1)) {
+        animation-range: entry 32% cover 34%;
+      }
+      .milestones :global(circle:nth-of-type(2)),
+      .milestones :global(text:nth-of-type(2)) {
+        animation-range: cover 34% cover 46%;
+      }
+      .milestones :global(circle:nth-of-type(3)),
+      .milestones :global(text:nth-of-type(3)) {
+        animation-range: cover 50% cover 58%;
+      }
+      .milestones :global(circle:nth-of-type(4)),
+      .milestones :global(text:nth-of-type(4)) {
+        animation-range: cover 56% cover 64%;
+      }
+    }
+  }
+
+  @keyframes curve-climb {
+    from {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes milestone-arrive {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   .dot {

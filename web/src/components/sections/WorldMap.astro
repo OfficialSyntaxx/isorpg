@@ -162,6 +162,23 @@ const districts = [
                       />
                     ))
                   }
+
+                  {
+                    /* A6 — the travel lantern.
+                       One more hole in the same mask, moved to the pointer.
+                       Its cx/cy are set as SVG ATTRIBUTES rather than through a
+                       style property: the content security policy blocks inline
+                       style attributes, and this way there is nothing for it to
+                       block. */
+                  }
+                  <ellipse
+                    class="atlas__lantern"
+                    cx="50"
+                    cy="50"
+                    rx="9"
+                    ry="8"
+                    fill="#000"
+                    data-lantern></ellipse>
                 </g>
               </mask>
             </defs>
@@ -334,6 +351,17 @@ const districts = [
   .atlas__hole {
     opacity: 0;
     transition: opacity var(--dur-slow) var(--ease-out);
+  }
+
+  /* The lantern fades in and out; it does not slide, because a light that lags
+     the pointer reads as lag rather than as weight. */
+  .atlas__lantern {
+    opacity: 0;
+    transition: opacity var(--dur-quick) var(--ease-out);
+  }
+
+  .atlas[data-lantern-on] .atlas__lantern {
+    opacity: 1;
   }
 
   .atlas__hole.is-active {
@@ -591,6 +619,40 @@ const districts = [
   // Open the settlement by default: an empty panel beside an undimmed map looks
   // like a control that does nothing, and Hearthvale is where the game starts.
   open("hearthvale");
+
+  // A6 — the travel lantern.
+  //
+  // The game marks a road with lanterns and route anchors; this is the same
+  // idea used as a cursor. The spotlight mask already exists for selection, so
+  // the lantern is one more hole in it rather than a second mechanism.
+  //
+  // MOUSE ONLY. On a touch screen a "pointer" is a tap, and a light that
+  // appears where you touched and then stays there is a smudge, not a lantern.
+  // The pointerType guard is why this needs a script at all — :hover would
+  // fire on touch too.
+  //
+  // The overlay itself is pointer-events: none so it never eats a click, so
+  // the listener goes on the figure around it.
+  const atlasFigure = map?.closest("figure");
+  if (map && atlasFigure) {
+    const move = (e: PointerEvent): void => {
+      if (e.pointerType !== "mouse") return;
+      const box = atlasFigure.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) return;
+      const lantern = map.querySelector("[data-lantern]");
+      if (!lantern) return;
+      // The overlay's viewBox is 0-100 in both axes over a square artwork, so a
+      // percentage of the box IS the user-space coordinate.
+      lantern.setAttribute("cx", (((e.clientX - box.left) / box.width) * 100).toFixed(2));
+      lantern.setAttribute("cy", (((e.clientY - box.top) / box.height) * 100).toFixed(2));
+      map.setAttribute("data-lantern-on", "");
+    };
+
+    atlasFigure.addEventListener("pointermove", move);
+    atlasFigure.addEventListener("pointerleave", () => {
+      map.removeAttribute("data-lantern-on");
+    });
+  }
 
   // Warm the creature portraits once the browser is idle.
   //

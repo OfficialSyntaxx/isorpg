@@ -57,7 +57,11 @@ const DIST = path.join(ROOT, "web/dist");
 const FLOOR = {
   "/": {
     "[data-reveal]": 12,
-    "[data-draw]": 6,
+    // 5, not 6: the experience curve moved off initPathDraw onto a scroll
+    // timeline in A4, so it is no longer a [data-draw] path. It is asserted
+    // directly instead — a floor that quietly absorbed the change would have
+    // been worse than one that had to be edited.
+    "[data-draw]": 5,
     "[data-parallax]": 1,
     "[data-hscroll]": 1,
     "[data-ambient]": 5,
@@ -560,6 +564,138 @@ const url = (r) => `http://localhost:${PORT}${r}`;
       );
     }
 
+    await page.close();
+  }
+
+  // ------------------------------------------- A4, the curve is climbed
+  //
+  // The experience curve is scrubbed against scroll rather than drawn on a
+  // timer, so the fact the section exists to land — half the experience to 99
+  // sits above level 92 — arrives as the reader climbs it.
+  //
+  // pathLength="1" normalises the polyline so the dash offset runs 1 -> 0 with
+  // no measuring, which is what lets this work with no script.
+  {
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 900 },
+    });
+    await page.goto(url("/"), { waitUntil: "load" });
+    await page.evaluate(() => {
+      document.documentElement.style.scrollBehavior = "auto";
+    });
+    await page.waitForTimeout(700);
+
+    const offsets = [];
+    const top = await page.evaluate(
+      () =>
+        document.querySelector(".line").getBoundingClientRect().top +
+        window.scrollY,
+    );
+    for (let d = -700; d <= 900; d += 200) {
+      await page.evaluate(
+        (y) => window.scrollTo(0, y),
+        Math.max(0, top - 450 + d),
+      );
+      await page.waitForTimeout(150);
+      offsets.push(
+        await page.evaluate(() =>
+          parseFloat(
+            getComputedStyle(document.querySelector(".line")).strokeDashoffset,
+          ),
+        ),
+      );
+    }
+    const distinct = new Set(offsets.map((o) => o.toFixed(2)));
+    ok(
+      "the experience curve is climbed rather than played",
+      distinct.size >= 4 &&
+        offsets[0] > 0.9 &&
+        offsets[offsets.length - 1] === 0,
+      offsets.map((o) => o.toFixed(2)).join(" -> "),
+    );
+    await page.close();
+
+    // Resting state is DRAWN. A reader with reduced motion, or a browser with
+    // no scroll timelines, must get the finished chart — an undrawn curve is
+    // not a calmer chart, it is a missing one.
+    const still = await browser.newPage({
+      viewport: { width: 1280, height: 900 },
+      reducedMotion: "reduce",
+    });
+    await still.goto(url("/"), { waitUntil: "load" });
+    await still.waitForTimeout(600);
+    const rest = await still.evaluate(() =>
+      parseFloat(
+        getComputedStyle(document.querySelector(".line")).strokeDashoffset,
+      ),
+    );
+    ok(
+      "reduced motion shows the whole curve",
+      rest === 0,
+      `dashoffset ${rest}`,
+    );
+    await still.close();
+  }
+
+  // ------------------------------------------- A6, the travel lantern
+  //
+  // Mouse only, by design: on a touch screen a light that appears where you
+  // tapped and stays there is a smudge. The pointerType guard is why this needs
+  // a script at all, and why the assertion drives a real mouse.
+  {
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 1000 },
+    });
+    await page.goto(url("/world/"), { waitUntil: "load" });
+    await page.waitForTimeout(1100);
+    const fig = page.locator(".world__atlas figure");
+    await fig.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(250);
+    const box = await fig.boundingBox();
+
+    const read = () =>
+      page.evaluate(() => ({
+        on: document
+          .querySelector("[data-map]")
+          .hasAttribute("data-lantern-on"),
+        cx: document.querySelector("[data-lantern]").getAttribute("cx"),
+        cy: document.querySelector("[data-lantern]").getAttribute("cy"),
+        opacity: Number(
+          getComputedStyle(document.querySelector("[data-lantern]")).opacity,
+        ),
+      }));
+
+    const before = await read();
+    await page.mouse.move(box.x + box.width * 0.25, box.y + box.height * 0.75);
+    await page.waitForTimeout(250);
+    const during = await read();
+    await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.2);
+    await page.waitForTimeout(250);
+    const moved = await read();
+    await page.mouse.move(box.x + box.width / 2, box.y - 220);
+    await page.waitForTimeout(300);
+    const after = await read();
+
+    ok(
+      "the lantern is dark until a mouse is over the map",
+      before.on === false && before.opacity === 0,
+      JSON.stringify(before),
+    );
+    ok(
+      "the lantern follows the pointer across the artwork",
+      during.on === true &&
+        during.opacity === 1 &&
+        Math.abs(Number(during.cx) - 25) < 2 &&
+        Math.abs(Number(during.cy) - 75) < 2 &&
+        Math.abs(Number(moved.cx) - 80) < 2 &&
+        Math.abs(Number(moved.cy) - 20) < 2,
+      `${during.cx},${during.cy} then ${moved.cx},${moved.cy}`,
+    );
+    ok(
+      "the lantern goes out when the pointer leaves",
+      after.on === false && after.opacity === 0,
+      JSON.stringify(after),
+    );
     await page.close();
   }
 
