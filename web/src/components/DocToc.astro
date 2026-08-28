@@ -25,17 +25,29 @@ const { headings, label } = Astro.props;
 ---
 
 <details class="toc" data-toc open>
-  <summary class="toc__summary" aria-label={label}>
+  {
+    /* No aria-label on the summary.
+      It had one, and it was a WCAG 2.5.3 failure: an aria-label REPLACES the
+      accessible name, so the control read as "Wiki sections" while visibly
+      saying "On this page". Someone driving the page by voice would say what
+      they can see and match nothing. The visible text is the name now, and the
+      descriptive label moved to the nav landmark below, which is what a
+      landmark label is for. Lighthouse scored /wiki 95 on accessibility until
+      this changed. */
+  }
+  <summary class="toc__summary">
     <span class="toc__title">On this page</span>
     <span class="toc__count">{headings.length}</span>
   </summary>
-  <ul class="toc__list">
-    {
-      headings.map((h) => (
-        <li class:list={["toc__item", h.depth === 3 && "toc__item--sub"]}>
-          <a href={`#${h.id}`}>{h.text}</a>
-        </li>
-      ))
-    }
-  </ul>
+  <nav class="toc__nav" aria-label={label}>
+    <ul class="toc__list">
+      {
+        headings.map((h) => (
+          <li class:list={["toc__item", h.depth === 3 && "toc__item--sub"]}>
+            <a href={`#${h.id}`}>{h.text}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
 </details>
