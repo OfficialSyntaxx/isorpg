@@ -1,5 +1,20 @@
 # Isoperia — Update Log
 
+## 2026-08-28 · Actor and combat asset recovery (in progress)
+
+- Repaired the local Git LFS checkout: the project now resolves real FBX/GLB
+  model binaries rather than Git LFS pointer files. This was the direct cause
+  of Unity selecting the primitive fallback visuals.
+- The player now instantiates the authored `hero_animated` rig and its existing
+  Idle/Walk/Gather/Attack/Hit controller. Root motion remains disabled so the
+  established third-person movement controller remains authoritative.
+- Re-enabled only the curated combat presenter. It uses the owned rat, ogre,
+  and cinder-hound models; unreviewed global decoration and asset-scatter views
+  remain disabled.
+
+**Validation:** Blender verified five hero animation takes in the restored FBX;
+Unity reimported the hero successfully and compiled the player change cleanly.
+
 ## 2026-08-28 · Hearthvale visual-recovery pass (in progress)
 
 - Replaced the intentional cube/capsule fallback in the central town with the

@@ -11,6 +11,8 @@ namespace Isoperia.Unity
     public sealed class WorldPlayerAvatarView : MonoBehaviour
     {
         public const string AvatarName = "PlayerAvatar";
+        private const string HeroAsset = "Art/OwnedModels/hero_animated";
+        private const string HeroControllerAsset = "Art/HeroController";
 
         private Material tunic;
         private Material skin;
@@ -57,12 +59,28 @@ namespace Isoperia.Unity
         private void Awake()
         {
             playerController = GetComponent<OpenWorldPlayerController>();
-            // hero_animated currently has a usable mesh and rig but no baked
-            // animation clips (its importer lists an empty clip set). Assigning
-            // it to HeroController therefore renders the bind pose in builds.
-            // Keep it in the library for the animation-authoring pass, but use
-            // the explicit animated fallback until compatible clips exist.
-            CreateAnimatedFallback();
+            if (!CreateOwnedHero()) CreateAnimatedFallback();
+        }
+
+        private bool CreateOwnedHero()
+        {
+            GameObject prefab = Resources.Load<GameObject>(HeroAsset);
+            RuntimeAnimatorController controller = Resources.Load<RuntimeAnimatorController>(HeroControllerAsset);
+            if (prefab == null || controller == null) return false;
+
+            GameObject model = Instantiate(prefab, transform);
+            model.name = "HeroModel";
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+            OwnedModelPresentation.FitToHeight(model, 1.72f, transform.position.y);
+
+            heroTransform = model.transform;
+            heroAnimator = model.GetComponentInChildren<Animator>();
+            if (heroAnimator == null) heroAnimator = model.AddComponent<Animator>();
+            heroAnimator.runtimeAnimatorController = controller;
+            heroAnimator.applyRootMotion = false;
+            CacheAnimatorParameters();
+            return true;
         }
 
         private void CreateAnimatedFallback()
