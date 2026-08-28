@@ -201,6 +201,8 @@ const url = (r) => `http://localhost:${PORT}${r}`;
     // failure rather than a thing nobody noticed.
     const regions = new Set();
     const trackShifts = new Set();
+    const heres = new Set();
+    const bars = new Set();
     await page.evaluate(() => {
       document.documentElement.style.scrollBehavior = "auto";
     });
@@ -219,9 +221,15 @@ const url = (r) => `http://localhost:${PORT}${r}`;
           ? getComputedStyle(document.querySelector("[data-hscroll-track]"))
               .transform
           : "none",
+        // A5: the same signal, published on <html> and consumed by chrome that
+        // sits outside every section.
+        here: document.documentElement.getAttribute("data-here"),
+        bar: getComputedStyle(document.documentElement).scrollbarColor,
       }));
       regions.add(s.region);
       trackShifts.add(s.track);
+      heres.add(s.here);
+      bars.add(s.bar);
     }
     await page.evaluate((h) => window.scrollTo(0, h), height);
     await page.waitForTimeout(700);
@@ -267,6 +275,23 @@ const url = (r) => `http://localhost:${PORT}${r}`;
       "the pillar run travels sideways as you scroll",
       trackShifts.size >= 3,
       `${trackShifts.size} distinct transforms`,
+    );
+
+    // A5. Two assertions, not one: the attribute reaching <html> proves the
+    // signal is published, and the scrollbar colour changing proves something
+    // outside the sections is actually consuming it. The first passed while the
+    // second did not — a replacement in components.css silently failed to match
+    // after prettier collapsed the rule onto one line, so the scrollbar stayed
+    // bound to the old value and two of six regions rendered identically.
+    ok(
+      "the region you are in is published to the whole document",
+      heres.size >= 3 && !heres.has(null),
+      [...heres].join(" → "),
+    );
+    ok(
+      "chrome outside the sections takes its colour from that region",
+      bars.size >= 3,
+      `${bars.size} distinct scrollbar colours: ${[...bars].join(" | ")}`,
     );
 
     // Self-drawing paths. initPathDraw sets an inline dasharray/dashoffset and

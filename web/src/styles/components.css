@@ -983,6 +983,84 @@ pre code {
   flex: none;
 }
 
+/* --- A5: the region you are standing in, at document level ---------------- */
+/* `--region` is declared on each [data-region] section, so it is scoped to that
+ * section's subtree. The sticky header, the scrollbar and ::selection are all
+ * outside every section — which is why the district colour used to stop at the
+ * edge of the content while the ambient wash travelled on alone.
+ *
+ * motion.ts publishes the dominant region as [data-here] on <html>, by the same
+ * screen-area measure that drives the wash, and these rules map it to --here.
+ * The result is that the whole interface travels outward with you rather than a
+ * background doing it by itself.
+ *
+ * WHAT IS DELIBERATELY *NOT* BOUND: --focus.
+ * A focus indicator should be one constant, recognisable thing. Legality is not
+ * the obstacle — tokens.json asserts all four district colours at 4.5:1 on the
+ * page surface in both themes, comfortably above the 3:1 a focus ring needs — so
+ * a region-tinted ring would pass and still be wrong, because someone tabbing a
+ * long page would watch their own cursor change colour under them. Contrast is
+ * the requirement; predictability is the point.
+ *
+ * WHY THE MIXES USE --here-mark AND NOT --here.
+ * `--district-frostwatch` is the SAME hex as `--accent` (#15579F light,
+ * #6AA8FF dark), so binding these surfaces to --here made two of the six
+ * regions — hearth and frostwatch — render identically. That is a fact about
+ * the palette rather than a bug, and the ambient wash never showed it because
+ * the wash already uses the mark colours, which are all distinct. These
+ * surfaces use the marks for the same reason.
+ *
+ * The marks are audited as NOT text-safe, which is fine here: every use below
+ * is a decorative surface, not text and not a focus indicator, so no ratio
+ * applies. The one that carries text is ::selection, and it sets
+ * `color: var(--text-strong)` over a 30% tint — a shift far too small to
+ * threaten a 7:1 pairing on the same ground.
+ */
+:root {
+  --here: var(--accent);
+  --here-mark: var(--mark-gold);
+}
+
+[data-here="wildwood"] {
+  --here: var(--district-wildwood);
+  --here-mark: var(--mark-wildwood);
+}
+
+[data-here="frostwatch"] {
+  --here: var(--district-frostwatch);
+  --here-mark: var(--mark-frostwatch);
+}
+
+[data-here="miregate"] {
+  --here: var(--district-miregate);
+  --here-mark: var(--mark-miregate);
+}
+
+[data-here="cinder"] {
+  --here: var(--district-cinder);
+  --here-mark: var(--mark-cinder);
+}
+
+[data-here="hearth"] {
+  --here: var(--accent);
+  --here-mark: var(--mark-gold);
+}
+
+/* Selecting text picks up the region. A small thing, and the kind of small
+   thing that is only ever there on purpose. */
+::selection {
+  background: color-mix(in srgb, var(--here-mark) 30%, transparent);
+  color: var(--text-strong);
+}
+
+/* The scrollbar becomes a position indicator in two senses at once: how far
+   down the page you are, and which part of the world that is. Firefox and
+   Chromium both honour this; anything that does not simply keeps its default. */
+html {
+  scrollbar-color: color-mix(in srgb, var(--here-mark) 62%, var(--border-strong))
+    transparent;
+}
+
 /* --- the tick ------------------------------------------------------------- */
 /* The game's engine runs on a 600ms tick, decoupled from the frame rate. This
    pulses at exactly that interval. It is a detail almost nobody will decode,

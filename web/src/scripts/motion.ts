@@ -368,6 +368,18 @@ export function initRegionAmbience(): void {
       if (name === key) el.setAttribute("data-on", "");
       else el.removeAttribute("data-on");
     }
+
+    // A5 — the same signal, published at document level.
+    //
+    // `--region` is declared on each [data-region] SECTION, so it only reaches
+    // that section's own subtree. The header, the scrollbar and ::selection all
+    // live outside every section, which is why the district colour used to stop
+    // at the edge of the content while a background wash travelled alone.
+    //
+    // One attribute on <html> gives the whole document the region it is standing
+    // in, and components.css maps it to --here. Nothing else changes: this
+    // function still decides what "here" is, by the same screen-area measure.
+    document.documentElement.setAttribute("data-here", key);
   };
 
   if (!("IntersectionObserver" in window)) {

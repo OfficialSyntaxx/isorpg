@@ -56,16 +56,38 @@ const path = Astro.url.pathname;
 </header>
 
 <style>
+  /* A5: the hairline under the header carries the region you are standing in,
+     and a low glow under it does the same. The bar is the one element on screen
+     at every scroll position, so it is the right place for the world to show
+     through — and a 1px line plus a 2px glow is as far as that can go before it
+     starts competing with the content it sits above.
+
+     The colour is crossfaded over --dur-world to match the ambient wash behind
+     the page; a snap here would give away that two mechanisms are involved. */
   .site-header {
     position: sticky;
     top: 0;
     z-index: 20;
     background: var(--glass-bg);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--here-mark) 52%, var(--border-subtle));
+    box-shadow: 0 1px 0 0 color-mix(in srgb, var(--here-mark) 20%, transparent);
     backdrop-filter: blur(10px) saturate(1.2);
     -webkit-backdrop-filter: blur(10px) saturate(1.2);
-    transition: padding-block var(--dur-base) var(--ease-out);
+    transition:
+      padding-block var(--dur-base) var(--ease-out),
+      border-bottom-color var(--dur-world) linear,
+      box-shadow var(--dur-world) linear;
     padding-block: var(--space-sm);
+  }
+
+  /* Without color-mix the mixes above resolve to nothing, which would leave the
+     header with no bottom edge at all. */
+  @supports not (background: color-mix(in srgb, red 50%, blue)) {
+    .site-header {
+      border-bottom-color: var(--border-subtle);
+      box-shadow: none;
+    }
   }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -82,7 +104,7 @@ const path = Astro.url.pathname;
   .site-header[data-condensed] {
     padding-block: var(--space-2xs);
     background: var(--surface-raised);
-    border-bottom-color: var(--border-strong);
+    border-bottom-color: color-mix(in srgb, var(--here-mark) 62%, var(--border-strong));
   }
 
   .site-header__inner {

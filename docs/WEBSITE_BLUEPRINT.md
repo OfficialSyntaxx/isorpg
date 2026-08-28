@@ -2083,15 +2083,41 @@ above level 92") lands exactly as the line goes vertical.
 
 Reuses machinery that already exists and is already gated.
 
-#### A5 — Region-reactive chrome · ~200 bytes CSS
+#### A5 ✅ — the region you are in reaches the whole document
 
-The ambient tint crossfades by region as you scroll, but the accent colour, the
-focus ring, the seam glow and the scrollbar stay constant throughout. Bind them
-to the active region too, so the whole interface travels rather than a
-background wash doing it alone.
+`--region` is declared on each `[data-region]` **section**, so it only ever
+reached that section's own subtree. The sticky header, the scrollbar and
+`::selection` all live outside every section — which is why the district colour
+stopped at the edge of the content while the ambient wash travelled alone.
 
-Constraint: the focus ring must keep 3:1 against every region surface (WCAG
-2.4.13 / 1.4.11), which means auditing five colours rather than assuming.
+`initRegionAmbience` now also publishes the dominant region as `[data-here]` on
+`<html>`, by the same screen-area measure that already drives the wash, and
+`components.css` maps it to `--here` / `--here-mark`. Bound to it: the header's
+bottom hairline and a 1px glow beneath it, the scrollbar thumb, and the text
+selection colour.
+
+**`--focus` is deliberately not bound.** Legality is not the obstacle —
+`tokens.json` asserts all four district colours at 4.5:1 on the page surface in
+both themes, comfortably above the 3:1 a focus ring needs. It would pass and
+still be wrong: someone tabbing a long page would watch their own cursor change
+colour under them. Contrast is the requirement; predictability is the point.
+
+**The surfaces use `--here-mark`, not `--here`, and finding out why was the
+useful part.** `--district-frostwatch` is the *same hex* as `--accent` (#15579F
+light, #6AA8FF dark), so the first version rendered two of the six regions —
+hearth and frostwatch — identically. The ambient wash never exposed that because
+it already used the mark colours, which are all distinct. A palette fact, not a
+bug, and invisible until measured.
+
+**Two assertions, not one, for a reason.** The attribute reaching `<html>` proves
+the signal is published; the scrollbar colour changing proves something outside
+the sections is consuming it. During this work the first passed while the second
+did not: a replacement in `components.css` silently failed to match because
+Prettier had collapsed the rule onto one line, so the scrollbar stayed bound to
+the old value. One assertion would have called that done.
+
+Verified across four regions — gold, green, blue, teal — and the negative
+control (removing the one line that publishes the attribute) fails both.
 
 #### A6 — A travel lantern on the world map · ~400 bytes
 
