@@ -2197,6 +2197,56 @@ It refuses formats it does not know rather than guessing, and the check asserts
 that pin equals the game's `SAVE_VERSION` — a reader pinned to a format the game
 no longer writes would refuse every real save while looking perfectly healthy.
 
+
+#### What the gate caught, and what that cost
+
+**Phase 14 shipped a 17-point performance regression on the landing page, and
+the production Lighthouse gate is the only thing that noticed.** `/` fell from
+100 to 83 on mobile while every new route scored 99–100. Nothing looked wrong.
+Nothing threw. Two rounds were needed to fix it and the first was aimed at the
+wrong element.
+
+**Round one, wrong.** A2 names the hero's world in a paragraph that shipped
+`hidden` and was filled in once the generator returned a seed — adding a line of
+text a second after load. Reserving its space was a real fix for a real shift,
+and production still measured 0.295.
+
+**Round two, right, after asking rather than guessing.** Lighthouse's
+layout-shift audit names elements. It named exactly one: `span.hero__sun`,
+carrying 0.29 of the 0.295. A3 changes the sun's `top`, `right`, `width` and
+`height` per daypart — layout properties — and the daypart was applied by the
+hero's module *after* load, so a 429×429 element moved on every page view.
+
+The fix is to decide the hour in `theme-init.js`, the blocking script that
+already sets `[data-theme]` and `[data-js]` for precisely this reason. One
+`Date` call in a script that already blocks, and the hero is correct on frame
+one.
+
+**And the local check had passed at under 0.1 the whole time.** It ran
+unthrottled; at full speed the script that set the daypart finished before
+anything worth measuring. Throttled to 4× — the rate Lighthouse's mobile profile
+emulates, and the rate `verify-hero.cjs` already used — it reports **0.295 on
+`/`**: production's number, reproduced locally, before the fix. That is the
+version worth having.
+
+Three lessons, all of them old ones learned again:
+
+- **A check that does not reproduce the production environment is not a check.**
+  This is the second time in one session — the first was `npx serve` inventing a
+  five-point deficit that did not exist. Both directions of that error have now
+  been made, in the same phase.
+- **Ask the instrument which element, rather than reasoning about which.** The
+  first fix was plausible, addressed a genuine shift, and was not the one that
+  mattered.
+- **Layout properties applied after paint are a layout shift, even on a
+  decorative absolutely-positioned element.** CLS does not care that the sun
+  affects nothing else; it moved, and it was 429px across.
+
+`verify-motion.cjs` finished at **52 assertions**, covering CLS on all six
+non-document routes under CPU throttling. `verify-doc-layout.cjs` already
+covered the other two — which is why this went unnoticed: the two routes with a
+CLS check were the two with no animated work in them.
+
 #### Suggested order
 
 | # | Piece | Why here |
