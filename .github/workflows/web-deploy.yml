@@ -158,7 +158,7 @@ jobs:
           npx --yes playwright@1.62.1 install --with-deps chromium
           PLAY_SCREENSHOT=play-under-csp.png node scripts/verify-deployed-play.cjs "$SITE"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: web-deploy-report
