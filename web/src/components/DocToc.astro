@@ -8,11 +8,23 @@
  * single column, it is a screen and a half of links before the reader reaches
  * a single word of content.
  *
- * It ships OPEN, and a script closes it on narrow viewports. That ordering is
- * deliberate: with no JavaScript the page behaves exactly as it did before,
- * showing the whole list, rather than hiding content behind a control that
- * needs a script to be useful. At >=64rem the summary is hidden entirely and
- * the list becomes the sticky sidebar (see .toc in components.css).
+ * IT SHIPS CLOSED, AND THE REASON IT USED TO SHIP OPEN WAS WRONG.
+ * The original argument was that shipping open kept the list available without
+ * JavaScript, "rather than hiding content behind a control that needs a script
+ * to be useful". That premise is false: <details> is native HTML and its
+ * summary toggles with no script at all. Nothing was ever gated behind
+ * JavaScript.
+ *
+ * What shipping open actually bought was a layout shift. The list rendered at
+ * full height, then a script collapsed it on phones, and the entire document
+ * jumped up by around 700px on every mobile load. Lighthouse measured the
+ * result on /wiki as a cumulative layout shift of 0.37 — "good" is below 0.1 —
+ * and CLS is a quarter of the mobile performance score.
+ *
+ * Closed costs a no-JS phone reader one tap, and a no-JS desktop reader one tap
+ * as well in the worst case; the CSS below reveals the list at sidebar widths
+ * without needing the open attribute at all, so that case is covered too. With
+ * JavaScript, initDocToc opens it at >=64rem exactly as before.
  */
 import type { Heading } from "../lib/markdown";
 
@@ -24,7 +36,7 @@ interface Props {
 const { headings, label } = Astro.props;
 ---
 
-<details class="toc" data-toc open>
+<details class="toc" data-toc>
   {
     /* No aria-label on the summary.
       It had one, and it was a WCAG 2.5.3 failure: an aria-label REPLACES the

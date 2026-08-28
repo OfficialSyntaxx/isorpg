@@ -37,10 +37,16 @@ const ROOT = path.join(__dirname, "..");
 const HEADERS_FILE = path.join(ROOT, "web/public/_headers");
 const DIST = path.join(ROOT, "web/dist");
 
-let pass = 0, fail = 0;
+let pass = 0,
+  fail = 0;
 const ok = (name, cond, detail = "") => {
-  if (cond) { pass++; console.log(`PASS  ${name}`); }
-  else { fail++; console.log(`FAIL  ${name}${detail ? "  [" + detail + "]" : ""}`); }
+  if (cond) {
+    pass++;
+    console.log(`PASS  ${name}`);
+  } else {
+    fail++;
+    console.log(`FAIL  ${name}${detail ? "  [" + detail + "]" : ""}`);
+  }
 };
 
 // --- parse _headers ----------------------------------------------------------
@@ -88,7 +94,10 @@ const rootHeaders = headersFor(rules, "/index.html");
 const csp = rootHeaders.get("Content-Security-Policy");
 
 // --- static assertions on the policy ----------------------------------------
-ok("a Content-Security-Policy is defined", typeof csp === "string" && csp.length > 0);
+ok(
+  "a Content-Security-Policy is defined",
+  typeof csp === "string" && csp.length > 0,
+);
 
 if (csp) {
   const directive = (name) => {
@@ -96,26 +105,62 @@ if (csp) {
     return m ? m[1].trim() : null;
   };
 
-  ok("script-src has no 'unsafe-inline'", !/script-src[^;]*'unsafe-inline'/.test(csp),
-     directive("script-src") || "");
-  ok("script-src has no bare 'unsafe-eval'",
-     !/script-src[^;]*'unsafe-eval'/.test(csp), directive("script-src") || "");
-  ok("style-src has no 'unsafe-inline'", !/style-src[^;]*'unsafe-inline'/.test(csp),
-     directive("style-src") || "");
-  ok("default-src is 'self'", directive("default-src") === "'self'", directive("default-src") || "");
-  ok("object-src is 'none'", directive("object-src") === "'none'", directive("object-src") || "");
-  ok("frame-ancestors is 'none'", directive("frame-ancestors") === "'none'",
-     directive("frame-ancestors") || "");
-  ok("base-uri is locked", directive("base-uri") === "'self'", directive("base-uri") || "");
-  ok("form-action is locked", directive("form-action") === "'self'", directive("form-action") || "");
-  // The Unity loader needs this; losing it silently would hang /play.
-  ok("script-src keeps 'wasm-unsafe-eval' for the Unity build",
-     /script-src[^;]*'wasm-unsafe-eval'/.test(csp), directive("script-src") || "");
-  // Only Google Fonts may be external, per §8.1.
-  const externalHosts = (csp.match(/https:\/\/[^\s;]+/g) || []).filter(
-    (h) => !/fonts\.(googleapis|gstatic)\.com/.test(h),
+  ok(
+    "script-src has no 'unsafe-inline'",
+    !/script-src[^;]*'unsafe-inline'/.test(csp),
+    directive("script-src") || "",
   );
-  ok("no external host beyond Google Fonts", externalHosts.length === 0, externalHosts.join(" "));
+  ok(
+    "script-src has no bare 'unsafe-eval'",
+    !/script-src[^;]*'unsafe-eval'/.test(csp),
+    directive("script-src") || "",
+  );
+  ok(
+    "style-src has no 'unsafe-inline'",
+    !/style-src[^;]*'unsafe-inline'/.test(csp),
+    directive("style-src") || "",
+  );
+  ok(
+    "default-src is 'self'",
+    directive("default-src") === "'self'",
+    directive("default-src") || "",
+  );
+  ok(
+    "object-src is 'none'",
+    directive("object-src") === "'none'",
+    directive("object-src") || "",
+  );
+  ok(
+    "frame-ancestors is 'none'",
+    directive("frame-ancestors") === "'none'",
+    directive("frame-ancestors") || "",
+  );
+  ok(
+    "base-uri is locked",
+    directive("base-uri") === "'self'",
+    directive("base-uri") || "",
+  );
+  ok(
+    "form-action is locked",
+    directive("form-action") === "'self'",
+    directive("form-action") || "",
+  );
+  // The Unity loader needs this; losing it silently would hang /play.
+  ok(
+    "script-src keeps 'wasm-unsafe-eval' for the Unity build",
+    /script-src[^;]*'wasm-unsafe-eval'/.test(csp),
+    directive("script-src") || "",
+  );
+  // NO external host is permitted. This used to allow the two Google Fonts
+  // hosts; the typefaces are self-hosted now, so the allowance is gone and the
+  // check is the stronger one it always wanted to be. A new external host in
+  // the policy is now a failure rather than a judgement call.
+  const externalHosts = csp.match(/https:\/\/[^\s;]+/g) || [];
+  ok(
+    "no external host in the policy at all",
+    externalHosts.length === 0,
+    externalHosts.join(" "),
+  );
 }
 
 for (const h of [
@@ -131,8 +176,10 @@ for (const h of [
 
 // --- drive a real browser ----------------------------------------------------
 if (!fs.existsSync(DIST)) {
-  console.log(`\nSKIP  browser pass: ${path.relative(ROOT, DIST)} not built. ` +
-              `Run \`npm run build\` in web/ first.`);
+  console.log(
+    `\nSKIP  browser pass: ${path.relative(ROOT, DIST)} not built. ` +
+      `Run \`npm run build\` in web/ first.`,
+  );
   console.log(`\n${pass}/${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 }
@@ -157,7 +204,11 @@ const server = http.createServer((req, res) => {
   if (urlPath.endsWith("/")) urlPath += "index.html";
   const file = path.join(DIST, urlPath);
 
-  if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+  if (
+    !file.startsWith(DIST) ||
+    !fs.existsSync(file) ||
+    fs.statSync(file).isDirectory()
+  ) {
     res.writeHead(404, { "Content-Type": "text/plain" });
     res.end("not found");
     return;
@@ -165,7 +216,9 @@ const server = http.createServer((req, res) => {
 
   // Apply the real headers for this path — the whole point of the exercise.
   const applied = headersFor(rules, urlPath);
-  const out = { "Content-Type": MIME[path.extname(file)] || "application/octet-stream" };
+  const out = {
+    "Content-Type": MIME[path.extname(file)] || "application/octet-stream",
+  };
   for (const [k, v] of applied) out[k] = v;
 
   res.writeHead(200, out);
@@ -194,20 +247,27 @@ function allRoutes() {
   const port = 4413;
   await new Promise((r) => server.listen(port, "127.0.0.1", r));
 
-  const browser = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
+  const browser = await chromium.launch({
+    executablePath,
+    args: ["--no-sandbox"],
+  });
 
   // The full route list is ~108 pages; the devlog entries are all built from one
   // template, so a sample of them plus every distinct route covers every
   // distinct combination of scripts and styles on the site.
   const routes = allRoutes();
   const distinct = routes.filter((r) => !r.startsWith("/devlog/2"));
-  const entrySample = routes.filter((r) => r.startsWith("/devlog/2")).slice(0, 4);
+  const entrySample = routes
+    .filter((r) => r.startsWith("/devlog/2"))
+    .slice(0, 4);
   const toCheck = [...distinct, ...entrySample];
 
   const violations = [];
 
   for (const route of toCheck) {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 900 },
+    });
 
     // The browser's own report of what the policy blocked. This is the
     // measurement — not a guess about what the policy permits.
@@ -222,18 +282,20 @@ function allRoutes() {
       });
     });
 
-    await page.goto(`http://localhost:${port}${route}`, { waitUntil: "load" }).catch(() => {});
+    await page
+      .goto(`http://localhost:${port}${route}`, { waitUntil: "load" })
+      .catch(() => {});
     // Let deferred work (module scripts, the canvas paint, observers) run —
     // a violation can happen well after `load`.
     await page.waitForTimeout(700);
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
+    await page
+      .evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+      .catch(() => {});
     await page.waitForTimeout(500);
 
     const found = await page.evaluate(() => window.__csp || []).catch(() => []);
     for (const v of found) {
-      // The sandbox blocks fonts.googleapis.com at the network layer, which is
-      // not a CSP violation and does not appear here. Anything that does appear
-      // is real.
+      // Nothing is expected here at all now that the fonts are same-origin.
       violations.push(`${route}: ${v.directive} blocked ${v.blocked}`);
     }
     await page.close();
@@ -251,7 +313,9 @@ function allRoutes() {
   finish();
 })().catch((e) => {
   console.error("verify-csp: " + ((e && e.stack) || e));
-  try { server.close(); } catch {}
+  try {
+    server.close();
+  } catch {}
   process.exit(1);
 });
 

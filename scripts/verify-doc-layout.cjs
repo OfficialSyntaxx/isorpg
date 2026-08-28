@@ -172,6 +172,47 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // Cumulative layout shift on a phone.
+  //
+  // The contents list used to ship OPEN and get closed by script on narrow
+  // viewports, which jumped the whole document up by around 700px on every
+  // mobile load. Lighthouse measured /wiki at a CLS of 0.37 against a "good"
+  // threshold of 0.1, and CLS is a quarter of the mobile performance score.
+  //
+  // The markup ships closed now. This is the check that says so in a number,
+  // because the visual difference between "collapsed immediately" and
+  // "collapsed a moment after paint" is exactly one frame nobody reviews.
+  for (const route of ROUTES) {
+    const page = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+    });
+    const cls = await page.evaluate.bind(page);
+    await page.addInitScript(() => {
+      window.__cls = 0;
+      try {
+        new PerformanceObserver((l) => {
+          for (const e of l.getEntries())
+            if (!e.hadRecentInput) window.__cls += e.value;
+        }).observe({ type: "layout-shift", buffered: true });
+      } catch {
+        window.__cls = -1;
+      }
+    });
+    await page.goto(`http://localhost:${port}${route}`, { waitUntil: "load" });
+    await page.waitForTimeout(1500);
+    const score = await cls(() => window.__cls);
+    if (score < 0) {
+      console.log(`SKIP  ${route}: layout-shift observer unavailable.`);
+    } else {
+      ok(
+        `${route} @390: cumulative layout shift under 0.1`,
+        score < 0.1,
+        `CLS ${score.toFixed(3)}`,
+      );
+    }
+    await page.close();
+  }
+
   // The disclosure must not be a trap: a reader who opens it on a phone has to
   // be able to close it again, and it must be open where it is the sidebar.
   {

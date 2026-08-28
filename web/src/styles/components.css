@@ -760,7 +760,12 @@ pre code {
   }
 
   /* In the sidebar the list is always shown, so the disclosure control is
-     noise. The plain title takes its place. */
+     noise. The plain title takes its place.
+
+     The list is revealed here without relying on the `open` attribute, which
+     is what lets the markup ship closed — no layout shift on a phone — while a
+     reader with no JavaScript still gets a full sidebar on a wide screen. The
+     UA hides a closed <details>'s children; overriding display puts them back. */
   /* Still a <summary>, so it is still an interactive element as far as an
      assistive technology is concerned — pointer-events: none does not change
      that. Zeroing its height made it 241x20, under the 24x24 minimum in WCAG
@@ -776,6 +781,10 @@ pre code {
 
   .toc__count {
     display: none;
+  }
+
+  .toc__nav {
+    display: block;
   }
 
   .toc__list {

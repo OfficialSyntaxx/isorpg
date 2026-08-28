@@ -30,12 +30,13 @@
   # and the loader would hang — the exact dead-site failure this project has
   # already shipped once. One policy, applied everywhere, cannot do that.
   #
-  # Google Fonts is the only external host permitted, and it needs two: the
-  # stylesheet comes from fonts.googleapis.com and the font files it references
-  # come from fonts.gstatic.com.
+  # There is no external host in this policy at all any more. The typefaces
+  # used to come from Google Fonts, which needed two entries — fonts.googleapis
+  # .com for the stylesheet and fonts.gstatic.com for the files it referenced.
+  # They are self-hosted now, so 'self' covers them and both entries are gone.
   #
   # blob: in worker-src and img-src is for the Unity build, which creates both.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; child-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; child-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
 
   # ---- Transport ----------------------------------------------------------
   # Two years, subdomains included, preload-eligible. Only safe to send once

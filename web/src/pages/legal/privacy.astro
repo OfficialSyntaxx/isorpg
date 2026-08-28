@@ -76,18 +76,18 @@ const updated = "27 August 2026";
           )
         }
 
-        <h2 id="fonts">Fonts, and the one third party</h2>
+        <h2 id="fonts">There is no third party</h2>
         <p>
-          The site loads its typefaces from Google Fonts. That means your browser makes a
-          request to <code>fonts.googleapis.com</code> and
-          <code>fonts.gstatic.com</code>, and those requests necessarily disclose your IP
-          address and user-agent to Google, as any request to any server does.
+          This site contacts no external host. Everything it loads — including its
+          typefaces — is served from this domain, and its content security policy permits
+          nothing else, so there is no request from this site that could disclose your IP
+          address or user-agent to anyone but us.
         </p>
         <p>
-          This is the only external host the site contacts — its content security policy
-          blocks everything else — but it is still a third party, and self-hosting the
-          fonts would remove it entirely. That is a known improvement, not a settled
-          position.
+          That was not always true. The typefaces were loaded from Google Fonts until 28
+          August 2026, which disclosed your IP address and user-agent to Google on every
+          page view, and this page said so. They are self-hosted now and both Google hosts
+          have been removed from the policy.
         </p>
 
         <h2 id="hosting">Hosting</h2>

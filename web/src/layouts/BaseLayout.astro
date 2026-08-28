@@ -6,6 +6,27 @@
  * Owns nothing visual beyond layout — the look comes entirely from the Phase 2
  * token and component layers, so a palette change is one edit in tokens.json.
  */
+// The typefaces, self-hosted.
+//
+// These were three families pulled from Google Fonts at runtime: a
+// render-blocking stylesheet on one cross-origin host, chaining to font files
+// on a second. Lighthouse measured the cost on production as an estimated 2,200ms
+// of render-blocking on both pages audited, with first contentful paint and
+// largest contentful paint identical at 3.3s — the first paint WAS the paint
+// that had finished waiting for Google.
+//
+// Imported rather than linked, so Vite fingerprints the woff2 files into
+// /_astro/ where the existing one-year immutable cache header already applies.
+// Every subset ships as an @font-face rule but `unicode-range` means a browser
+// downloads only the one it needs; the alternative — hand-written rules for
+// latin only — saves a few hundred bytes of CSS and gives up the caching.
+//
+// This also removes the last third party from the site, which the privacy page
+// used to have to disclose, and lets the CSP drop both Google hosts.
+import "@fontsource-variable/fraunces/opsz.css";
+import "@fontsource-variable/inter/wght.css";
+import "@fontsource/jetbrains-mono/400.css";
+import "@fontsource/jetbrains-mono/600.css";
 import "../styles/global.css";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
@@ -70,18 +91,6 @@ const canonical = absolute(pathname);
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.name} />
     <meta name="twitter:card" content="summary_large_image" />
-
-    {
-      /* Google Fonts is the only external host the §8.1 CSP permits. preconnect
-        because the stylesheet request chains to a second host for the font
-        files themselves. */
-    }
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Inter:wght@400..700&family=JetBrains+Mono:wght@400;600&display=swap"
-    />
 
     <link
       rel="icon"
