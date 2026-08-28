@@ -11,8 +11,8 @@
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
 **Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 1, 2,
-3, 5, 6, 7 and 8 done; Phase 4 built with its Lighthouse gate still open; Phase 9
-deferred (no domain purchased). Merged to `main` and **live in production** —
+3, 4, 5, 6, 7 and 8 done — the Phase 4 Lighthouse gate is met on every route and
+both device profiles; Phase 9 deferred (no domain purchased). Merged to `main` and **live in production** —
 landing page at `/`, game at `/play`, with an enforcing CSP.
 
 Four faults found on a real phone after the cutover are fixed and covered by new
@@ -69,7 +69,7 @@ Update the Status column as phases move.
 | 1 | Deploy composition spike | Opus 5 | ✅ Done | Game verified loading at `/play/` with correct Brotli headers |
 | 2 | Design system & tokens | Opus 5 | ✅ Done | Token file + type scale + motion scale reviewed against `docs/ART_BIBLE.md` |
 | 3 | Astro workspace scaffold | Opus 5 | ✅ Done | `npm run build` in `web/` green; CI runs it |
-| 4 | Landing page build | Opus 5 | 🟡 Built; Lighthouse gate open | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
+| 4 | Landing page build | Opus 5 | ✅ Done — Lighthouse gate met | All 8 sections live, Lighthouse ≥ 95/100/100/100 |
 | 5 | Animation layer | Opus 5 | ✅ Done | Motion spec implemented; `prefers-reduced-motion` verified |
 | 6 | Content routes (devlog, wiki, roadmap) | Sonnet 5 ×2 + Opus 5 | ✅ Done | Feeds render from repo markdown; RSS valid |
 | 7 | Security hardening | Opus 5 | ✅ Done | CSP enforced with zero console violations; headers audit passes |
@@ -1585,6 +1585,36 @@ are in the `lighthouse-reports` artifact on run
 [33137001186](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33137001186).
 No code changed as part of this entry — reporting only, per instruction.
 
+
+### Phase 4's Lighthouse gate, closed (2026-08-28) ✅
+
+The last open gate in this document. Measured on production, median of 3 runs,
+run [33140308348](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33140308348):
+
+| Route | Device | Performance | Accessibility | Best practices | SEO |
+|---|---|---|---|---|---|
+| `/` | mobile | 99 | 100 | 100 | 100 |
+| `/` | desktop | 100 | 100 | 100 | 100 |
+| `/features/` | mobile | 99 | 100 | 100 | 100 |
+| `/features/` | desktop | 100 | 100 | 100 | 100 |
+| `/wiki/` | mobile | 99 | 100 | 100 | 100 |
+| `/wiki/` | desktop | 95 | 100 | 100 | 100 |
+| `/devlog/` | mobile | 100 | 100 | 100 | 100 |
+| `/devlog/` | desktop | 100 | 100 | 100 | 100 |
+
+Every cell meets the target. Mobile performance moved 87 → 99, 87 → 99, 69 → 99
+and 87 → 100 across the four routes, from two fixes: self-hosting the typefaces
+(worth an estimated 2,200ms of render-blocking on every page) and shipping the
+contents list closed (CLS 0.37 → under 0.1 on `/wiki`).
+
+**What actually got this over the line was making the audit explain itself.**
+Before that, three separate theories were in play — DOM size on `/wiki`, general
+mobile slowness, "probably the fonts" — and all of them were guesses. Printing
+the failing audits and their estimated savings into the run summary turned a
+number into a diagnosis in one run, and the diagnosis named a cause nobody had
+proposed (the layout shift) alongside one that had been suspected for days and
+never measured. The lesson is the cheap one: a gate that reports only a score
+gets argued with; a gate that reports why gets fixed.
 
 ### Phase 9 — Custom domain ⏸️
 
