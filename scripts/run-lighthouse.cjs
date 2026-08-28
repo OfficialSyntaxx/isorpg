@@ -103,6 +103,31 @@ const CHROME_PATH = chrome();
 console.log(`Chrome:     ${CHROME_PATH}`);
 console.log(`Lighthouse: ${LIGHTHOUSE}`);
 console.log(`Base URL:   ${BASE}`);
+
+/*
+ * A LOCAL RUN IS NOT A PRODUCTION RUN, AND THE GAP IS LARGE.
+ *
+ * Measured 2026-08-28 on the same commit: `npx serve` over HTTP/1.1 with no
+ * compression and no cache headers gave a median mobile performance of 95 on
+ * both `/` and `/world/`, and blamed render-blocking stylesheets and font
+ * chaining. Netlify — HTTP/2, Brotli, the immutable cache headers this repo
+ * already ships — gave 100 on both. Five points, entirely transport.
+ *
+ * That gap was nearly acted on as a real regression: a whole phase of
+ * "reclaim the performance budget" work was planned against a number that
+ * only existed because of the static server used to produce it.
+ *
+ * So a localhost run is for comparing against other localhost runs and for
+ * reading the diagnostics. The gate is a run against the deployed site.
+ */
+if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/.test(BASE)) {
+  console.log(
+    "\nNOTE: local origin. Local scores run several points below production —\n" +
+      "a dev static server has no HTTP/2, no compression and no cache headers.\n" +
+      "Use these to compare against other local runs and to read the diagnostics;\n" +
+      "take the score itself from a run against the deployed site.",
+  );
+}
 console.log(`Routes:     ${ROUTES.join(" ")}`);
 console.log(`Runs:       ${RUNS} per route per form factor`);
 console.log(`Enforcing:  ${ENFORCE ? "yes" : "no (report only)"}\n`);

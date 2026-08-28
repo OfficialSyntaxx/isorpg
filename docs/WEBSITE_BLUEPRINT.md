@@ -86,7 +86,7 @@ Update the Status column as phases move.
 | 11 | Backend Phase B2 (accounts) | Opus 5 | ⬜ Blocked on B1 | Design doc only until greenlit |
 | 12 | Backend Phase B3 (cloud saves) | Opus 5 | ⬜ Blocked on B2 | Design doc only until greenlit |
 | 13 | Showing the game | Opus 5 | ✅ Done | Every published image declared with a provenance and rendered with a badge; the world map is the actual mainland |
-| 14 | Aesthetic pieces & player tools | Opus 5 | ⬜ Planned | Budget reclaimed to ≥97 mobile; A1–A6 each asserted in verify-motion; U1–U3 live at target |
+| 14 | Aesthetic pieces & player tools | Opus 5 | 🟡 In progress | A1–A6 each asserted in verify-motion; U1–U3 live; production Lighthouse at target for every route |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked · ⏸️ Deferred
 
@@ -1972,9 +1972,14 @@ the export (all four regions mismatch), and un-clipping the badge (`overflowing
 by 21px` — the exact bug).
 
 Lighthouse mobile after: `/` 95, `/world/` 95, median of three runs, with
-accessibility, best practices and SEO at 100. Both are at the target rather than
-above it — earlier medians on the same pages were 95 and 96, so this is inside
-run-to-run variance, but there is now no headroom on the performance gate.
+accessibility, best practices and SEO at 100.
+
+**That paragraph originally ended "there is now no headroom on the performance
+gate", and that was wrong.** Those numbers came from `npx serve`. Re-measured on
+the deployed site, same commit, median of five runs: **`/` 100 and `/world/`
+100**. The five-point gap is entirely transport — a dev static server has no
+HTTP/2, no compression and no cache headers, and Netlify has all three. See
+Phase 14's prerequisite for what nearly happened as a result.
 
 ### Phase 14 — Six aesthetic pieces and three tools ⬜
 
@@ -1983,29 +1988,40 @@ new aesthetic features… and then a couple user features."* Nothing here is
 started. Ordered, costed, and grounded in assets and data that already exist —
 no new dependencies, no external hosts, no backend.
 
-#### The prerequisite: there is no performance budget left
+#### The prerequisite that turned out not to exist
 
-Mobile Lighthouse is **95 on `/` and 95 on `/world/`** against a target of ≥95.
-Every aesthetic piece below lands on those two pages, so the first task is not a
-feature. Current landing payload, gzipped: **7,243 B of JavaScript** across five
-component scripts and **11,107 B of CSS** across four files.
+**This section originally read "there is no performance budget left" and planned
+a phase of optimisation work. It was wrong, and the way it was wrong is the
+useful part.**
 
-Candidate reclamation, cheapest first:
+Mobile Lighthouse measured 95 on `/` and 95 on `/world/` against a target of
+>= 95, with the diagnostics naming render-blocking stylesheets and a font chain:
+`BaseLayout.css` discovered after the HTML, then 160 KB of woff2 discovered
+after that. A plausible, specific, actionable diagnosis. The plan committed to
+reclaiming the budget to >= 97 before anything else could ship.
 
-- `BaseLayout` CSS is 6,473 B gzipped and carries the global component layer —
-  chips, tables, callouts, the TOC — on every route including the landing page,
-  which uses a fraction of it. Splitting the genuinely global rules from the
-  document-page rules is the single biggest available win.
-- `hero-terrain.ts` is 3,534 B gzipped, half the site's JavaScript. It runs once
-  and never again after the entrance settles. Worth checking whether the
-  entrance path can be dropped after first paint.
-- The overworld artwork is a 3 MB PNG that Astro reduces to 117 KB of WebP at
-  1280. Confirm which variant a phone actually fetches and whether a narrower
-  one would do.
+Then the same commit was measured on the deployed site — five runs, mobile —
+and scored **100 and 100**.
 
-**Exit gate: `/` and `/world/` at ≥97 mobile, median of five runs, before any
-Phase 14 feature ships.** Without that, the first thing added takes the site
-below its own gate.
+The entire deficit was the measuring instrument. `npx serve` speaks HTTP/1.1,
+sends nothing compressed, and sets no cache headers; Netlify serves HTTP/2 and
+Brotli and already ships the immutable cache headers in `web/public/_headers`.
+Every audit the local run flagged was real *about that server* and irrelevant to
+production. `font-display: swap` was already set on all 22 faces, so the fonts
+were never blocking first paint in the first place — which should have been the
+tell.
+
+**Two things follow.**
+
+`scripts/run-lighthouse.cjs` now prints a warning whenever the target is a local
+origin, with the measured numbers from both sides recorded in a comment beside
+it. Local runs are for comparing against other local runs and for reading
+diagnostics; the gate is the deployed site.
+
+And the budget is not the constraint it was written up as: there are five points
+of headroom on each page, not zero. The features below proceed directly. Each
+one still gets a production Lighthouse row before it is called done — that part
+of the plan was right, just aimed at the wrong origin.
 
 #### The asymmetry worth exploiting
 
@@ -2013,21 +2029,23 @@ The aesthetic pieces all cost the two constrained pages. **The tools are new
 routes, so they cost those pages nothing.** If the budget work stalls, the tools
 can ship regardless — which is why they are not simply last.
 
-#### A1 — The 600 ms tick becomes the site's metronome · ~0 bytes
+#### A1 ✅ — the motion scale is derived from the tick
 
-The game runs on a 600 ms tick, and the trust row already carries a dot pulsing
-at exactly that interval. But the motion scale itself (`--dur-instant: 120ms`
-through `--dur-world: 1800ms`) is a set of arbitrary round numbers that happen
-to sit near tick fractions.
+`tokens.json` now declares one `--tick: 600ms` and every duration as a fraction
+or multiple of it: instant = tick/5, quick = tick/3, base = tick/2, slow = tick,
+world = tick×3. Only one rendered value moved — `--dur-base`, 320ms → 300ms,
+which is under two frames.
 
-Re-derive the whole scale from one `--tick: 600ms`: 120 = tick/5, 200 = tick/3,
-300 = tick/2, 600 = tick, 1800 = tick×3. The rendered values barely move. What
-changes is that they are *derived* — the site moves at the engine's heartbeat by
-construction, one number retunes everything, and the claim becomes true rather
-than decorative.
+What changed is that the numbers are no longer round numbers that happen to sit
+near tick fractions. The site moves at the engine's interval by construction,
+and retuning the whole motion system is one edit.
 
-The cheapest identity win available, and the one hardest to copy without the
-game behind it.
+`--tick` is deliberately **not** collapsed under `prefers-reduced-motion`: it is
+a fact about the game, not a duration. The `--dur-*` tokens are overridden
+directly, as before, so nothing can reintroduce motion by reading `--tick`. The
+pulsing dot in the trust row — previously the only thing on the site running at
+the engine's interval, and the only place `600ms` was hardcoded — now reads the
+token, and stops outright under reduced motion rather than strobing at 0.01ms.
 
 #### A2 — The hero world is seeded per visitor, and shareable · ~300 bytes
 

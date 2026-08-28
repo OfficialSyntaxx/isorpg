@@ -983,17 +983,33 @@ pre code {
   flex: none;
 }
 
-/* --- the 600ms tick ------------------------------------------------------- */
+/* --- the tick ------------------------------------------------------------- */
 /* The game's engine runs on a 600ms tick, decoupled from the frame rate. This
    pulses at exactly that interval. It is a detail almost nobody will decode,
-   which is the point: the ones who do have learned something true. */
+   which is the point: the ones who do have learned something true.
+ *
+ * M12a: it reads --tick rather than repeating 600ms, and so does every
+ * duration in the motion scale — see the note in tokens.json. This dot used to
+ * be the only place on the site that ran at the engine's interval; it is now
+ * the visible instance of the interval everything else is derived from.
+ *
+ * NOT collapsed under reduced motion by the token, because --tick is a fact
+ * about the game rather than a duration. The @media block below stops it
+ * outright, which is what someone asking for no motion wants from a blinking
+ * dot — the alternative, a 0.01ms interval, is a strobe. */
 .tick {
   display: inline-block;
   width: 0.5em;
   height: 0.5em;
   border-radius: 50%;
   background: var(--good);
-  animation: tick 600ms steps(1, end) infinite;
+  animation: tick var(--tick) steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tick {
+    animation: none;
+  }
 }
 
 @keyframes tick {
