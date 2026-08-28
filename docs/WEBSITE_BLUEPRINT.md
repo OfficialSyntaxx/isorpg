@@ -1551,18 +1551,34 @@ only — no performance work done against these numbers.
 
 Targets: performance ≥ 95, accessibility 100, best practices 100, SEO 100.
 
-Compared against the 2026-08-28 baseline in the task that requested this run
-(mobile `/` 86, `/features/` 87, `/wiki/` 75, `/devlog/` 88; desktop `/` 98,
-`/features/` 98, `/wiki/` 93, `/devlog/` 98): everything is within the
-run-to-run noise band (~3 points) except `/wiki/` mobile, which reads **69**
-against a baseline of 75 — a 6-point drop. That is bigger than noise but does
-not reach the 10-point bar this doc treats as a confirmed regression, and no
-non-performance score moved (accessibility, best practices, SEO are 100
-everywhere, matching baseline including the earlier `/wiki` desktop
-accessibility fix). Recorded here rather than acted on; `/wiki` mobile
-performance was already the known outlier (suspected DOM-size cause, 700+
-lines of rendered markdown tables) and this run doesn't change that diagnosis,
-it just moves the number a bit against it.
+Compared against the previous audit (mobile `/` 86, `/features/` 87, `/wiki/`
+75, `/devlog/` 88; desktop `/` 98, `/features/` 98, `/wiki/` 93, `/devlog/`
+98): every score is within a few points except `/wiki/` mobile, which reads
+**69** against 75 — a 6-point drop. No non-performance score moved;
+accessibility, best practices and SEO are 100 everywhere, which also confirms
+the `/wiki` desktop accessibility fix in `fe37b2f` held.
+
+**That 6 points needed ruling out rather than waving through, because the two
+audits are not comparing identical sites.** The baseline was measured against
+`70472a5` and this run against `fe37b2f`, and the only site code in between was
+the accessibility fix — which changed `DocToc.astro`, the contents component
+that appears on `/wiki`. The one page whose markup changed is the one page whose
+score moved. That coincidence is worth a measurement even when the change looks
+harmless.
+
+It is harmless: the markup delta is one `<nav>` wrapper added and one
+`aria-label` attribute removed, against a built `/wiki` page of **2,234
+elements and 63 KB of HTML**. One element in two thousand cannot move Lighthouse
+six points. The desktop score for the same page went the other way over the same
+change (93 to 94), which is what noise looks like. So the drop is run-to-run
+variance, not a regression — but that is now a conclusion with a number behind
+it rather than an assumption.
+
+Recorded rather than acted on. `/wiki` mobile was already the known outlier and
+this run does not change that: it is one page rendering 700+ lines of markdown
+tables, and DOM size remains the leading suspected cause. Note that no
+regression threshold is defined anywhere in this document; the "within noise"
+judgement here is the author's, made against the evidence above.
 
 Full HTML/JSON reports for all 24 runs (4 routes x 2 form factors x 3 runs)
 are in the `lighthouse-reports` artifact on run
