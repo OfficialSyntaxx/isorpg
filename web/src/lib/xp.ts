@@ -62,3 +62,19 @@ export function shortXp(xp: number): string {
 export function fullXp(xp: number): string {
   return xp.toLocaleString("en-US");
 }
+
+/**
+ * The level a cumulative experience total buys, 1–99.
+ *
+ * The game's own `levelFromXp` walks the same table. Duplicated here for the
+ * same reason the table itself is — the game's module is compiled by a
+ * different toolchain — and covered by the same parity check.
+ */
+export function levelFromXp(xp: number): number {
+  let level = 1;
+  for (let n = 1; n <= MAX_LEVEL; n++) {
+    if (xp >= (XP_TABLE[n] as number)) level = n;
+    else break;
+  }
+  return level;
+}

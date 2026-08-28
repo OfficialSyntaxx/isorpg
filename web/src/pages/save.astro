@@ -1,0 +1,533 @@
+---
+/**
+ * /save — read your own save file, in your browser.
+ *
+ * WHY THIS PAGE IS THE STRONGEST THING ON THE SITE
+ * /legal/privacy claims this site contacts no external host and collects
+ * nothing. Every other page asks you to take that on trust. This one hands you
+ * something personal, tells you it never leaves the machine, and can be checked:
+ * open the network panel, drop a save, and watch nothing happen.
+ *
+ * `scripts/verify-save-privacy.cjs` asserts exactly that — it drives a real
+ * browser, drops a real save, and fails if a single request is made after the
+ * page has loaded. A promise about privacy that nothing verifies is a promise
+ * about intentions.
+ *
+ * WHY IT REFUSES UNKNOWN VERSIONS
+ * The save shape will change. A reader that guesses at a newer file renders
+ * confident nonsense — a level 3 character shown as level 47 is worse than a
+ * clear "this page is older than your save". The version is checked first and
+ * the page says which it expected.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { counts } from "../lib/gamedata";
+import { gamePath } from "../lib/site";
+
+/**
+ * The save format this page understands.
+ *
+ * Kept as a literal rather than imported: the game's `SAVE_VERSION` lives in a
+ * module outside `web/`, compiled by a different toolchain, and
+ * `verify-save-privacy.cjs` asserts these two agree — the same arrangement the
+ * experience table uses.
+ */
+const SUPPORTED = "1.1.0";
+---
+
+<BaseLayout
+  title="Read your save"
+  pathname="/save/"
+  description="Drop an Isoperia save export to see your levels, kills, achievements and town. Parsed entirely in your browser — nothing is uploaded."
+>
+  <section class="head" data-region="hearth">
+    <div class="wrap">
+      <p class="eyebrow">Save reader</p>
+      <h1 data-reveal>See where you got to.</h1>
+      <p class="lede" data-reveal>
+        Export a save from the game, drop it here, and read it back: every skill, your
+        kills, your achievements, your town.
+      </p>
+
+      <div class="callout callout--success" data-reveal>
+        <span class="callout__icon" aria-hidden="true">🔒</span>
+        <span class="callout__title">Your save does not leave this page</span>
+        <div class="callout__body">
+          <p>
+            It is read by your own browser and never sent anywhere. There is no upload, no
+            server and no analytics on this page — and you do not have to believe that:
+            open your browser's network panel, drop a file, and watch it stay empty. A
+            check in this project's build does the same thing and fails if a single
+            request is made.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 data-reveal>Drop it in</h2>
+
+      {
+        /* A label wrapping a file input is the whole control: it is keyboard
+           reachable, it announces properly, and it needs no ARIA. The drop zone
+           is the same element with pointer handlers on top — an enhancement over
+           a control that already works rather than a replacement for one. */
+      }
+      <label class="drop" data-drop>
+        <input
+          class="drop__input"
+          type="file"
+          accept=".json,application/json"
+          data-file
+        />
+        <span class="drop__title">Choose a save file, or drop one here</span>
+        <span class="drop__hint">
+          A <code>.json</code> export from the game's save menu
+        </span>
+      </label>
+
+      <details class="paste">
+        <summary>Or paste the text</summary>
+        <label class="paste__label" for="save-text">Save JSON</label>
+        <textarea
+          class="paste__area"
+          id="save-text"
+          rows="5"
+          spellcheck="false"
+          data-paste></textarea>
+        <button class="btn btn--secondary" type="button" data-read>Read it</button>
+      </details>
+
+      <p class="status" data-status role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="block" data-result hidden>
+    <div class="wrap">
+      <h2>Your character</h2>
+      <dl class="summary" data-summary></dl>
+
+      <h3 class="sub">Skills</h3>
+      <div class="scroll-x">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Skill</th>
+              <th class="num">Level</th>
+              <th class="num">Experience</th>
+              <th class="num">To 99</th>
+            </tr>
+          </thead>
+          <tbody data-skills></tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">Kills</h3>
+      <div class="scroll-x">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Creature</th>
+              <th class="num">Defeated</th>
+            </tr>
+          </thead>
+          <tbody data-kills></tbody>
+        </table>
+      </div>
+      <p class="note" data-nokills hidden>Nothing defeated yet.</p>
+    </div>
+  </section>
+
+  <section class="block" data-region="frostwatch">
+    <div class="wrap">
+      <h2 data-reveal>Where to find the file</h2>
+      <p class="note" data-reveal>
+        The game keeps your progress in your browser and can write it out as a file. Use
+        the export in its save menu, then bring the file here. Nothing on this page can
+        change your save — it only reads.
+      </p>
+      <p class="note">
+        This reader understands save format <code>{SUPPORTED}</code>. If your file is
+        newer it will say so rather than guess: a level shown wrong is worse than a level
+        not shown. {counts.skills} skills are listed either way.
+      </p>
+      <p class="cta-row" data-reveal>
+        <a class="btn btn--lg" href={gamePath} data-exit>Keep playing</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .head {
+    padding-block: var(--space-3xl) var(--space-xl);
+  }
+
+  .lede {
+    font-size: var(--text-lg);
+    color: var(--text-muted);
+    margin-block: var(--space-sm) var(--space-xl);
+  }
+
+  .block {
+    padding-block: var(--space-2xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .note {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-block: var(--space-sm) var(--space-lg);
+  }
+
+  .sub {
+    margin-top: var(--space-2xl);
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-lg);
+  }
+
+  .drop {
+    display: grid;
+    gap: var(--space-2xs);
+    justify-items: center;
+    text-align: center;
+    padding: var(--space-2xl) var(--space-lg);
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-quick) var(--ease-out),
+      background-color var(--dur-quick) var(--ease-out);
+  }
+
+  .drop:hover,
+  .drop:focus-within,
+  .drop[data-over] {
+    border-color: var(--accent);
+    background: var(--surface-sunken);
+  }
+
+  /* Visually hidden, not display:none — a hidden input cannot be focused, and
+     the label above is the only way in for a keyboard. */
+  .drop__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .drop__title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    color: var(--text-strong);
+  }
+
+  .drop__hint {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .paste {
+    margin-top: var(--space-lg);
+  }
+
+  .paste summary {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    min-height: 1.5rem;
+  }
+
+  .paste__label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-block: var(--space-sm) var(--space-2xs);
+  }
+
+  .paste__area {
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-page);
+    color: var(--text-body);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    margin-bottom: var(--space-sm);
+  }
+
+  .status {
+    margin-top: var(--space-lg);
+    font-size: var(--text-sm);
+    color: var(--text-body);
+    max-width: none;
+  }
+
+  .status[data-tone="bad"] {
+    color: var(--danger);
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--space-md);
+    margin: var(--space-lg) 0 0;
+  }
+
+  .summary dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .summary dd {
+    margin: var(--space-2xs) 0 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cta-row {
+    margin-top: var(--space-2xl);
+    max-width: none;
+  }
+</style>
+
+<script>
+  import { XP_TABLE, MAX, levelFromXp, fullXp } from "../lib/xp";
+
+  /*
+   * THERE IS NO NETWORK CALL IN THIS FILE, AND THAT IS THE FEATURE.
+   *
+   * No fetch, no XMLHttpRequest, no sendBeacon, no WebSocket, no dynamic
+   * import. scripts/verify-save-privacy.cjs asserts it twice: once by reading
+   * this source for those names, and once by driving a browser, dropping a real
+   * save, and failing if any request is made after load. The second is the one
+   * that matters — the first can be defeated by cleverness, the second cannot.
+   */
+  const SUPPORTED = "1.1.0";
+
+  const drop = document.querySelector<HTMLElement>("[data-drop]");
+  const fileInput = document.querySelector<HTMLInputElement>("[data-file]");
+  const pasteArea = document.querySelector<HTMLTextAreaElement>("[data-paste]");
+  const readButton = document.querySelector<HTMLButtonElement>("[data-read]");
+  const status = document.querySelector<HTMLElement>("[data-status]");
+  const result = document.querySelector<HTMLElement>("[data-result]");
+  const summary = document.querySelector<HTMLElement>("[data-summary]");
+  const skillsBody = document.querySelector<HTMLElement>("[data-skills]");
+  const killsBody = document.querySelector<HTMLElement>("[data-kills]");
+  const noKills = document.querySelector<HTMLElement>("[data-nokills]");
+
+  const SKILL_LABELS: Record<string, string> = {
+    attack: "Attack",
+    strength: "Strength",
+    defense: "Defence",
+    hitpoints: "Hitpoints",
+    woodcutting: "Woodcutting",
+    mining: "Mining",
+    fishing: "Fishing",
+    cooking: "Cooking",
+    smithing: "Smithing",
+    carpentry: "Carpentry",
+    construction: "Construction",
+    farming: "Farming",
+  };
+
+  function label(id: string): string {
+    return (
+      SKILL_LABELS[id] ?? id.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
+    );
+  }
+
+  function say(text: string, tone: "ok" | "bad" = "ok"): void {
+    if (!status) return;
+    status.textContent = text;
+    status.dataset.tone = tone;
+  }
+
+  function titleCase(id: string): string {
+    return id
+      .split("_")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+
+  function render(save: Record<string, any>): void {
+    const player = (save.player ?? {}) as Record<string, any>;
+    const skills = (player.skills ?? {}) as Record<string, { xp?: number }>;
+    const entries = Object.entries(skills);
+
+    const levels = entries.map(([, s]) => levelFromXp(Number(s?.xp) || 0));
+    const totalLevel = levels.reduce((a, b) => a + b, 0);
+    const totalXp = entries.reduce((a, [, s]) => a + (Number(s?.xp) || 0), 0);
+    const maxed = levels.filter((l) => l >= MAX).length;
+
+    const meta = (player.meta ?? {}) as Record<string, any>;
+    const kills = (meta.kills ?? {}) as Record<string, number>;
+    const killTotal = Object.values(kills).reduce((a, b) => a + (Number(b) || 0), 0);
+    const unlocked = (save.collectionLog?.unlocked ?? []) as string[];
+
+    if (summary) {
+      const cells: [string, string][] = [
+        ["Name", String(player.name ?? "—")],
+        ["Total level", totalLevel.toLocaleString()],
+        ["Total experience", fullXp(totalXp)],
+        ["Skills at 99", `${maxed} of ${entries.length}`],
+        ["Day", String(save.clock?.day ?? "—")],
+        ["Creatures defeated", killTotal.toLocaleString()],
+        ["Achievements", String((meta.achievements ?? []).length)],
+        ["Collection log", `${unlocked.length} items`],
+        ["Buildings", String((save.town?.buildings ?? []).length)],
+      ];
+      summary.replaceChildren(
+        ...cells.flatMap(([k, v]) => {
+          const wrap = document.createElement("div");
+          const dt = document.createElement("dt");
+          dt.textContent = k;
+          const dd = document.createElement("dd");
+          dd.textContent = v;
+          wrap.append(dt, dd);
+          return [wrap];
+        }),
+      );
+    }
+
+    if (skillsBody) {
+      const rows = entries
+        .map(([id, s]) => {
+          const xp = Number(s?.xp) || 0;
+          return { id, xp, level: levelFromXp(xp) };
+        })
+        .sort((a, b) => b.level - a.level || b.xp - a.xp);
+
+      skillsBody.replaceChildren(
+        ...rows.map((r) => {
+          const tr = document.createElement("tr");
+          const remaining = Math.max(0, (XP_TABLE[MAX] as number) - r.xp);
+          for (const [text, numeric] of [
+            [label(r.id), false],
+            [String(r.level), true],
+            [fullXp(r.xp), true],
+            [remaining === 0 ? "done" : fullXp(remaining), true],
+          ] as [string, boolean][]) {
+            const td = document.createElement("td");
+            if (numeric) td.className = "num";
+            td.textContent = text;
+            tr.append(td);
+          }
+          return tr;
+        }),
+      );
+    }
+
+    if (killsBody && noKills) {
+      const rows = Object.entries(kills)
+        .filter(([, n]) => Number(n) > 0)
+        .sort((a, b) => Number(b[1]) - Number(a[1]));
+      noKills.hidden = rows.length > 0;
+      killsBody.replaceChildren(
+        ...rows.map(([id, n]) => {
+          const tr = document.createElement("tr");
+          const a = document.createElement("td");
+          a.textContent = titleCase(id);
+          const b = document.createElement("td");
+          b.className = "num";
+          b.textContent = Number(n).toLocaleString();
+          tr.append(a, b);
+          return tr;
+        }),
+      );
+    }
+
+    if (result) result.hidden = false;
+  }
+
+  function read(text: string): void {
+    let save: Record<string, any>;
+    try {
+      save = JSON.parse(text) as Record<string, any>;
+    } catch {
+      say("That is not a save file — the text is not valid JSON.", "bad");
+      return;
+    }
+
+    if (!save || typeof save !== "object" || !save.player) {
+      say("That JSON does not look like an Isoperia save.", "bad");
+      return;
+    }
+
+    const version = typeof save.version === "string" ? save.version : "unknown";
+    if (version !== SUPPORTED) {
+      // Refused rather than guessed. See the note at the top of this file.
+      say(
+        `This save is format ${version}; this page reads ${SUPPORTED}. Rather than ` +
+          `show you numbers that might be wrong, it is showing you nothing.`,
+        "bad",
+      );
+      if (result) result.hidden = true;
+      return;
+    }
+
+    try {
+      render(save);
+      say("Read. Nothing was uploaded.");
+    } catch {
+      say("The file is a save, but something in it could not be read.", "bad");
+    }
+  }
+
+  function readFile(file: File): void {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => read(String(reader.result ?? "")));
+    reader.addEventListener("error", () => say("That file could not be opened.", "bad"));
+    reader.readAsText(file);
+  }
+
+  fileInput?.addEventListener("change", () => {
+    const file = fileInput.files?.[0];
+    if (file) readFile(file);
+  });
+
+  readButton?.addEventListener("click", () => {
+    const text = pasteArea?.value.trim();
+    if (text) read(text);
+    else say("Paste a save first.", "bad");
+  });
+
+  if (drop) {
+    for (const type of ["dragenter", "dragover"]) {
+      drop.addEventListener(type, (e) => {
+        e.preventDefault();
+        drop.dataset.over = "";
+      });
+    }
+    for (const type of ["dragleave", "drop"]) {
+      drop.addEventListener(type, () => delete drop.dataset.over);
+    }
+    drop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const file = (e as DragEvent).dataTransfer?.files?.[0];
+      if (file) readFile(file);
+    });
+  }
+</script>

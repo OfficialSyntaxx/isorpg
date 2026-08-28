@@ -167,6 +167,13 @@ jobs:
       - name: Verify the motion layer moves
         run: node ../scripts/verify-motion.cjs
 
+      # /save asks a visitor to hand over a personal file and promises it never
+      # leaves their machine. This drives a browser, feeds it a real save, and
+      # fails if anything crosses the origin, carries a body, or is not a static
+      # asset. A privacy promise nothing verifies is a promise about intentions.
+      - name: Verify /save never sends a save anywhere
+        run: node ../scripts/verify-save-privacy.cjs
+
       - name: Fail if the landing _headers went missing
         run: |
           # compose-site.cjs merges this into the root _headers. If Astro stops
