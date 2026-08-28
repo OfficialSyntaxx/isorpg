@@ -154,6 +154,8 @@ function runOnce(url, formFactor, slug, index) {
       cat && typeof cat.score === "number" ? Math.round(cat.score * 100) : null;
   }
   scores.__runtimeError = report.runtimeError ? report.runtimeError.code : null;
+  // Kept so the median run can be re-opened for its diagnostics below.
+  scores.__reportPath = jsonPath;
   console.log(
     `      run ${index + 1}: perf ${scores.performance} · a11y ${scores.accessibility} · ` +
       `bp ${scores["best-practices"]} · seo ${scores.seo}`,
@@ -235,6 +237,99 @@ lines.push(
 );
 lines.push("");
 lines.push("Full HTML reports are attached to this run as an artifact.");
+
+/**
+ * For every row under target, say WHY.
+ *
+ * Without this the workflow reports a number and nothing else, and the only
+ * route to the reasons is the HTML artifact — which cannot be downloaded from
+ * every environment that might need to read it. A gate that says "87" and stops
+ * is a gate somebody guesses against. These are the same audits the HTML report
+ * shows, pulled out of the JSON of the median run, so the diagnosis travels with
+ * the score.
+ */
+const METRICS = [
+  "first-contentful-paint",
+  "largest-contentful-paint",
+  "total-blocking-time",
+  "cumulative-layout-shift",
+  "speed-index",
+];
+
+const diagnosed = rows.filter(
+  (r) =>
+    !r.failed &&
+    r.__reportPath &&
+    Object.entries(TARGETS).some(
+      ([k, t]) => typeof r[k] === "number" && r[k] < t,
+    ),
+);
+
+if (diagnosed.length > 0) {
+  lines.push("");
+  lines.push("### Why the rows below target are below target");
+  for (const r of diagnosed) {
+    let report;
+    try {
+      report = JSON.parse(fs.readFileSync(r.__reportPath, "utf8"));
+    } catch {
+      continue;
+    }
+    const audits = report.audits || {};
+
+    lines.push("");
+    lines.push(`**\`${r.route}\` · ${r.formFactor}**`);
+    lines.push("");
+    const metricBits = METRICS.filter((m) => audits[m]).map(
+      (m) => `${audits[m].title}: ${audits[m].displayValue || "—"}`,
+    );
+    lines.push(metricBits.join(" · "));
+    lines.push("");
+
+    // Everything the performance category scored down, worst first, with the
+    // saving Lighthouse estimates where it estimates one.
+    const perfRefs = (
+      (report.categories.performance || {}).auditRefs || []
+    ).map((a) => a.id);
+    const failing = perfRefs
+      .map((id) => audits[id])
+      .filter(
+        (a) =>
+          a &&
+          typeof a.score === "number" &&
+          a.score < 0.9 &&
+          !METRICS.includes(a.id),
+      )
+      .map((a) => ({
+        title: a.title,
+        score: a.score,
+        detail: a.displayValue || "",
+        saving:
+          (a.details && typeof a.details.overallSavingsMs === "number"
+            ? a.details.overallSavingsMs
+            : 0) ||
+          (a.metricSavings
+            ? Math.max(
+                ...Object.values(a.metricSavings)
+                  .map(Number)
+                  .filter(Number.isFinite),
+                0,
+              )
+            : 0),
+      }))
+      .sort((x, y) => y.saving - x.saving || x.score - y.score);
+
+    if (failing.length === 0) {
+      lines.push("_No performance audit scored below 0.9._");
+      continue;
+    }
+    lines.push("| Audit | Score | Detail |");
+    lines.push("|---|---|---|");
+    for (const a of failing.slice(0, 12)) {
+      lines.push(`| ${a.title} | ${a.score.toFixed(2)} | ${a.detail} |`);
+    }
+  }
+}
 
 const summary = lines.join("\n");
 console.log("\n" + summary + "\n");
