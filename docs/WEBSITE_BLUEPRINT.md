@@ -1529,6 +1529,47 @@ file now also asserts that the terrain layer is never repainted by the loop, and
 that steady-state long-task time under 4× throttling stays within 600ms per
 3000ms.
 
+### Lighthouse audit, reporting run (2026-08-28) ✅
+
+Dispatched `.github/workflows/lighthouse.yml` against production
+(`https://inspiring-tarsier-8973d6.netlify.app`, commit `fe37b2f`) with
+`enforce=false`, both form factors, 3 runs/route, all four routes. Reporting
+only — no performance work done against these numbers.
+
+`https://inspiring-tarsier-8973d6.netlify.app` · median of 3 runs per row
+
+| Route | Device | Performance | Accessibility | Best practices | SEO |
+|---|---|---|---|---|---|
+| `/` | mobile | 87 ❌ | 100 ✅ | 100 ✅ | 100 ✅ |
+| `/` | desktop | 98 ✅ | 100 ✅ | 100 ✅ | 100 ✅ |
+| `/features/` | mobile | 87 ❌ | 100 ✅ | 100 ✅ | 100 ✅ |
+| `/features/` | desktop | 99 ✅ | 100 ✅ | 100 ✅ | 100 ✅ |
+| `/wiki/` | mobile | 69 ❌ | 100 ✅ | 100 ✅ | 100 ✅ |
+| `/wiki/` | desktop | 94 ❌ | 100 ✅ | 100 ✅ | 100 ✅ |
+| `/devlog/` | mobile | 87 ❌ | 100 ✅ | 100 ✅ | 100 ✅ |
+| `/devlog/` | desktop | 99 ✅ | 100 ✅ | 100 ✅ | 100 ✅ |
+
+Targets: performance ≥ 95, accessibility 100, best practices 100, SEO 100.
+
+Compared against the 2026-08-28 baseline in the task that requested this run
+(mobile `/` 86, `/features/` 87, `/wiki/` 75, `/devlog/` 88; desktop `/` 98,
+`/features/` 98, `/wiki/` 93, `/devlog/` 98): everything is within the
+run-to-run noise band (~3 points) except `/wiki/` mobile, which reads **69**
+against a baseline of 75 — a 6-point drop. That is bigger than noise but does
+not reach the 10-point bar this doc treats as a confirmed regression, and no
+non-performance score moved (accessibility, best practices, SEO are 100
+everywhere, matching baseline including the earlier `/wiki` desktop
+accessibility fix). Recorded here rather than acted on; `/wiki` mobile
+performance was already the known outlier (suspected DOM-size cause, 700+
+lines of rendered markdown tables) and this run doesn't change that diagnosis,
+it just moves the number a bit against it.
+
+Full HTML/JSON reports for all 24 runs (4 routes x 2 form factors x 3 runs)
+are in the `lighthouse-reports` artifact on run
+[33137001186](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33137001186).
+No code changed as part of this entry — reporting only, per instruction.
+
+
 ### Phase 9 — Custom domain ⏸️
 
 **Deferred at the owner's request, 2026-08-27: no domain has been purchased, so
