@@ -66,7 +66,12 @@ const skills = load<{
   RESOURCES: Record<string, ResourceNode>;
 }>("skills");
 
-const items = load<{ ITEMS: Record<string, unknown> }>("items");
+interface Item {
+  /** Experience per gathered unit, keyed by skill. The game falls back to 5. */
+  xp?: Record<string, number>;
+}
+
+const items = load<{ ITEMS: Record<string, Item> }>("items");
 interface Monster {
   name: string;
   level: number;
@@ -221,4 +226,240 @@ export function monster(id: string): MonsterFacts {
     );
   }
   return { name: m.name, level: m.level, hp: m.hp, maxHit: m.maxHit };
+}
+
+/* ---------------------------------------------------------------------------
+ * Training actions, for /calculator.
+ *
+ * WHERE THE NUMBERS COME FROM, AND WHAT THEY DELIBERATELY LEAVE OUT
+ *
+ * Gathering XP is not on the node. It is on the ITEM the node drops —
+ * `ITEMS[id].xp[skill]` — with a fallback of 5 for anything that does not
+ * declare one, which is exactly what the game's own gathering system reads. A
+ * node with several drops is averaged by drop weight, because that is what a
+ * long session actually pays.
+ *
+ * Crafting is simpler: the recipe carries its own `xp` and `ticks`.
+ *
+ * TWO GAME MECHANICS ARE EXCLUDED, ON PURPOSE:
+ *   - per-item mastery, which grants double drops (and so double XP) at a
+ *     chance that rises with use;
+ *   - the sub-level-16 bonus, worth up to +50% and tapering to nothing by 16.
+ *
+ * Both make real training FASTER than these figures. That makes every number
+ * the calculator prints a conservative bound rather than an optimistic one,
+ * which is the right direction for a page a player will plan an evening
+ * around — and the page says so rather than leaving it implied.
+ */
+export interface TrainingAction {
+  id: string;
+  label: string;
+  skill: string;
+  skillId: string;
+  levelReq: number;
+  /** Engine ticks per completed action. One tick is 600ms. */
+  ticks: number;
+  /** Base experience per action, before mastery and the early-level bonus. */
+  xp: number;
+  kind: "gather" | "craft";
+}
+
+interface RawNode extends ResourceNode {
+  drops?: { itemId: string; weight: number }[];
+  nodeType?: string;
+}
+
+interface Recipe {
+  id: string;
+  name: string;
+  skill: string;
+  levelReq: number;
+  ticks: number;
+  xp: number;
+}
+
+/** The default the gathering system uses for an item with no declared XP. */
+const FALLBACK_GATHER_XP = 5;
+
+export function trainingActions(): TrainingAction[] {
+  const nodes = skills.RESOURCES as Record<string, RawNode>;
+  const gather: TrainingAction[] = Object.entries(nodes).map(([id, n]) => {
+    const drops = n.drops ?? [];
+    const total = drops.reduce((sum, d) => sum + (d.weight || 0), 0);
+    const xp =
+      total > 0
+        ? drops.reduce(
+            (sum, d) =>
+              sum +
+              ((items.ITEMS[d.itemId]?.xp?.[n.skill] ?? FALLBACK_GATHER_XP) * d.weight) /
+                total,
+            0,
+          )
+        : FALLBACK_GATHER_XP;
+    return {
+      id,
+      label: nodeLabel(id),
+      skill: skillName(n.skill),
+      skillId: n.skill,
+      levelReq: n.levelReq,
+      ticks: n.ticksPerAction,
+      xp: Math.round(xp * 100) / 100,
+      kind: "gather" as const,
+    };
+  });
+
+  const recipeMap = load<{ RECIPES: Record<string, Recipe> }>("recipes").RECIPES;
+  const craft: TrainingAction[] = Object.values(recipeMap).map((r) => ({
+    id: r.id,
+    label: r.name,
+    skill: skillName(r.skill),
+    skillId: r.skill,
+    levelReq: r.levelReq,
+    ticks: r.ticks,
+    xp: r.xp,
+    kind: "craft" as const,
+  }));
+
+  return [...gather, ...craft].sort((a, b) =>
+    a.skill === b.skill
+      ? a.levelReq - b.levelReq || (a.label < b.label ? -1 : 1)
+      : a.skill < b.skill
+        ? -1
+        : 1,
+  );
+}
+
+/** The engine's tick, in milliseconds. The site's motion scale derives from it. */
+export const TICK_MS = 600;
+
+/* ---------------------------------------------------------------------------
+ * The bestiary, for /bestiary.
+ *
+ * Drop tables are stored as WEIGHTS, which is the right shape for the engine
+ * to roll against and the wrong shape for a person to read: "weight 140" tells
+ * you nothing until you know the total. Weights are converted to real
+ * probabilities here, once, at build time.
+ *
+ * `tertiary` and `petTable` entries already carry an explicit `chance`, so they
+ * pass through untouched — mixing the two would silently rescale them.
+ */
+export interface Drop {
+  itemId: string;
+  label: string;
+  /** 0–1. From the weight share for main drops, verbatim for the rest. */
+  chance: number;
+  min: number;
+  max: number;
+  table: "main" | "tertiary" | "pet";
+}
+
+export interface Beast {
+  id: string;
+  name: string;
+  level: number;
+  hp: number;
+  maxHit: number;
+  /** Ticks between the monster's attacks. */
+  attackTick: number;
+  aggroRange: number;
+  ranged: boolean;
+  boss: boolean;
+  respawnSeconds: number;
+  /** Experience per kill, summed across the skills it trains. */
+  xpTotal: number;
+  xp: { skill: string; amount: number }[];
+  drops: Drop[];
+}
+
+interface RawDrop {
+  itemId: string;
+  weight?: number;
+  chance?: number;
+  min?: number;
+  max?: number;
+}
+
+interface RawMonster {
+  id: string;
+  name: string;
+  level: number;
+  hp: number;
+  maxHit: number;
+  attackTick: number;
+  aggroRange: number;
+  ranged?: boolean;
+  boss?: boolean;
+  respawnMs: number;
+  xp: Record<string, number>;
+  main?: RawDrop[];
+  tertiary?: RawDrop[];
+  petTable?: RawDrop[];
+}
+
+const itemNames = load<{ ITEMS: Record<string, { name?: string }> }>("items").ITEMS;
+
+/** "raw_rat_meat" -> "Raw Rat Meat", for anything the item table does not name. */
+function itemLabel(id: string): string {
+  const named = itemNames[id]?.name;
+  if (named) return named;
+  return id
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+export function bestiary(): Beast[] {
+  const raw = combat.MONSTERS as unknown as Record<string, RawMonster>;
+  return Object.values(raw)
+    .map((m) => {
+      const main = m.main ?? [];
+      const total = main.reduce((sum, d) => sum + (d.weight ?? 0), 0);
+      const drops: Drop[] = [
+        ...main.map((d) => ({
+          itemId: d.itemId,
+          label: itemLabel(d.itemId),
+          chance: total > 0 ? (d.weight ?? 0) / total : 0,
+          min: d.min ?? 1,
+          max: d.max ?? 1,
+          table: "main" as const,
+        })),
+        ...(m.tertiary ?? []).map((d) => ({
+          itemId: d.itemId,
+          label: itemLabel(d.itemId),
+          chance: d.chance ?? 0,
+          min: d.min ?? 1,
+          max: d.max ?? 1,
+          table: "tertiary" as const,
+        })),
+        ...(m.petTable ?? []).map((d) => ({
+          itemId: d.itemId,
+          label: itemLabel(d.itemId),
+          chance: d.chance ?? 0,
+          min: 1,
+          max: 1,
+          table: "pet" as const,
+        })),
+      ].sort((a, b) => b.chance - a.chance);
+
+      const xp = Object.entries(m.xp ?? {})
+        .map(([skill, amount]) => ({ skill: skillName(skill), amount }))
+        .sort((a, b) => b.amount - a.amount);
+
+      return {
+        id: m.id,
+        name: m.name,
+        level: m.level,
+        hp: m.hp,
+        maxHit: m.maxHit,
+        attackTick: m.attackTick,
+        aggroRange: m.aggroRange,
+        ranged: Boolean(m.ranged),
+        boss: Boolean(m.boss),
+        respawnSeconds: Math.round(m.respawnMs / 1000),
+        xpTotal: xp.reduce((s, x) => s + x.amount, 0),
+        xp,
+        drops,
+      };
+    })
+    .sort((a, b) => a.level - b.level || (a.name < b.name ? -1 : 1));
 }

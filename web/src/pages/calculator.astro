@@ -1,0 +1,385 @@
+---
+/**
+ * /calculator — how long is 99?
+ *
+ * WHY THIS PAGE EXISTS
+ * Everything else on this site tells a visitor what Isoperia is. This is the
+ * first page that is useful to someone already playing it, and it answers the
+ * question a skill game actually generates: *how many, and how long?*
+ *
+ * WHY IT CAN BE TRUSTED
+ * Nothing here is written by hand. The experience table is
+ * `web/src/lib/xp.ts`, which `verify-xp-parity.cjs` asserts equal to the
+ * game's, element for element, in CI. Every action's experience and tick cost
+ * is read out of the content export at build time. The tick is the same 600ms
+ * the whole site's motion scale derives from.
+ *
+ * WHY IT WORKS WITH NO JAVASCRIPT
+ * The table below ships complete and correct for a character starting at level
+ * 1: every action, its experience, its cost in actions and in real time to
+ * reach 99. That is a genuinely useful page on its own, and it is what a search
+ * engine indexes. The script only re-does the arithmetic against a level you
+ * type in — an upgrade to a finished page, not the thing that makes it work.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { XP_TABLE, MAX } from "../lib/xp";
+import { trainingActions, TICK_MS, counts } from "../lib/gamedata";
+import { gamePath } from "../lib/site";
+
+const actions = trainingActions();
+
+/** Actions needed to cross from one cumulative experience total to another. */
+function actionsFor(xpEach: number, fromXp: number, toXp: number): number {
+  return Math.max(0, Math.ceil((toXp - fromXp) / xpEach));
+}
+
+/** Ticks → a duration a person can picture. */
+function human(ms: number): string {
+  const h = ms / 3_600_000;
+  if (h < 1) return `${Math.round(ms / 60_000)} min`;
+  if (h < 48) return `${h < 10 ? h.toFixed(1) : Math.round(h)} h`;
+  return `${Math.round(h / 24)} days`;
+}
+
+const target = XP_TABLE[MAX] as number;
+
+const rows = actions.map((a) => {
+  const need = actionsFor(a.xp, 0, target);
+  return {
+    ...a,
+    need,
+    ms: need * a.ticks * TICK_MS,
+  };
+});
+
+/** Grouped for the table, in the same order the skills page uses. */
+const bySkill = [...new Set(rows.map((r) => r.skill))].map((skill) => ({
+  skill,
+  rows: rows.filter((r) => r.skill === skill),
+}));
+
+const fastest = [...rows].sort((a, b) => a.ms - b.ms)[0];
+---
+
+<BaseLayout
+  title="Experience calculator"
+  pathname="/calculator/"
+  description="How many actions and how many hours to any level in Isoperia, using the game's own experience table and tick rate."
+>
+  <section class="head" data-region="frostwatch">
+    <div class="wrap">
+      <p class="eyebrow">Planner</p>
+      <h1 data-reveal>How long is 99?</h1>
+      <p class="lede" data-reveal>
+        Every number on this page is read from the game's own data when the page is built
+        — the same experience table the engine uses, the same tick, the same costs. Set
+        your level and it re-does the arithmetic for you.
+      </p>
+
+      <div class="controls" data-reveal>
+        <p class="controls__note">
+          Enter where you are. With JavaScript off, the table shows the cost from level 1,
+          which is the same calculation.
+        </p>
+        <div class="controls__row">
+          <label class="field">
+            <span class="field__label">Current level</span>
+            <input
+              class="field__input"
+              type="number"
+              min="1"
+              max="99"
+              value="1"
+              inputmode="numeric"
+              data-from
+            />
+          </label>
+          <label class="field">
+            <span class="field__label">Target level</span>
+            <input
+              class="field__input"
+              type="number"
+              min="2"
+              max="99"
+              value="99"
+              inputmode="numeric"
+              data-to
+            />
+          </label>
+          <p class="controls__gap" data-gap aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" data-region="wildwood">
+    <div class="wrap">
+      <h2 data-reveal>The curve, in one sentence</h2>
+      <p class="note" data-reveal>
+        Reaching 99 in a single skill costs <strong>{target.toLocaleString()}</strong>
+        experience, and <strong>half of it sits above level 92</strong>. That is why the
+        last seven levels of anything take longer than the first ninety-two, and why
+        {
+          fastest && (
+            <>
+              the quickest route on this page — {fastest.label} — is still{" "}
+              {human(fastest.ms)}
+              of doing one thing.
+            </>
+          )
+        }
+      </p>
+    </div>
+  </section>
+
+  {
+    bySkill.map((group) => (
+      <section class="block">
+        <div class="wrap">
+          <h2 data-reveal>{group.skill}</h2>
+          <div class="scroll-x" data-reveal>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th class="num">Level</th>
+                  <th class="num">XP each</th>
+                  <th class="num">Seconds each</th>
+                  <th class="num">Actions</th>
+                  <th class="num">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {group.rows.map((r) => (
+                  <tr data-row data-xp={r.xp} data-ticks={r.ticks} data-req={r.levelReq}>
+                    <td>{r.label}</td>
+                    <td class="num">{r.levelReq}</td>
+                    <td class="num">{r.xp}</td>
+                    <td class="num">{((r.ticks * TICK_MS) / 1000).toFixed(1)}</td>
+                    <td class="num" data-need>
+                      {r.need.toLocaleString()}
+                    </td>
+                    <td class="num" data-time>
+                      {human(r.ms)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    ))
+  }
+
+  <section class="block" data-region="cinder">
+    <div class="wrap">
+      <h2 data-reveal>What these numbers leave out</h2>
+      <div class="callout" data-reveal>
+        <span class="callout__icon" aria-hidden="true">⏱️</span>
+        <span class="callout__title">Every figure here is a ceiling, not an estimate</span
+        >
+        <div class="callout__body">
+          <p>
+            Two systems make real training faster than this. <strong
+              >Per-item mastery</strong
+            >
+            grants double drops — and so double experience — at a chance that rises the more
+            you do something. And below level 16 there is a bonus worth up to half again, tapering
+            to nothing by 16. Neither is modelled above, because both depend on how you have
+            played rather than on the data.
+          </p>
+          <p>
+            Banking, walking and node respawn are not counted either. The time column is
+            the cost of the actions themselves at {(TICK_MS / 1000).toFixed(1)}s per tick,
+            which is the floor a perfect session would approach.
+          </p>
+        </div>
+      </div>
+
+      <p class="note note--after">
+        {counts.skills} skills run on this same curve. Nothing here is tuned per skill — the
+        difference between them is entirely in what an action costs and pays.
+      </p>
+
+      <p class="cta-row" data-reveal>
+        <a class="btn btn--lg" href={gamePath} data-exit>Start the grind</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .head {
+    padding-block: var(--space-3xl) var(--space-xl);
+  }
+
+  .lede {
+    font-size: var(--text-lg);
+    color: var(--text-muted);
+    margin-top: var(--space-sm);
+  }
+
+  .block {
+    padding-block: var(--space-2xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .note {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-block: var(--space-sm) var(--space-lg);
+  }
+
+  .note--after {
+    margin-top: var(--space-lg);
+    margin-bottom: 0;
+  }
+
+  .controls {
+    margin-top: var(--space-xl);
+    padding: var(--space-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+  }
+
+  .controls__note {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    margin-bottom: var(--space-md);
+    max-width: 52ch;
+  }
+
+  .controls__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-lg);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .field__label {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .field__input {
+    width: 7rem;
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-page);
+    color: var(--text-strong);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    /* 24x24 is the WCAG 2.5.8 floor for a target, and a number input's spinner
+       is part of the control. */
+    min-height: 2.5rem;
+  }
+
+  .controls__gap {
+    color: var(--text-body);
+    font-size: var(--text-sm);
+    max-width: none;
+    margin: 0;
+    align-self: center;
+  }
+
+  .cta-row {
+    margin-top: var(--space-2xl);
+    max-width: none;
+  }
+</style>
+
+<script>
+  import { XP_TABLE } from "../lib/xp";
+
+  /*
+   * The only thing this script does is re-run arithmetic the page already did
+   * once at build time. Everything it touches has a correct value in the markup
+   * before it runs, so a failure here leaves a complete, accurate table for
+   * level 1 rather than an empty one.
+   */
+  const from = document.querySelector<HTMLInputElement>("[data-from]");
+  const to = document.querySelector<HTMLInputElement>("[data-to]");
+  const gap = document.querySelector<HTMLElement>("[data-gap]");
+  const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-row]"));
+
+  const TICK_MS = 600;
+
+  function human(ms: number): string {
+    const h = ms / 3_600_000;
+    if (h < 1) return `${Math.round(ms / 60_000)} min`;
+    if (h < 48) return `${h < 10 ? h.toFixed(1) : Math.round(h)} h`;
+    return `${Math.round(h / 24)} days`;
+  }
+
+  function clampLevel(value: string, fallback: number): number {
+    const n = Math.floor(Number(value));
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(99, Math.max(1, n));
+  }
+
+  function recompute(): void {
+    if (!from || !to) return;
+    const a = clampLevel(from.value, 1);
+    const b = clampLevel(to.value, 99);
+    const fromXp = XP_TABLE[a] ?? 0;
+    const toXp = XP_TABLE[b] ?? 0;
+    const need = Math.max(0, toXp - fromXp);
+
+    if (gap) {
+      gap.textContent =
+        b <= a
+          ? `Level ${b} is not above level ${a}.`
+          : `${need.toLocaleString()} experience from ${a} to ${b}.`;
+    }
+
+    for (const row of rows) {
+      const xp = Number(row.dataset.xp);
+      const ticks = Number(row.dataset.ticks);
+      const req = Number(row.dataset.req);
+      const needCell = row.querySelector<HTMLElement>("[data-need]");
+      const timeCell = row.querySelector<HTMLElement>("[data-time]");
+      if (!needCell || !timeCell || !xp) continue;
+
+      // An action you cannot use yet is not a plan. Saying so is more useful
+      // than printing a number that assumes a level the reader does not have.
+      if (req > a) {
+        needCell.textContent = "—";
+        timeCell.textContent = `needs ${req}`;
+        row.dataset.locked = "";
+        continue;
+      }
+      delete row.dataset.locked;
+
+      const count = need === 0 ? 0 : Math.ceil(need / xp);
+      needCell.textContent = count.toLocaleString();
+      timeCell.textContent = count === 0 ? "—" : human(count * ticks * TICK_MS);
+    }
+  }
+
+  if (from && to) {
+    from.addEventListener("input", recompute);
+    to.addEventListener("input", recompute);
+    recompute();
+  }
+</script>

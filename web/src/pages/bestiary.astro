@@ -1,0 +1,340 @@
+---
+/**
+ * /bestiary — everything that fights back.
+ *
+ * The region panels on /world show four creatures because four have portraits.
+ * This is the whole roster, and the difference matters: a player deciding
+ * whether to walk east wants the numbers for the thing they will meet there,
+ * not a curated four.
+ *
+ * PORTRAITS ARE NOT INVENTED FOR THE OTHER EIGHT
+ * Four monsters have a render registered in the media manifest. The rest get a
+ * data card and no image. `phase1_creature_silhouettes.png` exists and would
+ * fill the space, and using it would be the editor-screenshot mistake in a new
+ * costume: a picture that is not of the thing it is captioned as. An empty
+ * space that says nothing false is better than a filled one that does.
+ *
+ * DROP CHANCES ARE REAL PROBABILITIES
+ * The export stores main-table drops as weights, which are correct for the
+ * engine and useless to a reader — "weight 140" means nothing without the
+ * total. gamedata.ts converts them once, at build time. Tertiary and pet rolls
+ * already carry explicit chances and pass through untouched, because rescaling
+ * those against the main table would quietly make them wrong.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import MediaFigure from "../components/MediaFigure.astro";
+import { bestiary, TICK_MS, counts } from "../lib/gamedata";
+import type { MediaId } from "../lib/media";
+import { gamePath } from "../lib/site";
+
+const beasts = bestiary();
+
+/** The four that have a registered render. Everything else shows no image. */
+const PORTRAITS: Record<string, MediaId> = {
+  dire_wolf: "dire-wolf",
+  frost_imp: "frost-imp",
+  bog_husk: "bog-husk",
+  cave_slasher: "cave-slasher",
+};
+
+const pct = (n: number): string => {
+  if (n >= 0.1) return `${Math.round(n * 100)}%`;
+  if (n >= 0.01) return `${(n * 100).toFixed(1)}%`;
+  if (n <= 0) return "—";
+  return `1 in ${Math.round(1 / n).toLocaleString()}`;
+};
+
+const TABLE_LABEL = {
+  main: "Drop",
+  tertiary: "Rare",
+  pet: "Pet",
+} as const;
+
+const withPortraits = Object.keys(PORTRAITS).length;
+---
+
+<BaseLayout
+  title="Bestiary"
+  pathname="/bestiary/"
+  description="Every creature in Isoperia with its level, hitpoints, max hit, experience and full drop table — read from the game's own combat data."
+>
+  <section class="head" data-region="cinder">
+    <div class="wrap">
+      <p class="eyebrow">Bestiary</p>
+      <h1 data-reveal>Everything that fights back.</h1>
+      <p class="lede" data-reveal>
+        All {beasts.length} creatures, with the numbers the engine actually rolls: what they
+        hit for, what they are worth, and what they drop. Read from the combat data when this
+        page is built, so it cannot drift from the build you'd play.
+      </p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <ul class="beasts">
+        {
+          beasts.map((b) => (
+            <li class="beast" data-reveal id={b.id}>
+              <div class="beast__head">
+                {PORTRAITS[b.id] ? (
+                  <MediaFigure
+                    id={PORTRAITS[b.id] as MediaId}
+                    class="beast__plate"
+                    compact
+                    widths={[160, 320]}
+                    sizes="140px"
+                  />
+                ) : (
+                  <div class="beast__noplate">
+                    <span class="beast__initial" aria-hidden="true">
+                      {b.name.charAt(0)}
+                    </span>
+                    <span class="visually-hidden">No portrait for {b.name} yet.</span>
+                  </div>
+                )}
+
+                <div class="beast__id">
+                  <h2 class="beast__name">
+                    {b.name}
+                    {b.boss && <span class="tag beast__boss">Boss</span>}
+                  </h2>
+                  <dl class="stats">
+                    <div>
+                      <dt>Level</dt>
+                      <dd>{b.level}</dd>
+                    </div>
+                    <div>
+                      <dt>Hitpoints</dt>
+                      <dd>{b.hp}</dd>
+                    </div>
+                    <div>
+                      <dt>Max hit</dt>
+                      <dd>{b.maxHit}</dd>
+                    </div>
+                    <div>
+                      <dt>Attacks every</dt>
+                      <dd>{((b.attackTick * TICK_MS) / 1000).toFixed(1)}s</dd>
+                    </div>
+                    <div>
+                      <dt>Experience</dt>
+                      <dd>{b.xpTotal}</dd>
+                    </div>
+                    <div>
+                      <dt>Respawn</dt>
+                      <dd>{b.respawnSeconds}s</dd>
+                    </div>
+                  </dl>
+                  <p class="beast__note">
+                    Notices you from {b.aggroRange} tiles
+                    {b.ranged ? " and attacks at range" : ""}. Trains{" "}
+                    {b.xp.map((x) => `${x.skill} ${x.amount}`).join(", ")}.
+                  </p>
+                </div>
+              </div>
+
+              <div class="scroll-x">
+                <table class="table beast__drops">
+                  <caption class="visually-hidden">Drop table for {b.name}</caption>
+                  <thead>
+                    <tr>
+                      <th>Drops</th>
+                      <th class="num">Quantity</th>
+                      <th class="num">Chance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {b.drops.map((d) => (
+                      <tr>
+                        <td>
+                          {d.label}
+                          {d.table !== "main" && (
+                            <span class="tag beast__kind">{TABLE_LABEL[d.table]}</span>
+                          )}
+                        </td>
+                        <td class="num">
+                          {d.min === d.max ? d.min : `${d.min}–${d.max}`}
+                        </td>
+                        <td class="num">{pct(d.chance)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="block" data-region="miregate">
+    <div class="wrap">
+      <h2 data-reveal>How to read this</h2>
+      <p class="note" data-reveal>
+        <strong>Chance</strong> on the main table is that item's share of one roll, so the column
+        sums to 100% — every kill drops something from it. <strong>Rare</strong> and
+        <strong>Pet</strong> rows are separate rolls with their own odds and do not compete
+        with the main table or with each other.
+      </p>
+      <p class="note">
+        {withPortraits} of these {beasts.length} have a model render to show. The rest are listed
+        without one rather than borrowed from a silhouette sheet — a picture that is not of
+        the creature it sits beside is worse than no picture. Of {counts.monsters} monsters
+        in the game data, every one is here.
+      </p>
+      <p class="cta-row" data-reveal>
+        <a class="btn btn--lg" href={gamePath} data-exit>Go and meet them</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+  }
+
+  .head {
+    padding-block: var(--space-3xl) var(--space-xl);
+  }
+
+  .lede {
+    font-size: var(--text-lg);
+    color: var(--text-muted);
+    margin-top: var(--space-sm);
+  }
+
+  .block {
+    padding-block: var(--space-2xl);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .note {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-block: var(--space-sm) var(--space-lg);
+  }
+
+  .beasts {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  }
+
+  .beast {
+    padding: var(--space-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+  }
+
+  .beast__head {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+    margin-bottom: var(--space-md);
+  }
+
+  /* The same deliberately light plate the region panels use: these renders are
+     single figures on a pale studio backdrop, and inheriting the surface would
+     put a bright square inside a dark card. */
+  .beast__plate {
+    flex: 0 0 auto;
+    width: 7rem;
+    background: #eceef1;
+    border-radius: var(--radius-md);
+  }
+
+  .beast__plate :global(img) {
+    border-color: transparent;
+  }
+
+  /* No portrait, and it does not pretend otherwise. A plain monogram plate the
+     same size as a real one, so the grid stays even without implying there is
+     a picture missing from this particular card. */
+  .beast__noplate {
+    flex: 0 0 auto;
+    width: 7rem;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-sunken);
+  }
+
+  .beast__initial {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    color: var(--text-muted);
+    opacity: 0.55;
+  }
+
+  .beast__id {
+    min-width: 0;
+  }
+
+  .beast__name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-xs);
+  }
+
+  .beast__boss {
+    color: var(--district-cinder);
+    border-color: currentColor;
+  }
+
+  .beast__kind {
+    margin-left: var(--space-xs);
+    font-size: var(--text-2xs);
+    padding: 0 var(--space-2xs);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    gap: var(--space-2xs) var(--space-sm);
+    margin: 0 0 var(--space-sm);
+  }
+
+  .stats dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .stats dd {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .beast__note {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    max-width: none;
+  }
+
+  .beast__drops {
+    font-size: var(--text-sm);
+  }
+
+  .cta-row {
+    margin-top: var(--space-2xl);
+    max-width: none;
+  }
+</style>

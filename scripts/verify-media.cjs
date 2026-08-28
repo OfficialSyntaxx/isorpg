@@ -61,6 +61,17 @@ const ok = (name, cond, detail = "") => {
   }
 };
 
+/**
+ * Removes block and line comments, which also covers the braced block form
+ * Astro uses inside templates. Deliberately crude: it exists only to stop prose
+ * being read as code, so a false strip inside a string literal costs nothing.
+ */
+function stripComments(text) {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+}
+
 /** Every file under web/src, so a new page cannot opt out by being new. */
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -88,7 +99,15 @@ const files = walk(SRC);
   const offenders = [];
   for (const f of files) {
     if (f === MANIFEST) continue;
-    const text = fs.readFileSync(f, "utf8");
+    // Comments are stripped first.
+    //
+    // This rule is about what a page LOADS, and a filename inside a comment
+    // loads nothing. /bestiary documents why it does not use
+    // phase1_creature_silhouettes.png, and the first version of this check read
+    // that sentence as a violation — which would have forced the page to stop
+    // explaining itself in order to pass. An import cannot hide inside a
+    // comment, so nothing is lost by ignoring them.
+    const text = stripComments(fs.readFileSync(f, "utf8"));
     // Import specifiers and bare string paths alike — a page that reaches for
     // an image file at all is the thing being prevented, however it spells it.
     const re = /["'`]([^"'`\n]*\.(?:png|jpe?g|webp|avif|gif))["'`]/gi;
