@@ -563,6 +563,162 @@ const url = (r) => `http://localhost:${PORT}${r}`;
     await page.close();
   }
 
+  // ------------------------------------- A2 and A3, the hero's world and hour
+  //
+  // A2: the terrain generator is seeded per visitor and reproducible from the
+  // URL. Two assertions are needed because they can fail independently — a
+  // generator that ignores its seed reproduces nothing, and a generator that
+  // ignores the URL gives everyone a different world with no way to share one.
+  //
+  // A3: the scene reads the visitor's own clock. Asserted against a faked Date
+  // rather than whatever hour CI happens to run at, because a check that only
+  // passes between 08:00 and 17:00 is not a check.
+  {
+    const canvasTail = (page) =>
+      page.evaluate(() =>
+        document
+          .querySelector("[data-hero-terrain]")
+          .toDataURL("image/png")
+          .slice(-3000),
+      );
+
+    // Two unpinned visits must land in different worlds.
+    const labels = [];
+    for (let i = 0; i < 2; i++) {
+      const page = await browser.newPage({
+        viewport: { width: 1280, height: 900 },
+      });
+      await page.goto(url("/"), { waitUntil: "load" });
+      await page.waitForTimeout(2600);
+      labels.push(
+        await page.evaluate(
+          () =>
+            document.querySelector("[data-hero-world] a")?.textContent ?? null,
+        ),
+      );
+      await page.close();
+    }
+    ok(
+      "each visitor gets their own world, and it is named on the page",
+      labels[0] && labels[1] && labels[0] !== labels[1],
+      labels.join(" vs "),
+    );
+
+    // A pinned world must reproduce exactly, and a different pin must not.
+    const pinned = [];
+    for (const seed of ["abcxyz", "abcxyz", "zzz111"]) {
+      const page = await browser.newPage({
+        viewport: { width: 1280, height: 900 },
+      });
+      await page.goto(url(`/?world=${seed}`), { waitUntil: "load" });
+      await page.waitForTimeout(2600);
+      pinned.push({
+        seed,
+        label: await page.evaluate(
+          () =>
+            document.querySelector("[data-hero-world] a")?.textContent ?? null,
+        ),
+        tail: await canvasTail(page),
+      });
+      await page.close();
+    }
+    ok(
+      "?world= reproduces the same world, pixel for pixel",
+      pinned[0].tail === pinned[1].tail && pinned[0].label === "#abcxyz",
+      `${pinned[0].label} / ${pinned[1].label}, tails ${pinned[0].tail === pinned[1].tail ? "match" : "differ"}`,
+    );
+    ok(
+      "a different ?world= is a different world",
+      pinned[2].tail !== pinned[0].tail,
+      "two seeds produced identical terrain",
+    );
+
+    /*
+     * A structural check beside the behavioural ones, because they cannot do
+     * this job.
+     *
+     * The generator seeds three things: the terrain noise, the settlement and
+     * the birds. The assertions above compare whole canvases, so they prove
+     * "the world responds to the seed" — the user-visible contract — and cannot
+     * tell WHICH of the three sites is wired. Reverting the terrain to a
+     * constant while leaving the settlement seeded still produces a different
+     * canvas per seed, and passed all three; tested.
+     *
+     * So the wiring is checked at the source instead: no seed call may take a
+     * bare numeric literal. DEFAULT_WORLD is the one allowed constant, and it
+     * is a fallback rather than a seed.
+     */
+    {
+      const src = fs.readFileSync(
+        path.join(ROOT, "web/src/scripts/hero-terrain.ts"),
+        "utf8",
+      );
+      // Every seed call must mention `world`. Checking for a bare numeric
+      // literal is not enough: the regression this is for is someone reverting
+      // a seed to a NAMED constant — `makeNoise(DEFAULT_WORLD)` — which a
+      // literal-only pattern happily allows, and which passed all four of the
+      // assertions above when tested.
+      // `seed` / `seed: number` are the two function signatures and the one
+      // pass-through inside makeNoise — plumbing, not seed choices. Everything
+      // else that seeds a generator has to derive from `world`.
+      const calls = [...src.matchAll(/\b(?:rng|makeNoise)\(([^)]*)\)/g)]
+        .map((m) => m[1].trim())
+        .filter((arg) => arg.length > 0 && !/^seed(\s*:\s*number)?$/.test(arg))
+        .filter((arg) => !/\bworld\b/.test(arg));
+      ok(
+        "every generator seed is derived from this visitor's world",
+        calls.length === 0,
+        calls.map((c) => `seeded with "${c}"`).join("; "),
+      );
+    }
+
+    // A3. The hour layer sits ABOVE the scrim for a measured reason: driven
+    // under it, the scrim repainted the page colour back over the night and the
+    // picture barely changed while every computed style was correct.
+    const hours = [
+      ["dawn", "2026-08-28T06:30:00"],
+      ["day", "2026-08-28T12:00:00"],
+      ["dusk", "2026-08-28T18:30:00"],
+      ["night", "2026-08-28T23:30:00"],
+    ];
+    const wrong = [];
+    const opacities = {};
+    for (const [expected, iso] of hours) {
+      const ctx = await browser.newContext({
+        viewport: { width: 1280, height: 900 },
+      });
+      await ctx.addInitScript(`{ const F = Date; const fixed = new F("${iso}").getTime();
+        class D extends F {
+          constructor(...a) { if (a.length === 0) super(fixed); else super(...a); }
+          static now() { return fixed; }
+        }
+        window.Date = D; }`);
+      const page = await ctx.newPage();
+      await page.goto(url("/?world=abcxyz"), { waitUntil: "load" });
+      await page.waitForTimeout(2400);
+      const seen = await page.evaluate(() => ({
+        part: document.querySelector(".hero")?.getAttribute("data-daypart"),
+        hour: Number(
+          getComputedStyle(document.querySelector("[data-hero-hour]")).opacity,
+        ),
+      }));
+      if (seen.part !== expected)
+        wrong.push(`${iso} -> ${seen.part}, expected ${expected}`);
+      opacities[expected] = seen.hour;
+      await ctx.close();
+    }
+    ok(
+      "the hero reads the visitor's own hour",
+      wrong.length === 0,
+      wrong.join("; "),
+    );
+    ok(
+      "night actually darkens the world and day adds nothing",
+      opacities.day === 0 && opacities.night > 0.5 && opacities.dusk > 0.3,
+      JSON.stringify(opacities),
+    );
+  }
+
   // -------------------------------------------- M13, the creature cards
   //
   // Opening a region shows the creature that lives there, with its real numbers

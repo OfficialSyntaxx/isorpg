@@ -2047,31 +2047,68 @@ pulsing dot in the trust row — previously the only thing on the site running a
 the engine's interval, and the only place `600ms` was hardcoded — now reads the
 token, and stops outright under reduced motion rather than strobing at 0.01ms.
 
-#### A2 — The hero world is seeded per visitor, and shareable · ~300 bytes
+#### A2 ✅ — one world per visitor, reproducible on request
 
-`hero-terrain.ts` is deterministic: three hardcoded seeds (`20260827` for the
-terrain noise, `4242` for the window lights, `99` for the birds) with a comment
-explaining that a fixed seed is reviewable and `Math.random` is not.
+The generator had three hardcoded seeds (`20260827` terrain, `4242` settlement,
+`99` birds) under a comment explaining that a fixed seed is reviewable where
+`Math.random` is not. That reasoning still holds, and is why `paintTerrain` now
+*returns* the seed it used rather than rolling one and forgetting it: the number
+is written to the page and accepted back through the URL.
 
-Thread one seed through all three, derive it per visit, show it discreetly
-("world #4F2A91"), and honour `?world=` so a seed reproduces exactly. Every
-visitor gets their own Isoperia, and a good one can be shared or pinned for
-press.
+`?world=` wins when present, in base 36 so a shared link is short and
+case-insensitive. Anything unparseable falls back to the original constant, so a
+mangled link shows the art-directed world rather than an error. Without a
+parameter, `crypto.getRandomValues` picks a fresh world — not `Date.now()`,
+which would give near-identical worlds to everyone arriving in the same second.
 
-Checked before proposing: **no golden-image check covers the hero.**
-`verify-hero.cjs` detects animation by comparing hashes to each other, not to
-committed values, and `visual-regress.cjs` baselines the *game's* opening frame.
-A per-visitor seed breaks nothing. `?world=` gives the checks a pin anyway.
+The page names it: *"This world: #abcxyz"*, where the id is an `<a>` to the same
+page with `?world=`. Right-click-copy-link shares that exact world; a click
+re-enters it. Deliberately **not** a `history.replaceState` on load — rewriting
+someone's address bar so they bookmark a URL they never chose is a bigger
+liberty than the feature is worth.
 
-#### A3 — Real-time day and night in the hero · ~400 bytes
+Checked before building: no golden-image check covers the hero, so a per-visitor
+world breaks nothing.
 
-The hero's sun breathes on a 42 s loop and the wash on a 90 s loop — both
-arbitrary. Drive them from the visitor's local clock instead: dawn, day, dusk
-and night palettes, sun position by hour, window lights carrying the scene after
-sunset. The game has its own day clock (`clock: { minute, day }`,
-`DAY_START_MINUTE`), so this is a real system reflected, not an effect invented.
+#### A3 ✅ — the hero keeps the visitor's clock
 
-Someone opening the site at 11 pm should see a night settlement.
+Four parts, uneven on purpose because light is not: a narrow dawn (05–08), a
+long flat day (08–17), a short intense dusk (17–20), and a long night where the
+settlement's windows are the brightest thing on screen. Local time, so someone
+in Auckland opening this at their midnight sees midnight.
+
+**The first version drove `.hero__wash`, and it barely worked.** Every computed
+style was correct — `opacity: 0.78`, the animation cancelled, the dark gradient
+resolved — and the picture was still daylight. `.hero__wash` sits *under*
+`.hero__scrim`, and the scrim paints `--surface-page` back over most of the
+frame for text legibility, so the night was repainted away beneath it.
+
+The hour now has its own layer above the scrim, with a gradient weighted to the
+**right**: transparent where the headline sits, dark where the world is. That is
+the division of labour the scrim already makes — the left is a reading surface,
+the right is a window — and it lets the world go to night without the text
+losing its ground.
+
+#### Verifying A2 and A3, and three ways the checks were wrong first
+
+`verify-motion.cjs` is at 41 assertions. Getting there took four attempts and
+each failure is worth keeping:
+
+1. **The control harness tested a stale build.** Two controls "passed" because
+   the mutation did not compile, `npm run build` was piped to `/dev/null`, and
+   the suite ran against the previous `dist`. Controls are now gated on a clean
+   build and refuse to report a result otherwise.
+2. **The behavioural assertions cannot tell which seed site is wired.** They
+   compare whole canvases, so reverting the *terrain* to a constant while the
+   settlement stayed seeded still produced a different picture per seed and
+   passed all three. A source-level assertion sits beside them for the wiring.
+3. **That source assertion only caught numeric literals.** The realistic
+   regression is `makeNoise(DEFAULT_WORLD)` — a named constant — which it
+   allowed. It now requires every seed call to mention `world`, excluding the
+   two function signatures and the one internal pass-through.
+
+Four controls reproduce: terrain reverted to a named constant, `?world=` parsed
+but discarded, night's veil zeroed, and the region signal unpublished.
 
 #### A4 — The experience curve draws itself as you climb · ~250 bytes CSS, 0 JS
 

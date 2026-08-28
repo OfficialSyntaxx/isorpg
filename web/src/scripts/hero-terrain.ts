@@ -180,13 +180,64 @@ interface Bird {
   phase: number;
 }
 
+/**
+ * A2 — one world per visitor, reproducible on request.
+ *
+ * The generator was seeded with three hardcoded constants (20260827 for the
+ * terrain noise, 4242 for the settlement, 99 for the birds) and a comment
+ * explaining that a fixed seed is reviewable where Math.random is not. That
+ * reasoning still holds — it is why this returns a NUMBER that gets written to
+ * the page and accepted back through the URL, rather than calling Math.random
+ * and forgetting what it rolled.
+ *
+ * `?world=` wins when present, which is what makes a world shareable, a press
+ * screenshot repeatable, and a check pinnable. Anything unparseable falls back
+ * to the original constant, so a mangled link shows the art-directed world
+ * rather than an error.
+ */
+const DEFAULT_WORLD = 20260827;
+
+function resolveWorld(): number {
+  let raw: string | null = null;
+  try {
+    raw = new URL(window.location.href).searchParams.get("world");
+  } catch {
+    /* An exotic or opaque location. Fall through to a fresh world. */
+  }
+
+  if (raw) {
+    // Base 36 keeps the shared link short and case-insensitive.
+    const parsed = Number.parseInt(raw, 36);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed >>> 0;
+    return DEFAULT_WORLD;
+  }
+
+  // A fresh world per visit. crypto is used where available because a
+  // Date.now()-derived seed gives near-identical worlds to everyone who arrives
+  // in the same second, which defeats the point.
+  try {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    if (buf[0]) return buf[0] >>> 0;
+  } catch {
+    /* No crypto. The fallback below is still a different world per load. */
+  }
+  return (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0 || DEFAULT_WORLD;
+}
+
+/** The shareable form: short, lowercase, URL-safe. */
+export function worldLabel(seed: number): string {
+  return seed.toString(36);
+}
+
 export function paintTerrain(
   canvas: HTMLCanvasElement,
   lifeCanvas: HTMLCanvasElement,
-): void {
+): number | null {
   const ctx = canvas.getContext("2d");
   const lifeCtx = lifeCanvas.getContext("2d");
-  if (!ctx || !lifeCtx) return;
+  // null, not a seed: nothing was painted, so there is no world to name.
+  if (!ctx || !lifeCtx) return null;
 
   const root = document.documentElement;
   const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -196,6 +247,9 @@ export function paintTerrain(
    *  the setting while the page is open, and the honest response is to stop. */
   const mayAnimate = (): boolean =>
     !reducedQuery.matches && nav.connection?.saveData !== true;
+
+  /** This visitor's world. Resolved once: a resize must rebuild the SAME one. */
+  const world = resolveWorld();
 
   let tiles: Tile[] = [];
   let waterTiles: Tile[] = [];
@@ -441,7 +495,7 @@ export function paintTerrain(
     const gyMin = Math.floor(Math.min(...corners.map((c) => c.gy))) - PAD_TILES;
     const gyMax = Math.ceil(Math.max(...corners.map((c) => c.gy))) + PAD_TILES;
 
-    const noise = makeNoise(20260827);
+    const noise = makeNoise(world);
     const collected: Tile[] = [];
 
     for (let gy = gyMin; gy <= gyMax; gy++) {
@@ -509,7 +563,7 @@ export function paintTerrain(
     //
     // Clustered on high ground right of centre, which is where the composition
     // already puts its interest — the scrim keeps the left readable.
-    const lightRand = rng(4242);
+    const lightRand = rng(world ^ 0x9e3779b9);
     const candidates = tiles.filter(
       (t) =>
         (t.band === 2 || t.band === 3) &&
@@ -553,7 +607,7 @@ export function paintTerrain(
     }
 
     // Birds. Four is enough to read as life and few enough to cost nothing.
-    const birdRand = rng(99);
+    const birdRand = rng(world ^ 0x85ebca6b);
     birds = Array.from({ length: 4 }, () => ({
       x: birdRand() * cssW,
       y: cssH * (0.08 + birdRand() * 0.35),
@@ -854,7 +908,7 @@ export function paintTerrain(
   };
 
   build();
-  if (tiles.length === 0) return;
+  if (tiles.length === 0) return null;
 
   if (mayAnimate()) animateIn();
   else settle();
@@ -908,4 +962,6 @@ export function paintTerrain(
     attributeFilter: ["data-theme"],
   });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", schedule);
+
+  return world;
 }

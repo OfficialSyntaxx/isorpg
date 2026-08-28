@@ -56,6 +56,20 @@ import { site, gamePath } from "../../lib/site";
 
   <div class="hero__scrim"></div>
 
+  <!-- A3 — the hour, above the scrim.
+       The first version of this drove .hero__wash, which sits UNDER the scrim —
+       and the scrim paints --surface-page back over most of the frame for text
+       legibility, so a night veil under it was almost entirely repainted away.
+       Measured: the computed styles were all correct and the picture barely
+       changed.
+
+       So the hour gets its own layer above the scrim, and its gradient is
+       weighted to the RIGHT: transparent where the headline sits, dark where the
+       world is. That is the same division of labour the scrim already makes — the
+       left is a reading surface, the right is a window — and it means the world
+       can go to night without the text losing its ground. -->
+  <div class="hero__hour" aria-hidden="true" data-hero-hour></div>
+
   <!-- The two layers that only exist during the departure. Both are
        opacity-only, so at rest they cost a composited layer and nothing else.
        Dusk darkens the land you are leaving; the horizon is the light you are
@@ -84,6 +98,18 @@ import { site, gamePath } from "../../lib/site";
     <p class="hero__weight" data-reveal>
       No install, no account. First load downloads roughly 50&nbsp;MB.
     </p>
+
+    {
+      /* A2 — the world's name.
+         Empty until the canvas has actually generated something, because a
+         label for a world nobody can see is noise. The id is an <a> to the same
+         page with ?world=, so right-click-copy-link shares this exact world and
+         a click re-enters it deliberately. That is deliberately NOT a
+         history.replaceState on load: rewriting someone's address bar so they
+         bookmark a URL they never chose is a bigger liberty than the feature is
+         worth. */
+    }
+    <p class="hero__world" data-hero-world hidden></p>
   </div>
 </section>
 
@@ -528,13 +554,170 @@ import { site, gamePath } from "../../lib/site";
     color: var(--text-muted);
     font-size: var(--text-xs);
   }
+
+  .hero__world {
+    margin-top: var(--space-2xs);
+    color: var(--text-muted);
+    font-size: var(--text-2xs);
+    font-family: var(--font-mono);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .hero__world :global(a) {
+    color: inherit;
+    text-underline-offset: 0.25em;
+    text-decoration-color: var(--border-strong);
+  }
+
+  .hero__world :global(a:hover) {
+    color: var(--text-body);
+  }
+
+  /* ---------------------------------------------------------------------
+     A3 — THE HERO KEEPS THE VISITOR'S CLOCK
+     ---------------------------------------------------------------------
+     The sun breathed on a 42s loop and the wash on a 90s loop. Both were
+     arbitrary numbers standing in for time passing, on a page whose whole
+     claim is that the world is generated rather than drawn.
+
+     The scene now reads the visitor's own hour. Four parts, chosen to match
+     how the light actually changes rather than to split the day evenly: a
+     narrow warm dawn, a long flat day, a short intense dusk, and a long night
+     where the settlement's windows do the work.
+
+     It costs one Date call. Everything below is the existing sun and wash
+     elements taking different values — no new layers, no new requests, and the
+     canvas underneath is untouched, so none of this affects the terrain the
+     generator produced.
+
+     The game has its own day clock (a DAY_START_MINUTE and a minute counter),
+     so this reflects a real system rather than inventing an effect. It is not
+     synchronised to it: the game's day is a game-length day, and matching the
+     player's wall clock is the point here. */
+  .hero[data-daypart="dawn"] .hero__sun {
+    top: 8%;
+    right: 6%;
+    width: 44vmax;
+    height: 44vmax;
+    background: radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--mark-cinder) 30%, transparent) 0%,
+      transparent 62%
+    );
+  }
+
+  .hero[data-daypart="dusk"] .hero__sun {
+    top: 26%;
+    right: -4%;
+    width: 52vmax;
+    height: 52vmax;
+    background: radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--mark-cinder) 38%, transparent) 0%,
+      transparent 58%
+    );
+  }
+
+  /* No sun at night. The moon is not worth a layer; an absence reads correctly
+     on its own, and the window lights become the brightest thing on screen,
+     which is exactly what should happen. */
+  .hero[data-daypart="night"] .hero__sun {
+    opacity: 0.16;
+    top: 4%;
+    right: 14%;
+    width: 26vmax;
+    height: 26vmax;
+    background: radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--mark-frostwatch) 34%, transparent) 0%,
+      transparent 60%
+    );
+    animation: none;
+  }
+
+  .hero__hour {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    /* Crossfaded rather than switched, so a visitor who crosses an hour
+       boundary with the page open sees the light change rather than jump. */
+    transition: opacity var(--dur-world) linear;
+  }
+
+  /* Day is the resting state and adds nothing: an overlay at zero opacity. */
+  .hero[data-daypart="dawn"] .hero__hour {
+    opacity: 0.5;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      transparent 34%,
+      color-mix(in srgb, #2a2340 44%, transparent) 74%,
+      color-mix(in srgb, #3a2a44 52%, transparent) 100%
+    );
+  }
+
+  .hero[data-daypart="dusk"] .hero__hour {
+    opacity: 0.66;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      transparent 30%,
+      color-mix(in srgb, #7a3a1c 34%, transparent) 68%,
+      color-mix(in srgb, #2b1a2e 62%, transparent) 100%
+    );
+  }
+
+  .hero[data-daypart="night"] .hero__hour {
+    opacity: 0.88;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      transparent 26%,
+      color-mix(in srgb, #070d1b 62%, transparent) 62%,
+      color-mix(in srgb, #04070f 82%, transparent) 100%
+    );
+  }
+
+  /* Without color-mix every gradient above collapses, which would leave the
+     night hero with no night in it. The unmodified day scene is the fallback. */
+  @supports not (background: color-mix(in srgb, red 50%, blue)) {
+    .hero[data-daypart] .hero__sun,
+    .hero[data-daypart] .hero__hour {
+      background: none;
+    }
+  }
 </style>
 
 <script>
-  import { paintTerrain } from "../../scripts/hero-terrain";
+  import { paintTerrain, worldLabel } from "../../scripts/hero-terrain";
 
   const canvas = document.querySelector<HTMLCanvasElement>("[data-hero-terrain]");
   const life = document.querySelector<HTMLCanvasElement>("[data-hero-life]");
+  const hero = document.querySelector<HTMLElement>(".hero");
+
+  // A3 — the visitor's own hour, applied before the world is generated so the
+  // scene never flashes from day to night.
+  //
+  // The boundaries are uneven on purpose: light does not change in four equal
+  // blocks. Dawn is narrow, day is long and flat, dusk is short and the most
+  // saturated hour of the day, and night is the long stretch where the
+  // settlement's windows are the brightest thing on screen.
+  //
+  // Local time, not UTC: someone in Auckland opening this at their midnight
+  // should see midnight.
+  if (hero) {
+    const h = new Date().getHours();
+    const part =
+      h >= 5 && h < 8
+        ? "dawn"
+        : h >= 8 && h < 17
+          ? "day"
+          : h >= 17 && h < 20
+            ? "dusk"
+            : "night";
+    hero.setAttribute("data-daypart", part);
+  }
 
   if (canvas && life) {
     // Started AFTER the page has loaded and the browser is idle, not during it.
@@ -549,7 +732,24 @@ import { site, gamePath } from "../../lib/site";
     // requestIdleCallback with a timeout, because Safari has only recently
     // shipped it and the timeout guarantees the world appears on a busy page
     // rather than waiting for an idle moment that never comes.
-    const begin = () => paintTerrain(canvas, life);
+    const begin = () => {
+      const world = paintTerrain(canvas, life);
+      if (world === null) return;
+
+      // A2 — name the world, once it exists.
+      //
+      // Built here rather than in the template because there is nothing to name
+      // until the generator has produced something: a seed printed under a
+      // canvas that failed to paint is a label for a picture that is not there.
+      const slot = document.querySelector<HTMLElement>("[data-hero-world]");
+      if (!slot) return;
+      const id = worldLabel(world);
+      const link = document.createElement("a");
+      link.href = `?world=${id}`;
+      link.textContent = `#${id}`;
+      slot.append("This world: ", link);
+      slot.hidden = false;
+    };
     const schedule = () => {
       if ("requestIdleCallback" in window) {
         (
