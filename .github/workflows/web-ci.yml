@@ -144,6 +144,14 @@ jobs:
       - name: Verify no repository internals are published
         run: node ../scripts/verify-no-internals.cjs
 
+      # The check above reads the TEXT of built pages and cannot see inside a
+      # PNG — which is how a screenshot of the Unity editor, complete with an
+      # internal console, shipped on /press under alt text describing a
+      # settlement plaza. Images now enter the site through one manifest that
+      # declares what each of them is; this makes that manifest unbypassable.
+      - name: Verify every published image is declared
+        run: node ../scripts/verify-media.cjs
+
       # The hero runs a continuous animation loop, which is a promise about
       # someone's battery: it must animate, stop when scrolled out of view, and
       # under prefers-reduced-motion still PAINT the world while holding it

@@ -1,0 +1,163 @@
+---
+/**
+ * The only way an image reaches a page.
+ *
+ * Takes a manifest id rather than a file, so alt text, caption and provenance
+ * travel with the image instead of being retyped — and mistyped — per page. The
+ * provenance badge is not optional: an image whose kind is "concept" says so
+ * wherever it appears, because press pages get reproduced and a caption that
+ * only lives in the article's paragraph does not survive a crop.
+ *
+ * A placeholder entry renders as a reserved, labelled slot. It occupies its
+ * final aspect ratio from first paint, so dropping real footage in later shifts
+ * nothing — the layout is already the layout.
+ */
+import { Image } from "astro:assets";
+import { media, provenanceLabel, provenanceNote, type MediaId } from "../lib/media";
+
+interface Props {
+  id: MediaId;
+  /** Anything else — `data-reveal` and friends — lands on the <figure>. */
+  [key: `data-${string}`]: unknown;
+  /** Rendered widths for the srcset. Defaults suit a full-width figure. */
+  widths?: number[];
+  sizes?: string;
+  /** The first image on a page may want eager loading; everything else lazy. */
+  eager?: boolean;
+  class?: string;
+}
+
+const {
+  id,
+  widths = [480, 960, 1440],
+  sizes = "(min-width: 60rem) 60rem, 100vw",
+  eager = false,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const item = media[id];
+---
+
+<figure class:list={["media", className]} {...rest}>
+  {
+    item.kind === "placeholder" ? (
+      <div class="media__slot" data-ratio={item.ratio}>
+        <p class="media__slot-text">{item.expects}</p>
+      </div>
+    ) : (
+      <div class="media__frame">
+        <Image
+          src={item.src}
+          alt={item.alt}
+          widths={widths}
+          sizes={sizes}
+          loading={eager ? "eager" : "lazy"}
+          decoding={eager ? "sync" : "async"}
+        />
+        {/* Overlays — an interactive map layer, say — sit here, above the
+            image and inside its box, so they inherit its exact geometry. */}
+        <slot />
+      </div>
+    )
+  }
+
+  <figcaption class="media__cap">
+    <span class:list={["media__badge", `media__badge--${item.kind}`]}>
+      {provenanceLabel[item.kind]}
+    </span>
+    <span class="media__text">{item.caption}</span>
+    <span class="visually-hidden">. {provenanceNote[item.kind]}</span>
+  </figcaption>
+</figure>
+
+<style>
+  .media {
+    margin: 0;
+  }
+
+  .media__frame {
+    position: relative;
+    line-height: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .media :global(img) {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+  }
+
+  /* The empty slot. Deliberately plain: a decorated placeholder reads as a
+     finished element that failed to load. */
+  .media__slot {
+    display: grid;
+    place-items: center;
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-strong);
+    background: var(--surface-raised);
+  }
+
+  /* One rule per ratio the manifest is allowed to declare.
+     The ratio arrives on the slot as a data attribute rather than a style
+     attribute, because the content security policy blocks inline styles — and a
+     slot with no reserved height would shift the page the moment real footage
+     replaced it, which is the whole thing the slot exists to prevent. The union
+     type in media.ts and scripts/verify-media.cjs hold this list to one set. */
+  .media__slot[data-ratio="16 / 9"] {
+    aspect-ratio: 16 / 9;
+  }
+
+  .media__slot[data-ratio="4 / 3"] {
+    aspect-ratio: 4 / 3;
+  }
+
+  .media__slot[data-ratio="1 / 1"] {
+    aspect-ratio: 1 / 1;
+  }
+
+  .media__slot-text {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    text-align: center;
+    text-wrap: balance;
+    max-width: 40ch;
+  }
+
+  .media__cap {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-xs);
+    margin-top: var(--space-xs);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+
+  .media__badge {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    padding: 0.15em 0.5em;
+    border-radius: var(--radius-sm);
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+
+  /* Capture is the only badge that gets the accent. Concept art borrowing the
+     "this is the game" colour is exactly the confusion the badge prevents. */
+  .media__badge--capture {
+    color: var(--accent);
+  }
+
+  .media__badge--concept,
+  .media__badge--art,
+  .media__badge--placeholder {
+    color: var(--text-muted);
+  }
+</style>
