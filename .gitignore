@@ -27,3 +27,4 @@ dist-site/
 # Subagent git worktrees. These are separate checkouts of this repo; committing
 # them would embed a repository inside itself.
 .claude/worktrees/
+lighthouse-reports/

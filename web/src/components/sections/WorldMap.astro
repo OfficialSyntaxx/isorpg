@@ -2,64 +2,90 @@
 /**
  * §5.4 — the mainland.
  *
- * Content is the spatial contract in docs/WORLD_LAYOUT.md, not invented
- * geography: a safe settlement at the centre, four outer regions whose terrain
- * and resource loop reinforce one another, and a high-risk destination east.
- * District colours are the in-game route-anchor colours (UPDATES.md 2026-08-26).
+ * WHAT CHANGED, AND WHY
+ * This section used to draw its own map: six flat rounded rectangles in an
+ * SVG, each with a small symbolic glyph, that lit up one at a time. The fair
+ * criticism of it was that the highlight was the only thing happening — the
+ * shapes carried no information a colour swatch does not, so "showing the
+ * world" amounted to pointing at a bar chart and naming the bars. Nothing about
+ * it was specific to Isoperia.
  *
- * ACCESSIBILITY — WHY THE BUTTONS ARE THE INTERACTIVE LAYER
- * Blueprint §9.2 is explicit that an SVG map which only works with a mouse
- * fails. Rather than bolt tabindex and roles onto SVG paths — which is fragile
- * and announces badly — the real interactive layer is a list of ordinary
- * buttons. The SVG is decorative and reacts to them.
+ * The project already has a picture of the actual mainland: the illustrated
+ * overworld layout the world is greyboxed against, with the walled settlement
+ * and its fountain at the centre, pine forest and standing stones northwest,
+ * a snow-capped mine northeast, a dead-tree bog southwest, ploughed fields and
+ * a windmill southeast, and a violet-lit ruin on the eastern shore. Every claim
+ * in the region copy below is visible in it. So the map is that image, and
+ * selecting a region spotlights it — the surrounding world dims, the chosen
+ * ground stays lit, and you can see the trees, the snow line and the fields
+ * that the words describe.
  *
- * That has three consequences worth keeping: keyboard and screen-reader support
- * come free from the button element; the list is itself the text equivalent the
- * blueprint requires, so there is no separate "accessible version" to maintain;
- * and hovering the map is a nice-to-have rather than the only way in.
+ * It is labelled "Concept art" by MediaFigure and cannot be un-labelled: this
+ * is the layout the world is built to, not a screenshot of it, and a visitor
+ * deciding whether to play deserves to know which they are looking at.
+ *
+ * ACCESSIBILITY — WHY THE BUTTONS ARE STILL THE INTERACTIVE LAYER
+ * Unchanged, and the reason is unchanged. Blueprint §9.2 rules out a map that
+ * only works with a mouse. Rather than bolt roles and tabindex onto shapes, the
+ * real controls are ordinary buttons; the overlay is decorative and reacts to
+ * them. Keyboard and screen-reader support come free from the button element,
+ * and the list is itself the text equivalent, so there is no separate
+ * "accessible version" to drift.
+ *
+ * The overlay geometry is in percentages of the artwork, which is square, so it
+ * needs no reflow rules — it is correct at every width by construction.
  */
+import MediaFigure from "../MediaFigure.astro";
+
 const districts = [
   {
     id: "hearthvale",
     name: "Hearthvale",
     role: "Safe home and construction",
-    body: "An open plaza, a market, a campfire and the build plots. Buildings sit around a walkable square rather than ringing you in.",
+    body: "The walled centre. An open plaza around the fountain, a market, a campfire and the build plots — buildings sit around the square rather than ringing you in. Every road on the map starts here.",
     mod: "",
+    /** Spotlight, in percent of the artwork. Placed against the illustration. */
+    at: { cx: 48, cy: 45, rx: 15, ry: 13 },
   },
   {
     id: "wildwood",
     name: "Wildwood",
     role: "First gathering route",
-    body: "Northwest forest. Normal and oak trees, a shrine ruin as the arrival landmark, and the early wildlife that teaches you to watch your health.",
+    body: "Northwest forest. Normal and oak stands, the standing-stone ruin as the arrival landmark, and the early wildlife that teaches you to watch your health.",
     mod: "wildwood",
+    at: { cx: 21, cy: 16, rx: 17, ry: 14 },
   },
   {
     id: "frostwatch",
     name: "Frostwatch",
     role: "Mining progression",
-    body: "Northeast highlands. Copper and tin near the road, iron and coal deeper in, with a mine and snow-crag silhouette visible from the route.",
+    body: "Northeast highlands. Copper and tin near the road, iron and coal deeper in. The mine head and the snow line are both visible from the route, so you can see how far up you are choosing to go.",
     mod: "frostwatch",
+    at: { cx: 79, cy: 14, rx: 19, ry: 13 },
   },
   {
     id: "miregate",
     name: "Miregate",
     role: "Mid-game route",
-    body: "Southwest mire. Willow stands, fishing water, bog husks, and hazardous paths where the crossing matters more than the fight.",
+    body: "Southwest mire. Willow stands, fishing water, bog husks, and hazardous paths where finding the crossing matters more than winning the fight.",
     mod: "miregate",
+    at: { cx: 19, cy: 74, rx: 17, ry: 15 },
   },
   {
     id: "sunmere",
     name: "Sunmere",
     role: "Food and town growth",
-    body: "Southeast lowlands. Farm plots and fishing feeding the cooking and carpentry loop, with mills and a granary anchoring the shoreline.",
+    body: "Southeast lowlands. Farm plots and fishing feed the cooking and carpentry loop; the mill and granary anchor the shoreline and mark how far the town has grown.",
     mod: "wildwood",
+    at: { cx: 78, cy: 76, rx: 19, ry: 16 },
   },
   {
     id: "cinder",
     name: "Cinder Hollow",
     role: "High-risk destination",
-    body: "Outer east. The dungeon approach and a boss clearing, lit in pools. Every route is a loop back to town — this one you earn.",
+    body: "The far east ruin, lit in pools. The longest road on the map and the only one that is not a gentle loop — this is the route you earn.",
     mod: "cinder",
+    at: { cx: 86, cy: 45, rx: 11, ry: 10 },
   },
 ] as const;
 ---
@@ -69,157 +95,83 @@ const districts = [
     <p class="eyebrow">The mainland</p>
     <h2 data-reveal>One place, six ways it changes</h2>
     <p class="world__lede" data-reveal>
-      A safe centre, landmark-led roads, and four outer regions whose terrain, resources
-      and danger reinforce one another. Every route loops back to town.
+      A safe centre, landmark-led roads, four outer regions whose terrain, resources and
+      danger reinforce one another, and a dungeon east. Pick one and the map dims around
+      it.
     </p>
 
     <div class="world__grid">
-      <!-- Decorative: every region below is reachable as a button. -->
-      <svg
-        class="world__map"
-        viewBox="0 0 720 540"
-        role="img"
-        aria-label="Stylised survey map of the Isoperia mainland: a forested northwest, highlands northeast, a mire southwest, farmland southeast, a central settlement, and a dungeon on the far east."
-        data-map
-      >
-        <defs>
-          <pattern id="survey" width="24" height="24" patternUnits="userSpaceOnUse">
-            <path
-              d="M24 0H0v24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="0.5"
-              opacity="0.18"></path>
-          </pattern>
-        </defs>
-
-        <rect
-          x="28"
-          y="28"
-          width="664"
-          height="484"
-          rx="10"
-          fill="url(#survey)"
-          stroke="currentColor"
-          stroke-width="1.5"
-          opacity="0.85"></rect>
-
-        <!-- Regions.
-             Each carries a symbolic glyph, because four flat rectangles read as
-             a bar chart rather than a place — real device feedback, and fair.
-             Glyphs are drawn in translucent black so they sit legibly on every
-             mark colour in both themes without needing their own palette.
-             Labels stay in the button list: the mark colours are audited as NOT
-             text-safe, and at phone size map text would be ~6px anyway. -->
-
-        <!-- Northwest: forest -->
-        <g class="rgn" data-rgn="wildwood">
-          <rect x="42" y="42" width="252" height="222" rx="26" fill="var(--mark-wildwood)"
-          ></rect>
-          <g class="glyph">
-            <path d="M132 176 l22-42 22 42 z"></path>
-            <rect x="150" y="176" width="8" height="16" rx="2"></rect>
-            <path d="M170 186 l26-50 26 50 z"></path>
-            <rect x="192" y="186" width="8" height="18" rx="2"></rect>
-            <path d="M112 196 l18-34 18 34 z"></path>
-            <rect x="126" y="196" width="7" height="14" rx="2"></rect>
-          </g>
-        </g>
-
-        <!-- Northeast: highland crag -->
-        <g class="rgn" data-rgn="frostwatch">
-          <rect
-            x="304"
-            y="42"
-            width="252"
-            height="222"
-            rx="26"
-            fill="var(--mark-frostwatch)"></rect>
-          <g class="glyph">
-            <path d="M368 194 l44-76 44 76 z"></path>
-            <path d="M430 194 l34-58 34 58 z"></path>
-          </g>
-          <g class="glyph glyph--light">
-            <path d="M398 142 l14-24 14 24 -14 -7 z"></path>
-          </g>
-        </g>
-
-        <!-- Southwest: mire -->
-        <g class="rgn" data-rgn="miregate">
-          <rect
-            x="42"
-            y="276"
-            width="252"
-            height="222"
-            rx="26"
-            fill="var(--mark-miregate)"></rect>
-          <g class="glyph glyph--stroke">
-            <path d="M104 372 q22-16 44 0 t44 0 t44 0"></path>
-            <path d="M104 404 q22-16 44 0 t44 0 t44 0"></path>
-            <path d="M104 436 q22-16 44 0 t44 0 t44 0"></path>
-          </g>
-        </g>
-
-        <!-- Southeast: farmland -->
-        <g class="rgn" data-rgn="sunmere">
-          <rect x="304" y="276" width="252" height="222" rx="26" fill="var(--mark-gold)"
-          ></rect>
-          <g class="glyph">
-            <rect x="352" y="358" width="156" height="12" rx="6"></rect>
-            <rect x="352" y="386" width="156" height="12" rx="6"></rect>
-            <rect x="352" y="414" width="156" height="12" rx="6"></rect>
-            <rect x="352" y="442" width="104" height="12" rx="6"></rect>
-          </g>
-        </g>
-
-        <!-- Far east: the dungeon. Its own strip, reached by the longest road. -->
-        <g class="rgn" data-rgn="cinder">
-          <rect x="586" y="180" width="92" height="180" rx="18" fill="var(--mark-cinder)"
-          ></rect>
-          <g class="glyph">
-            <path d="M612 300 v-44 a20 20 0 0 1 40 0 v44 z"></path>
-          </g>
-          <g class="glyph glyph--light">
-            <path d="M632 292 q-11-10 0-24 q11 10 0 24 z"></path>
-          </g>
-        </g>
-
-        <!-- Routes: drawn before the settlement so the plaza sits on top. -->
-        <g
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-dasharray="6 7"
-          fill="none"
-          opacity="0.75"
+      <div class="world__atlas" data-reveal>
+        <MediaFigure
+          id="overworld-layout"
+          widths={[640, 960, 1280]}
+          sizes="(min-width: 62rem) 44rem, 100vw"
         >
-          <path d="M299 270 L168 153" data-draw data-draw-delay="0"></path>
-          <path d="M299 270 L430 153" data-draw data-draw-delay="90"></path>
-          <path d="M299 270 L168 387" data-draw data-draw-delay="180"></path>
-          <path d="M299 270 L430 387" data-draw data-draw-delay="270"></path>
-          <path
-            d="M299 270 L586 270"
-            data-draw
-            data-draw-delay="380"
-            data-draw-duration="1200"></path>
-        </g>
+          <svg
+            class="atlas"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            data-map
+          >
+            <defs>
+              {
+                /* A hard-edged spotlight looks like a cut-out sticker. The blur
+                   is what makes it read as light falling on the map. */
+              }
+              <filter id="atlas-soft" x="-25%" y="-25%" width="150%" height="150%">
+                <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
+              </filter>
 
-        <!-- Centre: the settlement itself, as buildings around a hearth. -->
-        <g class="rgn" data-rgn="hearthvale">
-          <circle
-            cx="299"
-            cy="270"
-            r="54"
-            fill="var(--surface-raised)"
-            stroke="currentColor"
-            stroke-width="2.5"></circle>
-          <g class="glyph glyph--town">
-            <path d="M272 268 l12-11 12 11 v14 h-24 z"></path>
-            <path d="M302 262 l11-10 11 10 v20 h-22 z"></path>
-            <path d="M285 288 l10-9 10 9 v11 h-20 z"></path>
-          </g>
-          <circle cx="299" cy="246" r="7" fill="var(--mark-gold)"></circle>
-        </g>
-      </svg>
+              {
+                /* White keeps the scrim; black holes punch through to the art.
+                   Each hole is invisible until its region is chosen, so the
+                   default state is the whole map, undimmed. */
+              }
+              <mask id="atlas-spot">
+                <rect width="100" height="100" fill="#fff"></rect>
+                <g filter="url(#atlas-soft)">
+                  {
+                    districts.map((d) => (
+                      <ellipse
+                        class="atlas__hole"
+                        data-rgn={d.id}
+                        cx={d.at.cx}
+                        cy={d.at.cy}
+                        rx={d.at.rx}
+                        ry={d.at.ry}
+                        fill="#000"
+                      />
+                    ))
+                  }
+                </g>
+              </mask>
+            </defs>
+
+            <rect
+              class="atlas__scrim"
+              width="100"
+              height="100"
+              mask="url(#atlas-spot)"
+              fill="#05070e"></rect>
+
+            {
+              /* Route pins. Faint at rest so the map always looks surveyed
+                 rather than blank, and the chosen one rides up on the light. */
+            }
+            <g class="atlas__pins">
+              {
+                districts.map((d) => (
+                  <g class="atlas__pin" data-rgn={d.id}>
+                    <circle class="atlas__ring" cx={d.at.cx} cy={d.at.cy} r="2.6" />
+                    <circle class="atlas__dot" cx={d.at.cx} cy={d.at.cy} r="0.9" />
+                  </g>
+                ))
+              }
+            </g>
+          </svg>
+        </MediaFigure>
+      </div>
 
       <ul class="world__list">
         {
@@ -270,62 +222,82 @@ const districts = [
 
   @media (min-width: 62rem) {
     .world__grid {
-      grid-template-columns: 1.35fr 1fr;
+      grid-template-columns: 1.2fr 1fr;
     }
   }
 
-  .world__map {
+  .atlas {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: auto;
-    /* currentColor drives the survey grid, the frame and the routes, so the
-       whole map follows the theme from one declaration. */
-    color: var(--text-muted);
+    height: 100%;
+    /* Decorative and reactive only — the buttons are the controls, and a
+       pointer landing here should not eat their clicks. */
+    pointer-events: none;
   }
 
-  /* Glyphs. Translucent black reads on every mark colour in both themes, which
-     a fixed palette colour would not. */
-  .world__map .glyph {
-    fill: rgb(0 0 0 / 0.34);
+  /* Nothing is dimmed until a region is chosen: the first thing a visitor sees
+     is the whole island. */
+  .atlas__scrim {
+    opacity: 0;
+    transition: opacity var(--dur-slow) var(--ease-out);
   }
 
-  .world__map .glyph--light {
-    fill: rgb(255 255 255 / 0.7);
+  .atlas[data-active] .atlas__scrim {
+    opacity: 0.68;
   }
 
-  .world__map .glyph--stroke {
+  .atlas__hole {
+    opacity: 0;
+    transition: opacity var(--dur-slow) var(--ease-out);
+  }
+
+  .atlas__hole.is-active {
+    opacity: 1;
+  }
+
+  /* Scaled rather than animated through the `r` attribute: CSS geometry
+     properties are not universally supported, and a transform is composited. */
+  .atlas__ring {
     fill: none;
-    stroke: rgb(0 0 0 / 0.34);
-    stroke-width: 5;
-    stroke-linecap: round;
-  }
-
-  /* The settlement sits on a surface plate rather than a mark colour, so its
-     buildings use the text token and stay legible in both themes. */
-  .world__map .glyph--town {
-    fill: var(--text-muted);
-  }
-
-  /* Regions dim when any sibling is active, so the highlighted one reads
-     without needing a colour nobody else has. */
-  .world__map .rgn {
-    opacity: 0.72;
+    stroke: #fff;
+    stroke-width: 0.5;
+    opacity: 0.5;
+    transform-box: fill-box;
+    transform-origin: center;
     transition:
       opacity var(--dur-base) var(--ease-out),
       transform var(--dur-base) var(--ease-out);
-    transform-box: fill-box;
-    transform-origin: center;
   }
 
-  /* Dimmed, but not so far that the glyphs stop reading — they carry the
-     meaning of each region, which flat colour did not. */
-  .world__map[data-active] .rgn {
-    opacity: 0.45;
+  .atlas__dot {
+    fill: #fff;
+    opacity: 0.75;
+    transition: opacity var(--dur-base) var(--ease-out);
   }
 
-  .world__map .rgn.is-active {
+  /* Unchosen pins fade rather than vanish, so the map keeps its survey marks
+     and you can still see where else there is to go. */
+  .atlas[data-active] .atlas__pin {
+    opacity: 0.28;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
+  .atlas[data-active] .atlas__pin.is-active {
     opacity: 1;
-    transform: translateY(-4px) scale(1.015);
   }
+
+  .atlas__pin.is-active .atlas__ring {
+    opacity: 1;
+    transform: scale(1.55);
+  }
+
+  .atlas__pin.is-active .atlas__dot {
+    opacity: 1;
+  }
+
+  /* No reduced-motion block: every duration above is a token, and tokens.css
+     collapses them all to 0.01ms under the media query. One place, not seven. */
 
   .world__list {
     list-style: none;
@@ -376,8 +348,8 @@ const districts = [
   );
 
   function setActive(id: string | null): void {
-    map?.querySelectorAll(".rgn").forEach((g) => {
-      g.classList.toggle("is-active", id !== null && g.getAttribute("data-rgn") === id);
+    map?.querySelectorAll(".atlas__hole, .atlas__pin").forEach((el) => {
+      el.classList.toggle("is-active", id !== null && el.getAttribute("data-rgn") === id);
     });
     if (map) {
       if (id) map.setAttribute("data-active", "");
@@ -400,8 +372,8 @@ const districts = [
   for (const btn of buttons) {
     const id = btn.dataset.district ?? null;
 
-    // Click toggles the description. Hover and keyboard focus only highlight
-    // the map — moving focus through the list should not expand six paragraphs.
+    // Click toggles the description. Hover and keyboard focus only move the
+    // spotlight — tabbing through the list should not expand six paragraphs.
     btn.addEventListener("click", () => {
       const isOpen = btn.getAttribute("aria-expanded") === "true";
       open(isOpen ? null : id);
@@ -418,7 +390,7 @@ const districts = [
     });
   }
 
-  // Open the settlement by default: an empty panel beside a dimmed map looks
-  // broken, and Hearthvale is where the game actually starts.
+  // Open the settlement by default: an empty panel beside an undimmed map looks
+  // like a control that does nothing, and Hearthvale is where the game starts.
   open("hearthvale");
 </script>

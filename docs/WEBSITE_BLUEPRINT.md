@@ -10,10 +10,17 @@
 > Those live in `ROADMAP.md`, `docs/ART_BIBLE.md`, `docs/WORLD_LAYOUT.md`, and
 > `WIKI.md`. The website consumes the game; it does not redesign it.
 
-**Created:** 2026-08-27 · **Last updated:** 2026-08-27 · **Status:** Phases 1, 2,
-3, 4, 5, 6, 7 and 8 done — the Phase 4 Lighthouse gate is met on every route and
+**Created:** 2026-08-27 · **Last updated:** 2026-08-28 · **Status:** Phases 1, 2,
+3, 4, 5, 6, 7, 8 and 13 done — the Phase 4 Lighthouse gate is met on every route and
 both device profiles; Phase 9 deferred (no domain purchased). Merged to `main` and **live in production** —
 landing page at `/`, game at `/play`, with an enforcing CSP.
+
+Phase 13 answers the question the site could not: it now shows the game. Every
+published image is declared in one manifest with a provenance badge a page
+cannot drop, and the world map is the actual illustrated mainland rather than
+six coloured rectangles. That work also removed a screenshot of the Unity
+editor that was live on `/press` under alt text describing a picture it did not
+contain.
 
 Four faults found on a real phone after the cutover are fixed and covered by new
 checks — the contents list overlapping the document, the site publishing its own
@@ -78,6 +85,7 @@ Update the Status column as phases move.
 | 10 | Backend Phase B1 (forms) | Sonnet 5 | ⬜ Not started | Newsletter + contact functions live, rate-limited, spam-guarded |
 | 11 | Backend Phase B2 (accounts) | Opus 5 | ⬜ Blocked on B1 | Design doc only until greenlit |
 | 12 | Backend Phase B3 (cloud saves) | Opus 5 | ⬜ Blocked on B2 | Design doc only until greenlit |
+| 13 | Showing the game | Opus 5 | ✅ Done | Every published image declared with a provenance and rendered with a badge; the world map is the actual mainland |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked · ⏸️ Deferred
 
@@ -1640,6 +1648,76 @@ one is bought, not outstanding work.
 
 Blocked by design. Do not start without an explicit greenlight; §7.2 and §7.3
 are the specs to start from when that happens.
+
+### Phase 13 — Showing the game ✅
+
+**The question that started it: "do visitors understand what the game is from
+the website alone?"** The honest answer at the time was no. The site described
+a loop precisely, printed real numbers out of the content export, and never
+once showed the game. A visitor could read every page and still not know what
+they would be looking at.
+
+**And a worse finding underneath it.** The one page that did carry screenshots,
+`/press`, was publishing a screenshot of the Unity *editor* — hierarchy panel,
+inspector, and a console printing internal object names and a local bridge port
+— under alt text describing "the Hearthvale settlement at runtime, seen from the
+third-person follow camera". That picture does not exist in that file. So the
+site leaked internals to anyone who looked at the image, and told a
+screen-reader user about a plaza while everyone else saw an IDE.
+
+`verify-no-internals.cjs` could not have caught it, and no realistic version of
+it could: that check reads the *text* of built pages, and nothing reads pixels
+for intent. The gap was never "we lack an image scanner". The gap was that an
+image could reach a page without anyone declaring what it was.
+
+**What was built.**
+
+- **`web/src/lib/media.ts` — the manifest.** Every published image, with
+  `alt`, `caption`, a date, and a `kind`: `capture` (pixels from a running
+  build), `concept` (art describing intent), `art` (a real asset shown outside
+  the game), or `placeholder` (nothing to show yet, and the page says so).
+- **`web/src/components/MediaFigure.astro` — the only way an image reaches a
+  page.** Takes a manifest id, not a file. Renders the provenance as a visible
+  badge, plus a fuller note for assistive technology. The badge is not
+  optional: press images get reproduced, and a caption that lives only in
+  someone else's paragraph does not survive a crop.
+- **`scripts/verify-media.cjs` — the gate,** 14 assertions. No page may
+  reference an image file directly; `astro:assets` may be imported in exactly
+  one file; every manifest entry must declare kind, caption, alt and date;
+  the editor screenshot is blocked by name with the reason; and the badge
+  cannot be removed from the renderer. Proven against the broken state before
+  being trusted: reinstating the blocked file and adding a direct image import
+  to a page both fail it.
+- **A placeholder that is honest.** There is no gameplay footage worth
+  publishing, so `/features` and `/press` carry a labelled, correctly
+  proportioned empty slot saying what will fill it. When a capture exists it is
+  one manifest entry and nothing else moves — the layout that will hold it is
+  already built and already tested.
+
+**And the world map, which was the other fair criticism.** It used to be six
+flat rounded rectangles that lit up one at a time; the highlight was the only
+thing happening, and nothing about it was specific to Isoperia. The project
+already had a picture of the actual mainland — the illustrated overworld layout
+the world is greyboxed against — in which every claim the region copy makes is
+visible: the walled settlement and its fountain, the pine forest and standing
+stones northwest, the snow-capped mine northeast, the dead-tree bog southwest,
+the fields and windmill southeast, the violet-lit ruin east. So the map is that
+image, and choosing a region spotlights it: the island dims, the chosen ground
+stays lit, and you can see the terrain the words describe. It carries the
+CONCEPT ART badge and cannot be stripped of it.
+
+The buttons are still the interactive layer, unchanged and for the unchanged
+reason (§9.2). The overlay geometry is in percentages of a square artwork, so it
+is correct at every width by construction rather than by media query.
+
+**Verified.** Lighthouse mobile after the change: `/` 95, `/features/` 96,
+`/world/` 96, `/press/` 96, with accessibility, best practices and SEO at 100
+on all four. The added images are lazy and below the hero, so none of them is
+the LCP element.
+
+**Left for later, deliberately.** Signature scroll moments built around footage
+are not worth designing against a slot. They come after the first capture, not
+before it.
 
 ---
 

@@ -12,6 +12,8 @@
  * indie-landing-page default the blueprint's §3.1 rules out. These are five
  * numbered steps through one loop, which is what the game actually is.
  */
+import MediaFigure from "../MediaFigure.astro";
+
 const pillars = [
   {
     n: "01",
@@ -64,6 +66,22 @@ const pillars = [
         600ms tick
       </li>
     </ul>
+  </div>
+
+  {
+    /* A landing page can describe a loop perfectly and still leave a visitor
+       unable to answer "what does it look like". One capture, placed before the
+       five steps rather than after them, so the steps are read against a real
+       picture of the place they happen in. Lazy and below the hero: it is not
+       the LCP element and must not become one. */
+  }
+  <div class="wrap pitch__media">
+    <MediaFigure
+      id="hearthvale-east-road"
+      data-reveal
+      widths={[480, 960, 1280]}
+      sizes="(min-width: 62rem) 52rem, 100vw"
+    />
   </div>
 
   <div class="wrap">
@@ -122,6 +140,10 @@ const pillars = [
     list-style: none;
     padding: 0;
     margin-top: var(--space-lg);
+  }
+
+  .pitch__media {
+    margin-top: var(--space-2xl);
   }
 
   .pillars__title {

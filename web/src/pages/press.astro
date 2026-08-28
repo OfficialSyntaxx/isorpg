@@ -2,29 +2,25 @@
 /**
  * /press — the press kit (blueprint §4.1).
  *
- * Two honesty constraints shape this page:
+ * Three honesty constraints shape this page:
  *
  * 1. The press contact in site.config.json is null. A press page whose contact
- *    is a dead mailto: is worse than one that says where to reach the project
- *    instead, so the block renders conditionally and falls back to the repo.
- * 2. Attribution is an obligation, not a courtesy. docs/ASSET_CREDITS.md is the
- *    project's licence acceptance record and this page summarises it and links
- *    to it rather than quietly omitting third-party CC0 work.
- *
- * Images are imported from docs/ and processed by astro:assets, so the 3 MB
- * concept PNG ships as a sized, modern-format, lazy-loaded asset instead of a
- * 3 MB PNG.
+ *    is a dead mailto: is worse than one that says plainly there is no route
+ *    yet, so the Contact block says exactly that.
+ * 2. Attribution is an obligation, not a courtesy. The project's licence
+ *    acceptance record is summarised here rather than quietly omitting the
+ *    third-party CC0 work it covers.
+ * 3. Every image comes from the media manifest, which states whether it is a
+ *    capture or an illustration and renders that as a badge. A press page is
+ *    the one page whose images get reproduced somewhere else, so the label has
+ *    to travel with the picture rather than sitting in a paragraph a crop can
+ *    lose.
  */
-import { Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { site, origin, gamePath, socials } from "../lib/site";
+import MediaFigure from "../components/MediaFigure.astro";
+import { site, origin, gamePath } from "../lib/site";
 import { counts } from "../lib/gamedata";
-
-import townShot from "../../../docs/screenshots/unity-town-runtime-2026-08-23.jpg";
-import roadShot from "../../../docs/screenshots/hearthvale-east-road-local-props-2026-08-25.png";
-import overworld from "../../../docs/concepts/isoperia-overworld-layout-v1.png";
-
-const github = socials().find((s) => s.id === "github");
+import { media, type MediaId } from "../lib/media";
 
 const facts: { k: string; v: string }[] = [
   { k: "Title", v: site.name },
@@ -41,23 +37,26 @@ const facts: { k: string; v: string }[] = [
   },
 ];
 
-const shots = [
-  {
-    src: townShot,
-    alt: "The Hearthvale settlement at runtime, seen from the third-person follow camera: a plaza, timber buildings and villagers.",
-    caption: "Hearthvale at runtime",
-  },
-  {
-    src: roadShot,
-    alt: "The east road out of Hearthvale, with travel lanterns and a supply crate grounded to the terrain.",
-    caption: "The east road, with route anchors",
-  },
-  {
-    src: overworld,
-    alt: "Top-down concept layout of the Isoperia overworld, showing the central settlement and the surrounding regions.",
-    caption: "Overworld layout concept",
-  },
-];
+/*
+ * WHAT IS NOT HERE, AND WHY
+ *
+ * unity-town-runtime-2026-08-23.jpg was published on this page and has been
+ * removed. It is a screenshot of the Unity EDITOR, not of the game: hierarchy
+ * panel, inspector, and a console showing debug output, internal object names
+ * and a local bridge port. The game view inside it is the old isometric
+ * prototype, which is not what Isoperia is any more.
+ *
+ * Its alt text described "the Hearthvale settlement at runtime, seen from the
+ * third-person follow camera" — a picture that does not exist in that file. A
+ * screen-reader user was told about a plaza while everyone else saw an IDE.
+ *
+ * scripts/verify-no-internals.cjs could not have caught this: it reads the text
+ * of built pages and cannot see inside a PNG. scripts/verify-media.cjs is the
+ * check that covers the gap — every image published by this site must be
+ * registered in web/src/lib/media.ts with a declared provenance, and that file
+ * blocks this one by name with the reason.
+ */
+const shots: MediaId[] = ["hearthvale-east-road", "overworld-layout", "gameplay-loop"];
 ---
 
 <BaseLayout
@@ -71,8 +70,9 @@ const shots = [
       <h1 data-reveal>{site.name}</h1>
       <p class="logline" data-reveal>{site.tagline}</p>
       <p class="note" data-reveal>
-        Everything on this page may be reproduced for coverage. Screenshots are from real
-        builds, not mock-ups.
+        Everything on this page may be reproduced for coverage. Each image below says
+        whether it is a capture from a real build or concept art — please carry that
+        distinction if you reproduce one.
       </p>
     </div>
   </section>
@@ -105,21 +105,26 @@ const shots = [
     <div class="wrap">
       <h2 data-reveal>Screenshots</h2>
       <p class="note" data-reveal>
-        Right-click to save. Higher-resolution originals live in the repository under <code
-          >docs/</code
-        >.
+        Right-click to save. Higher-resolution originals are available on request.
       </p>
 
       <div class="shots">
         {
-          shots.map((s) => (
-            <figure class="shot" data-reveal>
-              <Image src={s.src} alt={s.alt} widths={[480, 960, 1440]} loading="lazy" />
-              <figcaption>{s.caption}</figcaption>
-            </figure>
+          shots.map((id) => (
+            <MediaFigure
+              id={id}
+              data-reveal
+              sizes="(min-width: 48rem) 30rem, 100vw"
+              widths={[480, 960]}
+            />
           ))
         }
       </div>
+      <p class="note note--after">
+        The badge on each image is part of the image. If you reproduce one, please carry
+        it: <strong>{media["overworld-layout"].caption}</strong> is illustration, not a screenshot,
+        and running it as one would misrepresent how the game looks.
+      </p>
     </div>
   </section>
 
@@ -146,21 +151,18 @@ const shots = [
     <div class="wrap">
       <h2 data-reveal>Contact</h2>
       {
-        /* site.config.json's press address is null. Rather than render a dead
-           mailto:, point at the places that genuinely reach the project. */
+        /* Both the press address and every social link in site.config.json are
+           still null. This block used to fall back to a repository link, which
+           is no longer published — so it says plainly that there is no contact
+           route yet rather than pointing at one that does not exist. Filling in
+           contact.press, or any social url, makes this section useful. */
       }
       <p class="note" data-reveal>
-        There is no dedicated press address yet. The most reliable way to reach the
-        project is through the repository — issues and discussions are read.
+        There is no press contact address yet. This section will carry one as soon as
+        there is a role address to publish; until then there is no route to the project
+        from this page, and saying so is more useful than a dead link.
       </p>
       <p class="cta-row" data-reveal>
-        {
-          github && (
-            <a class="btn btn--secondary" href={github.url} rel="noopener noreferrer">
-              {github.cta}
-            </a>
-          )
-        }
         <a class="btn" href={gamePath} data-exit>Play in your browser</a>
       </p>
       <p class="note note--after">
@@ -223,23 +225,6 @@ const shots = [
     display: grid;
     gap: var(--space-lg);
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-  }
-
-  .shot {
-    margin: 0;
-  }
-
-  .shot :global(img) {
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-subtle);
-  }
-
-  .shot figcaption {
-    margin-top: var(--space-xs);
-    color: var(--text-muted);
-    font-size: var(--text-xs);
   }
 
   .cta-row {

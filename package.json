@@ -42,11 +42,12 @@
     "verify:compose": "node scripts/verify-compose.cjs",
     "verify:deploy-report": "node scripts/verify-deploy-report.cjs",
     "verify:site": "npm run verify:tokens && npm run verify:xp && npm run verify:compose && npm run verify:deploy-report",
-    "verify:security": "node scripts/verify-browser-guard.cjs && node scripts/verify-csp.cjs && node scripts/verify-chrome.cjs && node scripts/verify-doc-layout.cjs && node scripts/verify-no-internals.cjs && node scripts/verify-hero.cjs",
+    "verify:security": "node scripts/verify-browser-guard.cjs && node scripts/verify-csp.cjs && node scripts/verify-chrome.cjs && node scripts/verify-doc-layout.cjs && node scripts/verify-no-internals.cjs && node scripts/verify-media.cjs && node scripts/verify-hero.cjs",
     "verify:doc-layout": "node scripts/verify-doc-layout.cjs",
     "verify:no-internals": "node scripts/verify-no-internals.cjs",
     "verify:hero": "node scripts/verify-hero.cjs",
-    "verify:browser-guard": "node scripts/verify-browser-guard.cjs"
+    "verify:browser-guard": "node scripts/verify-browser-guard.cjs",
+    "verify:media": "node scripts/verify-media.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"
