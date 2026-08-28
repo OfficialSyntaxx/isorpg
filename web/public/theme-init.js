@@ -35,6 +35,34 @@
    */
   document.documentElement.setAttribute("data-js", "");
 
+  /* A3: the time of day, decided before first paint.
+   *
+   * This lived in the hero's own module and ran after load, which changed the
+   * sun's top/right/width/height once the page was already painted. Those are
+   * LAYOUT properties, so a 429x429 element moving counted as a layout shift:
+   * Lighthouse attributed 0.29 of a 0.295 CLS to span.hero__sun alone, and it
+   * cost the landing page 17 points of mobile performance.
+   *
+   * Deciding it here costs one Date call in a script that already blocks, and
+   * the hero is simply correct on the first frame — there is nothing to shift.
+   *
+   * The boundaries are uneven because light is: a narrow dawn, a long flat day,
+   * a short intense dusk, and a long night where the settlement's windows are
+   * the brightest thing on screen. Local time, so midnight anywhere looks like
+   * midnight.
+   */
+  var hour = new Date().getHours();
+  document.documentElement.setAttribute(
+    "data-daypart",
+    hour >= 5 && hour < 8
+      ? "dawn"
+      : hour >= 8 && hour < 17
+        ? "day"
+        : hour >= 17 && hour < 20
+          ? "dusk"
+          : "night",
+  );
+
   try {
     var saved = window.localStorage.getItem("isoperia-theme");
     if (saved === "light" || saved === "dark") {

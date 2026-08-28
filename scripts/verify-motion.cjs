@@ -358,10 +358,26 @@ const url = (r) => `http://localhost:${PORT}${r}`;
           window.__cls = -1;
         }
       });
+      /*
+       * CPU THROTTLED, BECAUSE UNTHROTTLED THIS CHECK IS BLIND.
+       *
+       * The first version ran at full speed and passed at under 0.1 while
+       * production measured 0.295 on the same commit. The shift it missed was
+       * the hero sun: a script set the time of day after load, changing the
+       * sun's top/right/width/height on an already-painted page. Unthrottled,
+       * that script finishes so early the move lands before anything worth
+       * measuring; at 4x it lands after paint, exactly as it does on a phone.
+       *
+       * 4x is the rate Lighthouse's mobile profile emulates, and verify-hero.cjs
+       * already uses it for the same reason.
+       */
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+
       await page.goto(url(route), { waitUntil: "load" });
       // Long enough to include the hero's generator, which starts on an idle
       // callback with a 1200ms timeout and is the slowest thing that can shift.
-      await page.waitForTimeout(3200);
+      await page.waitForTimeout(4200);
       const cls = await page.evaluate(() => window.__cls);
       if (cls < 0) {
         console.log(`SKIP  ${route}: no layout-shift observer.`);
@@ -888,7 +904,10 @@ const url = (r) => `http://localhost:${PORT}${r}`;
       await page.goto(url("/?world=abcxyz"), { waitUntil: "load" });
       await page.waitForTimeout(2400);
       const seen = await page.evaluate(() => ({
-        part: document.querySelector(".hero")?.getAttribute("data-daypart"),
+        // On <html>, not the hero: it is set by the pre-paint blocking script
+        // so the sun's geometry is right on the first frame. Setting it after
+        // load moved a 429x429 element and cost 0.29 of CLS.
+        part: document.documentElement.getAttribute("data-daypart"),
         hour: Number(
           getComputedStyle(document.querySelector("[data-hero-hour]")).opacity,
         ),

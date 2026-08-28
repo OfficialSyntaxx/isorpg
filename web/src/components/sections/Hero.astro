@@ -618,7 +618,7 @@ import { site, gamePath } from "../../lib/site";
      so this reflects a real system rather than inventing an effect. It is not
      synchronised to it: the game's day is a game-length day, and matching the
      player's wall clock is the point here. */
-  .hero[data-daypart="dawn"] .hero__sun {
+  :root[data-daypart="dawn"] .hero__sun {
     top: 8%;
     right: 6%;
     width: 44vmax;
@@ -630,7 +630,7 @@ import { site, gamePath } from "../../lib/site";
     );
   }
 
-  .hero[data-daypart="dusk"] .hero__sun {
+  :root[data-daypart="dusk"] .hero__sun {
     top: 26%;
     right: -4%;
     width: 52vmax;
@@ -645,7 +645,7 @@ import { site, gamePath } from "../../lib/site";
   /* No sun at night. The moon is not worth a layer; an absence reads correctly
      on its own, and the window lights become the brightest thing on screen,
      which is exactly what should happen. */
-  .hero[data-daypart="night"] .hero__sun {
+  :root[data-daypart="night"] .hero__sun {
     opacity: 0.16;
     top: 4%;
     right: 14%;
@@ -670,7 +670,7 @@ import { site, gamePath } from "../../lib/site";
   }
 
   /* Day is the resting state and adds nothing: an overlay at zero opacity. */
-  .hero[data-daypart="dawn"] .hero__hour {
+  :root[data-daypart="dawn"] .hero__hour {
     opacity: 0.5;
     background: linear-gradient(
       100deg,
@@ -681,7 +681,7 @@ import { site, gamePath } from "../../lib/site";
     );
   }
 
-  .hero[data-daypart="dusk"] .hero__hour {
+  :root[data-daypart="dusk"] .hero__hour {
     opacity: 0.66;
     background: linear-gradient(
       100deg,
@@ -692,7 +692,7 @@ import { site, gamePath } from "../../lib/site";
     );
   }
 
-  .hero[data-daypart="night"] .hero__hour {
+  :root[data-daypart="night"] .hero__hour {
     opacity: 0.88;
     background: linear-gradient(
       100deg,
@@ -706,8 +706,8 @@ import { site, gamePath } from "../../lib/site";
   /* Without color-mix every gradient above collapses, which would leave the
      night hero with no night in it. The unmodified day scene is the fallback. */
   @supports not (background: color-mix(in srgb, red 50%, blue)) {
-    .hero[data-daypart] .hero__sun,
-    .hero[data-daypart] .hero__hour {
+    :root[data-daypart] .hero__sun,
+    :root[data-daypart] .hero__hour {
       background: none;
     }
   }
@@ -718,30 +718,14 @@ import { site, gamePath } from "../../lib/site";
 
   const canvas = document.querySelector<HTMLCanvasElement>("[data-hero-terrain]");
   const life = document.querySelector<HTMLCanvasElement>("[data-hero-life]");
-  const hero = document.querySelector<HTMLElement>(".hero");
 
-  // A3 — the visitor's own hour, applied before the world is generated so the
-  // scene never flashes from day to night.
+  // A3 lives in theme-init.js now, not here.
   //
-  // The boundaries are uneven on purpose: light does not change in four equal
-  // blocks. Dawn is narrow, day is long and flat, dusk is short and the most
-  // saturated hour of the day, and night is the long stretch where the
-  // settlement's windows are the brightest thing on screen.
-  //
-  // Local time, not UTC: someone in Auckland opening this at their midnight
-  // should see midnight.
-  if (hero) {
-    const h = new Date().getHours();
-    const part =
-      h >= 5 && h < 8
-        ? "dawn"
-        : h >= 8 && h < 17
-          ? "day"
-          : h >= 17 && h < 20
-            ? "dusk"
-            : "night";
-    hero.setAttribute("data-daypart", part);
-  }
+  // Deciding the daypart in this module meant setting it AFTER load, which
+  // changed the sun's top/right/width/height on an already-painted page.
+  // Those are layout properties, so the sun moving was a layout shift —
+  // Lighthouse attributed 0.29 of a 0.295 CLS to span.hero__sun on its own.
+  // It is decided before first paint now, so the hero is correct on frame one.
 
   if (canvas && life) {
     // Started AFTER the page has loaded and the browser is idle, not during it.
