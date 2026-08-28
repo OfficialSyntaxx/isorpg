@@ -86,6 +86,7 @@ Update the Status column as phases move.
 | 11 | Backend Phase B2 (accounts) | Opus 5 | ⬜ Blocked on B1 | Design doc only until greenlit |
 | 12 | Backend Phase B3 (cloud saves) | Opus 5 | ⬜ Blocked on B2 | Design doc only until greenlit |
 | 13 | Showing the game | Opus 5 | ✅ Done | Every published image declared with a provenance and rendered with a badge; the world map is the actual mainland |
+| 14 | Aesthetic pieces & player tools | Opus 5 | ⬜ Planned | Budget reclaimed to ≥97 mobile; A1–A6 each asserted in verify-motion; U1–U3 live at target |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked · ⏸️ Deferred
 
@@ -1974,6 +1975,198 @@ Lighthouse mobile after: `/` 95, `/world/` 95, median of three runs, with
 accessibility, best practices and SEO at 100. Both are at the target rather than
 above it — earlier medians on the same pages were 95 and 96, so this is inside
 run-to-run variance, but there is now no headroom on the performance gate.
+
+### Phase 14 — Six aesthetic pieces and three tools ⬜
+
+Planned 2026-08-28 at the owner's request: *"more unique features… at minimum 5
+new aesthetic features… and then a couple user features."* Nothing here is
+started. Ordered, costed, and grounded in assets and data that already exist —
+no new dependencies, no external hosts, no backend.
+
+#### The prerequisite: there is no performance budget left
+
+Mobile Lighthouse is **95 on `/` and 95 on `/world/`** against a target of ≥95.
+Every aesthetic piece below lands on those two pages, so the first task is not a
+feature. Current landing payload, gzipped: **7,243 B of JavaScript** across five
+component scripts and **11,107 B of CSS** across four files.
+
+Candidate reclamation, cheapest first:
+
+- `BaseLayout` CSS is 6,473 B gzipped and carries the global component layer —
+  chips, tables, callouts, the TOC — on every route including the landing page,
+  which uses a fraction of it. Splitting the genuinely global rules from the
+  document-page rules is the single biggest available win.
+- `hero-terrain.ts` is 3,534 B gzipped, half the site's JavaScript. It runs once
+  and never again after the entrance settles. Worth checking whether the
+  entrance path can be dropped after first paint.
+- The overworld artwork is a 3 MB PNG that Astro reduces to 117 KB of WebP at
+  1280. Confirm which variant a phone actually fetches and whether a narrower
+  one would do.
+
+**Exit gate: `/` and `/world/` at ≥97 mobile, median of five runs, before any
+Phase 14 feature ships.** Without that, the first thing added takes the site
+below its own gate.
+
+#### The asymmetry worth exploiting
+
+The aesthetic pieces all cost the two constrained pages. **The tools are new
+routes, so they cost those pages nothing.** If the budget work stalls, the tools
+can ship regardless — which is why they are not simply last.
+
+#### A1 — The 600 ms tick becomes the site's metronome · ~0 bytes
+
+The game runs on a 600 ms tick, and the trust row already carries a dot pulsing
+at exactly that interval. But the motion scale itself (`--dur-instant: 120ms`
+through `--dur-world: 1800ms`) is a set of arbitrary round numbers that happen
+to sit near tick fractions.
+
+Re-derive the whole scale from one `--tick: 600ms`: 120 = tick/5, 200 = tick/3,
+300 = tick/2, 600 = tick, 1800 = tick×3. The rendered values barely move. What
+changes is that they are *derived* — the site moves at the engine's heartbeat by
+construction, one number retunes everything, and the claim becomes true rather
+than decorative.
+
+The cheapest identity win available, and the one hardest to copy without the
+game behind it.
+
+#### A2 — The hero world is seeded per visitor, and shareable · ~300 bytes
+
+`hero-terrain.ts` is deterministic: three hardcoded seeds (`20260827` for the
+terrain noise, `4242` for the window lights, `99` for the birds) with a comment
+explaining that a fixed seed is reviewable and `Math.random` is not.
+
+Thread one seed through all three, derive it per visit, show it discreetly
+("world #4F2A91"), and honour `?world=` so a seed reproduces exactly. Every
+visitor gets their own Isoperia, and a good one can be shared or pinned for
+press.
+
+Checked before proposing: **no golden-image check covers the hero.**
+`verify-hero.cjs` detects animation by comparing hashes to each other, not to
+committed values, and `visual-regress.cjs` baselines the *game's* opening frame.
+A per-visitor seed breaks nothing. `?world=` gives the checks a pin anyway.
+
+#### A3 — Real-time day and night in the hero · ~400 bytes
+
+The hero's sun breathes on a 42 s loop and the wash on a 90 s loop — both
+arbitrary. Drive them from the visitor's local clock instead: dawn, day, dusk
+and night palettes, sun position by hour, window lights carrying the scene after
+sunset. The game has its own day clock (`clock: { minute, day }`,
+`DAY_START_MINUTE`), so this is a real system reflected, not an effect invented.
+
+Someone opening the site at 11 pm should see a night settlement.
+
+#### A4 — The experience curve draws itself as you climb · ~250 bytes CSS, 0 JS
+
+The Progression section already draws its curve once on entry, via
+`initPathDraw`. Scrub it against scroll instead, with the M11 technique
+(`animation-timeline: view()`), so descending the page climbs the curve — and
+the single most quotable fact about the game ("half the experience to 99 sits
+above level 92") lands exactly as the line goes vertical.
+
+Reuses machinery that already exists and is already gated.
+
+#### A5 — Region-reactive chrome · ~200 bytes CSS
+
+The ambient tint crossfades by region as you scroll, but the accent colour, the
+focus ring, the seam glow and the scrollbar stay constant throughout. Bind them
+to the active region too, so the whole interface travels rather than a
+background wash doing it alone.
+
+Constraint: the focus ring must keep 3:1 against every region surface (WCAG
+2.4.13 / 1.4.11), which means auditing five colours rather than assuming.
+
+#### A6 — A travel lantern on the world map · ~400 bytes
+
+The spotlight mask on the overworld art currently follows selection. Let it also
+follow the pointer — a soft warm light revealing the ground under the cursor,
+matching the travel lanterns and route anchors the game uses to mark a road.
+
+Pointer-only enhancement. The button list stays the accessible path and the
+selected spotlight stays authoritative, so nothing is lost without a mouse.
+
+#### Considered and rejected
+
+**Item-emoji ambience.** All 62 items carry an emoji icon in the export, which
+makes a drifting constellation of them nearly free. Rejected: emoji render
+differently on every platform, carry no information here, and would be the first
+element on the site that is decoration with no argument behind it — §6.1.1.
+
+**A three.js or `<model-viewer>` showcase** for `hero_rigged.glb`,
+`villager.glb`, `forest_ogre.glb` and the rest. Rejected on weight: ~600 KB
+against a 7 KB script payload and a page already at its performance gate. The
+still renders already carry the art.
+
+#### U1 — `/bestiary`: every creature, with the real numbers · new route
+
+Twelve monsters in `combat.json`, four already registered with portraits. Per
+creature: level, hitpoints, max hit, attack style, experience awarded per kill,
+respawn interval, the drop table with weights converted to real probabilities,
+and the pet chance. Reuses the card built in M13.
+
+The eight without portraits get a data card and no image rather than a
+placeholder — `phase1_creature_silhouettes.png` exists but showing a silhouette
+sheet as a portrait would be the editor-screenshot mistake in a new costume.
+
+This is the page a player checks before deciding whether to walk east.
+
+#### U2 — `/calculator`: the experience planner · new route
+
+`xp.json` carries all 99 levels, already ported into `web/src/lib/xp.ts` and
+asserted equal to the game's table, element for element, by
+`verify-xp-parity.cjs`. `skills.json` carries `RESOURCES` with experience per
+action and ticks per action for all nine nodes.
+
+Together those answer the question every skill-game player actually has: *"I am
+level 63 Woodcutting with 400,000 experience — how many oak logs to 99, and how
+long is that?"* Actions **and** wall-clock time, because the tick length is
+known.
+
+Highest utility per byte on this list, entirely from data that is already
+parity-tested, and the kind of page that earns organic search rather than being
+shown to people who already arrived.
+
+#### U3 — `/save`: read your own save, in your browser · new route
+
+The game exports saves (`SAVE_VERSION = "1.1.0"`, sanitised on import). A page
+that accepts a dropped or pasted export and renders skill levels with progress
+to 99, total level, kill counts, achievements, the collection log, town
+buildings and playtime.
+
+**Nothing leaves the browser** — which makes this the strongest possible
+demonstration of the claim `/legal/privacy` already makes, that the site
+contacts no external host. Almost no indie game site offers this.
+
+Risks, both handleable: the save shape can drift, so the page reads `version`
+and refuses anything it does not know rather than rendering nonsense from a
+newer file; and a save is personal data, so the page must say plainly and
+verifiably that it is parsed locally, with no network call in the code path.
+
+#### U4 — items and recipes, later
+
+62 items and 31 recipes with emoji icons, values and shop stock. Cheap and
+useful, but less distinctive than U1–U3 and partly redundant with `/wiki`.
+
+#### Blocked, and named so it is not re-proposed
+
+A newsletter and a contact form need Phase 10. A Discord link needs a Discord.
+Neither is an aesthetic or content problem.
+
+#### Suggested order
+
+| # | Piece | Why here |
+|---|---|---|
+| 0 | Reclaim the budget to ≥97 | Everything aesthetic depends on it |
+| 1 | A1 tick metronome, A5 region chrome | Near-zero bytes, immediate identity |
+| 2 | A3 day/night, A2 seeded world | Together these make the hero the signature |
+| 3 | U2 calculator | Best utility per byte; costs the constrained pages nothing |
+| 4 | A4 curve scrub | Pairs with U2; reuses M11 |
+| 5 | U1 bestiary | Reuses M13 |
+| 6 | A6 lantern | Polish once the rest is settled |
+| 7 | U3 save inspector | Largest build, largest differentiator |
+
+Each aesthetic piece needs its assertions in `verify-motion.cjs` and its failure
+mode reproduced before it is trusted, per the pattern Phases 13a–13d
+established. Each new route needs a Lighthouse row at target before it ships.
 
 ---
 
