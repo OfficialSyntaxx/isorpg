@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using CoreGrid = Isoperia.Core.World.Grid;
+using Isoperia.Core.World;
 
 namespace Isoperia.Unity
 {
@@ -19,6 +20,13 @@ namespace Isoperia.Unity
         private const string LocalPropTrialAsset = "Art/OwnedModels/local_prop_trial";
         private const string PlazaFountainAsset = "Art/OwnedModels/hearthvale_plaza_fountain";
         private const string MarketCanopyAsset = "Art/OwnedModels/hearthvale_market_canopy";
+        private const string AwningAsset = "Art/OwnedModels/hearthvale_awning";
+        private const string NoticeboardAsset = "Art/OwnedModels/hearthvale_noticeboard";
+        private const string HandcartAsset = "Art/OwnedModels/hearthvale_handcart";
+        private const string ProduceCrateAsset = "Art/OwnedModels/hearthvale_produce_crate";
+        private const string BarrelAsset = "Art/OwnedModels/hearthvale_barrel";
+        private const string SacksAsset = "Art/OwnedModels/hearthvale_sacks";
+        private const string BenchAsset = "Art/OwnedModels/hearthvale_bench";
         private readonly List<GameObject> instances = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
         private Material paving;
@@ -54,19 +62,23 @@ namespace Isoperia.Unity
             // Hearthvale sits in the mainland's central 18x18 district. The
             // composition is relative to the authoritative center, never a
             // retired prototype-island coordinate.
-            const float ground = .18f;
-            Vector3 center = new Vector3(CoreGrid.TownCenter + .5f, ground, CoreGrid.TownCenter + .5f);
+            float centerX = CoreGrid.TownCenter + .5f;
+            float centerZ = CoreGrid.TownCenter + .5f;
+            Vector3 center = new Vector3(centerX, GroundAt(centerX, centerZ), centerZ);
 
             CreateTownMaterials();
             CreatePlazaAndStreets(center);
 
-            CreatePlazaFountain(center + new Vector3(0f, .02f, 0f));
-            CreateMarketShelter(center + new Vector3(-4.2f, .02f, 2.8f), 180f);
-            CreateMarketShelter(center + new Vector3(4.2f, .02f, -2.8f), 0f);
-            CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", center + new Vector3(-2.8f, .7f, 1.2f), new Color(.23f, .32f, .22f));
-            CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", center + new Vector3(2.8f, .7f, -1.2f), new Color(.38f, .23f, .16f));
+            PlaceOwnedLandmark(PlazaFountainAsset, "Town_HearthvalePlazaFountain", AtGround(center + new Vector3(0f, 0f, 0f)), 2.1f, 0f,
+                () => CreatePlazaFountain(center));
+            PlaceOwnedLandmark(MarketCanopyAsset, "Town_HearthvaleMarketNorth", AtGround(center + new Vector3(-4.2f, 0f, 2.8f)), 2.5f, 180f,
+                () => CreateMarketShelter(center + new Vector3(-4.2f, 0f, 2.8f), 180f));
+            PlaceOwnedLandmark(MarketCanopyAsset, "Town_HearthvaleMarketSouth", AtGround(center + new Vector3(4.2f, 0f, -2.8f)), 2.5f, 0f,
+                () => CreateMarketShelter(center + new Vector3(4.2f, 0f, -2.8f), 0f));
+            CreateNpc("Forester Elowen", "Gather 15 logs and return to the plaza.", "npc_ranger_kit", AtGround(center + new Vector3(-2.8f, 0f, 1.2f)), new Color(.23f, .32f, .22f));
+            CreateNpc("Cook Bram", "Cook a shrimp at your campfire.", "npc_blacksmith_kit", AtGround(center + new Vector3(2.8f, 0f, -1.2f)), new Color(.38f, .23f, .16f));
             CreateJourneyNpc("Wayfinder Nahl", "Lantern Road accepted · follow the eastern lights to Cinder Hollow, then return.",
-                center + new Vector3(6.8f, .7f, .7f), new Color(.82f, .66f, .22f));
+                "npc_guard_kit", AtGround(center + new Vector3(6.8f, 0f, .7f)), new Color(.82f, .66f, .22f));
 
             // Four readable, larger homes establish a proper residential ring.
             // The former procedural lanes overlapped the plaza sightlines and
@@ -90,7 +102,7 @@ namespace Isoperia.Unity
             }
             Place("windmill", center + new Vector3(12.5f, 0f, 13.5f), Vector3.one * 1.7f, -25f);
             CreateField(center + new Vector3(9.8f, 0f, 17f));
-            CreateNpc("Scout Tamsin", "Defeat a Giant Rat on the eastern route.", center + new Vector3(8f, .7f, 7f), new Color(.28f, .40f, .70f));
+            CreateNpc("Scout Tamsin", "Defeat a Giant Rat on the eastern route.", "npc_villager", AtGround(center + new Vector3(8f, 0f, 7f)), new Color(.28f, .40f, .70f));
             Place("watermill", center + new Vector3(-11f, 0f, 8f), Vector3.one * 1.25f, 90f);
 
             // Trees and stones define the settlement edge instead of blocking paths.
@@ -99,6 +111,16 @@ namespace Isoperia.Unity
             Place("tree", center + new Vector3(13f, 0f, -10f), Vector3.one * 1.35f, -20f);
             Place("rock-large", center + new Vector3(-13.5f, 0f, 10f), Vector3.one * 1.3f, 28f);
             Place("rock-small", center + new Vector3(13.5f, 0f, 9f), Vector3.one * 1.2f, -18f);
+
+            // Small authored props make the hub feel lived in without returning
+            // to the old unreviewed asset scatter.
+            PlaceOwnedProp(NoticeboardAsset, "Town_Noticeboard", center + new Vector3(-3.3f, 0f, -3.2f), 1.55f, 24f);
+            PlaceOwnedProp(HandcartAsset, "Town_Handcart", center + new Vector3(-5.6f, 0f, 4.3f), 1.1f, 135f);
+            PlaceOwnedProp(ProduceCrateAsset, "Town_ProduceCrate", center + new Vector3(-4.9f, 0f, 3.5f), .7f, 10f);
+            PlaceOwnedProp(BarrelAsset, "Town_Barrel", center + new Vector3(5.0f, 0f, -3.7f), .72f, 0f);
+            PlaceOwnedProp(SacksAsset, "Town_Sacks", center + new Vector3(5.7f, 0f, -3.3f), .78f, -20f);
+            PlaceOwnedProp(BenchAsset, "Town_Bench", center + new Vector3(1.7f, 0f, 3.8f), .85f, 180f);
+            PlaceCampfire(AtGround(center + new Vector3(-10.6f, 0f, -1.8f)));
         }
 
         private void CreateResidentialLane(Vector3 origin, float yaw, int homes)
@@ -114,9 +136,8 @@ namespace Isoperia.Unity
 
         private void CreateWorkshop(Vector3 origin, float yaw)
         {
-            // The previous forge export reads as a huge siege engine at the
-            // town camera distance. Keep this edge space clear until its
-            // replacement is modeled to the settlement scale.
+            PlaceForge(AtGround(origin), yaw);
+            PlaceOwnedProp(AwningAsset, "Town_WorkshopAwning", origin + new Vector3(1.8f, 0f, 2.2f), 1.6f, yaw);
             Place("fence", origin + new Vector3(1.8f, 0f, 2.2f), Vector3.one * 1.35f, yaw);
             Place("rock-small", origin + new Vector3(-2.0f, 0f, -1.7f), Vector3.one * .95f, 27f);
         }
@@ -133,6 +154,7 @@ namespace Isoperia.Unity
 
             GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
             instance.name = "Town_HearthvaleForge";
+            OwnedModelPresentation.FitToHeight(instance, 2.65f, position.y);
             ApplyForgePalette(instance);
             instances.Add(instance);
         }
@@ -148,7 +170,7 @@ namespace Isoperia.Unity
 
             GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
             instance.name = instanceName;
-            OwnedModelPresentation.FitToHeight(instance, height);
+            OwnedModelPresentation.FitToHeight(instance, height, position.y);
             ApplyOwnedLandmarkPalette(instance);
             instances.Add(instance);
         }
@@ -213,19 +235,13 @@ namespace Isoperia.Unity
             house.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             instances.Add(house);
 
-            float width = scale * 1.45f;
-            float depth = scale * 1.15f;
-            float wallHeight = scale * 1.34f;
-            AddBlock(house.transform, "StoneFoundation", new Vector3(0f, .14f, 0f), new Vector3(width + .12f, .28f, depth + .12f), plaster);
-            AddBlock(house.transform, "PlasterWall", new Vector3(0f, wallHeight * .55f, 0f), new Vector3(width, wallHeight, depth), plaster);
-            AddBlock(house.transform, "FrontTimber", new Vector3(0f, wallHeight * .55f, -depth - .025f), new Vector3(.12f, wallHeight * 1.02f, .10f), timber);
-            AddBlock(house.transform, "CornerTimberLeft", new Vector3(-width, wallHeight * .55f, -depth - .025f), new Vector3(.10f, wallHeight * 1.02f, .10f), timber);
-            AddBlock(house.transform, "CornerTimberRight", new Vector3(width, wallHeight * .55f, -depth - .025f), new Vector3(.10f, wallHeight * 1.02f, .10f), timber);
-            AddBlock(house.transform, "Door", new Vector3(0f, wallHeight * .34f, -depth - .09f), new Vector3(width * .28f, wallHeight * .62f, .06f), timber);
-            AddBlock(house.transform, "WindowLeft", new Vector3(-width * .62f, wallHeight * .62f, -depth - .09f), new Vector3(width * .16f, wallHeight * .24f, .05f), windowGlow);
-            AddBlock(house.transform, "WindowRight", new Vector3(width * .62f, wallHeight * .62f, -depth - .09f), new Vector3(width * .16f, wallHeight * .24f, .05f), windowGlow);
-            AddBlock(house.transform, "RoofLeft", new Vector3(-width * .5f, wallHeight + scale * .35f, 0f), new Vector3(width * .78f, .15f, depth + .18f), roof, 0f, 0f, -32f);
-            AddBlock(house.transform, "RoofRight", new Vector3(width * .5f, wallHeight + scale * .35f, 0f), new Vector3(width * .78f, .15f, depth + .18f), roof, 0f, 0f, 32f);
+            // Kenney's CC0 modular kit is used as actual architecture here;
+            // do not replace it with cube walls merely to make a house quickly.
+            PlaceKitPiece(house.transform, "wall-wood-door", new Vector3(0f, 0f, -1.15f), scale, 0f);
+            PlaceKitPiece(house.transform, "wall-wood-window-shutters", new Vector3(0f, 0f, 1.15f), scale, 180f);
+            PlaceKitPiece(house.transform, "wall-wood", new Vector3(-1.15f, 0f, 0f), scale, -90f);
+            PlaceKitPiece(house.transform, "wall-wood", new Vector3(1.15f, 0f, 0f), scale, 90f);
+            PlaceKitPiece(house.transform, "roof-gable", new Vector3(0f, 1.45f * scale, 0f), scale * 1.05f, 0f);
         }
 
         private void CreateTownMaterials()
@@ -309,17 +325,17 @@ namespace Isoperia.Unity
             Destroy(cylinder.GetComponent<Collider>());
         }
 
-        private void CreateNpc(string name, string hint, Vector3 position, Color color)
+        private void CreateNpc(string name, string hint, string assetName, Vector3 position, Color color)
         {
-            GameObject npc = CreateNpcBody(name, position, color);
+            GameObject npc = CreateNpcBody(name, assetName, position, color);
             npc.AddComponent<WorldInteractionTarget>().SetNpc(name, hint);
             npc.AddComponent<WorldNpcAmbientView>();
             instances.Add(npc);
         }
 
-        private void CreateJourneyNpc(string name, string hint, Vector3 position, Color color)
+        private void CreateJourneyNpc(string name, string hint, string assetName, Vector3 position, Color color)
         {
-            GameObject npc = CreateNpcBody(name, position, color);
+            GameObject npc = CreateNpcBody(name, assetName, position, color);
             WorldInteractionTarget target = npc.AddComponent<WorldInteractionTarget>();
             target.SetNpc(name, hint);
             target.SetJourney(LightPoolExpeditionSystem.AcceptedJournalId);
@@ -327,15 +343,26 @@ namespace Isoperia.Unity
             instances.Add(npc);
         }
 
-        private GameObject CreateNpcBody(string name, Vector3 position, Color fallbackColor)
+        private GameObject CreateNpcBody(string name, string assetName, Vector3 position, Color fallbackColor)
         {
-            // The available NPC source meshes are raw production studies with
-            // inconsistent origins and scale. A deliberately simple, grounded
-            // town-contact silhouette is clearer and safer until the shared
-            // rigged NPC set is finished.
             GameObject fallback = new GameObject("NPC_" + name.Replace(" ", string.Empty));
             fallback.transform.SetParent(transform, false);
             fallback.transform.position = position;
+            GameObject prefab = Resources.Load<GameObject>(OwnedNpcRoot + assetName);
+            if (prefab != null)
+            {
+                GameObject model = Instantiate(prefab, fallback.transform);
+                model.name = assetName;
+                OwnedModelPresentation.FitToHeight(model, 1.72f, position.y);
+                CapsuleCollider modelCollider = fallback.AddComponent<CapsuleCollider>();
+                modelCollider.radius = .33f;
+                modelCollider.height = 1.72f;
+                modelCollider.center = new Vector3(0f, .86f, 0f);
+                return fallback;
+            }
+
+            // Missing assets remain readable, but the normal path above is
+            // always the authored NPC model rather than a procedural proxy.
             Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             Material tunicMaterial = new Material(shader) { color = fallbackColor };
             runtimeMaterials.Add(tunicMaterial);
@@ -360,6 +387,41 @@ namespace Isoperia.Unity
             collider.height = 1.58f;
             collider.center = new Vector3(0f, .79f, 0f);
             return fallback;
+        }
+
+        private void PlaceKitPiece(Transform parent, string assetName, Vector3 localPosition, float scale, float yaw)
+        {
+            GameObject prefab = Resources.Load<GameObject>(AssetRoot + assetName);
+            if (prefab == null) return;
+            GameObject piece = Instantiate(prefab, parent);
+            piece.name = assetName;
+            piece.transform.localPosition = localPosition;
+            piece.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            piece.transform.localScale = Vector3.one * scale;
+        }
+
+        private void PlaceOwnedProp(string assetPath, string instanceName, Vector3 position, float height, float yaw)
+        {
+            GameObject prefab = Resources.Load<GameObject>(assetPath);
+            if (prefab == null) return;
+            Vector3 grounded = AtGround(position);
+            GameObject instance = Instantiate(prefab, grounded, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = instanceName;
+            OwnedModelPresentation.FitToHeight(instance, height, grounded.y);
+            ApplyOwnedLandmarkPalette(instance);
+            instances.Add(instance);
+        }
+
+        private static float GroundAt(float x, float z)
+        {
+            Tile tile = WorldRuntime.Instance.Grid.At(Mathf.FloorToInt(x), Mathf.FloorToInt(z));
+            return OpenWorldTerrainView.SurfaceHeight(tile, x, z);
+        }
+
+        private static Vector3 AtGround(Vector3 position)
+        {
+            position.y = GroundAt(position.x, position.z);
+            return position;
         }
 
         private void Place(string assetName, Vector3 position, Vector3 scale, float yaw = 0f)

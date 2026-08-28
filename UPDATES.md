@@ -1,5 +1,23 @@
 # Isoperia — Update Log
 
+## 2026-08-28 · Hearthvale visual-recovery pass (in progress)
+
+- Replaced the intentional cube/capsule fallback in the central town with the
+  curated local asset library: grounded, normalized Hearthvale fountain,
+  market canopies, forge, campfire, noticeboard, handcart, produce, barrels,
+  sacks, and bench.
+- Town contacts now instantiate the authored ranger, blacksmith, guard, and
+  villager models at a shared 1.72 m gameplay height. The old primitive NPC is
+  retained only as a missing-asset fallback.
+- Residential homes now use the imported CC0 modular town-kit walls and roofs
+  instead of generated cube walls. Imported model grounding is centralized in
+  `OwnedModelPresentation` so each curated prop sits on the actual terrain.
+- This is deliberately not a re-enable of the retired asset-scatter views.
+  Combat, routes, districts, and player animation remain separate polish
+  phases and will be restored only after visual review at controlled scale.
+
+**Validation:** Unity batch compilation completed cleanly after the change.
+
 ## 2026-08-25 · Phase 1 settlement asset-library expansion
 
 - Continued the local-only Phase 1 art pass without adding new scene placement.
