@@ -86,7 +86,7 @@ Update the Status column as phases move.
 | 11 | Backend Phase B2 (accounts) | Opus 5 | ⬜ Blocked on B1 | Design doc only until greenlit |
 | 12 | Backend Phase B3 (cloud saves) | Opus 5 | ⬜ Blocked on B2 | Design doc only until greenlit |
 | 13 | Showing the game | Opus 5 | ✅ Done | Every published image declared with a provenance and rendered with a badge; the world map is the actual mainland |
-| 14 | Aesthetic pieces & player tools | Opus 5 | 🟡 In progress | A1–A6 each asserted in verify-motion; U1–U3 live; production Lighthouse at target for every route |
+| 14 | Aesthetic pieces & player tools | Opus 5 | ✅ Done | A1–A6 each asserted in verify-motion; U1–U3 live; production Lighthouse at target for every route |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked · ⏸️ Deferred
 
@@ -2110,127 +2110,92 @@ each failure is worth keeping:
 Four controls reproduce: terrain reverted to a named constant, `?world=` parsed
 but discarded, night's veil zeroed, and the region signal unpublished.
 
-#### A4 — The experience curve draws itself as you climb · ~250 bytes CSS, 0 JS
+#### A4 ✅ — the curve is climbed, not played
 
-The Progression section already draws its curve once on entry, via
-`initPathDraw`. Scrub it against scroll instead, with the M11 technique
-(`animation-timeline: view()`), so descending the page climbs the curve — and
-the single most quotable fact about the game ("half the experience to 99 sits
-above level 92") lands exactly as the line goes vertical.
+It drew itself once on entry, on a 1400ms timer. Fine, and beside the point: the
+fact the section exists to land is that half the experience to 99 sits above
+level 92, and a timed draw shows that at whatever moment an observer happens to
+fire. Scrubbed against scroll, the reader climbs it — the long flat stretch
+passes quickly and the last seven levels take the rest of the section.
 
-Reuses machinery that already exists and is already gated.
+`pathLength="1"` is what makes it scriptless: it normalises the polyline so the
+dash offset runs 1 → 0 in pure CSS, where `initPathDraw` measures with
+`getTotalLength()` and animates on a timer, which cannot be scrubbed. Measured
+across the section: **1.00 → 0.88 → 0.59 → 0.31 → 0.02 → 0**, and 0 under
+reduced motion, because an undrawn curve is not a calmer chart but a missing
+one.
 
-#### A5 ✅ — the region you are in reaches the whole document
+The landing page's `[data-draw]` floor drops 6 → 5, since the curve is no longer
+one of those paths, and gains a direct assertion in exchange. A floor that
+quietly absorbed the change would have been worse than one that had to be
+edited.
 
-`--region` is declared on each `[data-region]` **section**, so it only ever
-reached that section's own subtree. The sticky header, the scrollbar and
-`::selection` all live outside every section — which is why the district colour
-stopped at the edge of the content while the ambient wash travelled alone.
+#### A6 ✅ — the travel lantern
 
-`initRegionAmbience` now also publishes the dominant region as `[data-here]` on
-`<html>`, by the same screen-area measure that already drives the wash, and
-`components.css` maps it to `--here` / `--here-mark`. Bound to it: the header's
-bottom hairline and a 1px glow beneath it, the scrollbar thumb, and the text
-selection colour.
+The spotlight mask already existed for selection, so the lantern is one more
+hole in it rather than a second mechanism, moved to the pointer. `cx`/`cy` are
+set as SVG attributes rather than through a style property, so there is nothing
+for the content security policy to block.
 
-**`--focus` is deliberately not bound.** Legality is not the obstacle —
-`tokens.json` asserts all four district colours at 4.5:1 on the page surface in
-both themes, comfortably above the 3:1 a focus ring needs. It would pass and
-still be wrong: someone tabbing a long page would watch their own cursor change
-colour under them. Contrast is the requirement; predictability is the point.
+**Mouse only, deliberately.** On a touch screen a pointer is a tap, and a light
+that appears where you touched and then stays is a smudge. The `pointerType`
+guard is the reason this needs a script at all — `:hover` fires on touch too.
 
-**The surfaces use `--here-mark`, not `--here`, and finding out why was the
-useful part.** `--district-frostwatch` is the *same hex* as `--accent` (#15579F
-light, #6AA8FF dark), so the first version rendered two of the six regions —
-hearth and frostwatch — identically. The ambient wash never exposed that because
-it already used the mark colours, which are all distinct. A palette fact, not a
-bug, and invisible until measured.
+#### U1 ✅ — /bestiary
 
-**Two assertions, not one, for a reason.** The attribute reaching `<html>` proves
-the signal is published; the scrollbar colour changing proves something outside
-the sections is consuming it. During this work the first passed while the second
-did not: a replacement in `components.css` silently failed to match because
-Prettier had collapsed the rule onto one line, so the scrollbar stayed bound to
-the old value. One assertion would have called that done.
+All 12 monsters with level, hitpoints, max hit, attack interval, experience by
+skill, aggro range, respawn and the full drop table. Weights are converted to
+real probabilities once at build time: "weight 140" is right for the engine and
+useless to a reader. Tertiary and pet rolls carry explicit chances and pass
+through untouched, because rescaling them against the main table would quietly
+make them wrong — and the page explains that the main column sums to 100% while
+the others are separate rolls.
 
-Verified across four regions — gold, green, blue, teal — and the negative
-control (removing the one line that publishes the attribute) fails both.
+The eight without a render get a data card and no image.
 
-#### A6 — A travel lantern on the world map · ~400 bytes
+**A check that flagged its own documentation.** `verify-media.cjs` read the
+sentence explaining why `phase1_creature_silhouettes.png` is *not* used as an
+image reference, and failed. The rule is about what a page loads, and a filename
+in a comment loads nothing, so the scanner strips comments first — confirmed it
+still catches a real import.
 
-The spotlight mask on the overworld art currently follows selection. Let it also
-follow the pointer — a soft warm light revealing the ground under the cursor,
-matching the travel lanterns and route anchors the game uses to mark a road.
+#### U2 ✅ — /calculator
 
-Pointer-only enhancement. The button list stays the accessible path and the
-selected spotlight stays authoritative, so nothing is lost without a mouse.
+40 training actions across every skill, with experience, tick cost, actions to
+target and wall-clock time. Gathering experience is not on the node: it is on
+the item the node drops, with a fallback of 5, which is what the game's own
+gathering system reads; multi-drop nodes are averaged by weight.
 
-#### Considered and rejected
+Mastery double-drops and the sub-16 bonus are excluded and the page says so.
+Both make real training *faster*, so every figure is a ceiling rather than an
+optimistic estimate — the right direction for a page someone plans an evening
+around.
 
-**Item-emoji ambience.** All 62 items carry an emoji icon in the export, which
-makes a drifting constellation of them nearly free. Rejected: emoji render
-differently on every platform, carry no information here, and would be the first
-element on the site that is decoration with no argument behind it — §6.1.1.
+Works with no JavaScript: the table is complete and correct from level 1, which
+is the version a search engine indexes. Spot-checked — Saw Plank at 20xp renders
+651,722 actions, and ⌈13,034,431 ÷ 20⌉ is 651,722.
 
-**A three.js or `<model-viewer>` showcase** for `hero_rigged.glb`,
-`villager.glb`, `forest_ogre.glb` and the rest. Rejected on weight: ~600 KB
-against a 7 KB script payload and a page already at its performance gate. The
-still renders already carry the art.
+#### U3 ✅ — /save
 
-#### U1 — `/bestiary`: every creature, with the real numbers · new route
+Drop a save export and read it back. The only page whose privacy claim the
+person relying on it can check: open the network panel, drop a file, watch it
+stay empty.
 
-Twelve monsters in `combat.json`, four already registered with portraits. Per
-creature: level, hitpoints, max hit, attack style, experience awarded per kill,
-respawn interval, the drop table with weights converted to real probabilities,
-and the pet chance. Reuses the card built in M13.
+`verify-save-privacy.cjs` does the same on every build — a real browser, a real
+save, failing if anything crosses the origin, carries a body, or is not a static
+asset. It also scans the source for `fetch` and friends, though that half is
+weaker: a source scan is defeated by `window["fe"+"tch"]`, and the network
+observation does not care how a request was spelled.
 
-The eight without portraits get a data card and no image rather than a
-placeholder — `phase1_creature_silhouettes.png` exists but showing a silhouette
-sheet as a portrait would be the editor-screenshot mistake in a new costume.
+**Its first version failed on a font.** It asserted zero requests after load and
+tripped on `jetbrains-mono-latin-600-normal.woff2` — rendering results puts text
+on the page in a weight not yet used. That is the site loading its own font from
+its own origin, and calling it a privacy breach would have been a false alarm
+that eventually gets silenced rather than understood.
 
-This is the page a player checks before deciding whether to walk east.
-
-#### U2 — `/calculator`: the experience planner · new route
-
-`xp.json` carries all 99 levels, already ported into `web/src/lib/xp.ts` and
-asserted equal to the game's table, element for element, by
-`verify-xp-parity.cjs`. `skills.json` carries `RESOURCES` with experience per
-action and ticks per action for all nine nodes.
-
-Together those answer the question every skill-game player actually has: *"I am
-level 63 Woodcutting with 400,000 experience — how many oak logs to 99, and how
-long is that?"* Actions **and** wall-clock time, because the tick length is
-known.
-
-Highest utility per byte on this list, entirely from data that is already
-parity-tested, and the kind of page that earns organic search rather than being
-shown to people who already arrived.
-
-#### U3 — `/save`: read your own save, in your browser · new route
-
-The game exports saves (`SAVE_VERSION = "1.1.0"`, sanitised on import). A page
-that accepts a dropped or pasted export and renders skill levels with progress
-to 99, total level, kill counts, achievements, the collection log, town
-buildings and playtime.
-
-**Nothing leaves the browser** — which makes this the strongest possible
-demonstration of the claim `/legal/privacy` already makes, that the site
-contacts no external host. Almost no indie game site offers this.
-
-Risks, both handleable: the save shape can drift, so the page reads `version`
-and refuses anything it does not know rather than rendering nonsense from a
-newer file; and a save is personal data, so the page must say plainly and
-verifiably that it is parsed locally, with no network call in the code path.
-
-#### U4 — items and recipes, later
-
-62 items and 31 recipes with emoji icons, values and shop stock. Cheap and
-useful, but less distinctive than U1–U3 and partly redundant with `/wiki`.
-
-#### Blocked, and named so it is not re-proposed
-
-A newsletter and a contact form need Phase 10. A Discord link needs a Discord.
-Neither is an aesthetic or content problem.
+It refuses formats it does not know rather than guessing, and the check asserts
+that pin equals the game's `SAVE_VERSION` — a reader pinned to a format the game
+no longer writes would refuse every real save while looking perfectly healthy.
 
 #### Suggested order
 
