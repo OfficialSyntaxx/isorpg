@@ -57,6 +57,7 @@ namespace Isoperia.Unity
             Disable<WorldDecorationView>();
             Disable<WorldDungeonView>();
             Disable<WorldOwnedAssetLibraryView>();
+            Disable<WorldCombatView>();
         }
 
         private static void Disable<T>() where T : Behaviour

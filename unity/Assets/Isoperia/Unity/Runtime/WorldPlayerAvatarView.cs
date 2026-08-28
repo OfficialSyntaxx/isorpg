@@ -64,6 +64,7 @@ namespace Isoperia.Unity
 
         private bool CreateOwnedHero()
         {
+            if (!WorldAssetAdmission.IsApproved(HeroAsset)) return false;
             GameObject prefab = Resources.Load<GameObject>(HeroAsset);
             RuntimeAnimatorController controller = Resources.Load<RuntimeAnimatorController>(HeroControllerAsset);
             if (prefab == null || controller == null) return false;

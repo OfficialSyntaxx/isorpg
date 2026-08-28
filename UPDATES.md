@@ -1,5 +1,23 @@
 # Isoperia — Update Log
 
+## 2026-08-28 · Phase 0 visual stabilization
+
+- Confirmed the model regression in the live Bootstrap scene after Git LFS
+  restored the actual binaries: several unreviewed `OwnedModels` exports
+  produced oversized panels, invalid silhouettes, and material failures.
+- Added `WorldAssetAdmission`, a runtime quarantine gate. Only the temporary
+  CC0 town kit may be instantiated in the live world until a source asset has
+  passed isolated review; owned landmarks, NPCs, hero, props, campfire, and
+  combat models now use safe fallback behavior instead.
+- Re-disabled the combat presenter until monster assets are individually
+  admitted. The reliable third-person controller and all gameplay systems
+  remain unchanged.
+- Added `docs/ASSET_ADMISSION.md`, the required Blender → isolated Unity
+  review → screenshot → live-world process for every future asset.
+
+**Live validation:** clean Editor restart, Bootstrap Play Mode, and a repeat
+capture confirmed that the oversized corrupted geometry no longer appears.
+
 ## 2026-08-28 · Actor and combat asset recovery (in progress)
 
 - Repaired the local Git LFS checkout: the project now resolves real FBX/GLB

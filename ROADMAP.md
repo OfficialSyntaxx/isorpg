@@ -1,5 +1,19 @@
 # Isoperia — Roadmap
 
+## Visual reset — Phase 0 (in progress)
+
+1. Quarantine every unreviewed runtime model and restore a stable playable
+   baseline. ✅
+2. Maintain an asset-admission checklist covering license, imported bounds,
+   pivot, materials, collisions, animation, WebGL cost, and screenshot review. ✅
+3. Create a dedicated isolated review scene for assets before any world
+   integration.
+4. Select and test a single free URP nature pack in that review scene; do not
+   import a package into the live world until the visual and performance review
+   is approved.
+5. Rebuild one Hearthvale vertical slice from admitted assets only, then use
+   its capture as the visual quality gate for the remaining regions.
+
 ## 3D open-world roadmap — active
 
 > **Direction change (2026-08-23):** the fixed isometric tile view was a

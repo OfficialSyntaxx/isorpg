@@ -144,6 +144,12 @@ namespace Isoperia.Unity
 
         private void PlaceForge(Vector3 position, float yaw)
         {
+            if (!WorldAssetAdmission.IsApproved(ForgeAsset))
+            {
+                CreateHouse(position, yaw, 1.35f);
+                Place("watermill", position + new Vector3(-2.2f, 0f, 1.8f), Vector3.one * 1.05f, yaw);
+                return;
+            }
             GameObject prefab = Resources.Load<GameObject>(ForgeAsset);
             if (prefab == null)
             {
@@ -161,6 +167,11 @@ namespace Isoperia.Unity
 
         private void PlaceOwnedLandmark(string assetPath, string instanceName, Vector3 position, float height, float yaw, System.Action fallback)
         {
+            if (!WorldAssetAdmission.IsApproved(assetPath))
+            {
+                fallback();
+                return;
+            }
             GameObject prefab = Resources.Load<GameObject>(assetPath);
             if (prefab == null)
             {
@@ -348,7 +359,10 @@ namespace Isoperia.Unity
             GameObject fallback = new GameObject("NPC_" + name.Replace(" ", string.Empty));
             fallback.transform.SetParent(transform, false);
             fallback.transform.position = position;
-            GameObject prefab = Resources.Load<GameObject>(OwnedNpcRoot + assetName);
+            string resourcePath = OwnedNpcRoot + assetName;
+            GameObject prefab = WorldAssetAdmission.IsApproved(resourcePath)
+                ? Resources.Load<GameObject>(resourcePath)
+                : null;
             if (prefab != null)
             {
                 GameObject model = Instantiate(prefab, fallback.transform);
@@ -402,6 +416,7 @@ namespace Isoperia.Unity
 
         private void PlaceOwnedProp(string assetPath, string instanceName, Vector3 position, float height, float yaw)
         {
+            if (!WorldAssetAdmission.IsApproved(assetPath)) return;
             GameObject prefab = Resources.Load<GameObject>(assetPath);
             if (prefab == null) return;
             Vector3 grounded = AtGround(position);
@@ -437,6 +452,7 @@ namespace Isoperia.Unity
 
         private void PlaceCampfire(Vector3 position)
         {
+            if (!WorldAssetAdmission.IsApproved(CampfireAsset)) return;
             GameObject prefab = Resources.Load<GameObject>(CampfireAsset);
             if (prefab == null) return;
             GameObject instance = Instantiate(prefab, position, Quaternion.identity, transform);
