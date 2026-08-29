@@ -938,7 +938,8 @@ export function paintTerrain(
             for (let k = 6; k >= 2; k--) {
               const t = walkable(d.gx + dx * k, d.gy + dy * k);
               if (t && clear(d, t)) {
-                if (!best || k > Math.abs(best.gx - d.gx) + Math.abs(best.gy - d.gy)) best = t;
+                if (!best || k > Math.abs(best.gx - d.gx) + Math.abs(best.gy - d.gy))
+                  best = t;
                 break;
               }
             }
@@ -1347,7 +1348,7 @@ export function paintTerrain(
       for (let k = 0; k < PUFFS; k++) {
         // Spreading the ages by k/PUFFS means a full column already exists at
         // time zero, which is what lets the still frame show a lit hearth.
-        const age = ((seconds * p.rate + p.phase + k / PUFFS) % 1 + 1) % 1;
+        const age = (((seconds * p.rate + p.phase + k / PUFFS) % 1) + 1) % 1;
         const size = (0.4 + age * 1.6) * tileW * 0.3 * p.scale;
         const x = p.x + Math.sin(age * 3 + p.phase * 6) * tileW * 0.13;
         const y = p.y - age * tileH * 3.4;
@@ -1364,7 +1365,7 @@ export function paintTerrain(
   const drawGrazer = (time: number): void => {
     if (!grazer) return;
     const g = grazer;
-    const t = ((time / g.period + g.phase) % 1 + 1) % 1;
+    const t = (((time / g.period + g.phase) % 1) + 1) % 1;
     // Ping-pong with a long dwell at each end: an animal moves in bursts.
     const raw = t < 0.5 ? t * 2 : 2 - t * 2;
     const u = raw < 0.25 ? 0 : raw > 0.75 ? 1 : (raw - 0.25) * 2;
@@ -1372,7 +1373,7 @@ export function paintTerrain(
     const y = g.y0 + (g.y1 - g.y0) * u;
     const sc = g.scale * tileW * 0.05;
     // Head dips to graze while it is standing still, not while it walks.
-    const graze = raw < 0.25 || raw > 0.75 ? (0.5 + 0.5 * Math.sin(time / 2400)) : 0;
+    const graze = raw < 0.25 || raw > 0.75 ? 0.5 + 0.5 * Math.sin(time / 2400) : 0;
 
     lifeCtx.globalAlpha = 0.2;
     lifeCtx.fillStyle = "#101418";
