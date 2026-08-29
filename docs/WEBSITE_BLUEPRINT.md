@@ -1403,25 +1403,38 @@ so components can stay documented without shipping their documentation.
 
 **4. The hero was a photograph of a world.** It generated one frame and stopped.
 Defensible on cost, and wrong for the top of a page selling a world you walk
-through. It is now a living scene: sunlight travelling across the land, three
-cloud shadows drifting at different speeds, water moving as a wave rather than
-tiles blinking in unison, a settlement of eleven houses with lit windows on their
-own flickers, and birds crossing.
+through. It became a living scene: water moving as a wave rather than tiles
+blinking in unison, a settlement of eleven houses with lit windows on their own
+flickers, and birds crossing.
 
-The cost discipline is what makes that affordable. The terrain is painted once
-into an offscreen canvas and blitted with a single `drawImage` per frame; only
-the moving parts are redrawn, which is roughly 150 draw calls a frame instead of
-the ~1500 a full repaint would cost. The loop stops entirely when the hero leaves
-the viewport and when the tab is hidden, and frame cost is measured so detail is
-shed under load rather than the whole page juddering. First load is still **22 KB
-gzipped**.
+Then it became a world with people in it (Phase 16). Villagers walk footpaths
+between the houses, chimneys smoke, and a deer stands at the treeline. **The
+villagers step on the engine's 600ms tick** — easing across the first ~72% of
+each tick and standing still for the rest, all of them on the same beat — which
+is the whole point: a settlement drifting smoothly is a screensaver, and one that
+steps on a visible cadence is a simulation running. The footpaths are derived
+from the houses the seed already placed rather than invented, and stay on one
+terrain band so nobody walks up a slope they cannot see.
+
+The cost discipline is what makes that affordable. There are two canvases: the
+terrain is painted once and never cleared, and only the life layer is redrawn.
+(An earlier version of this paragraph said the terrain was "blitted with a single
+`drawImage` per frame" — it never was, and that is not what the split does.) The
+life layer renders at device-pixel-ratio 1 on purpose, because it carries soft
+shapes with no edges anyone focuses on; that is also why a villager passing
+behind a roof is faded out rather than having the house repainted over them, as a
+half-resolution house over its own crisp copy is a permanent ghost. The loop
+stops entirely when the hero leaves the viewport and when the tab is hidden, and
+frame cost is measured so detail is shed under load rather than the whole page
+juddering — with the villagers deliberately never shed, since a device in trouble
+is exactly the one Lighthouse grades.
 
 Reduced motion changed meaning here. It used to bail out completely, leaving the
 authored gradient — obeying the setting by deleting the artwork. The world is now
 generated and painted in full and simply held still, which is what the setting
 actually asks for. Save-Data is treated the same way.
 
-`scripts/verify-hero.cjs` asserts all of it in a browser, 8 assertions, by
+`scripts/verify-hero.cjs` asserts all of it in a browser, 15 assertions, by
 hashing canvas pixels over time: a silent exception in the loop leaves a
 perfectly good still frame, which looks fine and is the bug.
 
