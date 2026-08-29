@@ -2213,3 +2213,13 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   not accidentally stored as an ordinary Git blob. No Ultimate Nature demo
   scene, renderer asset, or input preset has been assigned to the playable
   scene yet.
+
+## 2026-08-29 · Curated nature review composition
+
+- Built and saved a small player-scale composition in `Assets/Scenes/AssetReview.unity`:
+  flat water, two cliff forms, two forest rocks, four spruce placements, and
+  small log, bush, and mushroom dressing.
+- The review confirms the selected Ultimate Nature prefabs render with their
+  intended materials, LOD groups, and colliders. They remain review-only; the
+  next phase will compose a bespoke Hearthvale terrain/material pass and add
+  only this approved subset through the admission gate.
