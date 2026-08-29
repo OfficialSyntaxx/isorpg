@@ -2159,7 +2159,17 @@ image reference, and failed. The rule is about what a page loads, and a filename
 in a comment loads nothing, so the scanner strips comments first — confirmed it
 still catches a real import.
 
-#### U2 ✅ — /calculator
+#### U2 ❌ — /calculator (built, then removed in Phase 15a)
+
+The page below was built, shipped, scored 99/100 on production mobile, and was
+then deleted. It is kept here because the reason it went is worth more than a
+tidy document: **nothing was wrong with it.** It worked, it was fast, it was
+correct. It was simply not a thing anyone visiting a game’s landing page wanted,
+and it cost a nav slot on a header that had already run out of them — the
+regression Phase 15b exists to fix. Utility per byte was the wrong metric; the
+right question was whether a visitor would ever open it.
+
+What follows is the original write-up, unedited.
 
 40 training actions across every skill, with experience, tick cost, actions to
 target and wall-clock time. Gathering experience is not on the node: it is on
@@ -2254,7 +2264,7 @@ CLS check were the two with no animated work in them.
 | 0 | Reclaim the budget to ≥97 | Everything aesthetic depends on it |
 | 1 | A1 tick metronome, A5 region chrome | Near-zero bytes, immediate identity |
 | 2 | A3 day/night, A2 seeded world | Together these make the hero the signature |
-| 3 | U2 calculator | Best utility per byte; costs the constrained pages nothing |
+| 3 | U2 calculator | Best utility per byte; costs the constrained pages nothing — *removed in Phase 15a; the metric was wrong* |
 | 4 | A4 curve scrub | Pairs with U2; reuses M11 |
 | 5 | U1 bestiary | Reuses M13 |
 | 6 | A6 lantern | Polish once the rest is settled |

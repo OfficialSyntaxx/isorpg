@@ -24,10 +24,12 @@ const nav: { href: string; label: string }[] = [
   { href: "/features/", label: "Features" },
   { href: "/world/", label: "World" },
   { href: "/bestiary/", label: "Bestiary" },
-  { href: "/calculator/", label: "Calculator" },
-  { href: "/save/", label: "Save reader" },
   { href: "/devlog/", label: "Devlog" },
   { href: "/wiki/", label: "Wiki" },
+  // Last, and shortened from "Save reader". Phase 14 put this fourth, which on
+  // a 360px screen pushed Devlog and Wiki off the end of a scroller that gave
+  // no sign it could scroll. Least-used goes last; see the fade below.
+  { href: "/save/", label: "Saves" },
 ];
 
 const path = Astro.url.pathname;
@@ -161,6 +163,49 @@ const path = Astro.url.pathname;
       margin-block var(--dur-base) var(--ease-out);
     max-height: 3rem;
     opacity: 1;
+
+    /* THE OVERFLOW AFFORDANCE.
+     *
+     * The bleed above was added so a fade "reaches the screen edge", and then
+     * no fade was ever written. So the nav has been a silent scroller: measured
+     * at 360px it was 619px of links in a 324px box with three of seven links
+     * off-screen and nothing on the page admitting it.
+     *
+     * The base state is NO fade, and the animation is what adds it. That
+     * direction matters twice over: a nav that fits has an inactive scroll
+     * timeline, so the animation never applies and a short nav is never
+     * pointlessly greyed; and a browser without scroll-driven animation gets
+     * the same clean edge it gets today rather than a fade stuck on forever.
+     *
+     * animation-duration is set explicitly. The `animation` shorthand resets it
+     * to 0s, which freezes the keyframes at their start — the failure this
+     * codebase has already shipped once.
+     */
+    mask-image: linear-gradient(
+      to right,
+      #000 calc(100% - var(--nav-fade)),
+      transparent 100%
+    );
+    animation-name: nav-overflow-fade;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(self inline);
+  }
+
+  @property --nav-fade {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  @keyframes nav-overflow-fade {
+    from {
+      --nav-fade: 2.5rem;
+    }
+    to {
+      --nav-fade: 0px;
+    }
   }
 
   .site-header__nav::-webkit-scrollbar {

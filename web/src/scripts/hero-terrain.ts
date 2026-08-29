@@ -207,8 +207,22 @@ function resolveWorld(): number {
 
   if (raw) {
     // Base 36 keeps the shared link short and case-insensitive.
+    //
+    // THE RANGE CHECK IS THE POINT, AND IT USED TO BE `parsed >>> 0`.
+    //
+    // A world is a 32-bit seed, and `>>> 0` on an out-of-range parse does not
+    // reject it — it silently keeps the low 32 bits. So `?world=isoperia`
+    // parsed to 2.4e12, truncated to 993,363,834, and the page then labelled
+    // itself `#1w4vzya`. Copying that link back produced a DIFFERENT world from
+    // the one just visited, which breaks the two things the seed exists for: a
+    // shareable link and a repeatable press screenshot.
+    //
+    // Six base-36 characters is the most that fits (`zzzzzz` is 2,176,782,335;
+    // `100000` more is not), so anything longer falls back to the art-directed
+    // world rather than to a world nobody can link to. The label then always
+    // re-parses to the seed that produced it.
     const parsed = Number.parseInt(raw, 36);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed >>> 0;
+    if (Number.isFinite(parsed) && parsed > 0 && parsed <= 0xffffffff) return parsed;
     return DEFAULT_WORLD;
   }
 

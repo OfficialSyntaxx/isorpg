@@ -12,14 +12,23 @@ import { site, socials } from "../lib/site";
 
 const links = socials();
 
-/** Secondary routes: real pages that do not need to crowd the header. */
+/* Secondary routes: real pages that do not need to crowd the header.
+ *
+ * This list has to be COMPLETE, not merely secondary. Phase 14 added /bestiary
+ * and /save to the header and not to this list, and the header was at the same
+ * time silently hiding its overflow — so for a while the two newest pages on
+ * the site had no reachable link on a phone at all. The footer is the fallback
+ * for anything the header cannot show; a fallback with gaps in it is not one.
+ */
 const pages = [
   { href: "/features/", label: "Features" },
   { href: "/world/", label: "World" },
+  { href: "/bestiary/", label: "Bestiary" },
   { href: "/devlog/", label: "Devlog" },
   { href: "/wiki/", label: "Wiki" },
   { href: "/roadmap/", label: "Roadmap" },
   { href: "/press/", label: "Press kit" },
+  { href: "/save/", label: "Saves" },
   { href: "/devlog/rss.xml", label: "RSS" },
 ];
 

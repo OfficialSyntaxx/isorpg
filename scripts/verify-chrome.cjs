@@ -135,6 +135,111 @@ const headerHeight = (page) =>
     await page.close();
   }
 
+  /* THE ASSERTION THAT WAS MISSING, AND WHY THE OLD ONES ALL PASSED.
+   *
+   * Everything above measures the header's HEIGHT. Phase 14 added three nav
+   * items, the header stayed 109px — comfortably inside budget — and every
+   * check here went green while the nav quietly became 619px of links inside a
+   * 324px box with three of them off-screen. Height was never the thing that
+   * mattered; reachability was, and nothing asked about it.
+   *
+   * Two questions, at the two narrowest real phone widths:
+   *   1. Can every link actually be brought fully into view?
+   *   2. If the nav overflows, does the page SAY SO?
+   */
+  for (const width of [360, 390]) {
+    const page = await browser.newPage({ viewport: { width, height: 844 } });
+    await page.goto(`http://localhost:${port}/`, { waitUntil: "load" });
+    await page.waitForTimeout(250);
+
+    const nav = await page.evaluate(() => {
+      const n = document.querySelector(".site-header__nav");
+      if (!n) return null;
+      n.scrollLeft = 0;
+      const links = Array.from(n.querySelectorAll("a")).map((a) => ({
+        label: (a.textContent || "").trim(),
+        // Offset within the nav's scrollable content, independent of scroll.
+        left: a.offsetLeft,
+        width: a.getBoundingClientRect().width,
+      }));
+      return {
+        client: n.clientWidth,
+        scroll: n.scrollWidth,
+        overflows: n.scrollWidth > n.clientWidth + 1,
+        links,
+      };
+    });
+
+    ok(`nav exists @${width}`, nav !== null, "");
+
+    if (nav) {
+      // A link wider than the box can never be shown whole, however far you
+      // scroll. That is the failure a scroller cannot fix and a rename can.
+      const tooWide = nav.links.filter((l) => l.width > nav.client);
+      ok(
+        `@${width}: every nav link fits the nav box`,
+        tooWide.length === 0,
+        tooWide.length
+          ? `${tooWide.map((l) => `${l.label} ${Math.round(l.width)}px`).join(", ")} in ${nav.client}px`
+          : `${nav.links.length} links, widest ${Math.round(
+              Math.max(...nav.links.map((l) => l.width)),
+            )}px in ${nav.client}px`,
+      );
+
+      // And each one lands inside the scrollable content, so scrolling reaches
+      // it. A link past scrollWidth is unreachable at any scroll position.
+      const unreachable = nav.links.filter((l) => l.left + l.width > nav.scroll + 1);
+      ok(
+        `@${width}: every nav link is reachable by scrolling`,
+        unreachable.length === 0,
+        unreachable.length
+          ? unreachable.map((l) => l.label).join(", ")
+          : `${nav.links.length} links within ${nav.scroll}px of scroll`,
+      );
+
+      // The affordance. Only meaningful when there IS overflow — a nav that
+      // fits must not be greyed at its edge for nothing.
+      const fade = await page.evaluate(async () => {
+        const n = document.querySelector(".site-header__nav");
+        // A scroll timeline is sampled by the compositor, so a computed value
+        // read in the same task as the scroll is the value from BEFORE it. Read
+        // without this wait, the fade appears never to clear — which is how
+        // this assertion first failed against a mechanism that worked.
+        const settle = () =>
+          new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const read = () => getComputedStyle(n).getPropertyValue("--nav-fade").trim();
+        n.scrollLeft = 0;
+        await settle();
+        const at0 = read();
+        n.scrollLeft = n.scrollWidth;
+        await settle();
+        const atEnd = read();
+        return { at0, atEnd };
+      });
+
+      if (nav.overflows) {
+        ok(
+          `@${width}: overflowing nav shows a fade at the start`,
+          Number.parseFloat(fade.at0) > 0,
+          `--nav-fade: ${fade.at0} (nav ${nav.scroll}px in ${nav.client}px)`,
+        );
+        ok(
+          `@${width}: the fade clears once scrolled to the end`,
+          Number.parseFloat(fade.atEnd) < 1,
+          `--nav-fade: ${fade.atEnd}`,
+        );
+      } else {
+        ok(
+          `@${width}: nav fits, so no fade is drawn`,
+          Number.parseFloat(fade.at0) === 0,
+          `--nav-fade: ${fade.at0}`,
+        );
+      }
+    }
+
+    await page.close();
+  }
+
   // Anchor jumps must clear the sticky header. The wiki's contents list is the
   // reason: 51 links that would otherwise land underneath it.
   {
