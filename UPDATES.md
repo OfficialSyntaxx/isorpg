@@ -2194,3 +2194,22 @@ rigged 3D meshes). Everything before Phase 8 is procedural (zero-asset).*
   headers validate for both wasm and data; a browser carrying the previously
   failing cache now reaches the `Tap to play` start screen instead of stopping
   at 90% with an invalid data-size error.
+
+## 2026-08-29 · Ultimate Nature review import
+
+- Added the free **Ultimate Nature – Starter 1.3.0** package from Innerverse
+  Interactive to the Official Syntaxx Unity account and imported it into the
+  Git-tracked Unity project only. The separately maintained local Unity
+  project was not used for the import.
+- The source package adds its nature library, showcase scene, forest demo,
+  materials, colliders, LOD-enabled models, and URP settings under
+  `Assets/InnerverseInteractive/Ultimate Nature – Starter/`. It is quarantined
+  from the live Hearthvale scene pending the existing asset-admission review.
+- Unity merged the package dependency requirements, updating URP from 17.0.3
+  to 17.5.0 and uGUI from 2.0.0 to 2.5.0. The imported showcase opens and the
+  editor is not compiling; the Console has no script exception. The remaining
+  Input Manager message is Unity's deprecation notice, not a gameplay error.
+- Added `*.hdr` to the Unity Git LFS rules so the package HDRI sky texture is
+  not accidentally stored as an ordinary Git blob. No Ultimate Nature demo
+  scene, renderer asset, or input preset has been assigned to the playable
+  scene yet.
