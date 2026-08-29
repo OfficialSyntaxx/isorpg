@@ -2289,6 +2289,72 @@ established. Each new route needs a Lighthouse row at target before it ships.
 
 ---
 
+### Phase 15 — Repairs, and one removal ✅
+
+Phase 14 shipped four defects and this fixes them: a header quietly hiding four
+of its seven links behind a scroller with no affordance, a footer that never
+learned about the two newest routes, three devlog cards that looked clickable
+and had no `href`, and a `?world=` seed that truncated instead of falling back.
+
+`/calculator` is deleted. Nothing was wrong with it — it worked, it was fast, it
+scored 99 on production mobile — and that is the point worth recording. It was
+not something a visitor to a game's landing page would ever open, and it held a
+nav slot on a header that had run out of them. "Best utility per byte" was the
+wrong metric; the right question was whether anyone would open it.
+
+The hero also now says what the visitor is walking into: **pre-alpha**, best on
+desktop, the four browsers, and that saves stay on the device.
+
+### Phase 16 — The living settlement ✅
+
+See §"the hero was a photograph of a world" above for what it does. What belongs
+here is the process note: three of the five new assertions were **wrong on the
+first attempt and passed their negative controls**. One compared the busiest and
+quietest sampled intervals to detect a stepped walk, and passed against a
+literal constant glide. Two matched villager pixels within a ±26 colour cube and
+passed against a build with the villagers removed entirely — antialiased water
+edges fell inside the cube. A third was written against a seed where the thing
+it tested could not happen.
+
+That is now three separate occasions in this project where a check looked
+convincing and tested nothing. It is the same failure as the unthrottled CLS
+check and the CI job that resolved no browser: **a green check and a check that
+ran are different claims, and only one of them is visible in the output.**
+
+Two further defects were found only by *looking at the render* — chimneys drawn
+as 29×5px mill stacks, and villagers four pixels tall. No measurement would have
+caught either, because both were correct by every number being checked.
+
+### Phase 17 — The game's own item art ✅
+
+The site rendered items as text; the game has had 62 icons all along, cut from
+five generated grid sheets by `scripts/slice-atlas.cjs`. They are now on the
+`/bestiary` drop tables.
+
+**The manifest gained a `set`.** `media.ts` is built for hand-curated pictures:
+one entry, one written alt text, one provenance, reviewed by a person. Sixty-two
+of those would be unreadable and the review value would drown. So a set
+registers a whole directory under one provenance record — and because no human
+then reads each icon in, `verify-media.cjs` asserts the set maps **one-to-one
+onto the game's own item list, in both directions**. An orphaned icon is the
+loose-image problem the manifest exists to prevent, coming back through the back
+door; an item with no icon is a row that renders blank and looks deliberate.
+
+`ItemIcon.astro` is the second and only other component permitted to touch
+`astro:assets`. That rule's real content was never "exactly one file" — it was
+"a component that renders an image takes a manifest id, never a file" — so the
+list is closed at two and two new assertions hold ItemIcon to it: it must import
+the manifest, and it may not accept a `src` prop.
+
+The icons carry **empty alt text**, deliberately. Each sits beside the item's own
+name in the same cell, so a label would make a screen reader announce every drop
+twice. Fixing that exposed a bug in the audit itself: it required `alt=`, and
+Astro emits the bare `alt` form, so a correctly-marked decorative image was
+reported as missing its alt text — which would have pushed the fix in exactly
+the wrong direction.
+
+---
+
 ## 13. Open questions
 
 Answer these when they become relevant — none block Phase 1.

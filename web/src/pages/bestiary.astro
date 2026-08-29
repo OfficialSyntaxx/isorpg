@@ -23,6 +23,7 @@
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
 import MediaFigure from "../components/MediaFigure.astro";
+import ItemIcon from "../components/ItemIcon.astro";
 import { bestiary, TICK_MS, counts } from "../lib/gamedata";
 import type { MediaId } from "../lib/media";
 import { gamePath } from "../lib/site";
@@ -147,6 +148,7 @@ const withPortraits = Object.keys(PORTRAITS).length;
                     {b.drops.map((d) => (
                       <tr>
                         <td>
+                          <ItemIcon itemId={d.itemId} size={24} />
                           {d.label}
                           {d.table !== "main" && (
                             <span class="tag beast__kind">{TABLE_LABEL[d.table]}</span>

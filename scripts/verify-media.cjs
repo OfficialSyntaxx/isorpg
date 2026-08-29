@@ -33,6 +33,7 @@ const ROOT = path.join(__dirname, "..");
 const SRC = path.join(ROOT, "web/src");
 const MANIFEST = path.join(SRC, "lib/media.ts");
 const FIGURE = path.join(SRC, "components/MediaFigure.astro");
+const ICON = path.join(SRC, "components/ItemIcon.astro");
 
 const IMAGE_EXT = /\.(?:png|jpe?g|webp|avif|gif)$/i;
 
@@ -132,17 +133,44 @@ const files = walk(SRC);
  * description.
  * ------------------------------------------------------------------ */
 {
+  /* TWO COMPONENTS, NOT ONE — AND WHY THAT IS STILL SAFE.
+   *
+   * This rule existed to stop a page taking an already-imported ImageMetadata
+   * and rendering it with its own hand-written alt text, which is exactly how
+   * an editor screenshot got published described as a settlement plaza.
+   *
+   * ItemIcon.astro is the second, and the list is closed. It does not weaken
+   * the rule, because the rule's real content is "a component that renders an
+   * image must take a MANIFEST ID, never a file". ItemIcon takes an item id and
+   * resolves it through media.ts; the two assertions below hold it to that —
+   * it may not name an image path, and it may not accept a src.
+   */
   const users = files.filter(
     (f) =>
       f !== MANIFEST &&
       f !== FIGURE &&
+      f !== ICON &&
       /from\s+["']astro:assets["']/.test(fs.readFileSync(f, "utf8")),
   );
   ok(
-    "astro:assets is imported only by MediaFigure.astro",
+    "astro:assets is imported only by MediaFigure.astro and ItemIcon.astro",
     users.length === 0,
     users.map((f) => path.relative(ROOT, f)).join(", "),
   );
+  {
+    const iconText = fs.existsSync(ICON) ? stripComments(fs.readFileSync(ICON, "utf8")) : "";
+    ok(
+      "ItemIcon.astro resolves through the manifest",
+      /from\s+["'][^"']*lib\/media["']/.test(iconText),
+      "it must import media.ts rather than reach for files",
+    );
+    ok(
+      "ItemIcon.astro takes an item id, never an image",
+      iconText.length > 0 &&
+        !/\bsrc\s*[?]?\s*:/.test(iconText.split("interface Props")[1]?.split("}")[0] ?? ""),
+      "a src prop would let a caller bypass the set",
+    );
+  }
   ok(
     "MediaFigure.astro exists and imports astro:assets",
     fs.existsSync(FIGURE) &&
@@ -166,6 +194,60 @@ const imported = [];
   for (const spec of imported) {
     const abs = path.resolve(path.dirname(MANIFEST), spec);
     ok(`manifest image exists: ${path.basename(spec)}`, fs.existsSync(abs));
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * 3b. The icon SET matches the game's own item list, exactly.
+ *
+ * A set is registered as a directory rather than as sixty-two hand-written
+ * entries, which is the only way the manifest stays reviewable at that size.
+ * The trade is that no human reads each icon in, so something has to.
+ *
+ * One-to-one in BOTH directions, and both directions matter for different
+ * reasons. An icon with no item is a file that can be published while nothing
+ * on the site accounts for it — the loose-image problem this whole manifest
+ * exists to prevent, reintroduced through the back door. An item with no icon
+ * is a drop-table row that silently renders without one; itemIcon() returns
+ * null rather than a placeholder box precisely so that shows up here instead of
+ * looking deliberate on the page.
+ * ------------------------------------------------------------------ */
+{
+  const globMatch = /import\.meta\.glob<[^>]*>\(\s*["']([^"']+)["']/.exec(manifestText);
+  ok("the manifest registers an icon set", globMatch !== null);
+
+  if (globMatch) {
+    const dir = path.resolve(path.dirname(MANIFEST), path.dirname(globMatch[1]));
+    const icons = fs.existsSync(dir)
+      ? fs
+          .readdirSync(dir)
+          .filter((f) => f.endsWith(".png"))
+          .map((f) => f.replace(/\.png$/, ""))
+      : [];
+    ok(`the icon set resolves to files: ${path.relative(ROOT, dir)}`, icons.length > 0);
+
+    const ITEMS = path.join(
+      ROOT,
+      "unity/Assets/Isoperia/Resources/Content/items.json",
+    );
+    if (!fs.existsSync(ITEMS)) {
+      ok("the game's item list is readable", false, ITEMS);
+    } else {
+      const raw = JSON.parse(fs.readFileSync(ITEMS, "utf8"));
+      const ids = Object.keys(raw.ITEMS || raw);
+      const noIcon = ids.filter((i) => !icons.includes(i));
+      const noItem = icons.filter((i) => !ids.includes(i));
+      ok(
+        "every item the game defines has a registered icon",
+        noIcon.length === 0,
+        `${noIcon.length} without one: ${noIcon.slice(0, 6).join(", ")}`,
+      );
+      ok(
+        "every registered icon belongs to a real item",
+        noItem.length === 0,
+        `${noItem.length} orphaned: ${noItem.slice(0, 6).join(", ")}`,
+      );
+    }
   }
 }
 
@@ -280,7 +362,13 @@ if (fs.existsSync(FIGURE)) {
     for (const f of html) {
       const text = fs.readFileSync(f, "utf8");
       for (const tag of text.match(/<img\b[^>]*>/gi) || []) {
-        if (!/\salt=/.test(tag)) missing.push(path.relative(DIST, f));
+        // `alt` and `alt=""` are the same thing: an explicitly empty, and
+        // therefore decorative, image. Astro emits the bare form, and requiring
+        // an `=` reported a correctly-marked decorative icon as missing its alt
+        // text — which would have pushed the fix in the wrong direction, adding
+        // a label that duplicates the text beside it. The trailing character
+        // class is what stops this matching `alter=` or similar.
+        if (!/\salt(\s*=|[\s/>])/i.test(tag)) missing.push(path.relative(DIST, f));
       }
     }
     ok(

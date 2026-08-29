@@ -198,3 +198,66 @@ export const provenanceNote: Record<Provenance, string> = {
 export function get<K extends MediaId>(id: K): (typeof media)[K] {
   return media[id];
 }
+
+/* ---------------------------------------------------------------------------
+ * ICON SETS
+ *
+ * The manifest above is built for hand-curated pictures: one entry, one written
+ * alt text, one caption, one provenance. That is the right shape for six images
+ * a person chose. It is the wrong shape for the sixty-two item icons the game
+ * already ships — sixty-two stanzas nobody would read, each repeating the same
+ * provenance, and the review value of the manifest would drown in them.
+ *
+ * So a SET is registered instead: one provenance record covering a whole
+ * directory, with the guarantee that made the manifest worth having kept
+ * intact. scripts/verify-media.cjs asserts that the set's files map one-to-one
+ * onto the game's own item list, so an icon cannot appear on a page without a
+ * corresponding real item, and an item cannot quietly lose its icon.
+ *
+ * WHERE THESE CAME FROM, STATED PLAINLY
+ * Five grid sheets in assets/icons/ were generated, then cut into per-item PNGs
+ * by scripts/slice-atlas.cjs — the same files the game itself serves. They are
+ * `art` under this manifest's definitions: real project assets, shown outside
+ * the game. They are not captures and must never be badged as such.
+ *
+ * WHY THE ICONS THEMSELVES CARRY EMPTY ALT TEXT
+ * Every icon on the site sits immediately beside the item's own name, in the
+ * same table cell. Alt text of "Bronze axe" next to the words "Bronze axe"
+ * makes a screen reader say it twice, which is worse than silence. An image
+ * that repeats its adjacent label is decorative by definition, so it is marked
+ * as such. This is the one place alt text is deliberately empty, and it is the
+ * accessible choice rather than a shortcut around one.
+ */
+const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
+  "../../../public/icons/*.png",
+  { eager: true },
+);
+
+/** The set's shared provenance. There is exactly one record for all 62. */
+export const ITEM_ICONS = {
+  id: "item-icons",
+  kind: "art",
+  dated: "2026-08-27",
+  /** What the set is. Individual icons are decorative; see the note above. */
+  describes: "The game's own item icons, as served by the running build.",
+  source: "assets/icons/*.png, cut per item by scripts/slice-atlas.cjs",
+} as const;
+
+/** Every registered icon, keyed by item id. */
+export const itemIcons: Record<string, ImageMetadata> = Object.fromEntries(
+  Object.entries(iconFiles).map(([p, m]) => [
+    (p.split("/").pop() as string).replace(/\.png$/, ""),
+    m.default,
+  ]),
+);
+
+/**
+ * The icon for an item, or null.
+ *
+ * Null rather than a fallback image on purpose: a missing icon should be a
+ * visibly absent icon, not a generic box that looks deliberate. The check keeps
+ * the set complete, so null here means something genuinely changed.
+ */
+export function itemIcon(itemId: string): ImageMetadata | null {
+  return itemIcons[itemId] ?? null;
+}

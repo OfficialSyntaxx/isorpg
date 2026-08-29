@@ -1,0 +1,63 @@
+---
+/**
+ * The game's own icon for an item.
+ *
+ * The second — and only other — component allowed to touch astro:assets.
+ * MediaFigure is the way a PICTURE reaches a page: a figure with a caption and
+ * a provenance badge, because a picture gets reproduced and must carry its own
+ * context. An item icon is not that. It is a 28px glyph beside the item's name
+ * in a table, and wrapping sixty-two of them in badged figures would be absurd.
+ *
+ * It still cannot bypass the manifest. It takes an item id, never a file, and
+ * resolves through media.ts — so an icon that is not part of the registered set
+ * cannot be rendered here, and scripts/verify-media.cjs asserts both that this
+ * file hard-codes no image path and that the set matches the game's item list.
+ *
+ * Alt text is empty and the image is hidden from the accessibility tree. That
+ * is correct rather than lazy: the item's name is always right next to it, and
+ * a duplicate label makes a screen reader read every drop twice. See the note
+ * in media.ts.
+ */
+import { Image } from "astro:assets";
+import { itemIcon } from "../lib/media";
+
+interface Props {
+  itemId: string;
+  /** Rendered size in CSS pixels. Square. */
+  size?: number;
+}
+
+const { itemId, size = 28 } = Astro.props;
+const src = itemIcon(itemId);
+---
+
+{
+  src && (
+    <Image
+      class="item-icon"
+      src={src}
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      densities={[1, 2]}
+      loading="lazy"
+      decoding="async"
+    />
+  )
+}
+
+<style>
+  /* Width and height are set as attributes above so the box is reserved from
+     first paint. Phase 14 spent two rounds chasing a 0.29 CLS caused by exactly
+     this being left to load time; sixty-two unsized icons would be worse. */
+  .item-icon {
+    display: inline-block;
+    vertical-align: -0.35em;
+    margin-right: var(--space-2xs);
+    /* The icons are cut from generated sheets and their edges are soft; a
+       nearest-neighbour scale would make that worse, not crisper. */
+    image-rendering: auto;
+    flex: none;
+  }
+</style>
