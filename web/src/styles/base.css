@@ -58,6 +58,25 @@ h6 {
   text-wrap: balance;
 }
 
+/* BALANCE IS FOR HEADINGS THAT FIT IN TWO OR THREE LINES.
+ *
+ * `text-wrap: balance` above equalises line lengths, which is right on a wide
+ * screen. On a phone a long heading wraps to four or five lines and balancing
+ * them produces orphans: /features rendered "Everything / here is a / number /
+ * the game / actually uses." and /bestiary rendered "Everything / that /
+ * fights back." — a single short word stranded on its own line, twice.
+ *
+ * `pretty` is the right tool there: it leaves the greedy line breaking alone
+ * and only prevents the last line being a runt.
+ */
+@media (max-width: 45rem) {
+  h1,
+  h2,
+  h3 {
+    text-wrap: pretty;
+  }
+}
+
 h1 {
   font-size: var(--text-4xl);
 }

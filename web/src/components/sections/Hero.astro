@@ -508,10 +508,40 @@ import { site, gamePath } from "../../lib/site";
     background: linear-gradient(
       100deg,
       var(--surface-page) 0%,
-      color-mix(in srgb, var(--surface-page) 82%, transparent) 42%,
-      color-mix(in srgb, var(--surface-page) 30%, transparent) 72%,
+      color-mix(in srgb, var(--surface-page) 88%, transparent) 42%,
+      color-mix(in srgb, var(--surface-page) 46%, transparent) 72%,
       transparent 100%
     );
+  }
+
+  /* THE NARROW-SCREEN VEIL.
+   *
+   * The 100deg gradient above encodes a deliberate split: keep the left
+   * readable for the headline, let the right show the world. That split only
+   * works while the text column is narrower than the hero. On a phone the text
+   * spans the full width, so long lines run straight into the gradient's
+   * transparent end and are set over raw terrain.
+   *
+   * Measured at 390px with the expectations line added in Phase 15f: worst-case
+   * contrast 1.01:1 in light and 1.08:1 in dark — not "low contrast", invisible.
+   * Lighthouse scores accessibility 100 on this page and cannot see it, because
+   * it reads the computed background-color of the element, which is transparent;
+   * the thing behind the text is canvas pixels.
+   *
+   * So below 45rem the scrim stops being a side-to-side split and becomes a
+   * top-to-bottom veil: the world still reads through the upper part of the
+   * frame, and the half that carries text is nearly opaque.
+   */
+  @media (max-width: 45rem) {
+    .hero__scrim {
+      background: linear-gradient(
+        176deg,
+        color-mix(in srgb, var(--surface-page) 18%, transparent) 0%,
+        color-mix(in srgb, var(--surface-page) 55%, transparent) 20%,
+        color-mix(in srgb, var(--surface-page) 80%, transparent) 42%,
+        color-mix(in srgb, var(--surface-page) 84%, transparent) 100%
+      );
+    }
   }
 
   /* color-mix is well supported but not universal; without it the scrim would

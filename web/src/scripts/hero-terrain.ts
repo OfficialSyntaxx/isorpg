@@ -310,10 +310,14 @@ function resolveWorld(): number {
     // the one just visited, which breaks the two things the seed exists for: a
     // shareable link and a repeatable press screenshot.
     //
-    // Six base-36 characters is the most that fits (`zzzzzz` is 2,176,782,335;
-    // `100000` more is not), so anything longer falls back to the art-directed
-    // world rather than to a world nobody can link to. The label then always
-    // re-parses to the seed that produced it.
+    // The bound is NUMERIC, not a length, and that distinction matters: the
+    // largest 32-bit seed is `1z141z3`, which is SEVEN characters, and the site
+    // generates seven-character labels routinely — `#1wa8r07` came out of a
+    // normal page load while this was being reviewed. An earlier draft of this
+    // comment claimed six was the maximum, which would have invited someone to
+    // "simplify" the check into `raw.length <= 6` and reject most of the worlds
+    // the page hands out. Anything genuinely out of range falls back to the
+    // art-directed world rather than to a world nobody can link to.
     const parsed = Number.parseInt(raw, 36);
     if (Number.isFinite(parsed) && parsed > 0 && parsed <= 0xffffffff) return parsed;
     return DEFAULT_WORLD;

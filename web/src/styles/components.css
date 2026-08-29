@@ -621,6 +621,46 @@ pre code {
   overscroll-behavior-x: contain;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
+
+  /* THE SAME OVERFLOW AFFORDANCE THE HEADER NAV GOT, FOR THE SAME REASON.
+   *
+   * Measured on /wiki at 390px: TWENTY of these scroll horizontally, the widest
+   * 685px of content in a 349px box, and not one of them said so. A table that
+   * simply stops at the border reads as a table with fewer columns — the reader
+   * never learns there is more. It is exactly the failure the nav shipped with,
+   * sitting on every wiki table the whole time, and the automated overflow
+   * sweep cannot see it because the page itself does not overflow: the scroll
+   * container is doing its job.
+   *
+   * Base state is NO fade and the scroll timeline adds it, so a table that fits
+   * is never pointlessly greyed and a browser without scroll-driven animation
+   * gets today's clean edge rather than a fade stuck on forever.
+   */
+  mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - var(--table-fade)),
+    transparent 100%
+  );
+  animation-name: table-overflow-fade;
+  animation-duration: auto;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  animation-timeline: scroll(self inline);
+}
+
+@property --table-fade {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes table-overflow-fade {
+  from {
+    --table-fade: 2.5rem;
+  }
+  to {
+    --table-fade: 0px;
+  }
 }
 
 /* A generated in-page table of contents. */

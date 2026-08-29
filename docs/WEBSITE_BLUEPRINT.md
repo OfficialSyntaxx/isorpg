@@ -1018,7 +1018,10 @@ builds the real site. The current home page is still an interim scaffold — Pha
 - [x] **First load: 15.4 KB gzipped total** (9.8 KB HTML with inlined module
       scripts, 5.1 KB CSS, 0.8 KB theme init) against a 60 KB JS / 400 KB total
       budget (§9.1). No chart library, no animation library yet.
-- [ ] **OPEN — Lighthouse ≥ 95/100/100/100.** Not runnable here: this sandbox
+- [x] **CLOSED — Lighthouse ≥ 95/100/100/100.** Closed 2026-08-28 against the
+      deployed site; see "Phase 4's Lighthouse gate, closed" below for the
+      per-route numbers. The original note follows.
+      ~~Not runnable here: this sandbox~~
       has no Lighthouse and blocks the Google Fonts requests the real page
       makes, so any score it produced would be measuring a different page.
       Verified proxies in the meantime: no console errors, no layout overflow at
@@ -1994,7 +1997,7 @@ the deployed site, same commit, median of five runs: **`/` 100 and `/world/`
 HTTP/2, no compression and no cache headers, and Netlify has all three. See
 Phase 14's prerequisite for what nearly happened as a result.
 
-### Phase 14 — Six aesthetic pieces and three tools ⬜
+### Phase 14 — Six aesthetic pieces and three tools ✅
 
 Planned 2026-08-28 at the owner's request: *"more unique features… at minimum 5
 new aesthetic features… and then a couple user features."* Nothing here is
@@ -2387,6 +2390,85 @@ looked at.**
 *nodes*, and a node maps to several possible drops — there is no single icon for a row without
 choosing one arbitrarily. The bestiary drop tables, where each row is exactly one item, were
 the complete home for them.
+
+### Visual QA sweep (2026-08-29) ✅
+
+Everything above this line was verified by assertions. This was verified by
+*looking*, because twice in one session this project shipped things that passed
+every measurement and were visibly wrong.
+
+**Automated first**: 13 routes × 5 widths (360–1920) — horizontal overflow, the
+element causing it, broken images, console errors, failed requests. All 65 cells
+clean. Then ~25 screenshots in both themes, plus no-JS, reduced motion and all
+four hero dayparts.
+
+**Four defects found. None of them were findable by the automated pass.**
+
+1. **The hero text was illegible on mobile — 1.01:1 contrast.** Phase 15f added
+   two lines to `.hero__weight`. The scrim behind it is a 100deg gradient
+   encoding a deliberate split — keep the left readable, let the right show the
+   world — which only holds while the text column is narrower than the hero. On
+   a phone the text spans the full width and ran into the gradient's transparent
+   end. Measured worst-case: **1.01:1 light, 1.08:1 dark** on mobile, and 3.74:1
+   on desktop dark, all below the 4.5:1 body-text floor.
+
+   **Lighthouse scores this page 100 for accessibility and cannot see it**, because
+   it reads the element's computed `background-color` — which is transparent. The
+   thing behind the text is canvas pixels. Below 45rem the scrim is now a
+   top-to-bottom veil instead of a side-to-side split; all four cases now pass AA
+   (5.13 / 5.49 / 5.30 / 4.68). The first attempt at the fix overcorrected to
+   6.35:1 and erased the world from the frame, which is worse than the bug — the
+   generated world is the point of the hero. Tuned back to land just past AA.
+
+2. **Twenty scrolling wiki tables with no affordance.** The exact failure the
+   header nav shipped with, sitting on every `.table-wrap` the whole time — the
+   widest is 685px of content in a 349px box. A table that stops at its border
+   reads as a table with fewer columns. The automated overflow sweep is blind to
+   it *by design*: the page does not overflow, because the scroll container is
+   doing its job. Same CSS-only fade as the nav, same base-state-is-no-fade
+   reasoning.
+
+3. **An orphaned word in headings on narrow screens.** `text-wrap: balance` is
+   right on a wide screen and wrong at four or five lines; `/bestiary` rendered
+   "Everything / that / fights back.". Now `pretty` below 45rem.
+
+   This fix does **not** help `/features`, and the reason is worth recording: at
+   390px that h1 computes to 50.7px in a 351px box, so "Everything" alone is
+   ~250px. It is font-size bound, not wrap bound, and no wrapping algorithm can
+   fix it. Changing the global type scale is a design decision, not a QA fix.
+
+4. **A code comment that would have caused the next bug.** `resolveWorld` bounds
+   the seed numerically and correctly, but its comment claimed "six base-36
+   characters is the most that fits". The real maximum is `1z141z3` — **seven** —
+   and the site generates seven-character labels routinely. The comment invited
+   someone to simplify the check into `raw.length <= 6` and reject most of the
+   worlds the page hands out.
+
+**Confirmed working by eye**: dark mode across every route (never once looked at
+before this pass); the footer carrying Bestiary and Saves; the nav fade; the 62
+item icons in the drop tables; the three-badge figure row on `/features`; the
+no-JS hero, which renders all content and no longer ships blank; and all four
+dayparts, of which night — lit windows against dark terrain — is the strongest.
+
+---
+
+## 12b. What is actually left
+
+One place, because eighteen scattered status markers is how a document starts
+disagreeing with itself. Everything not listed here is done.
+
+| Phase | State | What is blocking it |
+|---|---|---|
+| 1 — Deploy composition spike | 🟡 | Option B (proxy rewrite) cannot be measured from a sandboxed session: outbound requests to `netlify.app` are blocked, so no header can be read back. Unblocked by measuring from a normal network, and only worth doing if Option A proves painful. |
+| 8 — Cutover | 🟡 | The service-worker update path and the physical device sweep both need the cutover to have happened and real hardware in hand. |
+| 9 — Custom domain | ⏸️ | Deferred by the owner, deliberately. Unblocks role email, a same-origin backend, `/play` subdomain isolation and dynamic OG images. |
+| 10 — Forms | ⬜ | Needs a same-origin backend, so it needs Phase 9 first. Adding a third-party host today would break the zero-external-hosts CSP claim `verify-csp.cjs` enforces. |
+| 11–12 — Accounts, cloud saves | ⛔ | Out of scope by decision, not by circumstance. |
+| 18 — Capture and two creature renders | ◐ | No Unity and no Blender in the container this was built in. Needs a machine with the toolchain. |
+
+**Not blocked, and not done: the production Lighthouse gate for Phases 15–18.**
+Nothing since Phase 14 has been deployed, so the current production numbers
+describe the old site. Running the audit now would measure the wrong thing.
 
 ---
 
