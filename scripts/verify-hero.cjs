@@ -226,13 +226,266 @@ const TERRAIN = "[data-hero-terrain]";
     await page.close();
   }
 
+  /* --- the living settlement ----------------------------------------------
+   *
+   * Two assertions, and the second is the one that matters. "Something moved"
+   * was already true of this hero before anyone lived in it — the water has
+   * shimmered since the first version. What is new is that PEOPLE move, and
+   * that they move on the engine's 600ms tick rather than drifting.
+   */
+  {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.goto(`http://localhost:${port}/?world=abcxyz`, { waitUntil: "load" });
+    await page.waitForTimeout(2600);
+
+    // Villager pixels and where their centre of mass is, by cloak tint. The
+    // scene uses no other colours in this range.
+    const SCAN = () => {
+      const c = document.querySelector("[data-hero-life]");
+      const g = c.getContext("2d", { willReadFrequently: true });
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      const TINTS = [
+        [60, 76, 107],
+        [107, 60, 66],
+        [75, 90, 60],
+        [90, 68, 104],
+        [200, 169, 138],
+      ];
+      let n = 0;
+      let sx = 0;
+      let sy = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 200) continue;
+        for (const t of TINTS) {
+          if (
+            Math.abs(d[i] - t[0]) < 16 &&
+            Math.abs(d[i + 1] - t[1]) < 16 &&
+            Math.abs(d[i + 2] - t[2]) < 16
+          ) {
+            const px = i / 4;
+            sx += px % c.width;
+            sy += Math.floor(px / c.width);
+            n++;
+            break;
+          }
+        }
+      }
+      return { n, x: n ? sx / n : 0, y: n ? sy / n : 0 };
+    };
+
+    const first = await page.evaluate(SCAN);
+    ok(
+      "the settlement is inhabited",
+      first.n > 40,
+      `${first.n} villager pixels`,
+    );
+
+    await page.waitForTimeout(1500);
+    const later = await page.evaluate(SCAN);
+    const moved = Math.hypot(later.x - first.x, later.y - first.y);
+    ok(
+      "the villagers walk",
+      later.n > 40 && moved > 1.5,
+      `centre of mass moved ${moved.toFixed(1)}px in 1500ms`,
+    );
+
+    /* THEY STEP, THEY DO NOT GLIDE.
+     *
+     * This is the assertion that protects the idea rather than its side
+     * effects. Everything else here would still pass if the villagers drifted
+     * at constant speed — the obvious implementation, and the one this
+     * replaced.
+     *
+     * A walker eases across the first ~72% of each 600ms tick and then stands
+     * still, and every walker shares the tick, so movement binned by PHASE
+     * WITHIN THE TICK is large early and near zero late. A glide is flat across
+     * every bin.
+     *
+     * The first version of this compared the busiest quarter of intervals with
+     * the quietest and used no phase at all. It PASSED a control that replaced
+     * the step with a literal constant glide: the centre of mass of four
+     * walkers turning at route ends is noisy enough to produce that spread on
+     * its own. Binning by tick phase and averaging over ten ticks is what
+     * removes the noise — and it works only because the walkers are offset by
+     * whole ticks and therefore pause together.
+     */
+    const walk = await page.evaluate(async () => {
+      const c = document.querySelector("[data-hero-life]");
+      const g = c.getContext("2d", { willReadFrequently: true });
+      const TINTS = [
+        [60, 76, 107],
+        [107, 60, 66],
+        [75, 90, 60],
+        [90, 68, 104],
+        [200, 169, 138],
+      ];
+      const at = () => {
+        const d = g.getImageData(0, 0, c.width, c.height).data;
+        let n = 0;
+        let sx = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i + 3] < 200) continue;
+          for (const t of TINTS) {
+            if (
+              Math.abs(d[i] - t[0]) < 16 &&
+              Math.abs(d[i + 1] - t[1]) < 16 &&
+              Math.abs(d[i + 2] - t[2]) < 16
+            ) {
+              sx += (i / 4) % c.width;
+              n++;
+              break;
+            }
+          }
+        }
+        return n ? sx / n : null;
+      };
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      // Six phase bins across the 600ms tick. Bins 0-3 lie inside the step;
+      // bin 5 is after the walker has stopped for the tick.
+      const BINS = 6;
+      const sum = new Array(BINS).fill(0);
+      const hits = new Array(BINS).fill(0);
+      let prev = at();
+      let prevT = performance.now();
+      for (let i = 0; i < 120; i++) {
+        await wait(50);
+        const now = performance.now();
+        const x = at();
+        if (x !== null && prev !== null) {
+          const mid = (prevT + now) / 2;
+          const b = Math.min(BINS - 1, Math.floor(((mid % 600) / 600) * BINS));
+          // Per millisecond: setTimeout is not exact and the intervals vary.
+          sum[b] += Math.abs(x - prev) / Math.max(1, now - prevT);
+          hits[b]++;
+        }
+        prev = x;
+        prevT = now;
+      }
+      return { avg: sum.map((v, k) => (hits[k] ? v / hits[k] : 0)), hits };
+    });
+    const moving = Math.max(...walk.avg.slice(0, 4));
+    const paused = walk.avg[5];
+    ok(
+      "the walk is stepped on the tick, not a constant glide",
+      Math.min(...walk.hits) > 4 && moving > paused * 2.5,
+      `during the step ${moving.toFixed(4)}px/ms vs ${paused.toFixed(4)} after it ` +
+        `(need 2.5x) — bins ${walk.avg.map((v) => v.toFixed(3)).join(" ")}`,
+    );
+
+    await page.close();
+  }
+
+  /* NOBODY WALKS OVER A ROOF.
+     *
+     * The life canvas always paints on top of the terrain, and the houses live
+     * in the terrain, so a walker passing behind one would be drawn over its
+     * roof. The fix is not to repaint the house — the life layer renders at
+     * device-pixel-ratio 1 on purpose and a half-resolution house over its own
+     * crisp copy is a permanent ghost — but to prefer routes that run in front
+     * of everything and fade a walker out over the depth boundary otherwise.
+     *
+     * Measured directly: villager pixels on the life canvas that land on roof
+     * colour in the terrain beneath. With the fade disabled this reaches 37-45%
+     * on some seeds; with it, 0-0.6%. The remainder is legitimate — a walker in
+     * front of one house may correctly overlap the roof of another BEHIND it —
+     * so the bound is a small percentage rather than zero.
+     */
+  {
+    /* A DIFFERENT SEED ON PURPOSE.
+     *
+     * The walk assertions above use abcxyz, which has plenty of villager
+     * pixels. It is the wrong fixture for THIS check: on abcxyz every route
+     * already runs in front of every house, so the measurement reads 0.00% with
+     * the fade enabled AND 0.00% with it disabled — an assertion that cannot
+     * fail. 4kd0p puts a route behind a roof: 37% without the fade, 0.05% with.
+     * Both numbers measured before this was written.
+     */
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.goto(`http://localhost:${port}/?world=4kd0p`, { waitUntil: "load" });
+    await page.waitForTimeout(2600);
+
+    const roofs = await page.evaluate(async () => {
+      const T = document.querySelector("[data-hero-terrain]");
+      const L = document.querySelector("[data-hero-life]");
+      const tg = T.getContext("2d", { willReadFrequently: true });
+      const lg = L.getContext("2d", { willReadFrequently: true });
+      const td = tg.getImageData(0, 0, T.width, T.height).data;
+      // The terrain canvas is at DPR 2 and the life canvas at 1.
+      const sc = T.width / L.width;
+      const ROOF = [
+        [115, 62, 41],
+        [138, 75, 50],
+        [166, 92, 60],
+      ];
+      const TINTS = [
+        [60, 76, 107],
+        [107, 60, 66],
+        [75, 90, 60],
+        [90, 68, 104],
+        [200, 169, 138],
+      ];
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      let onRoof = 0;
+      let total = 0;
+      // Across a full traversal, not one frame: a walker is only behind a
+      // house for part of its route.
+      for (let f = 0; f < 30; f++) {
+        const ld = lg.getImageData(0, 0, L.width, L.height).data;
+        for (let i = 0; i < ld.length; i += 4) {
+          if (ld[i + 3] < 200) continue;
+          let hit = false;
+          for (const t of TINTS) {
+            if (
+              Math.abs(ld[i] - t[0]) < 16 &&
+              Math.abs(ld[i + 1] - t[1]) < 16 &&
+              Math.abs(ld[i + 2] - t[2]) < 16
+            ) {
+              hit = true;
+              break;
+            }
+          }
+          if (!hit) continue;
+          total++;
+          const px = (i / 4) % L.width;
+          const py = Math.floor(i / 4 / L.width);
+          const ti = (Math.round(py * sc) * T.width + Math.round(px * sc)) * 4;
+          for (const t of ROOF) {
+            if (
+              Math.abs(td[ti] - t[0]) < 14 &&
+              Math.abs(td[ti + 1] - t[1]) < 14 &&
+              Math.abs(td[ti + 2] - t[2]) < 14
+            ) {
+              onRoof++;
+              break;
+            }
+          }
+        }
+        await wait(120);
+      }
+      return { onRoof, total };
+    });
+    const pct = roofs.total ? (100 * roofs.onRoof) / roofs.total : 0;
+    ok(
+      "no villager is drawn over a roof in front of them",
+      roofs.total > 200 && pct < 5,
+      `${pct.toFixed(2)}% of ${roofs.total} villager pixels landed on roof colour`,
+    );
+
+    await page.close();
+  }
+
   // --- reduced motion ------------------------------------------------------
   {
     const page = await browser.newPage({
       viewport: { width: 1280, height: 800 },
       reducedMotion: "reduce",
     });
-    await page.goto(`http://localhost:${port}/`, { waitUntil: "load" });
+    // Pinned. Without a seed this block gets a RANDOM world on every run, so
+    // any assertion about what the still frame contains is a coin toss — the
+    // "still frame has people in it" check passed and failed on alternate runs
+    // before this line existed.
+    await page.goto(`http://localhost:${port}/?world=abcxyz`, { waitUntil: "load" });
     await page.waitForTimeout(1800);
 
     const painted = await page.evaluate(() => {
@@ -260,6 +513,64 @@ const TERRAIN = "[data-hero-terrain]";
     await page.waitForTimeout(1200);
     const b = await page.evaluate(HASH, LIFE);
     ok("reduced motion holds the frame still", a === b, `${a} vs ${b}`);
+
+    /* THE STILL FRAME MUST BE INHABITED.
+     *
+     * `settle()` used to hand-pick which draw functions ran, and had already
+     * drifted: the animated sky has four birds and the reduced-motion sky had
+     * none, because nobody updated the subset when birds were added. It now
+     * calls renderFrame(0) instead, so the subset cannot drift again — and this
+     * asserts the thing that matters, which is that somebody is home.
+     *
+     * A settlement frozen with nobody in it would tell a reduced-motion visitor
+     * the world is uninhabited: the exact opposite of what the scene says to
+     * everyone else, and a worse bug than the missing birds.
+     */
+    const folk = await page.evaluate(() => {
+      const c = document.querySelector("[data-hero-life]");
+      if (!c) return -1;
+      const g = c.getContext("2d", { willReadFrequently: true });
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      /* The villager cloak tints and the skin tone.
+       *
+       * NEAR-OPAQUE ONLY, AND A TIGHT CUBE. The first version accepted alpha
+       * over 40 within +/-26 of a tint, and that matched antialiased water and
+       * bird edges — dark teal blends around (55,85,88) that sit inside the
+       * cube for two of the four cloaks. They were single pixels, but enough of
+       * them summed past a threshold of 8, so this check PASSED against a build
+       * with the villagers removed entirely. Reproduced, then fixed here.
+       *
+       * Villager bodies are filled at full alpha, so requiring 200+ excludes
+       * every blended edge in the scene, and 16 excludes the near misses.
+       */
+      const TINTS = [
+        [60, 76, 107],
+        [107, 60, 66],
+        [75, 90, 60],
+        [90, 68, 104],
+        [200, 169, 138],
+      ];
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 200) continue;
+        for (const t of TINTS) {
+          if (
+            Math.abs(d[i] - t[0]) < 16 &&
+            Math.abs(d[i + 1] - t[1]) < 16 &&
+            Math.abs(d[i + 2] - t[2]) < 16
+          ) {
+            n++;
+            break;
+          }
+        }
+      }
+      return n;
+    });
+    ok(
+      "the still frame has people in it",
+      folk > 40,
+      `${folk} villager pixels in the reduced-motion frame`,
+    );
     await page.close();
   }
 

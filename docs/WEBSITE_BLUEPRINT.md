@@ -1403,25 +1403,38 @@ so components can stay documented without shipping their documentation.
 
 **4. The hero was a photograph of a world.** It generated one frame and stopped.
 Defensible on cost, and wrong for the top of a page selling a world you walk
-through. It is now a living scene: sunlight travelling across the land, three
-cloud shadows drifting at different speeds, water moving as a wave rather than
-tiles blinking in unison, a settlement of eleven houses with lit windows on their
-own flickers, and birds crossing.
+through. It became a living scene: water moving as a wave rather than tiles
+blinking in unison, a settlement of eleven houses with lit windows on their own
+flickers, and birds crossing.
 
-The cost discipline is what makes that affordable. The terrain is painted once
-into an offscreen canvas and blitted with a single `drawImage` per frame; only
-the moving parts are redrawn, which is roughly 150 draw calls a frame instead of
-the ~1500 a full repaint would cost. The loop stops entirely when the hero leaves
-the viewport and when the tab is hidden, and frame cost is measured so detail is
-shed under load rather than the whole page juddering. First load is still **22 KB
-gzipped**.
+Then it became a world with people in it (Phase 16). Villagers walk footpaths
+between the houses, chimneys smoke, and a deer stands at the treeline. **The
+villagers step on the engine's 600ms tick** — easing across the first ~72% of
+each tick and standing still for the rest, all of them on the same beat — which
+is the whole point: a settlement drifting smoothly is a screensaver, and one that
+steps on a visible cadence is a simulation running. The footpaths are derived
+from the houses the seed already placed rather than invented, and stay on one
+terrain band so nobody walks up a slope they cannot see.
+
+The cost discipline is what makes that affordable. There are two canvases: the
+terrain is painted once and never cleared, and only the life layer is redrawn.
+(An earlier version of this paragraph said the terrain was "blitted with a single
+`drawImage` per frame" — it never was, and that is not what the split does.) The
+life layer renders at device-pixel-ratio 1 on purpose, because it carries soft
+shapes with no edges anyone focuses on; that is also why a villager passing
+behind a roof is faded out rather than having the house repainted over them, as a
+half-resolution house over its own crisp copy is a permanent ghost. The loop
+stops entirely when the hero leaves the viewport and when the tab is hidden, and
+frame cost is measured so detail is shed under load rather than the whole page
+juddering — with the villagers deliberately never shed, since a device in trouble
+is exactly the one Lighthouse grades.
 
 Reduced motion changed meaning here. It used to bail out completely, leaving the
 authored gradient — obeying the setting by deleting the artwork. The world is now
 generated and painted in full and simply held still, which is what the setting
 actually asks for. Save-Data is treated the same way.
 
-`scripts/verify-hero.cjs` asserts all of it in a browser, 8 assertions, by
+`scripts/verify-hero.cjs` asserts all of it in a browser, 15 assertions, by
 hashing canvas pixels over time: a silent exception in the loop leaves a
 perfectly good still frame, which looks fine and is the bug.
 
@@ -2159,7 +2172,17 @@ image reference, and failed. The rule is about what a page loads, and a filename
 in a comment loads nothing, so the scanner strips comments first — confirmed it
 still catches a real import.
 
-#### U2 ✅ — /calculator
+#### U2 ❌ — /calculator (built, then removed in Phase 15a)
+
+The page below was built, shipped, scored 99/100 on production mobile, and was
+then deleted. It is kept here because the reason it went is worth more than a
+tidy document: **nothing was wrong with it.** It worked, it was fast, it was
+correct. It was simply not a thing anyone visiting a game’s landing page wanted,
+and it cost a nav slot on a header that had already run out of them — the
+regression Phase 15b exists to fix. Utility per byte was the wrong metric; the
+right question was whether a visitor would ever open it.
+
+What follows is the original write-up, unedited.
 
 40 training actions across every skill, with experience, tick cost, actions to
 target and wall-clock time. Gathering experience is not on the node: it is on
@@ -2254,7 +2277,7 @@ CLS check were the two with no animated work in them.
 | 0 | Reclaim the budget to ≥97 | Everything aesthetic depends on it |
 | 1 | A1 tick metronome, A5 region chrome | Near-zero bytes, immediate identity |
 | 2 | A3 day/night, A2 seeded world | Together these make the hero the signature |
-| 3 | U2 calculator | Best utility per byte; costs the constrained pages nothing |
+| 3 | U2 calculator | Best utility per byte; costs the constrained pages nothing — *removed in Phase 15a; the metric was wrong* |
 | 4 | A4 curve scrub | Pairs with U2; reuses M11 |
 | 5 | U1 bestiary | Reuses M13 |
 | 6 | A6 lantern | Polish once the rest is settled |
@@ -2263,6 +2286,107 @@ CLS check were the two with no animated work in them.
 Each aesthetic piece needs its assertions in `verify-motion.cjs` and its failure
 mode reproduced before it is trusted, per the pattern Phases 13a–13d
 established. Each new route needs a Lighthouse row at target before it ships.
+
+---
+
+### Phase 15 — Repairs, and one removal ✅
+
+Phase 14 shipped four defects and this fixes them: a header quietly hiding four
+of its seven links behind a scroller with no affordance, a footer that never
+learned about the two newest routes, three devlog cards that looked clickable
+and had no `href`, and a `?world=` seed that truncated instead of falling back.
+
+`/calculator` is deleted. Nothing was wrong with it — it worked, it was fast, it
+scored 99 on production mobile — and that is the point worth recording. It was
+not something a visitor to a game's landing page would ever open, and it held a
+nav slot on a header that had run out of them. "Best utility per byte" was the
+wrong metric; the right question was whether anyone would open it.
+
+The hero also now says what the visitor is walking into: **pre-alpha**, best on
+desktop, the four browsers, and that saves stay on the device.
+
+### Phase 16 — The living settlement ✅
+
+See §"the hero was a photograph of a world" above for what it does. What belongs
+here is the process note: three of the five new assertions were **wrong on the
+first attempt and passed their negative controls**. One compared the busiest and
+quietest sampled intervals to detect a stepped walk, and passed against a
+literal constant glide. Two matched villager pixels within a ±26 colour cube and
+passed against a build with the villagers removed entirely — antialiased water
+edges fell inside the cube. A third was written against a seed where the thing
+it tested could not happen.
+
+That is now three separate occasions in this project where a check looked
+convincing and tested nothing. It is the same failure as the unthrottled CLS
+check and the CI job that resolved no browser: **a green check and a check that
+ran are different claims, and only one of them is visible in the output.**
+
+Two further defects were found only by *looking at the render* — chimneys drawn
+as 29×5px mill stacks, and villagers four pixels tall. No measurement would have
+caught either, because both were correct by every number being checked.
+
+### Phase 17 — The game's own item art ✅
+
+The site rendered items as text; the game has had 62 icons all along, cut from
+five generated grid sheets by `scripts/slice-atlas.cjs`. They are now on the
+`/bestiary` drop tables.
+
+**The manifest gained a `set`.** `media.ts` is built for hand-curated pictures:
+one entry, one written alt text, one provenance, reviewed by a person. Sixty-two
+of those would be unreadable and the review value would drown. So a set
+registers a whole directory under one provenance record — and because no human
+then reads each icon in, `verify-media.cjs` asserts the set maps **one-to-one
+onto the game's own item list, in both directions**. An orphaned icon is the
+loose-image problem the manifest exists to prevent, coming back through the back
+door; an item with no icon is a row that renders blank and looks deliberate.
+
+`ItemIcon.astro` is the second and only other component permitted to touch
+`astro:assets`. That rule's real content was never "exactly one file" — it was
+"a component that renders an image takes a manifest id, never a file" — so the
+list is closed at two and two new assertions hold ItemIcon to it: it must import
+the manifest, and it may not accept a `src` prop.
+
+The icons carry **empty alt text**, deliberately. Each sits beside the item's own
+name in the same cell, so a label would make a screen reader announce every drop
+twice. Fixing that exposed a bug in the audit itself: it required `alt=`, and
+Astro emits the bare `alt` form, so a correctly-marked decorative image was
+reported as missing its alt text — which would have pushed the fix in exactly
+the wrong direction.
+
+### Phase 18 — Real footage, and the bestiary's blanks ◐
+
+Partly done, and the rest needs a machine with the toolchain on it.
+
+**Shipped:** `art/blender/phase4_hearthvale_landmarks.png` is now published on `/features`
+under a `Project asset` badge. "The look" holds three figures and three different kinds of
+thing — a capture from a running build, a kit render of the models it is built from, and the
+empty gameplay slot — and the badges are what keep them apart. An asset render sitting
+unlabelled beside a capture is the editor-screenshot mistake in a new costume.
+
+**A claim in this roadmap was wrong, and it survived two reviews.** It said two of the
+nineteen Blender renders were publishable: the landmarks kit and `cinder_hound.png`. The
+second is not. Its ears are untextured pale blocks against a flat grey body, and — decisively
+— `cinder_hound` **is not in the game's combat roster**. The roster is twelve monsters and it
+is not one of them. Publishing it would have been a picture of a creature the game does not
+have. It passed review twice because it *looks* like the other four creature plates at
+filename level: one subject, clean backdrop. Nobody opened it. The lesson is the same one
+Phase 16 learned twice over: **a file that satisfies every stated criterion has still not been
+looked at.**
+
+**Blocked, and honestly so:**
+
+- A gameplay capture for the `gameplay-loop` slot needs a running build. Not available in the
+  container this was built in — no Unity. The placeholder stays and is already honest.
+- `cave_brute` and `forest_ogre` renders need Blender, also not available. Two of the eight
+  portrait-less bestiary cards stay portrait-less.
+- The eight blanks remain **not a defect to paper over**. `bestiary.astro` already argues it:
+  `phase1_creature_silhouettes.png` would fill the space and would be a picture that is not of
+  the thing it is captioned as.
+
+**Considered and rejected:** extending the item icons to `/features`. That page lists resource
+*nodes*, and a node maps to several possible drops — there is no single icon for a row without
+choosing one arbitrarily. The bestiary drop tables, where each row is exactly one item, were
+the complete home for them.
 
 ---
 

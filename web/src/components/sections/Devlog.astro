@@ -27,16 +27,25 @@ const total = all().length;
     <ul class="devlog__list">
       {
         entries.map((e) => (
-          <li class="card" data-reveal>
-            <span class="card__meta">{formatDate(e)}</span>
-            <span class="card__title">{e.title}</span>
-            <p class="devlog__summary">{e.summary}</p>
+          <li data-reveal>
+            {/* These looked clickable and were not: three cards with hover
+                styling, a title styled like a link, and no href on any of
+                them. Every entry has had its own page at /devlog/<slug>/ the
+                whole time. */}
+            <a class="card" href={`/devlog/${e.slug}/`}>
+              <span class="card__meta">{formatDate(e)}</span>
+              <span class="card__title">{e.title}</span>
+              <p class="devlog__summary">{e.summary}</p>
+            </a>
           </li>
         ))
       }
     </ul>
 
-    <p class="devlog__note">Development notes, written as the game changes.</p>
+    <p class="devlog__note">
+      Development notes, written as the game changes.
+      <a href="/devlog/">Read the development log</a>.
+    </p>
   </div>
 </section>
 

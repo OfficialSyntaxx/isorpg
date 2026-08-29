@@ -372,8 +372,16 @@ const SUPPORTED = "1.1.0";
       .join(" ");
   }
 
-  function render(save: Record<string, any>): void {
-    const player = (save.player ?? {}) as Record<string, any>;
+  /* A parsed save is arbitrary JSON from a file the visitor chose, so its
+   * static type has to be the honest one: `unknown` values, narrowed at each
+   * use. This was `any`, which is not the same claim — `any` says "trust me",
+   * and the whole point of this page is that the file is untrusted input. Every
+   * read below already coerces defensively (`?? {}`, `Number(x) || 0`), so
+   * nothing here changes at runtime; the type now says what the code does. */
+  type JsonObject = Record<string, unknown>;
+
+  function render(save: JsonObject): void {
+    const player = (save.player ?? {}) as JsonObject;
     const skills = (player.skills ?? {}) as Record<string, { xp?: number }>;
     const entries = Object.entries(skills);
 
@@ -382,10 +390,11 @@ const SUPPORTED = "1.1.0";
     const totalXp = entries.reduce((a, [, s]) => a + (Number(s?.xp) || 0), 0);
     const maxed = levels.filter((l) => l >= MAX).length;
 
-    const meta = (player.meta ?? {}) as Record<string, any>;
+    const meta = (player.meta ?? {}) as JsonObject;
     const kills = (meta.kills ?? {}) as Record<string, number>;
     const killTotal = Object.values(kills).reduce((a, b) => a + (Number(b) || 0), 0);
-    const unlocked = (save.collectionLog?.unlocked ?? []) as string[];
+    const unlocked = ((save.collectionLog as JsonObject | undefined)?.unlocked ??
+      []) as string[];
 
     if (summary) {
       const cells: [string, string][] = [
@@ -393,11 +402,17 @@ const SUPPORTED = "1.1.0";
         ["Total level", totalLevel.toLocaleString()],
         ["Total experience", fullXp(totalXp)],
         ["Skills at 99", `${maxed} of ${entries.length}`],
-        ["Day", String(save.clock?.day ?? "—")],
+        ["Day", String((save.clock as JsonObject | undefined)?.day ?? "—")],
         ["Creatures defeated", killTotal.toLocaleString()],
-        ["Achievements", String((meta.achievements ?? []).length)],
+        ["Achievements", String(((meta.achievements ?? []) as unknown[]).length)],
         ["Collection log", `${unlocked.length} items`],
-        ["Buildings", String((save.town?.buildings ?? []).length)],
+        [
+          "Buildings",
+          String(
+            (((save.town as JsonObject | undefined)?.buildings ?? []) as unknown[])
+              .length,
+          ),
+        ],
       ];
       summary.replaceChildren(
         ...cells.flatMap(([k, v]) => {
@@ -463,9 +478,9 @@ const SUPPORTED = "1.1.0";
   }
 
   function read(text: string): void {
-    let save: Record<string, any>;
+    let save: JsonObject;
     try {
-      save = JSON.parse(text) as Record<string, any>;
+      save = JSON.parse(text) as JsonObject;
     } catch {
       say("That is not a save file — the text is not valid JSON.", "bad");
       return;

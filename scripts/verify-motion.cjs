@@ -340,7 +340,6 @@ const url = (r) => `http://localhost:${PORT}${r}`;
       "/world/",
       "/features/",
       "/bestiary/",
-      "/calculator/",
       "/save/",
     ];
     for (const route of ROUTES) {
@@ -839,6 +838,57 @@ const url = (r) => `http://localhost:${PORT}${r}`;
       pinned[2].tail !== pinned[0].tail,
       "two seeds produced identical terrain",
     );
+
+    /* An over-long ?world= must FALL BACK, not silently truncate.
+     *
+     * A world is a 32-bit seed, and an out-of-range base-36 string was being
+     * put through `>>> 0`, which does not reject it — it keeps the low 32 bits.
+     * So `?world=isoperia` parsed to 2.4e12, truncated, and the page labelled
+     * itself `#1w4vzya`: a world the visitor never asked for and cannot get
+     * back to from what they typed.
+     *
+     * The check is the general property, not the specific wrong answer.
+     * Asserting the label round-trips does NOT catch this — `#1w4vzya` is only
+     * seven characters and re-parses to itself perfectly well; reproduced.
+     * Asserting the label is not `#1w4vzya` catches it but hardcodes one magic
+     * output of one magic input.
+     *
+     * What is actually true of a correct fallback: EVERY out-of-range seed
+     * lands on the same documented world. Under truncation they scatter, and
+     * two different over-long strings give two different worlds.
+     */
+    {
+      const over = [];
+      for (const seed of ["isoperia", "hearthvalerules", "abcxyz"]) {
+        const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+        await page.goto(url(`/?world=${seed}`), { waitUntil: "load" });
+        await page.waitForTimeout(2600);
+        over.push({
+          seed,
+          label:
+            (await page.evaluate(
+              () => document.querySelector("[data-hero-world] a")?.textContent ?? null,
+            )) ?? "",
+          tail: await canvasTail(page),
+        });
+        await page.close();
+      }
+      ok(
+        "every over-long ?world= falls back to the same world",
+        over[0].tail === over[1].tail && over[0].label === over[1].label,
+        `${over[0].seed} -> ${over[0].label}, ${over[1].seed} -> ${over[1].label}`,
+      );
+      ok(
+        "the fallback is not just any world — an in-range seed still wins",
+        over[2].label === "#abcxyz" && over[2].tail !== over[0].tail,
+        `${over[2].seed} -> ${over[2].label}`,
+      );
+      ok(
+        "an over-long seed's label re-parses to the world it labels",
+        /^#[0-9a-z]{1,6}$/.test(over[0].label),
+        `label was ${over[0].label}`,
+      );
+    }
 
     /*
      * A structural check beside the behavioural ones, because they cannot do

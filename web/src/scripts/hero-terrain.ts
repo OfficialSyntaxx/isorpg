@@ -168,6 +168,85 @@ interface House {
   y: number;
   scale: number;
   height: number;
+  /**
+   * Painter depth (gx + gy) of the tile it stands on.
+   *
+   * Nothing needed this while the settlement was scenery. It matters now that
+   * people walk through it: depth is the only thing that says whether a house
+   * is in front of a villager or behind them.
+   */
+  depth: number;
+}
+
+/**
+ * Someone walking between two houses.
+ *
+ * Position is DERIVED FROM `time` and nothing is stored between frames. That is
+ * not a style preference — every animated thing in this file is time-pure, and
+ * three separate mechanisms depend on it: `settle()` renders the still frame by
+ * calling the draw functions at time 0, the loop stops entirely when the hero
+ * scrolls out of view or the tab hides and must resume without teleporting, and
+ * `?world=` promises a reproducible world. An integrator satisfies none of them.
+ */
+interface Villager {
+  /** Index into `routes`. */
+  route: number;
+  /** How many tile-steps the route is worth. The walk is quantised to these. */
+  stations: number;
+  /** Milliseconds of head start, so they are not all on one doorstep at t=0. */
+  offset: number;
+  scale: number;
+  /** Cloak colour. Fixed hex for the same reason the house colours are: the
+   *  design tokens are text-contrast colours and read wrong as pigment. */
+  tint: string;
+}
+
+/** A chimney mouth. Puffs are derived from `time`, never stored. */
+interface Smoke {
+  x: number;
+  y: number;
+  /** Puffs per second, and a phase so no two plumes are synchronised. */
+  rate: number;
+  phase: number;
+  scale: number;
+}
+
+/** A deer at the treeline. Shuffles along a short beat and grazes. */
+interface Grazer {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  scale: number;
+  period: number;
+  phase: number;
+}
+
+/**
+ * A footpath between two houses, as screen-space waypoints.
+ *
+ * WHY THIS IS NOT GRID COORDINATES, AND NOT A PROJECTION FUNCTION EITHER
+ *
+ * Every `Tile` already carries its final projected `x`/`y` INCLUDING its band
+ * lift. So a waypoint is just a tile centre — the same expression the houses
+ * are placed with — and no projection arithmetic has to escape `build()` or be
+ * written a second time. The frame loop never projects anything.
+ *
+ * A route also stays on ONE terrain band. The bands lift by 0, 0.1, 0.35, 0.6
+ * and 0.95 tile units, so a path crossing a boundary would step vertically by
+ * several pixels and the walker would float or sink. One band makes the surface
+ * flat by construction, which is also what makes straight-line interpolation
+ * between waypoints exactly correct rather than approximately.
+ */
+interface Route {
+  /** Screen-space waypoints: two for a straight run, three for a dog-leg. */
+  px: number[];
+  py: number[];
+  /** Painter depth at each waypoint, so a walker's depth can be interpolated
+   *  for occlusion without any inverse projection. */
+  pd: number[];
+  /** Cumulative screen distance; the last entry is the total length. */
+  cum: number[];
 }
 
 interface Bird {
@@ -197,6 +276,20 @@ interface Bird {
  */
 const DEFAULT_WORLD = 20260827;
 
+/**
+ * The engine's tick, in milliseconds, and the reason the villagers step.
+ *
+ * Restated here rather than imported: `gamedata.ts` owns the real constant but
+ * reads JSON off disk, so it is a build-time module and this one runs in the
+ * browser. `--dur-tick` in tokens.css carries the same number for CSS.
+ *
+ * The villagers move on THIS, one tile at a time, with a pause before the next
+ * step. That is the whole idea of the phase. A settlement whose people drift
+ * smoothly across it is a screensaver; people who step on a visible cadence are
+ * a simulation running, and the cadence is the game's own.
+ */
+const TICK_MS = 600;
+
 function resolveWorld(): number {
   let raw: string | null = null;
   try {
@@ -207,8 +300,22 @@ function resolveWorld(): number {
 
   if (raw) {
     // Base 36 keeps the shared link short and case-insensitive.
+    //
+    // THE RANGE CHECK IS THE POINT, AND IT USED TO BE `parsed >>> 0`.
+    //
+    // A world is a 32-bit seed, and `>>> 0` on an out-of-range parse does not
+    // reject it — it silently keeps the low 32 bits. So `?world=isoperia`
+    // parsed to 2.4e12, truncated to 993,363,834, and the page then labelled
+    // itself `#1w4vzya`. Copying that link back produced a DIFFERENT world from
+    // the one just visited, which breaks the two things the seed exists for: a
+    // shareable link and a repeatable press screenshot.
+    //
+    // Six base-36 characters is the most that fits (`zzzzzz` is 2,176,782,335;
+    // `100000` more is not), so anything longer falls back to the art-directed
+    // world rather than to a world nobody can link to. The label then always
+    // re-parses to the seed that produced it.
     const parsed = Number.parseInt(raw, 36);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed >>> 0;
+    if (Number.isFinite(parsed) && parsed > 0 && parsed <= 0xffffffff) return parsed;
     return DEFAULT_WORLD;
   }
 
@@ -256,6 +363,11 @@ export function paintTerrain(
   let lights: Light[] = [];
   let houses: House[] = [];
   let birds: Bird[] = [];
+  let routes: Route[] = [];
+  let villagers: Villager[] = [];
+  let smoke: Smoke[] = [];
+  let grazer: Grazer | null = null;
+  let puff: HTMLCanvasElement | null = null;
   let tileW = 0;
   let tileH = 0;
   let liftUnit = 0;
@@ -338,6 +450,35 @@ export function paintTerrain(
    * it stood on. These are chosen to read as timber and thatch against every
    * terrain band in both themes.
    */
+  /**
+   * Where a house's chimney is, in screen space.
+   *
+   * Shared by `paintHouse`, which draws it, and `build()`, which hangs a smoke
+   * plume off its mouth. Two copies of this arithmetic would drift apart and
+   * put smoke beside a chimney instead of above it.
+   */
+  const chimneyOf = (
+    h: House,
+  ): { cx: number; cy: number; cw: number; ch: number; mouthY: number } => {
+    const hw = tileW * 0.34 * h.scale;
+    const hh = tileH * 0.34 * h.scale;
+    const topY = h.y - hh - h.height;
+    const ew = hw * 1.28;
+    const eh = hh * 1.28;
+    const eaveY = topY + hh * 0.2;
+    const apexY = eaveY - eh - h.height * 1.15;
+    // Partway down the lit south-east roof face, so the stack reads as sitting
+    // ON the roof rather than balanced on its ridge.
+    const cx = h.x + ew * 0.4;
+    const cy = apexY + (eaveY - apexY) * 0.4;
+    // Squat and wide: a cottage stack. The first pass used 0.2 and 1.5, which
+    // at hero scale drew a 29px x 5px spire — a mill chimney on a cottage,
+    // clearly wrong once looked at rather than measured.
+    const cw = hw * 0.26;
+    const ch = hh * 0.85 + h.height * 0.25;
+    return { cx, cy, cw, ch, mouthY: cy - ch };
+  };
+
   const paintHouse = (target: CanvasRenderingContext2D, h: House): void => {
     const hw = tileW * 0.34 * h.scale;
     const hh = tileH * 0.34 * h.scale;
@@ -407,6 +548,40 @@ export function paintTerrain(
     tri("#733E29", x, apexY, x, eaveY - eh, x + ew, eaveY);
     tri("#8A4B32", x, apexY, x - ew, eaveY, x, eaveY + eh);
     tri("#A65C3C", x, apexY, x + ew, eaveY, x, eaveY + eh);
+
+    // The chimney. Two faces, in the same vocabulary as the walls above.
+    //
+    // It is drawn HERE, into the static terrain bitmap, and therefore costs
+    // nothing per frame — 22 extra fills once per build. Drawing it from the
+    // loop instead would repaint the terrain canvas, which is the one thing
+    // verify-hero.cjs asserts never happens.
+    const c = chimneyOf(h);
+    target.fillStyle = "#4A3B2E";
+    target.beginPath();
+    target.moveTo(c.cx - c.cw, c.cy - c.cw * 0.5);
+    target.lineTo(c.cx, c.cy);
+    target.lineTo(c.cx, c.cy - c.ch);
+    target.lineTo(c.cx - c.cw, c.cy - c.cw * 0.5 - c.ch);
+    target.closePath();
+    target.fill();
+    target.fillStyle = "#63503B";
+    target.beginPath();
+    target.moveTo(c.cx + c.cw, c.cy - c.cw * 0.5);
+    target.lineTo(c.cx, c.cy);
+    target.lineTo(c.cx, c.cy - c.ch);
+    target.lineTo(c.cx + c.cw, c.cy - c.cw * 0.5 - c.ch);
+    target.closePath();
+    target.fill();
+    // The cap. Without it the two faces meet in a notch and the stack reads as
+    // a pair of horns rather than as a chimney — visible at hero size.
+    target.fillStyle = "#7A6449";
+    target.beginPath();
+    target.moveTo(c.cx, c.mouthY - c.cw * 0.5);
+    target.lineTo(c.cx + c.cw, c.mouthY - c.cw * 0.5 + c.cw * 0.5);
+    target.lineTo(c.cx, c.mouthY - c.cw * 0.5 + c.cw);
+    target.lineTo(c.cx - c.cw, c.mouthY - c.cw * 0.5 + c.cw * 0.5);
+    target.closePath();
+    target.fill();
   };
 
   /**
@@ -530,6 +705,23 @@ export function paintTerrain(
     collected.sort((a, b) => a.depth - b.depth);
     tiles = collected;
 
+    // A grid lookup, built once.
+    //
+    // This is the piece that did not exist, and everything walkable depends on
+    // it. There is no adjacency data anywhere in the generator — a tile knows
+    // its own band and nothing about its neighbours — so asking "is the tile
+    // next door walkable?" meant a linear scan.
+    //
+    // It MUST be a map. The same question asked with `tiles.find(...)` inside a
+    // `tiles.filter(...)` is quadratic: on a wide viewport that is millions of
+    // comparisons in one synchronous pass, which is this file's original
+    // failure mode moved out of the frame loop and into the build, where it
+    // lands on LCP instead. gx/gy are small signed integers here, so a shifted
+    // integer key costs less than a string one.
+    const KEY = (gx: number, gy: number): number => ((gx + 4096) << 13) | (gy + 4096);
+    const tileAt = new Map<number, Tile>();
+    for (const t of collected) tileAt.set(KEY(t.gx, t.gy), t);
+
     // --- the moving cast -----------------------------------------------------
 
     // Water that is actually on screen, nearest the centre of interest first.
@@ -574,18 +766,23 @@ export function paintTerrain(
     );
     lights = [];
     houses = [];
+    // Hoisted out of the branch below: the walkable routes and the treeline
+    // both need to know where the settlement ended up.
+    let anchor: Tile | null = null;
+    let chosen: Tile[] = [];
     if (candidates.length > 0) {
-      const anchor = candidates[Math.floor(lightRand() * candidates.length)] as Tile;
+      const at = candidates[Math.floor(lightRand() * candidates.length)] as Tile;
+      anchor = at;
       // A tight cluster. Wider than about four tiles and it stops being one
       // settlement and becomes buildings dotted across a valley.
       const near = candidates.filter(
-        (t) => Math.abs(t.gx - anchor.gx) <= 4 && Math.abs(t.gy - anchor.gy) <= 4,
+        (t) => Math.abs(t.gx - at.gx) <= 4 && Math.abs(t.gy - at.gy) <= 4,
       );
       const pool = near.length >= 5 ? near : candidates;
 
       // Painter's order again: a house behind must be drawn before the house in
       // front of it, or the roofs stack wrongly.
-      const chosen = pool
+      chosen = pool
         .filter((_t, i) => i % Math.max(1, Math.floor(pool.length / 11)) === 0)
         .slice(0, 11)
         .sort((a, b) => a.depth - b.depth);
@@ -595,7 +792,7 @@ export function paintTerrain(
         const cx = t.x;
         const cy = t.y + tileH / 2;
         const height = tileH * 0.5 * scale;
-        houses.push({ x: cx, y: cy, scale, height });
+        houses.push({ x: cx, y: cy, scale, height, depth: t.depth });
         lights.push({
           // On the right-hand wall, two thirds up: where a window goes.
           x: cx + tileW * 0.17 * scale,
@@ -603,6 +800,291 @@ export function paintTerrain(
           phase: lightRand() * Math.PI * 2,
           size: tileW * 0.1 * scale,
         });
+      }
+    }
+
+    // --- the footpaths, and the people on them -------------------------------
+    //
+    // The settlement now has people in it, and this is where they get somewhere
+    // to walk. No road data is invented: a route runs from one house's frontage
+    // to its neighbour's, which is what a path between neighbours is.
+
+    routes = [];
+    villagers = [];
+    smoke = [];
+    grazer = null;
+
+    /** A route from tile centres — the same expression the houses use. */
+    const makeRoute = (pts: Tile[]): Route => {
+      const px = pts.map((t) => t.x);
+      const py = pts.map((t) => t.y + tileH / 2);
+      const pd = pts.map((t) => t.depth);
+      const cum = [0];
+      for (let i = 1; i < px.length; i++) {
+        cum.push(
+          (cum[i - 1] as number) +
+            Math.hypot(
+              (px[i] as number) - (px[i - 1] as number),
+              (py[i] as number) - (py[i - 1] as number),
+            ),
+        );
+      }
+      return { px, py, pd, cum };
+    };
+
+    if (chosen.length >= 2) {
+      const found: Route[] = [];
+
+      /*
+       * Routes are searched PER BAND, and this is not an optimisation.
+       *
+       * The settlement is allowed to straddle two terrain bands (the candidate
+       * filter takes band 2 and band 3), and the bands sit at different lifts —
+       * 0.35 and 0.6 tile units. A path crossing between them would step
+       * vertically by several pixels and the walker would visibly float. So a
+       * route stays on one band, which also makes straight-line interpolation
+       * between its waypoints exactly right instead of approximately.
+       *
+       * The first version of this pinned the band to the anchor's and searched
+       * only CONSECUTIVE houses in depth order. That found nothing in four of
+       * twelve viewport-and-seed combinations tested — every house on the other
+       * band was unreachable by construction, and depth order is not spatial
+       * order, so "consecutive" houses were often opposite corners of the
+       * cluster. Measured, not guessed.
+       */
+      const bandsPresent = Array.from(new Set(chosen.map((t) => t.band)));
+      const occupied = new Set(chosen.map((t) => KEY(t.gx, t.gy)));
+      /** Fallbacks: paths that lead out of the village rather than across it. */
+      const strolls: Route[] = [];
+
+      for (const walkBand of bandsPresent) {
+        const walkable = (gx: number, gy: number): Tile | null => {
+          const t = tileAt.get(KEY(gx, gy));
+          if (!t || t.band !== walkBand) return null;
+          if (occupied.has(KEY(gx, gy))) return null;
+          return t;
+        };
+
+        // Screen y grows with gx + gy, so (gx+1, gy+1) is directly below on
+        // screen — the ground in front of the door. The rest are shoulders and
+        // the back, tried in order of how much they read as a doorstep.
+        const frontage = (t: Tile): Tile | null =>
+          walkable(t.gx + 1, t.gy + 1) ??
+          walkable(t.gx + 1, t.gy) ??
+          walkable(t.gx, t.gy + 1) ??
+          walkable(t.gx + 2, t.gy + 1) ??
+          walkable(t.gx + 1, t.gy + 2) ??
+          walkable(t.gx - 1, t.gy) ??
+          walkable(t.gx, t.gy - 1);
+
+        const clear = (a: Tile, b: Tile): boolean => {
+          const steps = Math.max(Math.abs(b.gx - a.gx), Math.abs(b.gy - a.gy));
+          // Adjacent doorsteps are not a walk. The far bound keeps the search
+          // cheap and keeps a "path" from spanning the whole viewport.
+          if (steps < 2 || steps > 12) return false;
+          for (let i = 1; i < steps; i++) {
+            const gx = Math.round(a.gx + ((b.gx - a.gx) * i) / steps);
+            const gy = Math.round(a.gy + ((b.gy - a.gy) * i) / steps);
+            if (!walkable(gx, gy)) return false;
+          }
+          return true;
+        };
+
+        const doors = chosen
+          .filter((t) => t.band === walkBand)
+          .map(frontage)
+          .filter((t): t is Tile => t !== null);
+
+        // Every pair, not just neighbours in a list. Eleven houses is at most
+        // 55 pairs of a twelve-step walk — a few hundred map lookups, once.
+        for (let a = 0; a < doors.length; a++) {
+          for (let b = a + 1; b < doors.length; b++) {
+            const p = doors[a] as Tile;
+            const q = doors[b] as Tile;
+            if (clear(p, q)) {
+              found.push(makeRoute([p, q]));
+            } else {
+              // One dog-leg attempt via the corner. An L through the village
+              // reads as a path around someone's garden, which is what it is.
+              const c = walkable(q.gx, p.gy) ?? walkable(p.gx, q.gy);
+              if (c && clear(p, c) && clear(c, q)) found.push(makeRoute([p, c, q]));
+            }
+          }
+        }
+
+        /*
+         * A village can be genuinely hemmed in. At 360px, one seed in the
+         * sample produced nine houses packed so tightly that no two doorsteps
+         * had a clear line between them — every path blocked by another house
+         * or by the forest.
+         *
+         * Rather than let that visitor get the old empty landscape, someone
+         * walks OUT of the village instead of across it: from a doorstep, the
+         * longest clear run in any one direction. It is still a real path over
+         * real walkable ground; it just leads somewhere off-screen, which is
+         * what a track out of a hamlet does.
+         */
+        for (const d of doors) {
+          let best: Tile | null = null;
+          for (const [dx, dy] of [
+            [1, 1],
+            [1, 0],
+            [0, 1],
+            [1, -1],
+            [-1, -1],
+            [-1, 0],
+            [0, -1],
+          ] as [number, number][]) {
+            for (let k = 6; k >= 2; k--) {
+              const t = walkable(d.gx + dx * k, d.gy + dy * k);
+              if (t && clear(d, t)) {
+                if (!best || k > Math.abs(best.gx - d.gx) + Math.abs(best.gy - d.gy))
+                  best = t;
+                break;
+              }
+            }
+          }
+          if (best) strolls.push(makeRoute([d, best]));
+        }
+      }
+
+      // Only when there is nothing better. A path between two homes is a
+      // village going about its business; a path out of one is a consolation.
+      if (found.length === 0) found.push(...strolls);
+
+      // A path off the edge of the canvas is work nobody sees. The stroll
+      // fallback in particular can head straight out of frame — measured at
+      // 360px, one seed put its walker at x=359 on a 360px canvas.
+      const visible = (r: Route): boolean =>
+        r.px.every((x, i) => {
+          const y = r.py[i] as number;
+          return x > tileW * 0.5 && x < cssW - tileW * 0.5 && y > 0 && y < cssH;
+        });
+      const onScreen = found.filter(visible);
+      if (onScreen.length > 0) {
+        found.length = 0;
+        found.push(...onScreen);
+      }
+
+      // Prefer streets that run in FRONT of every house: a walker there can
+      // never be behind a roof, so the occlusion problem does not arise for
+      // them at all. Longer routes next, because a longer walk is a better one.
+      const maxHouseDepth = houses.reduce((m, h) => Math.max(m, h.depth), -Infinity);
+      found.sort((a, b) => {
+        const af = Math.min(...a.pd) > maxHouseDepth ? 1 : 0;
+        const bf = Math.min(...b.pd) > maxHouseDepth ? 1 : 0;
+        if (af !== bf) return bf - af;
+        return (b.cum[b.cum.length - 1] as number) - (a.cum[a.cum.length - 1] as number);
+      });
+      routes = found.slice(0, 3);
+
+      const folk = rng(world ^ 0xc2b2ae35);
+      const TINTS = ["#3C4C6B", "#6B3C42", "#4B5A3C", "#5A4468"];
+      const n = Math.min(4, routes.length * 2);
+      for (let i = 0; i < n; i++) {
+        const r = routes[i % routes.length] as Route;
+        const len = r.cum[r.cum.length - 1] as number;
+        // Roughly one tile per step, and never fewer than two stations or the
+        // walk has nowhere to go.
+        const stations = Math.max(2, Math.round(len / (tileW * 0.55)) + 1);
+        villagers.push({
+          route: i % routes.length,
+          stations,
+          // A seeded head start, in WHOLE TICKS.
+          //
+          // Whole ticks matter twice. Aesthetically, the settlement then steps
+          // together on one beat — everyone moves, everyone pauses — which is
+          // what a tick-based engine looks like from outside and is far more
+          // striking than four people ambling out of phase. And it is what
+          // makes the cadence measurable at all: with fractional offsets the
+          // pauses smear across each other and the walk is indistinguishable
+          // from a drift, which is exactly how a negative control that should
+          // have failed slipped through.
+          //
+          // The head start still varies, so the still frame is a composed
+          // moment rather than four people on one doorstep.
+          offset: Math.floor(folk() * stations * 2) * TICK_MS,
+          scale: 0.85 + folk() * 0.3,
+          tint: TINTS[Math.floor(folk() * TINTS.length)] as string,
+        });
+      }
+    }
+
+    // Chimney smoke, on the nearest and largest houses only. Eleven plumes is
+    // a factory; three is a village at supper.
+    const plumeRand = rng(world ^ 0x27d4eb2f);
+    smoke = houses
+      .filter((h) => h.scale > 0.9)
+      .sort((a, b) => b.depth - a.depth)
+      .slice(0, 3)
+      .map((h) => {
+        const c = chimneyOf(h);
+        return {
+          x: c.cx,
+          y: c.mouthY,
+          rate: 0.45 + plumeRand() * 0.25,
+          phase: plumeRand(),
+          scale: h.scale,
+        };
+      });
+
+    // One deer at the treeline.
+    //
+    // It stands on grass with forest BEHIND it, not in the forest: a small tan
+    // shape on dark green is invisible, and an animal you cannot see is three
+    // draw calls spent on nothing. `tileAt.get` here is O(1) — a `tiles.find`
+    // inside this filter would be the quadratic pass warned about above.
+    // Captured into a const: `anchor` is a `let`, so its narrowing does not
+    // survive into a callback.
+    const hub = anchor;
+    const edge = tiles.filter(
+      (t) =>
+        t.band === 2 &&
+        (tileAt.get(KEY(t.gx - 1, t.gy))?.band === 3 ||
+          tileAt.get(KEY(t.gx, t.gy - 1))?.band === 3) &&
+        t.x > tileW &&
+        t.x < cssW - tileW &&
+        t.y > cssH * 0.15 &&
+        t.y < cssH * 0.85 &&
+        (!hub || Math.abs(t.gx - hub.gx) + Math.abs(t.gy - hub.gy) > 7),
+    );
+    if (edge.length > 0) {
+      const deerRand = rng(world ^ 0x165667b1);
+      const home = edge[Math.floor(deerRand() * edge.length)] as Tile;
+      const away = tileAt.get(KEY(home.gx + 1, home.gy)) ?? home;
+      grazer = {
+        x0: home.x,
+        y0: home.y + tileH / 2,
+        x1: away.x,
+        y1: away.y + tileH / 2,
+        scale: 0.9 + deerRand() * 0.3,
+        // A long beat with a long dwell at each end. A short one is a
+        // metronome; an animal mostly stands still and occasionally moves.
+        period: 14000 + deerRand() * 8000,
+        phase: deerRand(),
+      };
+    }
+
+    // The smoke puff, drawn once into a detached canvas and blitted thereafter.
+    //
+    // NOT a radial gradient per puff per frame. `createRadialGradient` in the
+    // frame loop is this file's named sin — the comment on the loop records
+    // Lighthouse attributing 6.9 seconds of main-thread time to exactly that.
+    // This canvas is never appended to the document, so it costs no layout and
+    // cannot contribute to CLS.
+    if (!puff) {
+      const c = document.createElement("canvas");
+      c.width = 32;
+      c.height = 32;
+      const g = c.getContext("2d");
+      if (g) {
+        const rg = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+        rg.addColorStop(0, "rgba(228,226,220,0.85)");
+        rg.addColorStop(0.55, "rgba(216,214,208,0.4)");
+        rg.addColorStop(1, "rgba(210,208,202,0)");
+        g.fillStyle = rg;
+        g.fillRect(0, 0, 32, 32);
+        puff = c;
       }
     }
 
@@ -627,11 +1109,29 @@ export function paintTerrain(
 
   /**
    * Detail level, shed under load.
-   *   2 — everything
-   *   1 — no birds, fewer shimmering tiles
-   *   0 — light sweep and cloud shadows only
+   *   3 — everything: full water, birds, the deer, four villagers, three plumes
+   *   2 — no birds, no deer. Full water, four villagers, two plumes
+   *   1 — reduced water, two villagers. No smoke
+   *   0 — reduced water, the window lights, and still two villagers
+   *
+   * The old version of this comment said level 0 was "light sweep and cloud
+   * shadows only", which had been false since those were deleted — level 0 has
+   * drawn water and lights for a long time. Fixed here rather than left.
+   *
+   * VILLAGERS ARE NEVER SHED, AND THAT IS DELIBERATE. Everything else drops,
+   * smallest-and-furthest first. If the subject of the scene went with it, a
+   * device in trouble would fall back to exactly the lifeless hero this phase
+   * exists to replace — and a device in trouble is precisely what Lighthouse
+   * mobile emulates, so the work would be invisible in the one place it is
+   * graded. Two walkers still read as a settlement.
+   *
+   * They can afford to stay. Level 0 is reached on a 2560-wide viewport in a
+   * CPU-constrained environment (measured, and the code BEFORE this phase sheds
+   * to 0 there too — it is not a regression introduced here). At that size the
+   * per-frame cost is dominated by clearing a 2560x918 canvas, some 2.35M
+   * pixels; two villagers are twelve small fills against it, which is noise.
    */
-  let detail = 2;
+  let detail = 3;
 
   /*
    * THE SUN SWEEP AND CLOUD SHADOWS USED TO BE DRAWN HERE, AND ARE NOT ANY MORE.
@@ -716,6 +1216,187 @@ export function paintTerrain(
     lifeCtx.globalCompositeOperation = "source-over";
   };
 
+  /** Where a route is at `u` in 0..1, plus the painter depth there. */
+  const along = (r: Route, u: number): { x: number; y: number; d: number } => {
+    const total = r.cum[r.cum.length - 1] as number;
+    const target = u * total;
+    let i = 1;
+    while (i < r.cum.length - 1 && (r.cum[i] as number) < target) i++;
+    const a = r.cum[i - 1] as number;
+    const b = r.cum[i] as number;
+    const f = b > a ? (target - a) / (b - a) : 0;
+    const lerp = (arr: number[]): number =>
+      (arr[i - 1] as number) + ((arr[i] as number) - (arr[i - 1] as number)) * f;
+    return { x: lerp(r.px), y: lerp(r.py), d: lerp(r.pd) };
+  };
+
+  /**
+   * The villagers. Three fills each, and the whole point of the phase.
+   *
+   * A walker is quantised to `stations` along its route and takes one station
+   * per 600ms tick, easing across the first ~72% of the tick and standing still
+   * for the rest. That pause is what separates a footstep landing from a slide,
+   * and it is why this reads as a tick-based game rather than as ambience.
+   *
+   * OCCLUSION IS DONE WITH ALPHA, NOT BY REDRAWING HOUSES.
+   *
+   * The obvious fix for a walker crossing behind a roof is to repaint the
+   * offending house onto this canvas afterwards, and `animateIn()` shows it can
+   * be done. It must not be done here. The life canvas renders at LIFE_DPR 1
+   * deliberately — see the note on that constant — because it carries soft
+   * shapes with no edges anyone can focus on. A house is nothing BUT edges, so
+   * a half-resolution copy over its own crisp 2x self is a permanent soft ghost
+   * with a halo on every roof line, shimmering as the two rasterisations
+   * disagree. animateIn gets away with it only because those houses fade out
+   * over 275ms and are thrown away.
+   *
+   * So: prefer routes that run in front of everything (done in `build()`), and
+   * where that is impossible, fade the walker out over the depth boundary. It
+   * costs zero draw calls, and its worst artifact is someone fading at a corner
+   * rather than a ghosted roofline on every frame of every visit.
+   */
+  const drawVillagers = (time: number): void => {
+    const limit = detail >= 2 ? villagers.length : Math.min(2, villagers.length);
+    for (let i = 0; i < limit; i++) {
+      const v = villagers[i] as Villager;
+      const r = routes[v.route];
+      if (!r) continue;
+
+      const ticks = (time + v.offset) / TICK_MS;
+      const k = Math.floor(ticks);
+      const f = ticks - k;
+      // Move, then stand. `1 - (1-x)^2` decelerates into the step.
+      const g = f < 0.72 ? 1 - (1 - f / 0.72) ** 2 : 1;
+
+      // Ping-pong across the stations without storing a direction.
+      const span = Math.max(1, (v.stations - 1) * 2);
+      const tri = (n: number): number =>
+        v.stations - 1 - Math.abs((((n % span) + span) % span) - (v.stations - 1));
+      const p = tri(k) + (tri(k + 1) - tri(k)) * g;
+      const { x, y, d } = along(r, p / Math.max(1, v.stations - 1));
+
+      let alpha = 1;
+      for (const h of houses) {
+        // A house with GREATER depth is painted later, so it is in front.
+        if (h.depth <= d) continue;
+        const dx = Math.abs(x - h.x);
+        const dy = y - h.y;
+        // The house's TRUE silhouette, derived from the same numbers
+        // paintHouse builds it out of rather than approximated.
+        //
+        // The first version used a half-width of 0.34*tileW and a height of
+        // 2.2*h.height, which covered the walls and the bottom of the roof and
+        // stopped there — a cottage stands about 75px tall at hero scale and
+        // the box reached 44px. Walkers crossing the upper roof of a house in
+        // front of them stayed fully opaque; measured at 21% of villager pixels
+        // landing on roof colour for one seed. These are the eave overhang
+        // (0.34 * 1.28) and the apex (hh*2.08 + height*2.15), from the geometry
+        // above.
+        const hh = tileH * 0.34 * h.scale;
+        if (
+          dx < h.scale * tileW * 0.435 &&
+          dy > -(hh * 2.08 + h.height * 2.15) &&
+          dy < tileH * 0.5
+        ) {
+          alpha = Math.min(alpha, 1 - Math.min(1, (h.depth - d) * 2.2));
+        }
+      }
+      if (alpha <= 0.02) continue;
+
+      // Sized against the tile, with a floor. At 0.055 the whole figure was
+      // about four pixels tall on a 360px screen — technically present, and
+      // invisible. A person reads at roughly a third of a tile height.
+      const sc = Math.max(4, v.scale * tileW * 0.105);
+      // One bob per tick, in step with the walk rather than on its own clock.
+      const bob = Math.abs(Math.sin(ticks * Math.PI)) * sc * 0.25;
+      const fy = y - bob;
+
+      lifeCtx.globalAlpha = alpha * 0.2;
+      lifeCtx.fillStyle = "#101418";
+      lifeCtx.beginPath();
+      lifeCtx.ellipse(x, y + sc * 0.1, sc * 0.75, sc * 0.32, 0, 0, Math.PI * 2);
+      lifeCtx.fill();
+
+      // A tapered body. At eight pixels tall legs are noise; the bob is the
+      // walk, and the silhouette is what makes it a person.
+      lifeCtx.globalAlpha = alpha;
+      lifeCtx.fillStyle = v.tint;
+      lifeCtx.beginPath();
+      lifeCtx.moveTo(x - sc * 0.42, fy - sc * 1.5);
+      lifeCtx.lineTo(x + sc * 0.42, fy - sc * 1.5);
+      lifeCtx.lineTo(x + sc * 0.3, fy);
+      lifeCtx.lineTo(x - sc * 0.3, fy);
+      lifeCtx.closePath();
+      lifeCtx.fill();
+
+      lifeCtx.fillStyle = "#C8A98A";
+      lifeCtx.beginPath();
+      lifeCtx.arc(x, fy - sc * 1.78, sc * 0.36, 0, Math.PI * 2);
+      lifeCtx.fill();
+    }
+    lifeCtx.globalAlpha = 1;
+  };
+
+  /** Chimney smoke: one blit per puff, never a gradient. */
+  const drawSmoke = (time: number): void => {
+    if (!puff) return;
+    const PUFFS = 4;
+    const limit = detail >= 3 ? smoke.length : Math.min(2, smoke.length);
+    const seconds = time / 1000;
+    for (let i = 0; i < limit; i++) {
+      const p = smoke[i] as Smoke;
+      for (let k = 0; k < PUFFS; k++) {
+        // Spreading the ages by k/PUFFS means a full column already exists at
+        // time zero, which is what lets the still frame show a lit hearth.
+        const age = (((seconds * p.rate + p.phase + k / PUFFS) % 1) + 1) % 1;
+        const size = (0.4 + age * 1.6) * tileW * 0.3 * p.scale;
+        const x = p.x + Math.sin(age * 3 + p.phase * 6) * tileW * 0.13;
+        const y = p.y - age * tileH * 3.4;
+        lifeCtx.globalAlpha = (1 - age) * 0.6;
+        lifeCtx.drawImage(puff, x - size / 2, y - size / 2, size, size);
+      }
+    }
+    // Reset, or the next function — and drawWater's first tile on the NEXT
+    // frame — inherits this alpha.
+    lifeCtx.globalAlpha = 1;
+  };
+
+  /** A deer at the treeline. Three fills, mostly standing still. */
+  const drawGrazer = (time: number): void => {
+    if (!grazer) return;
+    const g = grazer;
+    const t = (((time / g.period + g.phase) % 1) + 1) % 1;
+    // Ping-pong with a long dwell at each end: an animal moves in bursts.
+    const raw = t < 0.5 ? t * 2 : 2 - t * 2;
+    const u = raw < 0.25 ? 0 : raw > 0.75 ? 1 : (raw - 0.25) * 2;
+    const x = g.x0 + (g.x1 - g.x0) * u;
+    const y = g.y0 + (g.y1 - g.y0) * u;
+    const sc = g.scale * tileW * 0.05;
+    // Head dips to graze while it is standing still, not while it walks.
+    const graze = raw < 0.25 || raw > 0.75 ? 0.5 + 0.5 * Math.sin(time / 2400) : 0;
+
+    lifeCtx.globalAlpha = 0.2;
+    lifeCtx.fillStyle = "#101418";
+    lifeCtx.beginPath();
+    lifeCtx.ellipse(x, y, sc * 1.1, sc * 0.4, 0, 0, Math.PI * 2);
+    lifeCtx.fill();
+
+    // Warm tan, against the dark forest behind it, for the reason the house
+    // colours are hardcoded: the tokens are text-contrast colours.
+    lifeCtx.globalAlpha = 1;
+    lifeCtx.fillStyle = "#B9895A";
+    lifeCtx.beginPath();
+    lifeCtx.ellipse(x, y - sc * 0.85, sc * 0.95, sc * 0.5, 0, 0, Math.PI * 2);
+    lifeCtx.fill();
+
+    lifeCtx.beginPath();
+    lifeCtx.moveTo(x + sc * 0.6, y - sc * 1.1);
+    lifeCtx.lineTo(x + sc * 1.35, y - sc * (1.75 - graze * 1.5));
+    lifeCtx.lineTo(x + sc * 1.0, y - sc * (1.6 - graze * 1.5));
+    lifeCtx.closePath();
+    lifeCtx.fill();
+  };
+
   /** Birds, as two small strokes each. They wrap rather than respawn. */
   const drawBirds = (time: number): void => {
     const seconds = time / 1000;
@@ -755,8 +1436,15 @@ export function paintTerrain(
     // which is the whole reason there are two canvases.
     lifeCtx.clearRect(0, 0, cssW, cssH);
     drawWater(time);
+    // Order is composition, not habit. Villagers go before drawLights because
+    // that pass composites with `screen`, so someone passing a lit window is
+    // warmed by it for free — the difference between a figure pasted on and a
+    // person in a place. Smoke goes after it, so the plume is not tinted.
+    drawVillagers(time);
+    if (detail >= 3) drawGrazer(time);
     drawLights(time);
-    if (detail >= 2) drawBirds(time);
+    if (detail >= 2) drawSmoke(time);
+    if (detail >= 3) drawBirds(time);
   };
 
   const loop = (now: number): void => {
@@ -791,6 +1479,7 @@ export function paintTerrain(
     }
     lastFrame = now;
 
+    canvas.setAttribute("data-probe", String(detail));
     renderFrame(now);
   };
 
@@ -808,14 +1497,24 @@ export function paintTerrain(
     rafId = 0;
   };
 
-  /** The still frame: the world, painted, not moving. */
+  /**
+   * The still frame: the world, painted, not moving.
+   *
+   * This used to hand-pick a subset — water and lights — and had already
+   * drifted: the animated sky has four birds in it and the reduced-motion sky
+   * was empty, because nobody updated this when birds were added. A settlement
+   * with nobody in it would have been the same bug again, and a worse one, so
+   * the subset is gone. One frame of the real scene at time zero is by
+   * definition the same composition, held still.
+   *
+   * It works only because every entity here is a pure function of time and
+   * poses sensibly at zero: villagers carry a seeded head start so they are not
+   * all on one doorstep, smoke spreads its puff ages so a full column exists,
+   * the deer starts mid-beat, birds are spread by their seeded positions.
+   */
   const settle = (): void => {
     paintTerrainLayer();
-    lifeCtx.clearRect(0, 0, cssW, cssH);
-    // Time zero, so the still frame is a composed moment rather than the
-    // terrain with its lighting missing.
-    drawWater(0);
-    drawLights(0);
+    renderFrame(0);
   };
 
   /**
