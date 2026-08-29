@@ -41,6 +41,7 @@ import direWolf from "../../../assets/concepts/dire_wolf.png";
 import frostImp from "../../../assets/concepts/frost_imp.png";
 import bogHusk from "../../../assets/concepts/bog_husk.png";
 import caveSlasher from "../../../assets/concepts/cave_slasher.png";
+import hearthvaleKit from "../../../art/blender/phase4_hearthvale_landmarks.png";
 
 export type Provenance = "capture" | "concept" | "art" | "placeholder";
 
@@ -152,6 +153,31 @@ export const media = {
     alt: "A broad rock creature in dark teal and grey, its shoulders armoured in slabs, with pale slit eyes and long pale claws on both hands.",
     caption: "Cave Slasher",
   },
+
+  "hearthvale-landmarks": {
+    id: "hearthvale-landmarks",
+    kind: "art",
+    src: hearthvaleKit,
+    dated: "2026-08-26",
+    alt: "Two low-poly models on a plain studio backdrop: a tiered stone fountain with a teal basin and a tapered spire, and a wooden market stall with a pale blue awning over an empty counter.",
+    caption: "Hearthvale landmark kit",
+  },
+
+  /*
+   * WHY ONLY ONE OF THE NINETEEN BLENDER RENDERS IS HERE
+   *
+   * art/blender/ holds nineteen images and this is the only one published. The
+   * sixteen named phase1_* are contact sheets — several subjects per frame,
+   * clipped at the edges, much of it untextured grey work-in-progress. A
+   * contact sheet is a working document, not a picture of the game.
+   *
+   * cinder_hound.png was on this list until someone opened it. It is a single
+   * subject on a clean backdrop, which is why it survived a filename-level
+   * review twice, but its ears are untextured pale blocks against a flat grey
+   * body — and `cinder_hound` is not in the game's combat roster at all. It
+   * would have been a picture of a creature the game does not have, which is
+   * the editor-screenshot mistake wearing different clothes.
+   */
 
   /*
    * The gameplay slot.

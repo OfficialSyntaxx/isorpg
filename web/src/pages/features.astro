@@ -67,22 +67,35 @@ const stats = [
     /* Numbers describe a game; they do not show one. A visitor who has read
        this far still does not know whether Isoperia looks like anything they
        want to spend an evening in — so this sits above the tables, not below
-       them. The second slot is empty on purpose: there is no gameplay capture
+       them. The last slot is empty on purpose: there is no gameplay capture
        worth publishing yet, and the honest version of that is a labelled space,
-       not a stock loop dressed up as footage. */
+       not a stock loop dressed up as footage.
+
+       Three figures, three different kinds of thing, and the badges are what
+       keep them apart: a capture from a running build, a kit render that is a
+       real asset but is NOT what the game looks like in motion, and an empty
+       slot that says so. Putting an asset render next to a capture without
+       labelling which is which is precisely the mistake the media manifest
+       exists to prevent. */
   }
   <section class="block">
     <div class="wrap">
       <h2 data-reveal>What it actually looks like</h2>
       <p class="note" data-reveal>
-        One still from a running build, and the slot the moving version will fill. Every
-        image on this site carries a badge saying whether it is a capture or an
-        illustration.
+        One still from a running build, one render of the models it is built from, and
+        the slot the moving version will fill. Every image on this site carries a badge
+        saying which of those it is.
       </p>
 
       <div class="look">
         <MediaFigure
           id="hearthvale-east-road"
+          data-reveal
+          widths={[480, 960]}
+          sizes="(min-width: 52rem) 32rem, 100vw"
+        />
+        <MediaFigure
+          id="hearthvale-landmarks"
           data-reveal
           widths={[480, 960]}
           sizes="(min-width: 52rem) 32rem, 100vw"

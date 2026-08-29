@@ -2353,6 +2353,41 @@ Astro emits the bare `alt` form, so a correctly-marked decorative image was
 reported as missing its alt text — which would have pushed the fix in exactly
 the wrong direction.
 
+### Phase 18 — Real footage, and the bestiary's blanks ◐
+
+Partly done, and the rest needs a machine with the toolchain on it.
+
+**Shipped:** `art/blender/phase4_hearthvale_landmarks.png` is now published on `/features`
+under a `Project asset` badge. "The look" holds three figures and three different kinds of
+thing — a capture from a running build, a kit render of the models it is built from, and the
+empty gameplay slot — and the badges are what keep them apart. An asset render sitting
+unlabelled beside a capture is the editor-screenshot mistake in a new costume.
+
+**A claim in this roadmap was wrong, and it survived two reviews.** It said two of the
+nineteen Blender renders were publishable: the landmarks kit and `cinder_hound.png`. The
+second is not. Its ears are untextured pale blocks against a flat grey body, and — decisively
+— `cinder_hound` **is not in the game's combat roster**. The roster is twelve monsters and it
+is not one of them. Publishing it would have been a picture of a creature the game does not
+have. It passed review twice because it *looks* like the other four creature plates at
+filename level: one subject, clean backdrop. Nobody opened it. The lesson is the same one
+Phase 16 learned twice over: **a file that satisfies every stated criterion has still not been
+looked at.**
+
+**Blocked, and honestly so:**
+
+- A gameplay capture for the `gameplay-loop` slot needs a running build. Not available in the
+  container this was built in — no Unity. The placeholder stays and is already honest.
+- `cave_brute` and `forest_ogre` renders need Blender, also not available. Two of the eight
+  portrait-less bestiary cards stay portrait-less.
+- The eight blanks remain **not a defect to paper over**. `bestiary.astro` already argues it:
+  `phase1_creature_silhouettes.png` would fill the space and would be a picture that is not of
+  the thing it is captioned as.
+
+**Considered and rejected:** extending the item icons to `/features`. That page lists resource
+*nodes*, and a node maps to several possible drops — there is no single icon for a row without
+choosing one arbitrarily. The bestiary drop tables, where each row is exactly one item, were
+the complete home for them.
+
 ---
 
 ## 13. Open questions
