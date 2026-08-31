@@ -52,6 +52,35 @@ const TABLE_LABEL = {
 } as const;
 
 const withPortraits = Object.keys(PORTRAITS).length;
+
+/* The drop tables, shipped to the browser for the roll simulator.
+ *
+ * Emitted as an inert <script type="application/json"> rather than inlined
+ * into a module: the content security policy forbids inline executable script,
+ * and a JSON block is data the parser never runs. It is the same numbers the
+ * table above renders — one source, so the simulator cannot disagree with the
+ * page it sits on.
+ *
+ * Roughly 4 KB for twelve creatures, which is why it ships whole rather than
+ * being fetched per creature: a request per click would cost more than this.
+ */
+const rollTables = Object.fromEntries(
+  beasts.map((b) => [
+    b.id,
+    {
+      name: b.name,
+      xp: b.xpTotal,
+      drops: b.drops.map((d) => ({
+        id: d.itemId,
+        n: d.label,
+        c: d.chance,
+        min: d.min,
+        max: d.max,
+        t: d.table,
+      })),
+    },
+  ]),
+);
 ---
 
 <BaseLayout
@@ -163,10 +192,37 @@ const withPortraits = Object.keys(PORTRAITS).length;
                   </tbody>
                 </table>
               </div>
+
+              {/* The roll simulator. Progressive: hidden until the module runs,
+                  because a button that does nothing is worse than no button. */}
+              <div class="roll" data-roll={b.id} hidden>
+                <div class="roll__bar">
+                  <button class="btn btn--compact" data-kills="1">
+                    Kill one
+                  </button>
+                  <button class="btn btn--compact btn--secondary" data-kills="50">
+                    ×50
+                  </button>
+                  <button class="btn btn--compact btn--secondary" data-kills="1000">
+                    ×1000
+                  </button>
+                  <button class="roll__reset" data-reset hidden>
+                    Reset
+                  </button>
+                </div>
+                <p class="roll__tally" data-tally aria-live="polite" />
+                <ul class="roll__loot" data-loot />
+              </div>
             </li>
           ))
         }
       </ul>
+      <p class="note roll__caveat" data-reveal>
+        The roll buttons simulate the drop table printed above, using the same weights the
+        engine rolls. It is a simulation of the published numbers, not a recording of play
+        — it cannot tell you anything the table does not already say, it just says it
+        faster.
+      </p>
     </div>
   </section>
 
@@ -190,7 +246,124 @@ const withPortraits = Object.keys(PORTRAITS).length;
       </p>
     </div>
   </section>
+  <script
+    type="application/json"
+    id="roll-tables"
+    set:html={JSON.stringify(rollTables)}
+  />
 </BaseLayout>
+
+<script>
+  /* The drop-table roll simulator.
+   *
+   * WHY IT ROLLS RATHER THAN CALCULATES
+   * The table already prints every probability. A player reading "1 in 2,500"
+   * knows the number and has no feel for it; rolling two thousand kills and
+   * still not seeing the pet is the number, felt. That is the whole reason this
+   * exists, and it is why the tally reports kills rather than expected value.
+   *
+   * The maths is the engine's own: main-table drops are weighted shares of one
+   * roll, and tertiary and pet entries are independent chances rolled
+   * separately — which is why a kill can yield a main drop AND a pet.
+   */
+  interface Row {
+    id: string;
+    n: string;
+    c: number;
+    min: number;
+    max: number;
+    t: "main" | "tertiary" | "pet";
+  }
+  interface Table {
+    name: string;
+    xp: number;
+    drops: Row[];
+  }
+
+  const raw = document.querySelector<HTMLScriptElement>("#roll-tables")?.textContent;
+  if (raw) {
+    const tables = JSON.parse(raw) as Record<string, Table>;
+
+    for (const panel of document.querySelectorAll<HTMLElement>("[data-roll]")) {
+      const table = tables[panel.dataset.roll ?? ""];
+      if (!table) continue;
+      panel.hidden = false;
+
+      const tally = panel.querySelector<HTMLElement>("[data-tally]");
+      const lootEl = panel.querySelector<HTMLElement>("[data-loot]");
+      const reset = panel.querySelector<HTMLButtonElement>("[data-reset]");
+
+      const main = table.drops.filter((d) => d.t === "main");
+      const extras = table.drops.filter((d) => d.t !== "main");
+      const mainTotal = main.reduce((sum, d) => sum + d.c, 0);
+
+      let kills = 0;
+      const got = new Map<string, { n: string; qty: number; rare: boolean }>();
+
+      const take = (d: Row): void => {
+        const qty = d.min + Math.floor(Math.random() * (d.max - d.min + 1));
+        const cur = got.get(d.id);
+        if (cur) cur.qty += qty;
+        else got.set(d.id, { n: d.n, qty, rare: d.t !== "main" });
+      };
+
+      const rollOnce = (): void => {
+        kills++;
+        // One weighted roll over the main table.
+        if (mainTotal > 0) {
+          let r = Math.random() * mainTotal;
+          for (const d of main) {
+            r -= d.c;
+            if (r <= 0) {
+              take(d);
+              break;
+            }
+          }
+        }
+        // Then each rare and pet chance, independently.
+        for (const d of extras) if (Math.random() < d.c) take(d);
+      };
+
+      const render = (): void => {
+        if (tally) {
+          tally.textContent =
+            kills === 0
+              ? ""
+              : `${kills.toLocaleString()} kill${kills === 1 ? "" : "s"} · ` +
+                `${(kills * table.xp).toLocaleString()} xp`;
+        }
+        if (reset) reset.hidden = kills === 0;
+        if (!lootEl) return;
+        lootEl.replaceChildren(
+          ...[...got.values()]
+            .sort((a, b) => Number(b.rare) - Number(a.rare) || b.qty - a.qty)
+            .map((g) => {
+              const li = document.createElement("li");
+              if (g.rare) li.className = "is-rare";
+              const q = document.createElement("strong");
+              q.textContent = g.qty.toLocaleString();
+              li.append(q, document.createTextNode(` ${g.n}`));
+              return li;
+            }),
+        );
+      };
+
+      for (const btn of panel.querySelectorAll<HTMLButtonElement>("[data-kills]")) {
+        btn.addEventListener("click", () => {
+          const n = Number(btn.dataset.kills) || 1;
+          // A thousand rolls is a handful of microseconds; no need to yield.
+          for (let i = 0; i < n; i++) rollOnce();
+          render();
+        });
+      }
+      reset?.addEventListener("click", () => {
+        kills = 0;
+        got.clear();
+        render();
+      });
+    }
+  }
+</script>
 
 <style>
   .eyebrow {
@@ -338,5 +511,60 @@ const withPortraits = Object.keys(PORTRAITS).length;
   .cta-row {
     margin-top: var(--space-2xl);
     max-width: none;
+  }
+
+  /* --- the roll simulator ------------------------------------------------ */
+  .roll {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .roll__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    align-items: center;
+  }
+  .roll__reset {
+    font: inherit;
+    font-size: var(--text-xs);
+    background: none;
+    border: 0;
+    color: var(--text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .roll__tally {
+    margin-top: var(--space-2xs);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    min-height: 1.2em;
+  }
+  .roll__loot {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs) var(--space-xs);
+    font-size: var(--text-sm);
+  }
+  .roll__loot li {
+    color: var(--text-muted);
+  }
+  .roll__loot strong {
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+  }
+  /* A rare is the whole point of rolling. It gets to look like one. */
+  .roll__loot .is-rare {
+    color: var(--mark-gold);
+  }
+  .roll__loot .is-rare strong {
+    color: var(--mark-gold);
+  }
+  .roll__caveat {
+    margin-top: var(--space-lg);
   }
 </style>

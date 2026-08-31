@@ -2493,6 +2493,83 @@ there by `compose-site.cjs` at deploy time and is deliberately absent from `web/
 Two items — `dungeon_key` and `small_net` — have no source in any export. Their pages say so
 in words rather than showing an empty section, because a blank panel reads as missing data.
 
+### Phase 20 — The roll simulator ✅
+
+The bestiary printed every drop rate and none of them meant anything. "1 in 2,500" is a
+number a reader knows and has no feel for. Rolling two thousand kills and still not seeing
+the pet **is** that number, felt — so each creature's drop table gained a roll.
+
+It sits under the table it simulates rather than on a page of its own, and that is the
+lesson from `/calculator`: a tool you have to go somewhere to use is a tool nobody opens. The
+question "what would I actually get?" arrives while you are looking at the table, so the
+answer is there.
+
+The maths is the engine's: main-table entries are weighted shares of one roll, tertiary and
+pet entries are independent chances rolled separately — which is why one kill can yield a
+main drop *and* a pet. Verified against the printed table rather than assumed: 1,000 Giant
+Rat kills produced 620 coin drops, 210 bones and 171 rat meat, summing to almost exactly one
+main drop per kill, with the 2.0% rare landing at 2.4% and the 1-in-2,500 pet correctly
+absent.
+
+The tables ship as an inert `<script type="application/json">` — the CSP forbids inline
+executable script, and it is the same data the table renders, so the two cannot disagree.
+The panel is hidden until the module runs, because a button that does nothing is worse than
+no button. The page carries a plain caveat: it simulates the published numbers and cannot
+tell you anything the table does not already say, it just says it faster.
+
+**Equipment comparison was considered and dropped.** `equip` carries only `slot` and `tier`
+across fourteen items — there is nothing to compare. Building it would have meant inventing
+numbers, which is the one thing this site does not do.
+
+### Phase 21 — New since you were last here ✅
+
+The devlog's one duty to a returning reader is showing them where they stopped. Entries
+dated after the last visit are badged, and a line at the top counts them.
+
+Entirely local. The timestamp lives in that browser's `localStorage` and is never sent
+anywhere — the site has no analytics and no backend, and `/save` makes a public promise
+about not uploading things that would be hollow if the devlog quietly tracked return visits.
+The stored value is the **newest entry's date**, not `Date.now()`: a reader who visits at
+midday must not have an entry published later that day counted as already seen.
+
+Three states tested, all in a real browser: a first visit marks nothing (a new reader has
+missed nothing), a return marks exactly the entries published since, and a reload clears
+them.
+
+**The honest limit of this phase.** The plumbing showcases updates; the bottleneck is that
+only eight player-facing entries exist against sixty dated engineering ones. That gap is
+authoring, not code, and it must stay that way — `UPDATES.md` names source files, build
+scripts, vendors and per-asset spend, which is exactly why the public devlog is a separate
+file. Generating entries from it would reintroduce the leak the split exists to prevent.
+
+### Phase 22 — The check that should have existed all along ✅
+
+Phase 4 recorded "responsive 360 → 1920, verified at six widths: zero horizontal overflow at
+every one." True when written, and **nothing re-checked it afterwards** — the same shape as
+the header that silently hid four links while a height check went on passing.
+
+`scripts/verify-responsive.cjs` now walks 14 routes × 5 widths on every build: page-level
+horizontal overflow, images that failed to load, and uncaught errors. **210 assertions**, and
+it caught its first bug before it was even committed.
+
+`/quests` hand-wrote `.table-wrap` around a clue table, but the stylesheet scoped that rule
+to `.prose .table-wrap` — outside prose it was a div with a class and no behaviour, and a
+457px table sat in a 360px viewport shoving the whole page 115px sideways. A horizontally
+scrolling page on a phone is about as visible as defects get, and it passed ten green checks.
+The rule is no longer scoped: a class name that says "this table scrolls" had better mean it
+wherever it is written.
+
+**The culprit search skips scroll containers, and that detail mattered.** An element inside
+`overflow-x: auto` is *supposed* to extend past the viewport. Reporting those named the
+header nav as the cause — sending the first diagnosis to entirely the wrong file — when the
+nav was behaving perfectly and a table was not.
+
+**And the check was not in the gate for its first hour.** A one-line edit to `package.json`
+matched the wrong occurrence and appended it to `verify:links` instead of `verify:security`,
+so the chain ran ten checks and stopped. Caught by counting the result lines rather than
+trusting the exit code. Writing "a check CI does not run is a check that does not run" in one
+commit message and then shipping exactly that in the next is worth recording.
+
 ---
 
 ## 12b. What is actually left

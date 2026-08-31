@@ -615,8 +615,19 @@ pre code {
   white-space: nowrap;
 }
 
-/* The wrapper the markdown renderer puts around every table. */
-.prose .table-wrap {
+/* The wrapper the markdown renderer puts around every table.
+ *
+ * DELIBERATELY NOT SCOPED TO .prose ANYMORE. It was, because the markdown
+ * renderer is what emits it — but three pages hand-write the same wrapper
+ * outside a .prose container, and there it was a div with a class and no
+ * behaviour at all. /quests shipped a 457px clue table in a 360px viewport
+ * with nothing to scroll it, overflowing the whole page by 115px.
+ *
+ * That is the hazard of scoping a utility to where it happened to be born: the
+ * class name says "this table scrolls" wherever it is written, so it had better
+ * mean it. Nothing is lost for the prose case, which still matches.
+ */
+.table-wrap {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   border: 1px solid var(--border-subtle);

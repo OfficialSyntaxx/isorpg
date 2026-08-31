@@ -43,6 +43,7 @@ for (const entry of entries) {
       {entries.length} entries, newest first. Every build, every regression, every corrective
       pass — written down as it happened.
     </p>
+    <p class="devlog-index__since" id="devlog-since" hidden aria-live="polite"></p>
 
     {
       groups.map((group) => (
@@ -50,9 +51,14 @@ for (const entry of entries) {
           <h2 class="devlog-index__month">{group.label}</h2>
           <ul class="devlog-index__list">
             {group.items.map((e) => (
-              <li data-reveal>
+              <li data-reveal data-entry={e.date}>
                 <a class="card" href={`/devlog/${e.slug}/`}>
-                  <span class="card__meta">{formatDate(e)}</span>
+                  <span class="card__meta">
+                    {formatDate(e)}
+                    <span class="devlog-index__new" hidden>
+                      new
+                    </span>
+                  </span>
                   <span class="card__title">{e.title}</span>
                   <p class="devlog-index__summary">{e.summary}</p>
                 </a>
@@ -64,6 +70,67 @@ for (const entry of entries) {
     }
   </section>
 </BaseLayout>
+
+<script>
+  /* "New since you were last here."
+   *
+   * The one thing a devlog owes a returning reader is a way to tell where they
+   * stopped. This marks entries dated after the last visit and says how many
+   * there are, then records the visit.
+   *
+   * ENTIRELY LOCAL, AND DELIBERATELY SO. The timestamp lives in this browser's
+   * localStorage and is never sent anywhere — the site has no analytics and no
+   * backend, and /save makes a public promise about not uploading things that
+   * would be hollow if the devlog quietly tracked return visits. Every access
+   * is wrapped: storage throws outright in some privacy modes, and a devlog
+   * that fails to render because it could not remember a date would be a
+   * strictly worse page.
+   *
+   * The marks are applied AFTER first paint on purpose. Rendering them at build
+   * time is impossible (the server has no idea who is reading), and reserving
+   * space for a badge that usually is not there would cost layout on every row.
+   * The badge is inside the existing meta line, so showing it shifts nothing.
+   */
+  const KEY = "isoperia-devlog-seen";
+  const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-entry]"));
+  const banner = document.querySelector<HTMLElement>("#devlog-since");
+
+  let seen: string | null = null;
+  try {
+    seen = window.localStorage.getItem(KEY);
+  } catch {
+    /* Storage unavailable. Nothing is marked, which is the correct fallback:
+       every entry reads as already-seen rather than as spuriously new. */
+  }
+
+  if (seen) {
+    let fresh = 0;
+    for (const row of rows) {
+      const date = row.dataset.entry ?? "";
+      if (date > seen) {
+        fresh++;
+        const badge = row.querySelector<HTMLElement>(".devlog-index__new");
+        if (badge) badge.hidden = false;
+      }
+    }
+    if (fresh > 0 && banner) {
+      banner.textContent = `${fresh} new since you were last here.`;
+      banner.hidden = false;
+    }
+  }
+
+  // Newest entry date, not "now": a reader who visits mid-day should not have
+  // an entry published later that same day counted as already seen.
+  const newest = rows.reduce((max, r) => {
+    const d = r.dataset.entry ?? "";
+    return d > max ? d : max;
+  }, "");
+  try {
+    if (newest) window.localStorage.setItem(KEY, newest);
+  } catch {
+    /* Nothing to do. The page has already rendered correctly. */
+  }
+</script>
 
 <style>
   .devlog-index {
@@ -110,5 +177,26 @@ for (const entry of entries) {
     color: var(--text-muted);
     font-size: var(--text-sm);
     max-width: none;
+  }
+
+  .devlog-index__since {
+    display: inline-block;
+    margin-top: var(--space-xs);
+    padding: var(--space-3xs) var(--space-xs);
+    border-radius: var(--radius-pill);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-strong);
+    font-size: var(--text-xs);
+  }
+  .devlog-index__new {
+    margin-left: var(--space-2xs);
+    padding: 0 var(--space-3xs);
+    border-radius: var(--radius-sm);
+    background: var(--mark-gold);
+    color: #2a2113;
+    font-size: var(--text-2xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
   }
 </style>
