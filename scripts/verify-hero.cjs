@@ -341,11 +341,26 @@ const TERRAIN = "[data-hero-terrain]";
       };
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-      // Six phase bins across the 600ms tick. Bins 0-3 lie inside the step;
-      // bin 5 is after the walker has stopped for the tick.
-      const BINS = 6;
-      const sum = new Array(BINS).fill(0);
-      const hits = new Array(BINS).fill(0);
+      /* TWO BUCKETS WITH A GUARD BAND, NOT SIX EQUAL BINS.
+       *
+       * The walker eases across the first 72% of the tick and stands still for
+       * the rest. Six equal bins put that boundary inside bin 4 (66.7-83.3%),
+       * so bin 4 was half movement and half pause, and the comparison leaned on
+       * bin 5 alone. Under load — a parallel build on the same machine, or a
+       * shared CI runner — dropped frames smear samples across bins and the
+       * ratio collapsed to 1.9 against a 2.5 threshold. Measured: it failed
+       * beside a running gate and passed immediately on an idle machine.
+       *
+       * A check that depends on how busy the host is will eventually fail on
+       * work that did not break it, and "flake" is not a root cause. So the
+       * samples that fall in the 72-82% transition are discarded and the two
+       * unambiguous phases are compared directly, which also puts far more
+       * samples in each bucket.
+       */
+      const MOVING_END = 0.72;
+      const PAUSED_START = 0.82;
+      const sum = [0, 0];
+      const hits = [0, 0];
       let prev = at();
       let prevT = performance.now();
       for (let i = 0; i < 120; i++) {
@@ -353,24 +368,25 @@ const TERRAIN = "[data-hero-terrain]";
         const now = performance.now();
         const x = at();
         if (x !== null && prev !== null) {
-          const mid = (prevT + now) / 2;
-          const b = Math.min(BINS - 1, Math.floor(((mid % 600) / 600) * BINS));
-          // Per millisecond: setTimeout is not exact and the intervals vary.
-          sum[b] += Math.abs(x - prev) / Math.max(1, now - prevT);
-          hits[b]++;
+          const phase = ((prevT + now) / 2 % 600) / 600;
+          const b = phase < MOVING_END ? 0 : phase >= PAUSED_START ? 1 : -1;
+          if (b >= 0) {
+            // Per millisecond: setTimeout is not exact and intervals vary.
+            sum[b] += Math.abs(x - prev) / Math.max(1, now - prevT);
+            hits[b]++;
+          }
         }
         prev = x;
         prevT = now;
       }
       return { avg: sum.map((v, k) => (hits[k] ? v / hits[k] : 0)), hits };
     });
-    const moving = Math.max(...walk.avg.slice(0, 4));
-    const paused = walk.avg[5];
+    const [moving, paused] = walk.avg;
     ok(
       "the walk is stepped on the tick, not a constant glide",
-      Math.min(...walk.hits) > 4 && moving > paused * 2.5,
+      Math.min(...walk.hits) > 8 && moving > paused * 2.5,
       `during the step ${moving.toFixed(4)}px/ms vs ${paused.toFixed(4)} after it ` +
-        `(need 2.5x) — bins ${walk.avg.map((v) => v.toFixed(3)).join(" ")}`,
+        `(need 2.5x; ${walk.hits[0]}/${walk.hits[1]} samples)`,
     );
 
     await page.close();

@@ -1,0 +1,276 @@
+---
+/**
+ * /quests — the four systems the site had never mentioned.
+ *
+ * Audited before this was written: of the thirteen content files the game
+ * exports, four were referenced by no page anywhere — quests, shop stock, clue
+ * scrolls and critters — and farming appeared exactly once, as a word in a
+ * sentence. They are shipped, working systems with real data, and the only way
+ * to know they existed was to have the repository.
+ *
+ * They share a page rather than getting four thin ones. Six quests, two clue
+ * tiers, three crops and thirteen shop lines is not four pages of material; it
+ * is one page about what there is to *do* besides fight, and splitting it would
+ * make each part look emptier than it is.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ItemIcon from "../components/ItemIcon.astro";
+import { questRows, clueRows, seedRows, shopRows } from "../lib/compendium";
+
+const quests = questRows();
+const clues = clueRows();
+const seeds = seedRows();
+const stock = shopRows();
+---
+
+<BaseLayout
+  title="Quests, clues and the farm"
+  pathname="/quests/"
+  description="Isoperia's quests, clue scrolls, crops and shop stock — the systems beyond combat, read from the game's own content export."
+>
+  <section class="head" data-region="sunmere">
+    <div class="wrap">
+      <p class="eyebrow">Things to do</p>
+      <h1 data-reveal>Not everything is a fight.</h1>
+      <p class="lede" data-reveal>
+        {quests.length} quests, {clues.length} tiers of clue scroll, {seeds.length} crops and
+        a shop with {stock.length} lines in it. All of it read from the game's content export
+        when this page is built.
+      </p>
+    </div>
+  </section>
+
+  <section class="block" id="quests">
+    <div class="wrap">
+      <h2 data-reveal>Quests</h2>
+      <ul class="quests">
+        {
+          quests.map((q) => (
+            <li class="quest card" data-reveal id={q.id}>
+              <h3 class="card__title">{q.title}</h3>
+              <p>{q.summary}</p>
+              <dl class="quest__meta">
+                {q.target && (
+                  <>
+                    <dt>
+                      {q.target.kind === "inventory"
+                        ? "Bring"
+                        : q.target.kind === "kills"
+                          ? "Defeat"
+                          : "Do"}
+                    </dt>
+                    <dd>
+                      {q.target.icon && <ItemIcon itemId={q.target.id} size={20} />}
+                      {q.target.href ? (
+                        <a href={q.target.href}>
+                          {q.target.count}× {q.target.name}
+                        </a>
+                      ) : (
+                        <span>{q.target.name}</span>
+                      )}
+                    </dd>
+                  </>
+                )}
+                {q.rewards.length > 0 && (
+                  <>
+                    <dt>Reward</dt>
+                    <dd>
+                      {q.rewards.map((r) => (
+                        <span class="quest__reward">
+                          <ItemIcon itemId={r.id} size={20} />
+                          <a href={`/items/${r.id}/`}>
+                            {r.amount}× {r.name}
+                          </a>
+                        </span>
+                      ))}
+                    </dd>
+                  </>
+                )}
+              </dl>
+              {q.doneText && <p class="quest__done">“{q.doneText}”</p>}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="block seam" id="clues" data-region="cinder">
+    <div class="wrap">
+      <h2 data-reveal>Clue scrolls</h2>
+      <p class="note" data-reveal>
+        A scroll points you somewhere. Follow it to the end and it pays out coins, a
+        spread of loot, and sometimes something you cannot get any other way.
+      </p>
+      <div class="table-wrap" data-reveal>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th class="num">Steps</th>
+              <th class="num">Coins</th>
+              <th>Loot</th>
+              <th>Unique</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              clues.map((c) => (
+                <tr>
+                  <td>{c.name}</td>
+                  <td class="num">{c.steps}</td>
+                  <td class="num">
+                    {c.coins.min.toLocaleString()}–{c.coins.max.toLocaleString()}
+                  </td>
+                  <td>
+                    {c.loot.map((l, n) => (
+                      <>
+                        {n > 0 && ", "}
+                        <a href={`/items/${l.id}/`}>{l.name}</a>
+                        <span class="dim">
+                          {" "}
+                          {l.min}–{l.max}
+                        </span>
+                      </>
+                    ))}
+                  </td>
+                  <td>
+                    {c.unique ? (
+                      <>
+                        <a href={`/items/${c.unique.id}/`}>{c.unique.name}</a>
+                        <span class="dim"> {Math.round(c.unique.chance * 100)}%</span>
+                      </>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="farming">
+    <div class="wrap">
+      <h2 data-reveal>Farming</h2>
+      <p class="note" data-reveal>
+        Plant it and walk away. Crops grow on real time, not on ticks, so a field is
+        something you come back to rather than something you stand next to.
+      </p>
+      <div class="table-wrap" data-reveal>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Seed</th>
+              <th class="num">Level</th>
+              <th class="num">Grows in</th>
+              <th class="num">XP</th>
+              <th>Produces</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              seeds.map((s) => (
+                <tr>
+                  <td>
+                    <ItemIcon itemId={s.id} size={22} />
+                    <a href={`/items/${s.id}/`}>{s.name}</a>
+                  </td>
+                  <td class="num">{s.levelReq}</td>
+                  <td class="num">{s.minutes} min</td>
+                  <td class="num">{s.xp}</td>
+                  <td>
+                    <a href={`/items/${s.produce.id}/`}>{s.produce.name}</a>
+                    <span class="dim">
+                      {" "}
+                      {s.produce.min}–{s.produce.max}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="block seam" id="shop" data-region="miregate">
+    <div class="wrap">
+      <h2 data-reveal>The general store</h2>
+      <p class="note" data-reveal>
+        What the settlement will sell you, and for how much. Everything here is also
+        obtainable some other way — the shop is a shortcut, not a gate.
+      </p>
+      <div class="table-wrap" data-reveal>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Type</th>
+              <th class="num">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              stock.map((s) => (
+                <tr>
+                  <td>
+                    <ItemIcon itemId={s.id} size={22} />
+                    <a href={`/items/${s.id}/`}>{s.name}</a>
+                  </td>
+                  <td class="dim">{s.type?.toLowerCase() ?? "—"}</td>
+                  <td class="num">{s.price.toLocaleString()}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .quests {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+  .quest__meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-3xs) var(--space-sm);
+    margin-top: var(--space-sm);
+    font-size: var(--text-sm);
+  }
+  .quest__meta dt {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+  }
+  .quest__meta dd {
+    margin: 0;
+  }
+  .quest__reward {
+    display: inline-flex;
+    align-items: center;
+    margin-right: var(--space-xs);
+  }
+  .quest__done {
+    margin-top: var(--space-sm);
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: var(--text-sm);
+  }
+  .dim {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+</style>

@@ -1,0 +1,208 @@
+---
+/**
+ * /items/<id> — one page per item, and the question a player actually asks.
+ *
+ * Every other page on this site describes a system: here are the monsters, here
+ * are the nodes, here are the recipes. A player does not think in systems. They
+ * think "I have a bronze bar, what is it for" and "I need coal, where is it".
+ * Those two questions are the whole page, and neither had an answer anywhere on
+ * the site before it existed.
+ *
+ * Nothing here is written by hand. Sources and uses are derived in
+ * compendium.ts by inverting every content export that mentions an item, so a
+ * recipe change moves this page with it. See the note at the top of that file.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ItemIcon from "../../components/ItemIcon.astro";
+import { allItems, item, type Source, type Use } from "../../lib/compendium";
+
+export function getStaticPaths() {
+  return allItems().map((i) => ({ params: { id: i.id } }));
+}
+
+const { id } = Astro.params;
+const it = item(id as string);
+if (!it) throw new Error(`No item "${id}" in the content export.`);
+
+/** Plain-language headings, so a table never says "kind: gather". */
+const SOURCE_LABEL: Record<Source["kind"], string> = {
+  drop: "Dropped by",
+  gather: "Gathered from",
+  craft: "Made by",
+  farm: "Grown from",
+  shop: "Bought from",
+  clue: "Found in",
+  quest: "Rewarded by",
+};
+const USE_LABEL: Record<Use["kind"], string> = {
+  craft: "Used to make",
+  quest: "Needed for",
+};
+
+const groupedSources = Object.entries(
+  it.sources.reduce<Record<string, Source[]>>((acc, s) => {
+    (acc[s.kind] ??= []).push(s);
+    return acc;
+  }, {}),
+) as [Source["kind"], Source[]][];
+
+const groupedUses = Object.entries(
+  it.uses.reduce<Record<string, Use[]>>((acc, u) => {
+    (acc[u.kind] ??= []).push(u);
+    return acc;
+  }, {}),
+) as [Use["kind"], Use[]][];
+
+const xpRows = Object.entries(it.xp ?? {});
+const skillTitle = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+---
+
+<BaseLayout
+  title={it.name}
+  pathname={`/items/${it.id}/`}
+  description={`${it.name} in Isoperia — ${it.desc ?? "an item in the game"} Where it comes from, what it makes, and what it is worth.`}
+>
+  <section class="head" data-region="hearthvale">
+    <div class="wrap">
+      <p class="eyebrow"><a href="/items/">Items</a></p>
+      <div class="item__title">
+        <ItemIcon itemId={it.id} size={56} />
+        <h1 data-reveal>{it.name}</h1>
+      </div>
+      {
+        it.desc && (
+          <p class="lede" data-reveal>
+            {it.desc}
+          </p>
+        )
+      }
+      <ul class="item__facts" data-reveal>
+        {it.type && <li class="tag">{it.type.toLowerCase()}</li>}
+        {typeof it.value === "number" && <li class="tag">{it.value} coins</li>}
+        {it.stack && <li class="tag">stacks</li>}
+        {typeof it.levelReq === "number" && <li class="tag">level {it.levelReq}</li>}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap item__cols">
+      <div>
+        <h2 data-reveal>Where it comes from</h2>
+        {
+          groupedSources.length === 0 ? (
+            <p class="note" data-reveal>
+              Nothing in the content export produces this item. It is granted by the game
+              itself — a dungeon gate, a starting kit or a scripted moment — rather than
+              by a drop table, a recipe or a shop. Stated rather than left blank: an empty
+              section would read as missing data.
+            </p>
+          ) : (
+            groupedSources.map(([kind, list]) => (
+              <div class="item__group" data-reveal>
+                <h3>{SOURCE_LABEL[kind]}</h3>
+                <ul class="item__list">
+                  {list.map((s) => (
+                    <li>
+                      {s.href ? <a href={s.href}>{s.label}</a> : <span>{s.label}</span>}
+                      {s.detail && <span class="item__detail">{s.detail}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          )
+        }
+      </div>
+
+      <div>
+        <h2 data-reveal>What it is for</h2>
+        {
+          groupedUses.length === 0 && xpRows.length === 0 ? (
+            <p class="note" data-reveal>
+              Nothing consumes this item. It is an end product — sell it, eat it, or wear
+              it.
+            </p>
+          ) : (
+            <>
+              {groupedUses.map(([kind, list]) => (
+                <div class="item__group" data-reveal>
+                  <h3>{USE_LABEL[kind]}</h3>
+                  <ul class="item__list">
+                    {list.map((u) => (
+                      <li>
+                        {u.href ? <a href={u.href}>{u.label}</a> : <span>{u.label}</span>}
+                        {u.detail && <span class="item__detail">{u.detail}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              {xpRows.length > 0 && (
+                <div class="item__group" data-reveal>
+                  <h3>Experience it grants</h3>
+                  <ul class="item__list">
+                    {xpRows.map(([skill, amount]) => (
+                      <li>
+                        <span>{skillTitle(skill)}</span>
+                        <span class="item__detail">{amount} xp</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .item__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+  .item__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-md);
+  }
+  .item__cols {
+    display: grid;
+    gap: var(--space-2xl);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    align-items: start;
+  }
+  .item__group {
+    margin-block: var(--space-lg);
+  }
+  .item__group h3 {
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--text-muted);
+  }
+  .item__list {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-2xs);
+  }
+  .item__list li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding-block: var(--space-2xs);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .item__detail {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+</style>

@@ -149,7 +149,7 @@ const withPortraits = Object.keys(PORTRAITS).length;
                       <tr>
                         <td>
                           <ItemIcon itemId={d.itemId} size={24} />
-                          {d.label}
+                          <a href={`/items/${d.itemId}/`}>{d.label}</a>
                           {d.table !== "main" && (
                             <span class="tag beast__kind">{TABLE_LABEL[d.table]}</span>
                           )}

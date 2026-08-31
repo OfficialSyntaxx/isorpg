@@ -1,0 +1,204 @@
+---
+/**
+ * /items — every item, searchable.
+ *
+ * PROGRESSIVE BY CONSTRUCTION. The whole table is rendered at build time and is
+ * complete and readable with no JavaScript; the script only hides rows. That is
+ * not a nicety — it is the version a search engine indexes, and this site has
+ * already shipped one page that was blank without JS.
+ *
+ * The filter is a plain substring match over name and type. No fuzzy library,
+ * no index shipped to the browser: the rows are already in the DOM, there are
+ * sixty-two of them, and matching against `textContent` is instant at that size.
+ * Adding a search dependency for this would be all cost.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ItemIcon from "../../components/ItemIcon.astro";
+import { allItems } from "../../lib/compendium";
+
+const items = allItems();
+const types = [...new Set(items.map((i) => i.type).filter(Boolean))].sort() as string[];
+---
+
+<BaseLayout
+  title="Items"
+  pathname="/items/"
+  description={`All ${items.length} items in Isoperia — what drops them, what crafts them, what they are used for and what they are worth. Read from the game's own content export.`}
+>
+  <section class="head" data-region="hearthvale">
+    <div class="wrap">
+      <p class="eyebrow">Compendium</p>
+      <h1 data-reveal>Every item, and where it comes from.</h1>
+      <p class="lede" data-reveal>
+        All {items.length} items in the build, each with the monsters that drop it, the recipes
+        that make it, the crops that grow it and the quests that want it. Every connection is
+        derived from the game's own content export when this page is built — none of it is written
+        by hand, so none of it can go stale.
+      </p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="filters" data-reveal>
+        <label class="filters__field">
+          <span class="visually-hidden">Search items</span>
+          <input
+            type="search"
+            id="item-search"
+            placeholder="Search 62 items…"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </label>
+        <div class="filters__types" role="group" aria-label="Filter by type">
+          <button class="chip" data-type="" aria-pressed="true">All</button>
+          {
+            types.map((t) => (
+              <button class="chip" data-type={t} aria-pressed="false">
+                {t.toLowerCase()}
+              </button>
+            ))
+          }
+        </div>
+        <p class="filters__count" id="item-count" aria-live="polite">
+          {items.length} items
+        </p>
+      </div>
+
+      <ul class="items">
+        {
+          items.map((i) => (
+            <li
+              class="items__row"
+              data-name={i.name.toLowerCase()}
+              data-type={i.type ?? ""}
+            >
+              <a href={`/items/${i.id}/`}>
+                <ItemIcon itemId={i.id} size={32} />
+                <span class="items__name">{i.name}</span>
+                <span class="items__meta">
+                  {i.sources.length > 0 &&
+                    `${i.sources.length} source${i.sources.length === 1 ? "" : "s"}`}
+                  {i.sources.length > 0 && i.uses.length > 0 && " · "}
+                  {i.uses.length > 0 &&
+                    `${i.uses.length} use${i.uses.length === 1 ? "" : "s"}`}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="note" id="item-empty" hidden>Nothing matches that.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const search = document.querySelector<HTMLInputElement>("#item-search");
+  const rows = Array.from(document.querySelectorAll<HTMLElement>(".items__row"));
+  const count = document.querySelector<HTMLElement>("#item-count");
+  const empty = document.querySelector<HTMLElement>("#item-empty");
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>(".chip"));
+
+  let type = "";
+
+  function apply(): void {
+    const q = (search?.value ?? "").trim().toLowerCase();
+    let shown = 0;
+    for (const row of rows) {
+      const name = row.dataset.name ?? "";
+      const t = row.dataset.type ?? "";
+      const hit = (q === "" || name.includes(q)) && (type === "" || t === type);
+      row.hidden = !hit;
+      if (hit) shown++;
+    }
+    if (count) count.textContent = `${shown} item${shown === 1 ? "" : "s"}`;
+    if (empty) empty.hidden = shown > 0;
+  }
+
+  search?.addEventListener("input", apply);
+  for (const chip of chips) {
+    chip.addEventListener("click", () => {
+      type = chip.dataset.type ?? "";
+      for (const c of chips) c.setAttribute("aria-pressed", String(c === chip));
+      apply();
+    });
+  }
+</script>
+
+<style>
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+  .filters__field {
+    flex: 1 1 14rem;
+  }
+  .filters__field input {
+    width: 100%;
+    padding: var(--space-2xs) var(--space-sm);
+    font: inherit;
+    color: var(--text-strong);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+  }
+  .filters__types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs);
+  }
+  .chip {
+    font: inherit;
+    font-size: var(--text-xs);
+    padding: var(--space-3xs) var(--space-xs);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--surface-raised);
+    color: var(--text-strong);
+    border-color: var(--border-strong);
+  }
+  .filters__count {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    margin-left: auto;
+  }
+  .items {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3xs);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  }
+  .items__row a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding: var(--space-2xs) var(--space-xs);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text-strong);
+  }
+  .items__row a:hover {
+    background: var(--surface-raised);
+    border-color: var(--border-strong);
+  }
+  .items__name {
+    flex: 1;
+  }
+  .items__meta {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+</style>

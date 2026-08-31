@@ -2450,6 +2450,49 @@ item icons in the drop tables; the three-badge figure row on `/features`; the
 no-JS hero, which renders all content and no longer ships blank; and all four
 dayparts, of which night — lit windows against dark terrain — is the strongest.
 
+### Phase 19 — The compendium ✅
+
+**The audit that prompted it.** The game ships thirteen content exports. Four were
+referenced by **no page anywhere** — quests, shop stock, clue scrolls and critters — and
+farming appeared exactly once, as a word in a sentence. Those are shipped, working systems
+with real data, and the only way to know they existed was to have the repository. That is
+the "content nobody else has", and it was already in the build.
+
+The deeper gap: every export points **one way**. A monster names the items it drops, a
+recipe names its inputs, a quest names its reward — and nothing points back. An item did not
+know it was dropped by anything, so the site could describe systems but could not answer the
+question a player actually asks: *where does this come from, and what is it for?*
+
+**What was built.** `web/src/lib/compendium.ts` inverts every export that mentions an item
+into a source/use graph, and three routes render it: `/items` (all 62, searchable, filter by
+type), `/items/<id>` (62 pages — drops, recipes, crops, shop, clue loot, quest rewards, what
+it crafts into, what XP it grants) and `/quests` (the four invisible systems, one page).
+Nothing is hand-written; a recipe change moves the pages with it.
+
+**Three bugs, all the same shape: a guessed field name.**
+
+1. Monster drops live on `main`, not `drops`. The first index read `m.drops`, which exists
+   on no monster. It threw nothing, warned nothing, and **indexed zero drops** — while still
+   reporting a healthy-looking 58 of 62 items connected, because gathering, crafting and the
+   shop cover most of them. Caught only by checking one fact known to be true from the
+   bestiary page: bones drop from Giant Rats. They did not appear. `gamedata.ts:293` had the
+   right name all along; two readers of one export must not disagree about what it is called.
+2. `starterType` decides what a quest's `target` means — an item, a **monster**, or a
+   progress flag. Treating all three as items produced `/items/giant_rat/` and
+   `/items/cinder_hollow_returned/`: real-looking links to pages that were never built.
+3. Rewards carry **either** `qty` **or** `min`/`max`. Reading only `qty` printed "× Coins"
+   with the number missing, on two of six quests.
+
+**`scripts/verify-links.cjs` is the check that came out of it**, and it is the durable
+lesson: the more a site infers, the more ways it can infer something that does not exist, so
+a generated link needs a generated check. It walks every built page, resolves all 2,241
+internal links and every in-page anchor, and fails on a miss. Reintroducing bug 2 fails it
+with exactly the two links that shipped. `/play/` is exempt by name — the game is mounted
+there by `compose-site.cjs` at deploy time and is deliberately absent from `web/dist`.
+
+Two items — `dungeon_key` and `small_net` — have no source in any export. Their pages say so
+in words rather than showing an empty section, because a blank panel reads as missing data.
+
 ---
 
 ## 12b. What is actually left

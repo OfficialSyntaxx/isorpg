@@ -171,6 +171,9 @@ jobs:
       # leaves their machine. This drives a browser, feeds it a real save, and
       # fails if anything crosses the origin, carries a body, or is not a static
       # asset. A privacy promise nothing verifies is a promise about intentions.
+      - name: Verify every internal link resolves
+        run: node ../scripts/verify-links.cjs
+
       - name: Verify /save never sends a save anywhere
         run: node ../scripts/verify-save-privacy.cjs
 
