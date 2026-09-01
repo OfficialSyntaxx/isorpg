@@ -28,7 +28,7 @@ jobs:
           # Asset validation must inspect payloads, not 130-byte LFS pointers.
           lfs: true
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
