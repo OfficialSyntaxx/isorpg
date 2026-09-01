@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Isoperia.Core.Content;
+using Isoperia.Core.Save;
 using NUnit.Framework;
 
 namespace Isoperia.Unity.Tests
