@@ -93,9 +93,19 @@ remaining mainland is finished.
 | `node scripts/verify-scene-materials.cjs` | Passed, but covers zero active mesh-bearing scene renderers. |
 | `node scripts/verify-model-budget.cjs` | Passed: existing 11-model subset, 5.35 MB. Not a complete world performance budget. |
 | `node scripts/verify-always-included-shaders.cjs` | Passed: URP shader/pipeline settings pinned. Not shader appearance validation. |
-| `npm run verify:world-resources` | Blocked locally: no Mono compiler/runtime. Exits 2 rather than reporting success. CI is configured to run it. |
-| Unity compilation, imported-asset audit, six EditMode tests | Not run locally: no Unity Editor or connected Unity MCP. |
+| `npm run verify:world-resources` | Blocked locally (no Mono); passed 3/3 in GitHub CI after compiling the actual registry/selection code and tests with Mono. |
+| `npm run verify:core` | Passed 379/379 in GitHub CI with Mono. |
+| Legacy browser smoke | Passed 5/5 in GitHub CI. This does not exercise Unity. |
+| Unity Editor compilation, imported-asset audit, three engine-dependent interaction/placement tests | Not run: no Unity Editor or connected Unity MCP. The three selection tests ran outside Unity as recorded above. |
 | Play Mode, screenshots, WebGL build, device/performance tests | Not run for this change. Required before visual approval/release. |
+
+Code commit `76b03f8` passed [GitHub CI run 33555545960](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33555545960).
+The source audit, Mono suites/parity checks, build, gameplay tests, composition
+checks and legacy browser smoke completed. The existing PWA browser check reported
+no Chromium binary and the existing visual-regression script reported no Playwright;
+both skipped. A green job therefore does **not** establish PWA or visual acceptance.
+The first two runs exposed the missing LFS checkout and a missing namespace import
+in the new tests; both were corrected before this successful run.
 
 The project already includes a Coplay Unity MCP dependency, but it is not
 connected to this session. Continue the Editor validation with this checkout on
