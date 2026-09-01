@@ -44,6 +44,9 @@ not establish material appearance, animation quality, collision or visual approv
 - Add source audit tests, three pure C# selection tests, three Unity interaction/
   placement tests, and a read-only Unity imported-asset audit menu. CI installs
   Mono explicitly so resource tests cannot silently skip.
+  The first CI run exposed a non-LFS checkout; CI now hydrates LFS payloads before
+  auditing models. The pointer failures were checkout configuration, not corrupt
+  source models.
 
 Core generation, save IDs, resource density, admission rules and scene/prefab
 serialization were not changed. This is deliberately not a claim that the
