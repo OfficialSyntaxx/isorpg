@@ -67,21 +67,55 @@ namespace Isoperia.Unity
             if (!WorldAssetAdmission.IsApproved(HeroAsset)) return false;
             GameObject prefab = Resources.Load<GameObject>(HeroAsset);
             RuntimeAnimatorController controller = Resources.Load<RuntimeAnimatorController>(HeroControllerAsset);
-            if (prefab == null || controller == null) return false;
+            if (prefab == null)
+            {
+                Debug.LogError("[Isoperia] Approved hero model could not be loaded: " + HeroAsset, this);
+                return false;
+            }
 
             GameObject model = Instantiate(prefab, transform);
             model.name = "HeroModel";
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = Quaternion.identity;
             OwnedModelPresentation.FitToHeight(model, 1.72f, transform.position.y);
+            ApplyHeroPalette(model);
 
             heroTransform = model.transform;
             heroAnimator = model.GetComponentInChildren<Animator>();
-            if (heroAnimator == null) heroAnimator = model.AddComponent<Animator>();
-            heroAnimator.runtimeAnimatorController = controller;
-            heroAnimator.applyRootMotion = false;
-            CacheAnimatorParameters();
+            if (controller != null)
+            {
+                if (heroAnimator == null) heroAnimator = model.AddComponent<Animator>();
+                heroAnimator.runtimeAnimatorController = controller;
+                heroAnimator.applyRootMotion = false;
+                CacheAnimatorParameters();
+            }
+            else
+            {
+                Debug.LogWarning("[Isoperia] Hero model loaded without an animation controller: " + HeroControllerAsset, this);
+            }
             return true;
+        }
+
+        private static void ApplyHeroPalette(GameObject model)
+        {
+            foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < palette.Length; i++)
+                {
+                    string part = renderer.name.ToLowerInvariant();
+                    Color color = part.Contains("skin") || part.Contains("face") || part.Contains("head")
+                        ? new Color(.72f, .43f, .25f)
+                        : part.Contains("boot") || part.Contains("shoe")
+                            ? new Color(.08f, .045f, .025f)
+                            : part.Contains("hat") || part.Contains("robe") || part.Contains("cloth")
+                                ? new Color(.12f, .22f, .52f)
+                                : new Color(.23f, .27f, .34f);
+                    palette[i] = WorldMaterialCache.Lit("Hero_" + renderer.name, color);
+                }
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void CreateAnimatedFallback()

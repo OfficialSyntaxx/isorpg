@@ -1,5 +1,27 @@
 # Isoperia — Update Log
 
+## 2026-09-01 · Unity renovation verification and authored runtime lane
+
+- Fetched and switched to `claude/unity-engine-migration-roadmap-fz9w8y` with
+  existing local work preserved; hydrated the complete Unity asset tree from
+  Git LFS so models, textures, audio, and environment dependencies are real
+  binaries during Editor validation.
+- Verified Unity MCP against the tracked project at
+  `/private/tmp/isorpg_work/unity`, loaded `Bootstrap.unity`, and passed all 6
+  `Isoperia.Unity.Tests` EditMode tests.
+- Ran the Unity world asset audit: 193 imported assets, 131 admitted runtime
+  assets, 33 animation clips, 0 import/geometry issues. Planar water is now
+  explicitly recognized as a valid surface in the audit.
+- Promoted the locally authored `Art/OwnedModels` family into the reviewed
+  runtime lane, applied consistent actor/town palettes, enabled authored
+  combat presentation, added house collision volumes, and widened the default
+  third-person camera to reduce obstruction and improve world readability.
+- Captured `unity/Artifacts/hearthvale-polish-pass.png` in Play Mode. The
+  scene is now using authored runtime models, but the visual gate remains open:
+  several authored buildings/props still need a dedicated proportion and
+  composition pass before this is considered polished.
+
+
 ## 2026-08-28 · Phase 0 visual stabilization
 
 - Confirmed the model regression in the live Bootstrap scene after Git LFS

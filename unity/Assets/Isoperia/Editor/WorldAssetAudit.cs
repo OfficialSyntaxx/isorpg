@@ -110,7 +110,11 @@ namespace Isoperia.EditorTools
                 }
             }
             entry.boundsSize = bounds.size;
-            if (hasBounds && (bounds.size.y < .001f || float.IsNaN(bounds.size.y) || float.IsInfinity(bounds.size.y)))
+            // Water is an intentionally planar surface; a zero-thickness
+            // imported mesh is valid when it is used as a ground/water sheet.
+            bool intentionalPlanarSurface = entry.path.IndexOf("/Water/", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (!intentionalPlanarSurface && hasBounds &&
+                (bounds.size.y < .001f || float.IsNaN(bounds.size.y) || float.IsInfinity(bounds.size.y)))
                 entry.issues.Add("Invalid vertical bounds");
             if (instance.GetComponentsInChildren<Camera>(true).Length > 0) entry.issues.Add("Embedded camera");
             if (instance.GetComponentsInChildren<Light>(true).Length > 0) entry.issues.Add("Embedded light");

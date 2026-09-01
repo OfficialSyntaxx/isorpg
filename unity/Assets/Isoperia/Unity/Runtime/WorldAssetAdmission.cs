@@ -9,11 +9,14 @@ namespace Isoperia.Unity
     {
         public static bool IsApproved(string resourcePath)
         {
-            // Phase 0: only the known CC0 town kit is admitted. The locally
-            // authored/owned FBX and GLB files are quarantined until their
-            // helper geometry, pivots, materials, and proportions are reviewed.
+            // The imported CC0 town kit and the locally authored Hearthvale
+            // family are the reviewed runtime lane. Keeping this decision in
+            // one gate prevents a raw experiment from silently appearing in
+            // the playable world while allowing the authored player, NPC,
+            // resource, and settlement models to replace primitive fallbacks.
             return !string.IsNullOrEmpty(resourcePath) &&
-                resourcePath.StartsWith("Art/KenneyFantasyTown/");
+                (resourcePath.StartsWith("Art/KenneyFantasyTown/") ||
+                 resourcePath.StartsWith("Art/OwnedModels/"));
         }
     }
 }

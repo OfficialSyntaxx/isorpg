@@ -59,7 +59,6 @@ namespace Isoperia.Unity
             // invisible and makes the gathering loop inaccessible in 3D.
             Disable<WorldDungeonView>();
             Disable<WorldOwnedAssetLibraryView>();
-            Disable<WorldCombatView>();
         }
 
         private static void Disable<T>() where T : Behaviour

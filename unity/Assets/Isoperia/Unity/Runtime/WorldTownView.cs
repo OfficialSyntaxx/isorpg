@@ -255,6 +255,9 @@ namespace Isoperia.Unity
             PlaceKitPiece(house.transform, "wall-wood", new Vector3(-1.15f, 0f, 0f), scale, -90f);
             PlaceKitPiece(house.transform, "wall-wood", new Vector3(1.15f, 0f, 0f), scale, 90f);
             PlaceKitPiece(house.transform, "roof-gable", new Vector3(0f, 1.45f * scale, 0f), scale * 1.05f, 0f);
+            BoxCollider collision = house.AddComponent<BoxCollider>();
+            collision.center = new Vector3(0f, .85f * scale, 0f);
+            collision.size = new Vector3(2.15f * scale, 1.7f * scale, 2.15f * scale);
         }
 
         private void CreateTownMaterials()
@@ -372,6 +375,7 @@ namespace Isoperia.Unity
                 GameObject model = Instantiate(prefab, fallback.transform);
                 model.name = assetName;
                 OwnedModelPresentation.FitToHeight(model, 1.72f, position.y);
+                ApplyOwnedLandmarkPalette(model);
                 CapsuleCollider modelCollider = fallback.AddComponent<CapsuleCollider>();
                 modelCollider.radius = .33f;
                 modelCollider.height = 1.72f;
@@ -416,6 +420,23 @@ namespace Isoperia.Unity
             piece.transform.localPosition = localPosition;
             piece.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             piece.transform.localScale = Vector3.one * scale;
+            ApplyTownKitPalette(piece, assetName);
+        }
+
+        private static void ApplyTownKitPalette(GameObject instance, string assetName)
+        {
+            Color color = assetName.Contains("roof") ? new Color(.08f, .28f, .30f) :
+                assetName.Contains("window") || assetName.Contains("lantern") ? new Color(.92f, .52f, .16f) :
+                assetName.Contains("fence") ? new Color(.22f, .10f, .045f) :
+                new Color(.38f, .20f, .09f);
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < palette.Length; i++)
+                    palette[i] = WorldMaterialCache.Lit("TownKit_" + assetName, color, assetName.Contains("window") || assetName.Contains("lantern"));
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void PlaceOwnedProp(string assetPath, string instanceName, Vector3 position, float height, float yaw)
