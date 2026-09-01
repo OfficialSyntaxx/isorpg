@@ -1,0 +1,1005 @@
+{
+  "scope": "Model source integrity, GUID uniqueness, and discoverable literal Resources paths. Dynamic references, import results, materials, clips and visual approval require the Unity audit.",
+  "modelCount": 166,
+  "resourceModelCount": 131,
+  "checkedResourceReferences": 46,
+  "errors": [],
+  "models": [
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Props/Branches/Models/UNS_Branch.fbx",
+      "bytes": 37932,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Props/Logs/Models/UNS_Log.fbx",
+      "bytes": 84284,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Props/Logs/Models/UNS_Stump.fbx",
+      "bytes": 79580,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Cliffs/Models/UNS_Rock_Cliff_01.fbx",
+      "bytes": 116348,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Cliffs/Models/UNS_Rock_Cliff_02.fbx",
+      "bytes": 117372,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Cliffs/Models/UNS_Rock_Cliff_03.fbx",
+      "bytes": 127660,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Cliffs/Models/UNS_Rock_Cliff_04.fbx",
+      "bytes": 207596,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Cliffs/Models/UNS_Rock_Cliff_05.fbx",
+      "bytes": 153244,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Forest/Models/UNS_Standard_Rock_01.fbx",
+      "bytes": 98204,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Forest/Models/UNS_Standard_Rock_02.fbx",
+      "bytes": 96844,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Forest/Models/UNS_Standard_Rock_03.fbx",
+      "bytes": 141276,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Forest/Models/UNS_Standard_Rock_04.fbx",
+      "bytes": 90508,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Forest/Models/UNS_Standard_Rock_05.fbx",
+      "bytes": 98892,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/Mountain/Models/UNS_Mountain.fbx",
+      "bytes": 283196,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/River/Models/UNS_Tiny_Rock_01.fbx",
+      "bytes": 31772,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/River/Models/UNS_Tiny_Rock_02.fbx",
+      "bytes": 31596,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/River/Models/UNS_Tiny_Rock_03.fbx",
+      "bytes": 34604,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/River/Models/UNS_Tiny_Rock_04.fbx",
+      "bytes": 32316,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Rocks/River/Models/UNS_Tiny_Rock_05.fbx",
+      "bytes": 32828,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Trees/Fir/Models/UNS_Spruce_01.fbx",
+      "bytes": 705068,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Trees/Fir/Models/UNS_Spruce_02.fbx",
+      "bytes": 459804,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Vegetation/Bushes/Models/UNS_Bush.fbx",
+      "bytes": 113420,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Vegetation/Flowers/Models/UNS_Flower.fbx",
+      "bytes": 32508,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Vegetation/Grass/Models/UNS_Grass.fbx",
+      "bytes": 64396,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Vegetation/Mushrooms/Models/UNS_Mushroom_Patch.fbx",
+      "bytes": 48108,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Water/Models/UNS_Water_Detailed.fbx",
+      "bytes": 187340,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Water/Models/UNS_Water_Flat.fbx",
+      "bytes": 14764,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/bog_husk.glb",
+      "bytes": 461076,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/cave_brute.glb",
+      "bytes": 539524,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/cave_slasher.glb",
+      "bytes": 618348,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/dire_wolf.glb",
+      "bytes": 328672,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/forest_ogre.glb",
+      "bytes": 541556,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/frost_imp.glb",
+      "bytes": 476204,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/hero_rigged.glb",
+      "bytes": 738772,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Art/Models/villager.glb",
+      "bytes": 313416,
+      "resourcePath": null,
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/fence.fbx",
+      "bytes": 26992,
+      "resourcePath": "Art/KenneyFantasyTown/fence",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/fountain-round.fbx",
+      "bytes": 60144,
+      "resourcePath": "Art/KenneyFantasyTown/fountain-round",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/lantern.fbx",
+      "bytes": 29504,
+      "resourcePath": "Art/KenneyFantasyTown/lantern",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/road-bend.fbx",
+      "bytes": 33984,
+      "resourcePath": "Art/KenneyFantasyTown/road-bend",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/road-corner.fbx",
+      "bytes": 28992,
+      "resourcePath": "Art/KenneyFantasyTown/road-corner",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/road.fbx",
+      "bytes": 27472,
+      "resourcePath": "Art/KenneyFantasyTown/road",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/rock-large.fbx",
+      "bytes": 30368,
+      "resourcePath": "Art/KenneyFantasyTown/rock-large",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/rock-small.fbx",
+      "bytes": 28128,
+      "resourcePath": "Art/KenneyFantasyTown/rock-small",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/roof-corner.fbx",
+      "bytes": 27824,
+      "resourcePath": "Art/KenneyFantasyTown/roof-corner",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/roof-gable-end.fbx",
+      "bytes": 25968,
+      "resourcePath": "Art/KenneyFantasyTown/roof-gable-end",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/roof-gable.fbx",
+      "bytes": 26848,
+      "resourcePath": "Art/KenneyFantasyTown/roof-gable",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/stall-green.fbx",
+      "bytes": 30176,
+      "resourcePath": "Art/KenneyFantasyTown/stall-green",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/stall-red.fbx",
+      "bytes": 29792,
+      "resourcePath": "Art/KenneyFantasyTown/stall-red",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/tree-high.fbx",
+      "bytes": 32688,
+      "resourcePath": "Art/KenneyFantasyTown/tree-high",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/tree.fbx",
+      "bytes": 31456,
+      "resourcePath": "Art/KenneyFantasyTown/tree",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/wall-wood-corner.fbx",
+      "bytes": 26192,
+      "resourcePath": "Art/KenneyFantasyTown/wall-wood-corner",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/wall-wood-door.fbx",
+      "bytes": 36608,
+      "resourcePath": "Art/KenneyFantasyTown/wall-wood-door",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/wall-wood-window-shutters.fbx",
+      "bytes": 25936,
+      "resourcePath": "Art/KenneyFantasyTown/wall-wood-window-shutters",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/wall-wood.fbx",
+      "bytes": 27280,
+      "resourcePath": "Art/KenneyFantasyTown/wall-wood",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/watermill.fbx",
+      "bytes": 41216,
+      "resourcePath": "Art/KenneyFantasyTown/watermill",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/KenneyFantasyTown/windmill.fbx",
+      "bytes": 43648,
+      "resourcePath": "Art/KenneyFantasyTown/windmill",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/actor_animation_baseline.fbx",
+      "bytes": 164780,
+      "resourcePath": "Art/OwnedModels/actor_animation_baseline",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/boss_frostwatch_yeti.fbx",
+      "bytes": 21500,
+      "resourcePath": "Art/OwnedModels/boss_frostwatch_yeti",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/boss_miregate_gator.fbx",
+      "bytes": 22860,
+      "resourcePath": "Art/OwnedModels/boss_miregate_gator",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/boss_sunmere_siren.fbx",
+      "bytes": 21804,
+      "resourcePath": "Art/OwnedModels/boss_sunmere_siren",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/boss_wildwood_ancient.fbx",
+      "bytes": 23036,
+      "resourcePath": "Art/OwnedModels/boss_wildwood_ancient",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/campfire.fbx",
+      "bytes": 23564,
+      "resourcePath": "Art/OwnedModels/campfire",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/cinder_ash_tree.fbx",
+      "bytes": 17516,
+      "resourcePath": "Art/OwnedModels/cinder_ash_tree",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/cinder_barricade.fbx",
+      "bytes": 17948,
+      "resourcePath": "Art/OwnedModels/cinder_barricade",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/cinder_furnace_ruins.fbx",
+      "bytes": 18508,
+      "resourcePath": "Art/OwnedModels/cinder_furnace_ruins",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/cinder_gate.fbx",
+      "bytes": 21228,
+      "resourcePath": "Art/OwnedModels/cinder_gate",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/cinder_hound_animated.fbx",
+      "bytes": 149580,
+      "resourcePath": "Art/OwnedModels/cinder_hound_animated",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/cinder_lava_rock.fbx",
+      "bytes": 17660,
+      "resourcePath": "Art/OwnedModels/cinder_lava_rock",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/dire_wolf.glb",
+      "bytes": 328672,
+      "resourcePath": "Art/OwnedModels/dire_wolf",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/farm_chicken_coop.fbx",
+      "bytes": 18140,
+      "resourcePath": "Art/OwnedModels/farm_chicken_coop",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/farm_crop_rows.fbx",
+      "bytes": 20060,
+      "resourcePath": "Art/OwnedModels/farm_crop_rows",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/farm_fence_segment.fbx",
+      "bytes": 17004,
+      "resourcePath": "Art/OwnedModels/farm_fence_segment",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/farm_water_trough.fbx",
+      "bytes": 16764,
+      "resourcePath": "Art/OwnedModels/farm_water_trough",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/forest_ogre.glb",
+      "bytes": 541556,
+      "resourcePath": "Art/OwnedModels/forest_ogre",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/friendly_chicken.fbx",
+      "bytes": 22476,
+      "resourcePath": "Art/OwnedModels/friendly_chicken",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/friendly_fishing_bird.fbx",
+      "bytes": 22620,
+      "resourcePath": "Art/OwnedModels/friendly_fishing_bird",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/friendly_mule.fbx",
+      "bytes": 21708,
+      "resourcePath": "Art/OwnedModels/friendly_mule",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/friendly_sheep.fbx",
+      "bytes": 21708,
+      "resourcePath": "Art/OwnedModels/friendly_sheep",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/frostwatch_crystal_cluster.fbx",
+      "bytes": 17820,
+      "resourcePath": "Art/OwnedModels/frostwatch_crystal_cluster",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/frostwatch_mine_gate.fbx",
+      "bytes": 36620,
+      "resourcePath": "Art/OwnedModels/frostwatch_mine_gate",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/frostwatch_mine_support.fbx",
+      "bytes": 17020,
+      "resourcePath": "Art/OwnedModels/frostwatch_mine_support",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/frostwatch_mine.fbx",
+      "bytes": 22700,
+      "resourcePath": "Art/OwnedModels/frostwatch_mine",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/frostwatch_ore_cart.fbx",
+      "bytes": 18764,
+      "resourcePath": "Art/OwnedModels/frostwatch_ore_cart",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/frostwatch_supply_tent.fbx",
+      "bytes": 17628,
+      "resourcePath": "Art/OwnedModels/frostwatch_supply_tent",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/frostwatch_winch.fbx",
+      "bytes": 19532,
+      "resourcePath": "Art/OwnedModels/frostwatch_winch",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_anvil.fbx",
+      "bytes": 26940,
+      "resourcePath": "Art/OwnedModels/hearthvale_anvil",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_awning.fbx",
+      "bytes": 16620,
+      "resourcePath": "Art/OwnedModels/hearthvale_awning",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_banner.fbx",
+      "bytes": 17180,
+      "resourcePath": "Art/OwnedModels/hearthvale_banner",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_barrel.fbx",
+      "bytes": 17660,
+      "resourcePath": "Art/OwnedModels/hearthvale_barrel",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_bed.fbx",
+      "bytes": 17868,
+      "resourcePath": "Art/OwnedModels/hearthvale_bed",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_bench.fbx",
+      "bytes": 15564,
+      "resourcePath": "Art/OwnedModels/hearthvale_bench",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_chair.fbx",
+      "bytes": 15580,
+      "resourcePath": "Art/OwnedModels/hearthvale_chair",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_cooking_pot.fbx",
+      "bytes": 18076,
+      "resourcePath": "Art/OwnedModels/hearthvale_cooking_pot",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_fireplace.fbx",
+      "bytes": 18444,
+      "resourcePath": "Art/OwnedModels/hearthvale_fireplace",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_fish_rack.fbx",
+      "bytes": 31484,
+      "resourcePath": "Art/OwnedModels/hearthvale_fish_rack",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_forge.fbx",
+      "bytes": 25500,
+      "resourcePath": "Art/OwnedModels/hearthvale_forge",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_handcart.fbx",
+      "bytes": 16460,
+      "resourcePath": "Art/OwnedModels/hearthvale_handcart",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_hanging_sign.fbx",
+      "bytes": 17212,
+      "resourcePath": "Art/OwnedModels/hearthvale_hanging_sign",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_hay_bale.fbx",
+      "bytes": 16604,
+      "resourcePath": "Art/OwnedModels/hearthvale_hay_bale",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_market_canopy.fbx",
+      "bytes": 94156,
+      "resourcePath": "Art/OwnedModels/hearthvale_market_canopy",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_noticeboard.fbx",
+      "bytes": 16764,
+      "resourcePath": "Art/OwnedModels/hearthvale_noticeboard",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_plaza_fountain.fbx",
+      "bytes": 54716,
+      "resourcePath": "Art/OwnedModels/hearthvale_plaza_fountain",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_produce_crate.fbx",
+      "bytes": 20988,
+      "resourcePath": "Art/OwnedModels/hearthvale_produce_crate",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_sacks.fbx",
+      "bytes": 16636,
+      "resourcePath": "Art/OwnedModels/hearthvale_sacks",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_scarecrow.fbx",
+      "bytes": 18428,
+      "resourcePath": "Art/OwnedModels/hearthvale_scarecrow",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_shelf.fbx",
+      "bytes": 17516,
+      "resourcePath": "Art/OwnedModels/hearthvale_shelf",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_table.fbx",
+      "bytes": 15708,
+      "resourcePath": "Art/OwnedModels/hearthvale_table",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hearthvale_tool_rack.fbx",
+      "bytes": 17932,
+      "resourcePath": "Art/OwnedModels/hearthvale_tool_rack",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hero_animated_v2.fbx",
+      "bytes": 1845100,
+      "resourcePath": "Art/OwnedModels/hero_animated_v2",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hero_animated.fbx",
+      "bytes": 1845036,
+      "resourcePath": "Art/OwnedModels/hero_animated",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/hero_rigged.glb",
+      "bytes": 738772,
+      "resourcePath": "Art/OwnedModels/hero_rigged",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/local_prop_trial.fbx",
+      "bytes": 34924,
+      "resourcePath": "Art/OwnedModels/local_prop_trial",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/mire_wisp.fbx",
+      "bytes": 19340,
+      "resourcePath": "Art/OwnedModels/mire_wisp",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/miregate_boardwalk.fbx",
+      "bytes": 18060,
+      "resourcePath": "Art/OwnedModels/miregate_boardwalk",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/miregate_bone_totem.fbx",
+      "bytes": 19804,
+      "resourcePath": "Art/OwnedModels/miregate_bone_totem",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/miregate_broken_gate.fbx",
+      "bytes": 17036,
+      "resourcePath": "Art/OwnedModels/miregate_broken_gate",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/miregate_ruin.fbx",
+      "bytes": 20044,
+      "resourcePath": "Art/OwnedModels/miregate_ruin",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/miregate_watchtower.fbx",
+      "bytes": 16780,
+      "resourcePath": "Art/OwnedModels/miregate_watchtower",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/monster_bog_husk.fbx",
+      "bytes": 23100,
+      "resourcePath": "Art/OwnedModels/monster_bog_husk",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/monster_cave_slasher.fbx",
+      "bytes": 23084,
+      "resourcePath": "Art/OwnedModels/monster_cave_slasher",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/monster_forest_ogre.fbx",
+      "bytes": 22812,
+      "resourcePath": "Art/OwnedModels/monster_forest_ogre",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/monster_frost_imp.fbx",
+      "bytes": 23036,
+      "resourcePath": "Art/OwnedModels/monster_frost_imp",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/monster_rat.fbx",
+      "bytes": 21980,
+      "resourcePath": "Art/OwnedModels/monster_rat",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/monster_wolf.fbx",
+      "bytes": 22588,
+      "resourcePath": "Art/OwnedModels/monster_wolf",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_blacksmith_kit.fbx",
+      "bytes": 18476,
+      "resourcePath": "Art/OwnedModels/npc_blacksmith_kit",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_child.fbx",
+      "bytes": 21500,
+      "resourcePath": "Art/OwnedModels/npc_child",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_elder.fbx",
+      "bytes": 23164,
+      "resourcePath": "Art/OwnedModels/npc_elder",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_farmer_kit.fbx",
+      "bytes": 19004,
+      "resourcePath": "Art/OwnedModels/npc_farmer_kit",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_guard_kit.fbx",
+      "bytes": 16796,
+      "resourcePath": "Art/OwnedModels/npc_guard_kit",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_guard.fbx",
+      "bytes": 23116,
+      "resourcePath": "Art/OwnedModels/npc_guard",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_merchant_pack.fbx",
+      "bytes": 17580,
+      "resourcePath": "Art/OwnedModels/npc_merchant_pack",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_merchant.fbx",
+      "bytes": 22844,
+      "resourcePath": "Art/OwnedModels/npc_merchant",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_questgiver.fbx",
+      "bytes": 23020,
+      "resourcePath": "Art/OwnedModels/npc_questgiver",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_ranger_kit.fbx",
+      "bytes": 18844,
+      "resourcePath": "Art/OwnedModels/npc_ranger_kit",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/npc_villager.fbx",
+      "bytes": 21500,
+      "resourcePath": "Art/OwnedModels/npc_villager",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/ore_vein.fbx",
+      "bytes": 21292,
+      "resourcePath": "Art/OwnedModels/ore_vein",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/route_milestone.fbx",
+      "bytes": 16508,
+      "resourcePath": "Art/OwnedModels/route_milestone",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/route_road_brazier.fbx",
+      "bytes": 19004,
+      "resourcePath": "Art/OwnedModels/route_road_brazier",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/route_road_lantern.fbx",
+      "bytes": 18684,
+      "resourcePath": "Art/OwnedModels/route_road_lantern",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/route_ruined_cart.fbx",
+      "bytes": 16460,
+      "resourcePath": "Art/OwnedModels/route_ruined_cart",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/route_wood_bridge.fbx",
+      "bytes": 15948,
+      "resourcePath": "Art/OwnedModels/route_wood_bridge",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/sunmere_buoy.fbx",
+      "bytes": 18684,
+      "resourcePath": "Art/OwnedModels/sunmere_buoy",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/sunmere_fishing_dock.fbx",
+      "bytes": 18108,
+      "resourcePath": "Art/OwnedModels/sunmere_fishing_dock",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/sunmere_lake_shrine.fbx",
+      "bytes": 17708,
+      "resourcePath": "Art/OwnedModels/sunmere_lake_shrine",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/sunmere_net_rack.fbx",
+      "bytes": 18780,
+      "resourcePath": "Art/OwnedModels/sunmere_net_rack",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/sunmere_rowboat.fbx",
+      "bytes": 16796,
+      "resourcePath": "Art/OwnedModels/sunmere_rowboat",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/villager.glb",
+      "bytes": 313416,
+      "resourcePath": "Art/OwnedModels/villager",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wayfinder_sign.fbx",
+      "bytes": 17564,
+      "resourcePath": "Art/OwnedModels/wayfinder_sign",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_autumn_tree.fbx",
+      "bytes": 17164,
+      "resourcePath": "Art/OwnedModels/wild_autumn_tree",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_boulder_cluster.fbx",
+      "bytes": 16476,
+      "resourcePath": "Art/OwnedModels/wild_boulder_cluster",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_broadleaf_tree.fbx",
+      "bytes": 17164,
+      "resourcePath": "Art/OwnedModels/wild_broadleaf_tree",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_fallen_log.fbx",
+      "bytes": 16716,
+      "resourcePath": "Art/OwnedModels/wild_fallen_log",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_fern_cluster.fbx",
+      "bytes": 16060,
+      "resourcePath": "Art/OwnedModels/wild_fern_cluster",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_mushroom_cluster.fbx",
+      "bytes": 17180,
+      "resourcePath": "Art/OwnedModels/wild_mushroom_cluster",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_pine_tree.fbx",
+      "bytes": 17164,
+      "resourcePath": "Art/OwnedModels/wild_pine_tree",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_reed_cluster.fbx",
+      "bytes": 15484,
+      "resourcePath": "Art/OwnedModels/wild_reed_cluster",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_shoreline_debris.fbx",
+      "bytes": 19100,
+      "resourcePath": "Art/OwnedModels/wild_shoreline_debris",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wild_stump.fbx",
+      "bytes": 16700,
+      "resourcePath": "Art/OwnedModels/wild_stump",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_boar.fbx",
+      "bytes": 19708,
+      "resourcePath": "Art/OwnedModels/wildwood_boar",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_log_stack.fbx",
+      "bytes": 19644,
+      "resourcePath": "Art/OwnedModels/wildwood_log_stack",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_rope_coil.fbx",
+      "bytes": 22124,
+      "resourcePath": "Art/OwnedModels/wildwood_rope_coil",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_sawhorse.fbx",
+      "bytes": 16988,
+      "resourcePath": "Art/OwnedModels/wildwood_sawhorse",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_shrine_fragments.fbx",
+      "bytes": 16988,
+      "resourcePath": "Art/OwnedModels/wildwood_shrine_fragments",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_shrine.fbx",
+      "bytes": 22140,
+      "resourcePath": "Art/OwnedModels/wildwood_shrine",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_tent.fbx",
+      "bytes": 17388,
+      "resourcePath": "Art/OwnedModels/wildwood_tent",
+      "problems": []
+    },
+    {
+      "path": "unity/Assets/Isoperia/Resources/Art/OwnedModels/wildwood_waygate.fbx",
+      "bytes": 31692,
+      "resourcePath": "Art/OwnedModels/wildwood_waygate",
+      "problems": []
+    }
+  ]
+}

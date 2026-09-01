@@ -14,7 +14,7 @@ namespace Isoperia.Unity
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
         private const string VillagerAsset = "Art/OwnedModels/villager";
-        private const string OwnedNpcRoot = "Art/OwnedModels/npc_";
+        private const string OwnedNpcRoot = "Art/OwnedModels/";
         private const string CampfireAsset = "Art/OwnedModels/campfire";
         private const string ForgeAsset = "Art/OwnedModels/hearthvale_forge";
         private const string LocalPropTrialAsset = "Art/OwnedModels/local_prop_trial";
@@ -121,6 +121,8 @@ namespace Isoperia.Unity
             PlaceOwnedProp(SacksAsset, "Town_Sacks", center + new Vector3(5.7f, 0f, -3.3f), .78f, -20f);
             PlaceOwnedProp(BenchAsset, "Town_Bench", center + new Vector3(1.7f, 0f, 3.8f), .85f, 180f);
             PlaceCampfire(AtGround(center + new Vector3(-10.6f, 0f, -1.8f)));
+            TryPlaceTownKit("lantern", center + new Vector3(-3.7f, 0f, -3.4f), 1.7f, 0f);
+            TryPlaceTownKit("lantern", center + new Vector3(3.7f, 0f, 3.4f), 1.7f, 180f);
         }
 
         private void CreateResidentialLane(Vector3 origin, float yaw, int homes)
@@ -242,7 +244,7 @@ namespace Isoperia.Unity
         {
             GameObject house = new GameObject("Town_HearthvaleHome");
             house.transform.SetParent(transform, false);
-            house.transform.position = position;
+            house.transform.position = AtGround(position);
             house.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             instances.Add(house);
 
@@ -276,6 +278,7 @@ namespace Isoperia.Unity
 
         private void CreatePlazaFountain(Vector3 position)
         {
+            if (TryPlaceTownKit("fountain-round", position, 1.25f, 0f)) return;
             GameObject fountain = new GameObject("Town_HearthvalePlazaFountain");
             fountain.transform.SetParent(transform, false);
             fountain.transform.position = position;
@@ -288,6 +291,7 @@ namespace Isoperia.Unity
 
         private void CreateMarketShelter(Vector3 position, float yaw)
         {
+            if (TryPlaceTownKit(yaw > 90f ? "stall-green" : "stall-red", position, 2.15f, yaw)) return;
             GameObject stall = new GameObject("Town_HearthvaleMarketShelter");
             stall.transform.SetParent(transform, false);
             stall.transform.position = position;
@@ -375,8 +379,8 @@ namespace Isoperia.Unity
                 return fallback;
             }
 
-            // Missing assets remain readable, but the normal path above is
-            // always the authored NPC model rather than a procedural proxy.
+            // Quarantined actors intentionally use this temporary proxy until
+            // their animation and materials pass the asset-review scene.
             Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             Material tunicMaterial = new Material(shader) { color = fallbackColor };
             runtimeMaterials.Add(tunicMaterial);
@@ -448,6 +452,24 @@ namespace Isoperia.Unity
             instance.name = "Town_" + assetName;
             instance.transform.localScale = scale;
             instances.Add(instance);
+        }
+
+        private bool TryPlaceTownKit(string assetName, Vector3 position, float height, float yaw)
+        {
+            string resourcePath = AssetRoot + assetName;
+            if (!WorldAssetAdmission.IsApproved(resourcePath)) return false;
+            GameObject prefab = Resources.Load<GameObject>(resourcePath);
+            if (prefab == null)
+            {
+                Debug.LogError("[Isoperia] Missing approved town model: " + resourcePath, this);
+                return false;
+            }
+            Vector3 grounded = AtGround(position);
+            GameObject instance = Instantiate(prefab, grounded, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = "Town_" + assetName;
+            OwnedModelPresentation.FitToHeight(instance, height, grounded.y);
+            instances.Add(instance);
+            return true;
         }
 
         private void PlaceCampfire(Vector3 position)

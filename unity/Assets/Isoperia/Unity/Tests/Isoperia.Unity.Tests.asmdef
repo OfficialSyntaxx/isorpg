@@ -1,0 +1,11 @@
+{
+  "name": "Isoperia.Unity.Tests",
+  "rootNamespace": "Isoperia.Unity.Tests",
+  "references": ["Isoperia.Core", "Isoperia.Unity", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "noEngineReferences": false
+}

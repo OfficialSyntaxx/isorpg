@@ -54,7 +54,9 @@ namespace Isoperia.Unity
         {
             Disable<WorldBuildingView>();
             Disable<WorldBiomeLandmarkView>();
-            Disable<WorldDecorationView>();
+            // Resource presentation uses the approved town kit and is the
+            // click target for gathering. Disabling it leaves live Core nodes
+            // invisible and makes the gathering loop inaccessible in 3D.
             Disable<WorldDungeonView>();
             Disable<WorldOwnedAssetLibraryView>();
             Disable<WorldCombatView>();

@@ -1,251 +1,184 @@
-using Isoperia.Core.World;
+using System.Collections.Generic;
 using UnityEngine;
-using CoreGrid = Isoperia.Core.World.Grid;
 
 namespace Isoperia.Unity
 {
-    /// <summary>
-    /// Presentation for Core resource nodes. Gameplay still selects and depletes
-    /// the registry nodes; this view turns them into the imported CC0 town-kit
-    /// models so the playable world does not read as a field of debug cubes.
-    /// </summary>
-    [RequireComponent(typeof(MeshFilter))]
-    [RequireComponent(typeof(MeshRenderer))]
+    /// <summary>Bounded, persistent presentation of the authoritative gathering nodes.</summary>
     public sealed class WorldDecorationView : MonoBehaviour
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
-        private const string OreVeinAsset = "Art/OwnedModels/ore_vein";
-        private const float VisibleRadius = 28f;
-        private const int RebuildDistance = 10;
-        private const int MaxVisibleTrees = 32;
-        private const int MaxVisibleOreVeins = 24;
-        private const int MaxVisibleFishingSpots = 8;
-        private readonly System.Collections.Generic.List<GameObject> instances =
-            new System.Collections.Generic.List<GameObject>();
-        private readonly System.Collections.Generic.List<WorldResourceNode> nearbyNodes =
-            new System.Collections.Generic.List<WorldResourceNode>();
-        private Material waterMarkerMaterial;
-        private Material oreStoneMaterial;
-        private Material copperMaterial;
-        private Material tinMaterial;
-        private Material ironMaterial;
-        private Material coalMaterial;
+        private const float RebuildDistance = 2f;
+        private readonly Dictionary<string, GameObject> instances = new Dictionary<string, GameObject>();
+        private readonly Dictionary<string, GameObject> prefabs = new Dictionary<string, GameObject>();
+        private readonly List<WorldResourceNode> nearbyNodes = new List<WorldResourceNode>();
+        private readonly HashSet<string> wanted = new HashSet<string>();
+        private readonly List<string> retired = new List<string>();
+        private WorldResourceRegistry resources;
         private Transform player;
-        private int lastAnchorX = int.MinValue;
-        private int lastAnchorZ = int.MinValue;
+        private Vector3 lastAnchor;
+        private bool dirty = true;
+
+        public int VisibleCount => instances.Count;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateDecorationView()
         {
             if (Object.FindAnyObjectByType<WorldDecorationView>() != null) return;
-
-            var root = new GameObject(nameof(WorldDecorationView));
-            root.AddComponent<WorldDecorationView>();
+            new GameObject(nameof(WorldDecorationView)).AddComponent<WorldDecorationView>();
         }
 
-        private void Start()
-        {
-            Rebuild();
-            if (SaveDriver.Instance?.Resources != null)
-                SaveDriver.Instance.Resources.NodeChanged += OnNodeChanged;
-        }
+        private void OnEnable() { dirty = true; }
 
         private void Update()
         {
-            if (player == null)
-                player = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
+            // Scene-load callbacks can run before the save owner has created
+            // its registry. Retry binding instead of leaving an empty world.
+            WorldResourceRegistry current = SaveDriver.Instance?.Resources;
+            if (current != resources)
+            {
+                Unsubscribe();
+                ClearInstances();
+                resources = current;
+                if (resources != null) resources.NodeChanged += OnNodeChanged;
+                dirty = true;
+            }
+            if (resources == null) return;
+            if (player == null) player = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
             if (player == null) return;
-
-            int x = Mathf.FloorToInt(player.position.x);
-            int z = Mathf.FloorToInt(player.position.z);
-            if (Mathf.Abs(x - lastAnchorX) < RebuildDistance && Mathf.Abs(z - lastAnchorZ) < RebuildDistance) return;
-            Rebuild();
+            Vector3 delta = player.position - lastAnchor;
+            if (dirty || delta.x * delta.x + delta.z * delta.z >= RebuildDistance * RebuildDistance)
+                Rebuild();
         }
 
         public void Rebuild()
         {
-            DestroyRuntimeAssets();
-
-            CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
-            WorldResourceRegistry resources = SaveDriver.Instance?.Resources;
-            if (player == null)
-                player = GameObject.Find(WorldPlayerAvatarView.AvatarName)?.transform;
-            int anchorX = player == null ? grid.Width / 2 : Mathf.FloorToInt(player.position.x);
-            int anchorZ = player == null ? grid.Height / 2 : Mathf.FloorToInt(player.position.z);
-            lastAnchorX = anchorX;
-            lastAnchorZ = anchorZ;
-            if (resources != null)
+            if (resources == null || player == null || WorldRuntime.Instance == null) return;
+            lastAnchor = player.position;
+            dirty = false;
+            WorldResourceSelection.Select(resources.Nodes, Mathf.FloorToInt(lastAnchor.x),
+                Mathf.FloorToInt(lastAnchor.z), nearbyNodes);
+            wanted.Clear();
+            foreach (WorldResourceNode node in nearbyNodes) wanted.Add(node.Id);
+            retired.Clear();
+            foreach (var pair in instances)
+                if (!wanted.Contains(pair.Key)) retired.Add(pair.Key);
+            foreach (string id in retired)
             {
-                nearbyNodes.Clear();
-                for (int i = 0; i < resources.Nodes.Count; i++)
-                {
-                    WorldResourceNode node = resources.Nodes[i];
-                    if (node.Depleted) continue;
-                    float dx = node.X - anchorX;
-                    float dz = node.Y - anchorZ;
-                    if (dx * dx + dz * dz > VisibleRadius * VisibleRadius) continue;
-                    nearbyNodes.Add(node);
-                }
-
-                // Show the closest, distinct interactables first. The Core still
-                // owns every node and direct tile interaction; this only keeps a
-                // streamed 3D view from turning into a wall of duplicate props.
-                nearbyNodes.Sort((left, right) =>
-                {
-                    float leftDistance = (left.X - anchorX) * (left.X - anchorX) + (left.Y - anchorZ) * (left.Y - anchorZ);
-                    float rightDistance = (right.X - anchorX) * (right.X - anchorX) + (right.Y - anchorZ) * (right.Y - anchorZ);
-                    return leftDistance.CompareTo(rightDistance);
-                });
-                int trees = 0;
-                int oreVeins = 0;
-                int fishingSpots = 0;
-                for (int i = 0; i < nearbyNodes.Count; i++)
-                {
-                    WorldResourceNode node = nearbyNodes[i];
-                    if (node.Type == "TREE" && trees >= MaxVisibleTrees) continue;
-                    if (node.Type == "ROCK" && oreVeins >= MaxVisibleOreVeins) continue;
-                    if (node.Type != "TREE" && node.Type != "ROCK" && fishingSpots >= MaxVisibleFishingSpots) continue;
-
-                    Tile tile = grid.At(node.X, node.Y);
-                    float ground = OpenWorldTerrainView.SurfaceHeight(tile, node.X + .5f, node.Y + .5f);
-                    float offsetX = 0.3f + ((tile.Seed % 31) / 100f);
-                    float offsetZ = 0.3f + (((tile.Seed / 31) % 31) / 100f);
-                    var basePosition = new Vector3(tile.X + offsetX, ground, tile.Y + offsetZ);
-                    float yaw = (tile.Seed % 8) * 45f;
-
-                    if (node.Type == "TREE")
-                    {
-                        Place(tile.Seed % 3 == 0 ? "tree-high" : "tree", basePosition, 4.35f, yaw, node);
-                        trees++;
-                    }
-                    else if (node.Type == "ROCK")
-                    {
-                        PlaceOreVein(basePosition, yaw, node);
-                        oreVeins++;
-                    }
-                    else
-                    {
-                        CreateWaterMarker(basePosition, yaw, node);
-                        fishingSpots++;
-                    }
-                }
+                // Destroy is deferred; disable now so stale colliders cannot
+                // intercept another interaction during this frame.
+                instances[id].SetActive(false);
+                Destroy(instances[id]);
+                instances.Remove(id);
+            }
+            foreach (WorldResourceNode node in nearbyNodes)
+            {
+                if (instances.ContainsKey(node.Id)) continue;
+                GameObject instance = CreateNode(node);
+                if (instance != null) instances.Add(node.Id, instance);
             }
         }
 
-        private void Place(string assetName, Vector3 position, float targetHeight, float yaw, WorldResourceNode node)
+        private GameObject CreateNode(WorldResourceNode node)
         {
-            GameObject prefab = Resources.Load<GameObject>(AssetRoot + assetName);
-            if (prefab == null) return;
+            var tile = WorldRuntime.Instance.Grid.At(node.X, node.Y);
+            float x = node.X + .5f, z = node.Y + .5f;
+            float ground = OpenWorldTerrainView.SurfaceHeight(tile, x, z);
+            GameObject root = new GameObject("Resource_" + node.Id);
+            root.transform.SetParent(transform, false);
+            root.transform.position = new Vector3(x, ground, z);
+            root.AddComponent<WorldInteractionTarget>().SetResource(node);
+            if (node.Type == "WATER")
+            {
+                CreateFishingSpot(root);
+                return root;
+            }
 
-            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
-            instance.name = "Resource_" + assetName;
-            // Community assets use different authoring units. Normalize every
-            // streamed prop by bounds so a tree cannot fill the entire camera.
-            OwnedModelPresentation.FitToHeight(instance, targetHeight);
-            instance.AddComponent<SphereCollider>().radius = .7f;
-            instance.AddComponent<WorldInteractionTarget>().SetResource(node);
-            instances.Add(instance);
-        }
-
-        private void PlaceOreVein(Vector3 position, float yaw, WorldResourceNode node)
-        {
-            GameObject prefab = Resources.Load<GameObject>(OreVeinAsset);
+            string asset = node.Type == "TREE"
+                ? (tile.Seed % 3 == 0 ? "tree-high" : "tree")
+                : (node.X % 2 == 0 ? "rock-large" : "rock-small");
+            GameObject prefab = LoadApproved(asset);
             if (prefab == null)
             {
-                Place(node.X % 2 == 0 ? "rock-large" : "rock-small", position, 1.05f, yaw, node);
-                return;
+                Destroy(root);
+                return null;
             }
-
-            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f), transform);
-            instance.name = "Resource_OreVein_" + node.Def["masteryKey"].AsString("ore");
-            OwnedModelPresentation.FitToHeight(instance, 1.28f);
-            ApplyOrePalette(instance, node.Def["masteryKey"].AsString("copper"));
-            instance.AddComponent<SphereCollider>().radius = .72f;
-            instance.AddComponent<WorldInteractionTarget>().SetResource(node);
-            instances.Add(instance);
+            GameObject model = Instantiate(prefab, root.transform);
+            model.transform.localRotation = Quaternion.Euler(0f, (tile.Seed % 8) * 45f, 0f);
+            float height = node.Type == "TREE" ? 4.35f : 1.05f;
+            OwnedModelPresentation.FitToHeight(model, height, ground);
+            foreach (Collider imported in model.GetComponentsInChildren<Collider>(true))
+                imported.enabled = false;
+            // Keep interaction dimensions on an unscaled parent. A collider on
+            // the normalized imported mesh inherits arbitrary authoring units.
+            CapsuleCollider hitbox = root.AddComponent<CapsuleCollider>();
+            hitbox.radius = node.Type == "TREE" ? .42f : .58f;
+            hitbox.height = node.Type == "TREE" ? 1.9f : 1.16f;
+            hitbox.center = Vector3.up * (hitbox.height * .5f);
+            return root;
         }
 
-        private void ApplyOrePalette(GameObject oreVein, string type)
+        private GameObject LoadApproved(string name)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            if (oreStoneMaterial == null) oreStoneMaterial = new Material(shader) { color = new Color(.18f, .22f, .27f) };
-            if (copperMaterial == null) copperMaterial = CreateMineralMaterial(shader, new Color(.76f, .28f, .07f));
-            if (tinMaterial == null) tinMaterial = CreateMineralMaterial(shader, new Color(.53f, .72f, .79f));
-            if (ironMaterial == null) ironMaterial = CreateMineralMaterial(shader, new Color(.45f, .49f, .55f));
-            if (coalMaterial == null) coalMaterial = new Material(shader) { color = new Color(.06f, .07f, .09f) };
-            Material mineral = type == "tin" ? tinMaterial : type == "iron" ? ironMaterial : type == "coal" ? coalMaterial : copperMaterial;
+            string path = AssetRoot + name;
+            if (!WorldAssetAdmission.IsApproved(path)) return null;
+            if (prefabs.TryGetValue(path, out GameObject prefab)) return prefab;
+            prefab = Resources.Load<GameObject>(path);
+            prefabs.Add(path, prefab);
+            if (prefab == null) Debug.LogError("[Isoperia] Missing approved resource model: " + path, this);
+            return prefab;
+        }
 
-            foreach (Renderer renderer in oreVein.GetComponentsInChildren<Renderer>(true))
+        private static void CreateFishingSpot(GameObject root)
+        {
+            // A shallow ring marks the existing fishing node without importing
+            // an unreviewed model or creating a new material for each spot.
+            LineRenderer ripple = root.AddComponent<LineRenderer>();
+            ripple.useWorldSpace = false;
+            ripple.loop = true;
+            ripple.positionCount = 24;
+            ripple.widthMultiplier = .035f;
+            ripple.sharedMaterial = WorldMaterialCache.Lit("FishingRipple", new Color(.35f, .78f, .86f));
+            for (int i = 0; i < ripple.positionCount; i++)
             {
-                Material[] source = renderer.sharedMaterials;
-                Material[] palette = new Material[source.Length];
-                for (int i = 0; i < source.Length; i++)
-                {
-                    string name = source[i] == null ? string.Empty : source[i].name;
-                    palette[i] = name.Contains("Mineral") ? mineral : oreStoneMaterial;
-                }
-                renderer.sharedMaterials = palette;
+                float angle = i * Mathf.PI * 2f / ripple.positionCount;
+                ripple.SetPosition(i, new Vector3(Mathf.Cos(angle) * .48f, .07f, Mathf.Sin(angle) * .48f));
             }
+            BoxCollider hitbox = root.AddComponent<BoxCollider>();
+            hitbox.center = new Vector3(0f, .08f, 0f);
+            hitbox.size = new Vector3(1.05f, .16f, 1.05f);
         }
 
-        private static Material CreateMineralMaterial(Shader shader, Color color)
+        private void OnNodeChanged(WorldResourceNode node)
         {
-            var material = new Material(shader) { color = color };
-            material.EnableKeyword("_EMISSION");
-            material.SetColor("_EmissionColor", color * .20f);
-            return material;
+            // Ordinary harvests change remaining uses, not geometry. Only a
+            // depletion/respawn can change membership in the visible set.
+            if (node.Depleted && instances.TryGetValue(node.Id, out GameObject instance))
+            {
+                instance.SetActive(false);
+                Destroy(instance);
+                instances.Remove(node.Id);
+                dirty = true;
+            }
+            else if (!node.Depleted && !instances.ContainsKey(node.Id)) dirty = true;
         }
 
-        private void CreateWaterMarker(Vector3 position, float yaw, WorldResourceNode node)
+        private void Unsubscribe()
         {
-            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            marker.name = "Resource_FishingSpot";
-            marker.transform.SetParent(transform, false);
-            marker.transform.position = position + new Vector3(0f, .05f, 0f);
-            marker.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-            marker.transform.localScale = new Vector3(.26f, .04f, .26f);
-            marker.GetComponent<Renderer>().sharedMaterial = WaterMarkerMaterial();
-            marker.AddComponent<WorldInteractionTarget>().SetResource(node);
-            instances.Add(marker);
+            if (resources != null) resources.NodeChanged -= OnNodeChanged;
+            resources = null;
         }
 
-        private Material WaterMarkerMaterial()
+        private void ClearInstances()
         {
-            if (waterMarkerMaterial != null) return waterMarkerMaterial;
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            waterMarkerMaterial = new Material(shader) { color = new Color(.18f, .63f, .78f, 1f) };
-            return waterMarkerMaterial;
-        }
-
-        private void OnDestroy()
-        {
-            if (SaveDriver.Instance?.Resources != null)
-                SaveDriver.Instance.Resources.NodeChanged -= OnNodeChanged;
-            DestroyRuntimeAssets();
-        }
-
-        private void OnNodeChanged(WorldResourceNode _)
-        {
-            Rebuild();
-        }
-
-        private void DestroyRuntimeAssets()
-        {
-            for (int i = 0; i < instances.Count; i++)
-                if (instances[i] != null) Destroy(instances[i]);
+            foreach (GameObject instance in instances.Values)
+                if (instance != null) { instance.SetActive(false); Destroy(instance); }
             instances.Clear();
-            if (waterMarkerMaterial != null) Destroy(waterMarkerMaterial);
-            if (oreStoneMaterial != null) Destroy(oreStoneMaterial);
-            if (copperMaterial != null) Destroy(copperMaterial);
-            if (tinMaterial != null) Destroy(tinMaterial);
-            if (ironMaterial != null) Destroy(ironMaterial);
-            if (coalMaterial != null) Destroy(coalMaterial);
-            waterMarkerMaterial = null;
-            oreStoneMaterial = null;
-            copperMaterial = null;
-            tinMaterial = null;
-            ironMaterial = null;
-            coalMaterial = null;
+        }
+
+        private void OnDisable()
+        {
+            Unsubscribe();
+            ClearInstances();
         }
     }
 }
