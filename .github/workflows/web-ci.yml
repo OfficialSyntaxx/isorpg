@@ -39,7 +39,7 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # "22" resolves to the latest 22.x on the runner. astro-eslint-parser
       # declares engines >=22.22.3 and prints a warning below that, but it was
