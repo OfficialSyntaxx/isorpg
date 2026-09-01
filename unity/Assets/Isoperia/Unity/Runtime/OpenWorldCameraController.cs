@@ -10,8 +10,8 @@ namespace Isoperia.Unity
     {
         private Transform target;
         private float yaw = 38f;
-        private float pitch = 22f;
-        private float distance = 5.8f;
+        private float pitch = 30f;
+        private float distance = 9.2f;
         private float previousPinchDistance;
         private float shakeAmplitude;
 

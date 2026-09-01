@@ -14,7 +14,7 @@ namespace Isoperia.Unity
     {
         private const string AssetRoot = "Art/KenneyFantasyTown/";
         private const string VillagerAsset = "Art/OwnedModels/villager";
-        private const string OwnedNpcRoot = "Art/OwnedModels/npc_";
+        private const string OwnedNpcRoot = "Art/OwnedModels/";
         private const string CampfireAsset = "Art/OwnedModels/campfire";
         private const string ForgeAsset = "Art/OwnedModels/hearthvale_forge";
         private const string LocalPropTrialAsset = "Art/OwnedModels/local_prop_trial";
@@ -121,6 +121,8 @@ namespace Isoperia.Unity
             PlaceOwnedProp(SacksAsset, "Town_Sacks", center + new Vector3(5.7f, 0f, -3.3f), .78f, -20f);
             PlaceOwnedProp(BenchAsset, "Town_Bench", center + new Vector3(1.7f, 0f, 3.8f), .85f, 180f);
             PlaceCampfire(AtGround(center + new Vector3(-10.6f, 0f, -1.8f)));
+            TryPlaceTownKit("lantern", center + new Vector3(-3.7f, 0f, -3.4f), 1.7f, 0f);
+            TryPlaceTownKit("lantern", center + new Vector3(3.7f, 0f, 3.4f), 1.7f, 180f);
         }
 
         private void CreateResidentialLane(Vector3 origin, float yaw, int homes)
@@ -242,7 +244,7 @@ namespace Isoperia.Unity
         {
             GameObject house = new GameObject("Town_HearthvaleHome");
             house.transform.SetParent(transform, false);
-            house.transform.position = position;
+            house.transform.position = AtGround(position);
             house.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             instances.Add(house);
 
@@ -253,6 +255,9 @@ namespace Isoperia.Unity
             PlaceKitPiece(house.transform, "wall-wood", new Vector3(-1.15f, 0f, 0f), scale, -90f);
             PlaceKitPiece(house.transform, "wall-wood", new Vector3(1.15f, 0f, 0f), scale, 90f);
             PlaceKitPiece(house.transform, "roof-gable", new Vector3(0f, 1.45f * scale, 0f), scale * 1.05f, 0f);
+            BoxCollider collision = house.AddComponent<BoxCollider>();
+            collision.center = new Vector3(0f, .85f * scale, 0f);
+            collision.size = new Vector3(2.15f * scale, 1.7f * scale, 2.15f * scale);
         }
 
         private void CreateTownMaterials()
@@ -276,6 +281,7 @@ namespace Isoperia.Unity
 
         private void CreatePlazaFountain(Vector3 position)
         {
+            if (TryPlaceTownKit("fountain-round", position, 1.25f, 0f)) return;
             GameObject fountain = new GameObject("Town_HearthvalePlazaFountain");
             fountain.transform.SetParent(transform, false);
             fountain.transform.position = position;
@@ -288,6 +294,7 @@ namespace Isoperia.Unity
 
         private void CreateMarketShelter(Vector3 position, float yaw)
         {
+            if (TryPlaceTownKit(yaw > 90f ? "stall-green" : "stall-red", position, 2.15f, yaw)) return;
             GameObject stall = new GameObject("Town_HearthvaleMarketShelter");
             stall.transform.SetParent(transform, false);
             stall.transform.position = position;
@@ -368,6 +375,7 @@ namespace Isoperia.Unity
                 GameObject model = Instantiate(prefab, fallback.transform);
                 model.name = assetName;
                 OwnedModelPresentation.FitToHeight(model, 1.72f, position.y);
+                ApplyOwnedLandmarkPalette(model);
                 CapsuleCollider modelCollider = fallback.AddComponent<CapsuleCollider>();
                 modelCollider.radius = .33f;
                 modelCollider.height = 1.72f;
@@ -375,8 +383,8 @@ namespace Isoperia.Unity
                 return fallback;
             }
 
-            // Missing assets remain readable, but the normal path above is
-            // always the authored NPC model rather than a procedural proxy.
+            // Quarantined actors intentionally use this temporary proxy until
+            // their animation and materials pass the asset-review scene.
             Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             Material tunicMaterial = new Material(shader) { color = fallbackColor };
             runtimeMaterials.Add(tunicMaterial);
@@ -412,6 +420,23 @@ namespace Isoperia.Unity
             piece.transform.localPosition = localPosition;
             piece.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             piece.transform.localScale = Vector3.one * scale;
+            ApplyTownKitPalette(piece, assetName);
+        }
+
+        private static void ApplyTownKitPalette(GameObject instance, string assetName)
+        {
+            Color color = assetName.Contains("roof") ? new Color(.08f, .28f, .30f) :
+                assetName.Contains("window") || assetName.Contains("lantern") ? new Color(.92f, .52f, .16f) :
+                assetName.Contains("fence") ? new Color(.22f, .10f, .045f) :
+                new Color(.38f, .20f, .09f);
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] source = renderer.sharedMaterials;
+                Material[] palette = new Material[source.Length];
+                for (int i = 0; i < palette.Length; i++)
+                    palette[i] = WorldMaterialCache.Lit("TownKit_" + assetName, color, assetName.Contains("window") || assetName.Contains("lantern"));
+                renderer.sharedMaterials = palette;
+            }
         }
 
         private void PlaceOwnedProp(string assetPath, string instanceName, Vector3 position, float height, float yaw)
@@ -448,6 +473,24 @@ namespace Isoperia.Unity
             instance.name = "Town_" + assetName;
             instance.transform.localScale = scale;
             instances.Add(instance);
+        }
+
+        private bool TryPlaceTownKit(string assetName, Vector3 position, float height, float yaw)
+        {
+            string resourcePath = AssetRoot + assetName;
+            if (!WorldAssetAdmission.IsApproved(resourcePath)) return false;
+            GameObject prefab = Resources.Load<GameObject>(resourcePath);
+            if (prefab == null)
+            {
+                Debug.LogError("[Isoperia] Missing approved town model: " + resourcePath, this);
+                return false;
+            }
+            Vector3 grounded = AtGround(position);
+            GameObject instance = Instantiate(prefab, grounded, Quaternion.Euler(0f, yaw, 0f), transform);
+            instance.name = "Town_" + assetName;
+            OwnedModelPresentation.FitToHeight(instance, height, grounded.y);
+            instances.Add(instance);
+            return true;
         }
 
         private void PlaceCampfire(Vector3 position)

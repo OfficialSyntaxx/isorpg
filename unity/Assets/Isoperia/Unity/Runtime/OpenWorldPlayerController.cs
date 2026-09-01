@@ -70,6 +70,10 @@ namespace Isoperia.Unity
             if (IsMoving) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), 14f * Time.deltaTime);
             if (IsMoving)
             {
+                // The retired grid controller used to interrupt harvesting on
+                // movement. The perspective controller must own that contract
+                // too, or players keep harvesting after leaving the node.
+                SaveDriver.Instance?.Gathering?.Interrupt();
                 candidate = transform.position + move * Time.deltaTime;
                 CoreGrid grid = WorldRuntime.Instance == null ? new CoreGrid() : WorldRuntime.Instance.Grid;
                 int x = Mathf.FloorToInt(candidate.x);

@@ -24,6 +24,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Asset validation must inspect payloads, not 130-byte LFS pointers.
+          lfs: true
 
       - uses: actions/setup-node@v4
         with:
@@ -52,6 +55,10 @@ jobs:
       # just the ones that trigger a build.
       - name: Verify the Unity port
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mono-mcs mono-runtime
+          npm run verify:world-assets
+          npm run verify:world-resources
           npm run verify:scene
           npm run verify:core
           npm run verify:parity

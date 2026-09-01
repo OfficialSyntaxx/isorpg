@@ -42,8 +42,10 @@ namespace Isoperia.Unity
             if (resource != null && !resource.Depleted)
             {
                 if (!InRange(player, resource.X, resource.Y)) return false;
-                SaveDriver.Instance?.Gathering?.Interrupt();
-                SaveDriver.Instance?.Gathering?.StartGathering(resource);
+                var gathering = SaveDriver.Instance?.Gathering;
+                if (gathering == null) return false;
+                gathering.Interrupt();
+                if (!gathering.StartGathering(resource)) return false;
                 InteractionStarted?.Invoke(this);
                 return true;
             }
@@ -52,13 +54,15 @@ namespace Isoperia.Unity
             {
                 if (!InRange(player, enemy.X, enemy.Y)) return false;
                 SaveDriver.Instance?.Gathering?.Interrupt();
-                SaveDriver.Instance?.Combat?.TryTarget(enemy, player);
+                if (SaveDriver.Instance?.Combat?.TryTarget(enemy, player) != true) return false;
                 InteractionStarted?.Invoke(this);
                 return true;
             }
 
             if (!string.IsNullOrEmpty(npcName))
             {
+                if (!InRange(player, Mathf.FloorToInt(transform.position.x),
+                    Mathf.FloorToInt(transform.position.z))) return false;
                 if (!string.IsNullOrEmpty(journeyId))
                     SaveDriver.Instance?.State?.Player?.Journal?.Add(journeyId);
                 SaveDriver.Instance?.ShowStatus(npcName + " · " + npcHint);

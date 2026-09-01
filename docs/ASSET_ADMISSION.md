@@ -1,5 +1,21 @@
 # Isoperia asset admission gate
 
+## Renovation validation tools
+
+- `npm run verify:world-assets` checks model payload headers, GLB structure,
+  unresolved LFS pointers, duplicate GUIDs/model resource keys, missing model
+  metadata, and discoverable runtime resource paths. It does not approve art.
+- `Isoperia > Validation > Audit world assets` inspects imported models and
+  prefabs in a disposable Unity preview scene. Read
+  `unity/Artifacts/world-asset-import-audit.json` for meshes, submesh materials,
+  shader compatibility flags, bounds, embedded cameras/lights, missing scripts,
+  and imported clip names. It does not modify any asset or admission rule.
+- Run EditMode filter `Isoperia.Unity.Tests` for resource selection and
+  interaction regressions. `npm run verify:world-resources` runs the same three
+  selection tests with Mono outside Unity and fails explicitly if Mono is absent.
+
+The screenshot and actor-motion checks below remain required after these tools.
+
 No FBX, GLB, prefab, material, or Asset Store package is allowed into a live
 world scene just because it imports successfully.
 

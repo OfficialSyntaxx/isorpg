@@ -51,7 +51,9 @@
     "verify:browser-guard": "node scripts/verify-browser-guard.cjs",
     "verify:media": "node scripts/verify-media.cjs",
     "verify:motion": "node scripts/verify-motion.cjs",
-    "verify:save": "node scripts/verify-save-privacy.cjs"
+    "verify:save": "node scripts/verify-save-privacy.cjs",
+    "verify:world-assets": "node --test scripts/audit-world-assets.test.cjs && node scripts/audit-world-assets.cjs",
+    "verify:world-resources": "node scripts/verify-world-resources.cjs"
   },
   "dependencies": {
     "three": "^0.170.0"
