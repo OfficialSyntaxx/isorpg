@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Isoperia.Unity
@@ -23,7 +24,7 @@ namespace Isoperia.Unity
             // normal player build.
             return true;
 #elif UNITY_EDITOR
-            return UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path == ScenePath;
+            return SceneManager.GetActiveScene().path == ScenePath;
 #else
             return false;
 #endif
@@ -33,5 +34,22 @@ namespace Isoperia.Unity
         {
             return scene.path == ScenePath;
         }
+
+#if ISOPERIA_M0_INSPECTION
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void LogInspectionPlayerState()
+        {
+            GameObject player = GameObject.Find("Inspection Player");
+            GameObject camera = GameObject.Find("Inspection Camera");
+            GameObject terrain = GameObject.Find("Shorelands Terrain");
+            bool world = Object.FindAnyObjectByType<WorldRuntime>() != null;
+            bool save = Object.FindAnyObjectByType<SaveDriver>() != null;
+            bool motor = player != null && player.GetComponent<M0.M0InspectionMotor>() != null;
+            bool controller = player != null && player.GetComponent<CharacterController>() != null;
+            bool orbit = camera != null && camera.GetComponent<M0.M0InspectionCamera>() != null;
+            bool collider = terrain != null && terrain.GetComponent<TerrainCollider>() != null;
+            Debug.Log("M0_INSPECTION_PLAYER world=" + world + " save=" + save + " motor=" + motor + " controller=" + controller + " orbit=" + orbit + " collider=" + collider);
+        }
+#endif
     }
 }

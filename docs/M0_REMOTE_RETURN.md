@@ -18,3 +18,9 @@
 - Correct Editor identity was reverified: `/Users/syntaxx/isorpg-m0/unity`, Unity `6000.5.8f1`, MCP `unity@931634bd`; M0 had six saved roots and the serialized player/camera bootstrap references persisted (`509399182`, `1324392517`).
 - Palette check passed. Unity began the import/recompile, but the correct Editor's MCP bridge timed out repeatedly before it could return Console/Play Mode state. No other Unity instance was used. Therefore fresh M0 rig attachment, normal Bootstrap disposable-save regression, touch controls, traversal, Terrain/control-map/wind/foam proof, render statistics, and captures remain NOT RUN. No real save storage was accessed.
 - Remote branch was pushed normally and verified at `9fc7d6b54ff7c06265226f03846e6ac0c771b0c5`. Stop before M0-04. Resume by reconnecting the exact Editor after its import/bridge recovery and continue at fresh controlled Play Mode validation.
+
+## Scoped inspection-player validation update
+
+- A dedicated macOS inspection player was built from only `ShorelandsM0.unity` with the explicit `ISOPERIA_M0_INSPECTION` define. Its `Player.log` recorded: `M0_INSPECTION_PLAYER world=False save=False motor=True controller=True orbit=True collider=True`.
+- This is player evidence for M0 startup isolation and rig/collider attachment. The player launched on Metal with PhysX and its new log section contained no project errors or exceptions.
+- The build helper is Editor-only and the runtime source has no `UnityEditor` references. Normal Bootstrap/disposable-save regression, touch interaction, terrain palette/foam/wind visuals, full-route traversal, render statistics, labelled captures, and phone validation remain NOT RUN. M0-04 remains blocked.

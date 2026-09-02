@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace Isoperia.Unity.Editor
+namespace Isoperia.EditorTools
 {
     /// <summary>Builds the isolated M0 proof with an explicit startup define.</summary>
     public static class M0InspectionBuild
@@ -12,7 +12,7 @@ namespace Isoperia.Unity.Editor
         {
             var options = new BuildPlayerOptions
             {
-                scenes = new[] { M0InspectionStartup.ScenePath },
+                scenes = new[] { Isoperia.Unity.M0InspectionStartup.ScenePath },
                 locationPathName = "Builds/M0Inspection/M0Inspection.app",
                 target = BuildTarget.StandaloneOSX,
                 options = BuildOptions.None,
