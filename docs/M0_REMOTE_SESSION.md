@@ -20,6 +20,37 @@ game intent; this document bounds one execution session.
 
 ## 1. Verify the environment before editing
 
+### Recovery from the first blocked session
+
+The first return (`e292ec1`, `M0_REMOTE_RETURN.md`) reached Editors for
+`/Users/syntaxx/isoRpg` and `/private/tmp/isorpg_work/unity`, not the intended
+`/Users/syntaxx/isorpg-m0/unity`. Do not select either unrelated instance as a shortcut.
+
+1. In `/Users/syntaxx/isorpg-m0`, inspect branch/worktree and fetch the latest
+   `codex/m0-shorelands-foundation`; fast-forward only if clean. Preserve local work
+   and resolve any branch divergence before opening the project.
+2. Open **`/Users/syntaxx/isorpg-m0/unity`** with Unity Hub using **6000.5.8f1**.
+   Existing Editors may remain open; do not discard unsaved work or terminate them.
+   The connected agent may open the correct project if its tools permit; otherwise
+   ask the user to do this single action.
+3. Enable/start the already-installed CoplayDev bridge in that Editor. Re-discover
+   instances and select the one reporting the exact project path. Do not reuse a
+   cached instance ID. Canonicalize filesystem paths for comparison where needed;
+   prove this is the same checkout, not merely the same repository name or version.
+4. Perform the read-only probes below, then run the palette check on the fetched
+   revision. The generator now uses explicitly encoded stored DEFLATE blocks;
+   this removes dependence on the local zlib compressor's block splitting. PNG
+   encoding changed, but decoded pixels, palette data, dimensions and GUID did not.
+5. If the atlas still reports stale, **do not overwrite it to force a pass**.
+   Return `git rev-parse HEAD`, `git status --short`, `python3 --version`, actual
+   and freshly generated SHA-256 hashes (generate to memory or a temporary file),
+   and `git check-attr filter text -- unity/Assets/Isoperia/Art/Textures/shorelands_atlas.png`.
+   Inspect whether the checkout has PNG bytes or an LFS pointer. This distinguishes
+   a stale checkout/modified file from generator drift. The first report did not
+   contain enough byte-level evidence to establish which caused its mismatch.
+
+Continue the original mission only after project identity and the atlas check pass.
+
 - Fetch the branch, inspect HEAD and worktree, and preserve unrelated changes.
   Work on this branch; no force-push, PR, merge to main or deployment.
 - Record the local absolute project path. The Unity project is `<checkout>/unity`,

@@ -31,6 +31,15 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+Resume via **Recovery from the first blocked session** in
+[`docs/M0_REMOTE_SESSION.md`](docs/M0_REMOTE_SESSION.md). Open the intended
+`/Users/syntaxx/isorpg-m0/unity` checkout, rediscover/select its MCP instance,
+and re-run the read-only probes and atlas check. The first return's CI run
+`33663010899` passed; its wrong-project stop was correct. The PNG generator now
+fixes stored-block boundaries for portability without changing any pixels.
+macOS/Linux CI checks were added; the original Mac mismatch still needs the
+updated-checkout recheck. Preserve the original return report as evidence.
+
 The 2026-09-02 connected-session attempt stopped before M0 work because the
 reachable Unity Editors belonged to `/Users/syntaxx/isoRpg` and
 `/private/tmp/isorpg_work`, not this checkout's `unity/` directory. No Unity

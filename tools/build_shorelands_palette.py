@@ -33,6 +33,19 @@ def chunk(kind, data):
             + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF))
 
 
+def stored_deflate(data):
+    """Canonical zlib stream: fixed stored blocks, independent of compressor build."""
+    stream = bytearray(b"\x78\x01")
+    blocks = [data[i:i + 65535] for i in range(0, len(data), 65535)] or [b""]
+    for i, block in enumerate(blocks):
+        size = len(block)
+        stream.append(int(i == len(blocks) - 1))  # BFINAL, BTYPE=00, byte padding
+        stream.extend(struct.pack("<HH", size, size ^ 0xFFFF))
+        stream.extend(block)
+    stream.extend(struct.pack(">I", zlib.adler32(data) & 0xFFFFFFFF))
+    return bytes(stream)
+
+
 def build():
     data = json.loads(SOURCE.read_text())
     bands, width, stride = data["bands"], data["width"], data["band_height"]
@@ -49,10 +62,12 @@ def build():
     pixels = [bytes(c for x in range(width) for c in ramp(b["tuned_hsv"], x / (width - 1)))
               for b in bands]
     raw = b"".join((b"\0" + row) * stride for row in reversed(pixels))
-    # Stored DEFLATE blocks avoid compressor-version drift. The tiny RGB asset
+    # Explicit block boundaries avoid drift between zlib implementations. Level
+    # zero compression alone does not specify how a compressor splits blocks.
+    # The tiny RGB asset
     # stays below 121 KiB; import is deliberately uncompressed with no mipmaps.
     png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
-           + chunk(b"sRGB", b"\0") + chunk(b"IDAT", zlib.compress(raw, level=0)) + chunk(b"IEND", b""))
+           + chunk(b"sRGB", b"\0") + chunk(b"IDAT", stored_deflate(raw)) + chunk(b"IEND", b""))
     svg = ['<svg xmlns="http://www.w3.org/2000/svg" width="960" height="660" viewBox="0 0 960 660">',
            '<rect width="960" height="660" fill="#18212b"/>',
            '<g font-family="sans-serif" fill="#f3eee2">',

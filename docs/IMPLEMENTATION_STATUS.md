@@ -107,3 +107,17 @@ user's current request and milestone. Update ownership when a task is started.
   run tools/build_shorelands_palette.py`. The tracked 256×160 PNG was left
   untouched; reconcile and re-check it in the intended checkout before treating
   the prior generated-atlas evidence as current.
+
+## Originating-chat review of the blocked return
+
+- Reviewed `e292ec1` and [CI run 33663010899](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33663010899): success.
+  The wrong-project stop is accepted; M0 implementation states remain unchanged.
+- Added a precise recovery sequence to `M0_REMOTE_SESSION.md`. The connected
+  session must open/select `/Users/syntaxx/isorpg-m0/unity` before resuming.
+- Replaced compressor-selected level-zero PNG block splitting with explicit
+  stored DEFLATE blocks. Local boundary checks and an independent PNG decoder
+  confirm valid output and byte-identical decoded pixels. No GUID/UV changes.
+- Added macOS and Linux atlas checks in CI. This removes one portability weakness;
+  the first session supplied no hashes/bytes proving the exact mismatch cause.
+  Re-check the fetched branch on the Mac; collect the documented diagnostics if
+  it still fails. No Unity/Blender authoring or validation occurred in this review.

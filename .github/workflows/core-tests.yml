@@ -27,6 +27,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  palette-portability:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify palette on authoring platforms
+        run: python3 tools/build_shorelands_palette.py --check
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
