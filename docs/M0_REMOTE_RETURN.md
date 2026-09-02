@@ -1,6 +1,7 @@
 # M0 checkpoint-repair return
 
 - Result: PARTIAL — repair blockers are closed, but M0-02/M0-03 acceptance remains open pending visual traversal/captures and mobile-input implementation. Stopped before M0-04.
+- Implementation commit: `3913cf16773f0190ee0ea39d57d20f11ebe0f67a`.
 - Branch / Unity: `codex/m0-shorelands-foundation`; `/Users/syntaxx/isorpg-m0/unity`; Unity `6000.5.8f1`; explicitly selected MCP instance `unity@931634bd`.
 - Persistence: the previous Editor cache could not be recovered safely (the actual active scene was `SampleScene`, while the committed M0 scene had `m_Roots: []`). Recreated in Edit Mode, explicitly saved and reopened `Assets/Isoperia/Scenes/ShorelandsM0.unity`. Reopen proof: `roots=6`, with `Shorelands Terrain`, `Shorelands Water`, `Inspection Player`, `Inspection Camera`, `Sun`, and `M0 Inspection Mode`; Terrain, TerrainCollider, and bootstrap all present. On-disk YAML contains those roots and references.
 - Isolation repair: removed namespace-wide/deferred destruction from `M0InspectionBootstrap`. Added `M0InspectionStartup`; gated every legacy AfterSceneLoad auto-creator and made `WorldRuntime` defer creation until scene-loaded identity is known. `WorldOwnedAssetLibraryView` is already a no-op. This keeps non-M0 Bootstrap startup unchanged while preventing M0 legacy world/HUD/player/camera/save creation at source.
