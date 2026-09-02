@@ -31,6 +31,13 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+**Priority after partial checkpoint `a751c69`:** execute
+[`docs/M0_CHECKPOINT_REPAIR.md`](docs/M0_CHECKPOINT_REPAIR.md) before continuing the
+original M0 sequence. The committed scene has an empty root list despite the
+reported Editor hierarchy. Recover/save the scene, replace after-start culling
+with real startup isolation, restore Terrain collision, and complete rendering,
+controls and evidence. CI passed; M0-02/M0-03 are not accepted as complete.
+
 Recovery session: Unity 6000.5.8f1 was opened at the correct
 `/Users/syntaxx/isorpg-m0/unity` checkout and the atlas check passed. M0-02/M0-03
 now have a scoped checkpoint, but their Editor MCP instance disappeared after

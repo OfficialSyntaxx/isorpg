@@ -21,8 +21,8 @@ mobile acceptance, not atlas research or initial blockout.
 | ID | Work | State | Dependency / exit evidence |
 |---|---|---|---|
 | M0-01 | Palette reference and Shorelands atlas | In review | Codex, 2026-09-02: five-family CC0-derived atlas, reproducible generator and UV guide committed; Unity import/lit-scene review pending; see `M0_SHORELANDS_ART.md` |
-| M0-02 | Terrain/world, wind and water shaders | In review | Atlas surface, GPU wind and depth-foam water shaders/materials authored in scoped M0 assets. Import completed without shader errors, but MCP disconnected at Play Mode; lit render/capture still required. |
-| M0-03 | Isolated Shorelands scene and greybox | In review | `ShorelandsM0` has Unity Terrain (20m vertical size; authored height range ~17m), terrain collider, shore/water edge, grey placeholders and scene-local camera/player gate. Runtime isolation/traversal/capture evidence is blocked by MCP disconnect. |
+| M0-02 | Terrain/world, wind and water shaders | In review | Shader/material sources committed; reported import passes. Terrain control mapping, atlas-UV mesh usage, water depth and lit runtime evidence remain unresolved; see `M0_CHECKPOINT_REPAIR.md`. |
+| M0-03 | Isolated Shorelands scene and greybox | Blocked | Review of `a751c69`: committed scene has no roots/objects. Recover and save hierarchy, replace namespace culling with startup prevention, restore Terrain collision; see `M0_CHECKPOINT_REPAIR.md`. |
 | M0-04 | Hero landforms and admitted scatter | Planned | Blockout and art admission evidence |
 | M0-05 | Dress, light and compose three reveals | Planned | Prior art tasks; three phone captures |
 | M0-06 | Profile and review the beauty proof | Planned | GDD §36; measured device evidence and authoring hours |
@@ -121,3 +121,11 @@ user's current request and milestone. Update ownership when a task is started.
   the first session supplied no hashes/bytes proving the exact mismatch cause.
   Re-check the fetched branch on the Mac; collect the documented diagnostics if
   it still fails. No Unity/Blender authoring or validation occurred in this review.
+
+## Review of partial checkpoint a751c69
+
+- [CI run 33666175031](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33666175031) passed. No Unity execution occurred in this review.
+- The scene blob has `m_Roots: []` and no GameObject records; prior hierarchy
+  claims describe Editor observations, not reproducible committed scene content.
+- Repair scope and evidence are in `M0_CHECKPOINT_REPAIR.md`. M0-04 remains blocked
+  by the unfinished checkpoint. Preserve partial assets and prior return evidence.
