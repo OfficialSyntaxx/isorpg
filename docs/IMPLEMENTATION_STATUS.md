@@ -173,3 +173,15 @@ user's current request and milestone. Update ownership when a task is started.
 - Next bounded task is `M0_VALIDATION_SESSION.md`, beginning with a stable bridge
   probe and build/run of the scoped inspection player. Do not change gameplay
   systems or recreate the scene while these checks are pending.
+
+## Review of 6b0ffb7 — inspection player isolation verified
+
+- Final SHA `6b0ffb7580c9a9b6e206ed969f71ccfa8d7d9b9f`; [CI run
+  33682290635](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33682290635)
+  passed Core tests and macOS/Linux palette checks.
+- The scoped macOS player recorded `world=False save=False motor=True
+  controller=True orbit=True collider=True` on Metal/PhysX with no project errors.
+  The helper is Editor-only and runtime sources contain no `UnityEditor` references.
+- M0-02/M0-03 remain In review: touch controls, terrain/foam/wind visual proof,
+  full traversal, statistics, labelled captures and phone validation are not run.
+  M0-04 remains blocked; generated build/test artifacts remain excluded.

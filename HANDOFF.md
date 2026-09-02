@@ -31,6 +31,11 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+Latest player validation is published at `6b0ffb7`; CI `33682290635` passed. The
+scoped macOS player confirmed world/save isolation, rig/collider attachment and
+zero project errors. Continue with visual, traversal, touch and capture evidence;
+the player build alone does not complete M0. Stop before M0-04.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and

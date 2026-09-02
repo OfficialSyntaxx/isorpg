@@ -1,6 +1,8 @@
 # M0 checkpoint-repair return
 
 - Result: PARTIAL — repair blockers are closed, but M0-02/M0-03 acceptance remains open pending visual traversal/captures and mobile-input implementation. Stopped before M0-04.
+- Final pushed SHA: `6b0ffb7580c9a9b6e206ed969f71ccfa8d7d9b9f`.
+- Final CI: [run 33682290635](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33682290635) passed Core tests and both palette portability jobs.
 - Implementation commit: `3913cf16773f0190ee0ea39d57d20f11ebe0f67a`.
 - Branch / Unity: `codex/m0-shorelands-foundation`; `/Users/syntaxx/isorpg-m0/unity`; Unity `6000.5.8f1`; explicitly selected MCP instance `unity@931634bd`.
 - Persistence: the previous Editor cache could not be recovered safely (the actual active scene was `SampleScene`, while the committed M0 scene had `m_Roots: []`). Recreated in Edit Mode, explicitly saved and reopened `Assets/Isoperia/Scenes/ShorelandsM0.unity`. Reopen proof: `roots=6`, with `Shorelands Terrain`, `Shorelands Water`, `Inspection Player`, `Inspection Camera`, `Sun`, and `M0 Inspection Mode`; Terrain, TerrainCollider, and bootstrap all present. On-disk YAML contains those roots and references.
