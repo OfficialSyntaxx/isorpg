@@ -31,6 +31,13 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+The 2026-09-02 connected-session attempt stopped before M0 work because the
+reachable Unity Editors belonged to `/Users/syntaxx/isoRpg` and
+`/private/tmp/isorpg_work`, not this checkout's `unity/` directory. No Unity
+assets or scenes were changed. Read `docs/M0_REMOTE_RETURN.md`, then open
+`<this-checkout>/unity` in Unity 6000.5.8f1 and select that instance in the
+CoplayDev bridge before resuming.
+
 For a connected Unity/Blender session, execute
 [`docs/M0_REMOTE_SESSION.md`](docs/M0_REMOTE_SESSION.md). It defines the startup
 probes, M0-01 review, M0-02 shaders, M0-03 isolated greybox, validation and return

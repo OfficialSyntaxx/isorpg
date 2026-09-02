@@ -1,0 +1,17 @@
+# M0 connected-session return
+
+- Result: BLOCKED
+- Branch and implementation commit SHA: `codex/m0-shorelands-foundation`; no implementation commit was made. Session start SHA: `951b5d5f59b09584052c341a564181df7c7251ed`.
+- Final pushed SHA (report-only follow-up may be identified in the return message): this report-only commit.
+- Owner/session and date: Codex connected-session handoff, 2026-09-02.
+- Unity project path/version; Unity and Blender probe results: required project `/Users/syntaxx/isorpg-m0/unity`, Unity 6000.5.8f1, URP 17.5.0. CoplayDev Unity MCP was reachable but reported two running Editors: `/Users/syntaxx/isoRpg/Assets` and `/private/tmp/isorpg_work/unity/Assets`, both Unity 6000.5.8f1. Neither is the required checkout, so no Editor instance was selected or used. No Blender MCP capability was exposed.
+- M0-01 / M0-02 / M0-03 states and acceptance evidence: M0-01 remains In review. Its read-only local `python3 tools/build_shorelands_palette.py --check` returned `Stale output: unity/Assets/Isoperia/Art/Textures/shorelands_atlas.png; run tools/build_shorelands_palette.py`; the tracked PNG was left untouched. Prior CI evidence is recorded below, but no Unity import/lit-scene review occurred. M0-02 and M0-03 remain Planned and were not started.
+- Changed files and reasons (including any runtime isolation gate): documentation only: this return report plus status and handoff updates. No runtime isolation gate was added; no Unity asset, scene, shader, settings, or source code changed.
+- Unity Console baseline/new errors; compile and Play Mode results: NOT RUN. Probing them against either wrong project would not validate this checkout.
+- Save-isolation and legacy-compatibility evidence: NOT RUN; no Play Mode was entered and no save data was accessed or changed.
+- CI URL, checked SHA, test totals and failures: no CI was triggered by implementation. Existing M0-01 checkpoint `0de647029393360d1d08c014002cdf78eda859c2` passed [Core CI run 33661510739](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33661510739), 411/411 tests. The required palette check failed first; a subsequent Core-test attempt could not start because `dotnet` is not installed in this session (`zsh: command not found: dotnet`). That prior CI does not validate this connected session.
+- Capture paths/links and the build/commit they depict: none; no valid Editor scene was opened.
+- Device/OS/API/resolution/settings, or NOT RUN: NOT RUN.
+- Measured hands-on authoring time, or NOT RECORDED: NOT RECORDED; no authoring was performed.
+- Blockers, unverified assumptions and remaining work: wrong-project Unity connection is the stop condition. The palette generator also reports the tracked atlas as stale; do not regenerate or overwrite it in this stopped session. Open `/Users/syntaxx/isorpg-m0/unity` in Unity 6000.5.8f1, verify the CoplayDev bridge points to it, then perform fresh read-only project path, scene/hierarchy, Play Mode, dirty-state, and Console probes. Connect Blender separately if available. Reconcile the palette output, then complete M0-01 import/lit review; all M0-02 shader work and M0-03 isolated greybox work remain.
+- Exact next task and required environment: P04—connect Unity 6000.5.8f1 / URP 17.5.0 to `/Users/syntaxx/isorpg-m0/unity` via CoplayDev MCP, with Blender available if possible; execute the startup probes in `M0_REMOTE_SESSION.md`, reconcile the stale palette output, and re-run its check before any authoring.

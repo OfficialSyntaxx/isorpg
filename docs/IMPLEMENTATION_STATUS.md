@@ -10,7 +10,7 @@ This is the working board, not a claim that described gameplay already exists.
 | P01 | Repair validator fixtures and add shipping-JSON gate | Verified | `740a776`, 411/411 tests; run `33653573403` |
 | P02 | Retire the legacy exporter write path | Verified | Direct invocation exits 1; SHA-256 snapshots of all 13 content JSON files unchanged; npm test export call removed |
 | P03 | Align GDD, Claude/Codex entry points, workflow and handoff | Verified | Active Markdown links resolve; all three skills pass quick_validate; diff reviewed |
-| P04 | Connect local Unity and Blender to the correct checkout | Blocked here | No Unity/Blender tools exposed in this session; verify local project path, active scene, version and dirty state on connection |
+| P04 | Connect local Unity and Blender to the correct checkout | Blocked | 2026-09-02 connected-session probe found two Unity 6000.5.8f1 Editors, but neither targets the session checkout (`/Users/syntaxx/isorpg-m0/unity`): `/Users/syntaxx/isoRpg` and `/private/tmp/isorpg_work`. Blender bridge was not exposed. See `M0_REMOTE_RETURN.md`; do not author M0 assets until the intended checkout is opened and selected. |
 | P05 | Establish target-device evidence | Planned | iPhone for iteration; target-class Android performance remains unverified |
 
 P01–P03 prepare repository work. P04 gates scene authoring. P05 gates final M0
@@ -91,3 +91,19 @@ user's current request and milestone. Update ownership when a task is started.
   33661510739](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33661510739)
   passed the generated-atlas check and **411/411 Core tests**. Unity import and
   lit-scene review remain pending.
+
+## M0 connected-session return — 2026-09-02
+
+- The mandatory Unity probe reached the installed CoplayDev bridge, but the two
+  running Editors were for `/Users/syntaxx/isoRpg` and
+  `/private/tmp/isorpg_work`, not this branch checkout at
+  `/Users/syntaxx/isorpg-m0/unity`. The session stopped at the wrong-project
+  condition before Console, asset import, Play Mode, or Blender work.
+- M0-01 remains In review; M0-02 and M0-03 remain Planned. No project assets,
+  scenes, shaders, settings, or save data were changed. Full return evidence is
+  in `docs/M0_REMOTE_RETURN.md`.
+- The session's read-only `python3 tools/build_shorelands_palette.py --check`
+  returned `Stale output: unity/Assets/Isoperia/Art/Textures/shorelands_atlas.png;
+  run tools/build_shorelands_palette.py`. The tracked 256×160 PNG was left
+  untouched; reconcile and re-check it in the intended checkout before treating
+  the prior generated-atlas evidence as current.
