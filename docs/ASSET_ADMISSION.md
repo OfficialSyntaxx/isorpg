@@ -65,11 +65,11 @@ gradient palette texture (GDD §19.1).
 
 This is the step that makes mixed-source assets look like one game, and it is the
 step people skip. Assets from different authors stop clashing because they are
-all sampling the same colours — and the whole world resolves to three materials,
-so it batches.
+all sampling the same palette. Use the appropriate terrain, vegetation or water shader family;
+measure passes and draw calls instead of inferring batching from a shared atlas.
 
 - Map each surface to the palette band for its material and region.
-- **Delete the asset's original textures.** They are not shipping.
+- **Preserve original textures with editable source art.** Exclude replaced textures from runtime packaging; never delete the only source copy.
 
 **Exception:** hero characters and bosses keep unique textures. That's where the
 player actually looks.
@@ -85,7 +85,7 @@ player actually looks.
 | Axis | Blender is Z-up, Unity is Y-up. Export FBX as `-Z forward, Y up`. |
 | Normals | Recalculated outside. Flipped faces read as holes in the mesh. |
 | LODs | LOD0/LOD1 minimum on props and vegetation; vegetation gets a far billboard. |
-| Colliders | Simple primitives. Never a mesh collider on scatter. |
+| Colliders | Simple primitives where needed; decorative scatter has no collision (§30.4). |
 | Naming | `snake_case`, descriptive: `oak_tree_a`, `cliff_shore_arch`. |
 
 ---
@@ -95,8 +95,8 @@ player actually looks.
 1. Export from Blender as FBX in **T-pose**.
 2. Upload to Mixamo → auto-rig.
 3. Download clips **"without skin"**; download the rigged mesh once **with skin**.
-4. In Unity set the rig to **Humanoid** — the avatar system then retargets every
-   clip onto every humanoid automatically.
+4. In Unity set the rig to **Humanoid** — the avatar system then retargets compatible clips after Avatar validation. Verify actual bone/skinning
+   budgets; Mixamo rigs do not automatically match the existing 24-bone skeleton.
 
 One ~12-clip set (idle, walk, run, attack ×2, hit, death, gather) serves the
 player, villagers, guards and every humanoid enemy. **That retargeting is what
@@ -109,7 +109,7 @@ their own clips — keep those few and reuse them across variants.
 
 - Place it in a lit scene beside an existing asset. Compare style and scale.
 - Check silhouette readability at third-person distance **on the phone**.
-- Confirm draw calls didn't jump — if they did, the atlas step was missed.
+- Measure draw calls and shader passes before/after. Investigate mesh, material, lighting and transparency changes if the asset exceeds its budget.
 
 ---
 

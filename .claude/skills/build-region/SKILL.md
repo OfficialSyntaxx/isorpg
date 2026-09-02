@@ -16,6 +16,8 @@ and content but cannot execute it.
 
 Read `docs/GDD_ALDERFELL.md` §3 (the region and its identity), §6 (budget) and
 §18. Know which region you're building and what its ≤5-hue palette lock is.
+Read the current status board and verify the editor project path before writes.
+For M0, use an isolated inspection scene without legacy gameplay bootstrap.
 
 ## The order
 
@@ -75,8 +77,9 @@ not the monitor**.
 - [ ] ≤5 dominant hues, distinct from neighbouring regions
 - [ ] Sky and fog carrying the atmosphere
 - [ ] Composed for a 6" screen, checked there
-- [ ] **Budget:** ~120k tris, ~40 draw calls, 3 materials for the dressed region
-- [ ] **30 FPS on device**
+- [ ] **Budget:** ~120k tris, ~40 draw calls, 3 material families for the dressed region
+- [ ] **30 FPS on a real target-class Android device**; iPhone-only evidence is provisional
+- [ ] Device, build SHA, resolution/settings, frame-time percentiles, resident memory and authoring hours recorded
 
 If a framed-reveal screenshot isn't worth keeping, the region is not finished.
 Say so plainly rather than marking it done.

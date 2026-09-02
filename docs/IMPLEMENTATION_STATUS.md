@@ -1,0 +1,75 @@
+# Alderfell implementation status
+
+Design baseline: GDD 6.1. Current production milestone: **M0 — not started**.
+This is the working board, not a claim that described gameplay already exists.
+
+## Preparation gate
+
+| ID | Task | State | Evidence / remaining condition |
+|---|---|---|---|
+| P01 | Repair validator fixtures and add shipping-JSON gate | Verified | `740a776`, 411/411 tests; run `33653573403` |
+| P02 | Retire the legacy exporter write path | Verified | Direct invocation exits 1; SHA-256 snapshots of all 13 content JSON files unchanged; npm test export call removed |
+| P03 | Align GDD, Claude/Codex entry points, workflow and handoff | Verified | Active Markdown links resolve; all three skills pass quick_validate; diff reviewed |
+| P04 | Connect local Unity and Blender to the correct checkout | Blocked here | No Unity/Blender tools exposed in this session; verify local project path, active scene, version and dirty state on connection |
+| P05 | Establish target-device evidence | Planned | iPhone for iteration; target-class Android performance remains unverified |
+
+P01–P03 prepare repository work. P04 gates scene authoring. P05 gates final M0
+mobile acceptance, not atlas research or initial blockout.
+
+## Production work queue
+
+| ID | Work | State | Dependency / exit evidence |
+|---|---|---|---|
+| M0-01 | Palette reference and Shorelands atlas | Ready | ≤5-hue band, source/licence recorded, texture committed |
+| M0-02 | Terrain/world, wind and water shaders | Planned | M0-01; compile and lit-scene visual check on Unity |
+| M0-03 | Isolated Shorelands scene and greybox | Planned | P04; 15m relief, switchback, walkable with inspection rig |
+| M0-04 | Hero landforms and admitted scatter | Planned | Blockout and art admission evidence |
+| M0-05 | Dress, light and compose three reveals | Planned | Prior art tasks; three phone captures |
+| M0-06 | Profile and review the beauty proof | Planned | GDD §36; measured device evidence and authoring hours |
+| M1-01 | Specify command/movement ownership contract | Planned | M0 gate, D02; serialized intents, ordering, spatial adapter and reconciliation tests |
+| M1-02 | Replace transform-to-state movement bridge | Planned | M1-01; Core owns position; Unity input/animation and traversal validated |
+| M1-03 | Isolate old world bootstrap and offline/labour wiring | Planned | Keep legacy source; new gameplay bootstrap cannot invoke idle rewards |
+| M2-01 | Three abilities, one wolf, feedback and enemy AI | Planned | D03; GDD M2 feel gate |
+| M2-02 | Death/repair/recovery behavior | Planned | D04 and gameplay tests; device interruption behavior follows D06 |
+| M3-01 | XP-to-50, gear instances, mastery and acquisition | Planned | D03/D05; migration and balancing tests |
+| M3-02 | Versioned saves and pause/suspend/resume | Planned | D06; fixture migration + real-device kill/relaunch |
+| M3-03 | Locale keys and collection-log completion | Planned | Key/acquisition coverage, counts, UI and save persistence |
+| M3-04 | Act I vertical slice | Planned | Free progression route, onboarding, 45-minute stranger playtest |
+| M4+ | Remaining regions, housing, dungeons and endgame | Planned | Earlier gates plus D01/D07; preserve GDD scope |
+
+No later task is implicitly authorized by this queue. Select work matching the
+user's current request and milestone. Update ownership when a task is started.
+
+## Existing implementation versus target
+
+| Area | Observed baseline | Required migration |
+|---|---|---|
+| Engine | Unity 6000.5.8f1; URP 17.5.0; Input 1.20.0 | Preserve versions; verify actual Editor connection |
+| Core | `noEngineReferences: true`, RNG/math/pathfinding/system tests | Keep boundary; pure Core compilation is not proof of server readiness |
+| Movement | `OpenWorldPlayerController` writes transforms and Core positions | M1 command-authoritative bridge |
+| World | Legacy procedural grid and bootstrap | Authored region scenes; isolate M0 proof |
+| Content | Existing JSON is mostly old-game content | Hand-author Alderfell data when each system/milestone is ready |
+| Time/save | `SaveVersion = "2.2.0"`, epoch timers and legacy offline behavior | Explicit new schema and migration policy before M3 |
+| Collection log | `GameState.CollectionLog` HashSet exists | Counts, acquisition hooks, complete UI and persistence audit |
+| Progression | Inherited twelve skills and old XP/equipment design | Resolve D03/D05 before retuning |
+| Assets | Files and importer scaffolding exist | No new art is certified by this preparation pass |
+| Builds | Mobile workflow configured | Exact Unity build/device results still required |
+
+## Validation record
+
+- Baseline: `d32591a`, GitHub run `33646465136`: 396 tests, 379 passed,
+  17 failed, all in `ContentValidatorTests`. Empty fixture tables failed in the
+  loader before validator checks ran.
+- Preparation fix: `740a7761ac19942578ac682cfd547909e6ae121b`,
+  [Core run 33653573403](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33653573403):
+  **411 tests passed, 0 failed**, standalone build succeeded. This covers Core and
+  actual JSON; it does not certify Unity scenes or player builds.
+- Export retirement: direct execution returns 1 with the retirement message;
+  SHA-256 snapshots confirm all 13 content JSON files unchanged. No full legacy
+  npm test run was needed or performed.
+- Documentation: active Markdown file links resolve, all three repository skills
+  pass `quick_validate.py`, and `git diff --check` passes.
+- Local container: .NET CLI could not start (`Process.GetStat` environment error).
+  Branch GitHub Actions is the executable C# validation source for this session.
+- Unity compilation, Play Mode, Blender, native builds and phone performance:
+  **not run** in this preparation session. No claim of visual or release readiness.

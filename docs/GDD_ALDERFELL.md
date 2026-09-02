@@ -1,16 +1,22 @@
 # Alderfell — Game Design Document
 
-**Version** 6.0 · **Date** 2026-09-02 · **Status** Complete. M0 ready to start.
-**Engine** Unity 6.0.5 (6000.5.8f1) URP · **Platform** Mobile-first (iOS/Android), PC parity from one build
+**Version** 6.1 · **Date** 2026-09-02 · **Status** Design baseline. Repository workflow foundation prepared; M0 is next. Editor/device acceptance remains pending.
+**Engine** Unity 6000.5.8f1 URP · **Platform** Mobile-first, PC content parity from one project; separate platform builds
 **Genre** Third-person high-fantasy action-RPG with skill progression
 **Scope posture** Solo dev + AI tooling, **zero cash budget**. Systems are costed
 in time and licence, not money. Cut lines are explicit.
 
+> **v6.1 changes:** synchronized the operating documents; separated design intent
+> from implementation evidence; repaired the content-validation workflow; clarified
+> v1 endgame, progression access, quest rewards, timing and release gates. Appendix A
+> now records unresolved implementation decisions with their blocking milestone.
+> See `docs/WORKFLOW.md` and `docs/IMPLEMENTATION_STATUS.md` before starting a task.
+>
 > **v6.0 changes:** the content half — the last real gaps. Added §37 gear
 > (material × quality tiers), §38 the story spine, §39 both boss encounters,
 > §40 the Hearth's Landing NPC roster, §41 dungeon layouts, §42 housing rooms
 > and costs, §43 economy sources and sinks. Guilds cut; abilities gate on skill
-> level alone. Appendix A is down to one open decision.
+> level alone. That revision listed one open decision; v6.1 expands the register below.
 >
 > **v5.0 changes:** made the document actionable by an agent working
 > unsupervised. Added a Start here index, §27 player goals (collection log,
@@ -42,7 +48,7 @@ in time and licence, not money. Cut lines are explicit.
 
 **If you are an agent or a new collaborator picking this project up cold, read
 this section, then §1 (pillars), §16 (architecture), and §36 (the current
-milestone). That is enough to start work. Read the rest as it becomes relevant.**
+milestone), then the workflow, status board and handoff. Read the rest as it becomes relevant.**
 
 | I need to… | Read |
 |---|---|
@@ -55,6 +61,14 @@ milestone). That is enough to start work. Read the rest as it becomes relevant.*
 | Know if something is finished | §32 |
 | Understand a term | §35 |
 | Know what we deliberately don't do | §15 |
+
+**Document authority:** this GDD defines game intent. `docs/WORKFLOW.md` defines
+how changes are delivered; `docs/IMPLEMENTATION_STATUS.md` records task status and
+evidence. `AGENTS.md` and `CLAUDE.md` are entry points into those same documents.
+`HANDOFF.md` is the current session handoff. Historical files under `docs/archive/`
+and the legacy prototype documents are reference material, not competing plans.
+A feature described here is **planned unless implementation evidence says otherwise**.
+The Core reuse estimate is a planning estimate, not a completion percentage.
 
 **The five rules that override everything else:**
 
@@ -95,7 +109,7 @@ your name.*
 
 ## 1. Pillars
 
-These four settle every argument. When a feature conflicts with a pillar, the
+These five settle every argument. When a feature conflicts with a pillar, the
 feature loses.
 
 ### P1 — The world is the product
@@ -220,7 +234,7 @@ by a ring index.
 | **The Shorelands** | `title` / ambience | Where you wash up. Cliffs, tidepools, a wrecked hull, gulls, a switchback path climbing inland. First landmark: the smoke of Hearth's Landing seen from the clifftop. *The tutorial, with no tutorial UI.* |
 | **Hearth's Landing** | `village` | Hub town built into a hillside — tiered, a waterfall through the middle, a bell tower visible from all four neighbours. Bank, market, trainers, housing, quests. **Safe.** |
 | **Thornwood** | `forest` / `swamp` | Dense forest, canopy light shafts, a sunken barrow. Elevation hidden by trees so the space feels bigger than it is. Woodcutting heartland. |
-| **Kingsmoor Ruins** | `dungeon` / `boss` | The fallen kingdom made literal. Broken keep on a plateau, visible from three regions. First dungeon and boss. |
+| **Kingsmoor Ruins** | `dungeon` / `boss` | The fallen kingdom made literal. Broken keep on a plateau, visible from three regions. Second dungeon and Act III boss. |
 | **Coldreach Pass** | `snow` | A wall of mountain, one road, and the promise of everything beyond it in v2. Mining heartland. |
 
 **Why five:** it's what one person can author to P1 quality. Five beautiful
@@ -289,10 +303,9 @@ worth keeping; the economy around them is not.
 | II — Townsfolk | 10–20 | Hearth's Landing, Thornwood | A place in the town, first real gear, a home. |
 | III — Adventurer | 20–30 | Kingsmoor Ruins | First dungeon, first boss, the town notices you. |
 | IV — Named | 30–40 | Coldreach Pass | Titles, endgame gear, the realm reacts. |
-| V — Legend | 40–50 | Endgame | Reserved for v2 / the MMO milestone. |
+| V — Legend | 40–50 | Endgame | v1 mastery and completion in existing regions (§28); no additional region. |
 
-Recognition is **diegetic**: NPC dialogue changes by act, guards greet you, the
-town bell rings for you at Act IV. That's the "legend" payoff, and it's cheap —
+Recognition is **diegetic**: NPC dialogue changes by act, guards greet you, the town bell rings in the epilogue immediately after Act IV. That's the "legend" payoff, and it's cheap —
 dialogue variants, not systems.
 
 ### 4.3 Loot model — drops are bases, crafting refines them
@@ -310,7 +323,7 @@ future player economy has real demand on both sides.
   longer, more satisfying hook than a single drop.
 
 `ShopSystem` handles NPC vendors and acts as the seed of the later player market
-(§12). Gold sinks: repairs (§4.4), housing, fast-travel unlocks, respecs.
+(§12). Gold sinks: repairs (§4.4), housing and fast-travel unlocks (§43). A respec system is not specified for v1.
 
 ### 4.4 Death — tiered by region
 
@@ -324,8 +337,10 @@ Danger is a design tool, placed deliberately rather than applied uniformly.
 | **Deep** | Drop everything but equipped gear; corpse has a recovery timer. | Coldreach Pass, dungeon depths |
 
 The tier is **signposted in the world** — a boundary marker, a palette shift, a
-music change — never a surprise. Tier is a property of the region asset, so it's
-data, not code, and it tunes freely after playtesting.
+music change — never a surprise. Tier is authored zone data, with subzone overrides:
+the tutorial crab encounter is Safe even though the wider Shorelands is Settled.
+Corpse lifetime, persistence across suspension, repeated deaths and recovery rules
+must be specified before M2 death implementation (Appendix A).
 
 ---
 
@@ -342,7 +357,7 @@ the mobile-safe choice — precise timing on a touchscreen is a losing battle.
   unlocked by skill level.
 - **Three styles** — Melee, Ranged and **Arcane** (new; a high-fantasy world needs
   magic). Weakness triangle, readable from enemy silhouette and VFX colour.
-- **Resources:** stamina (melee/ranged), mana (arcane). Regenerate out of combat.
+- **Resources:** stamina (melee/ranged), mana (arcane). Regenerate quickly out of combat and slowly in combat (§23.2).
 - **Global cooldown** 1 tick (600ms), aligning abilities to the sim.
 
 **The budget goes to feedback.** The math works; what's missing is hit-stop,
@@ -498,8 +513,9 @@ housing district — a direct swap of a muddy identity for a proven, MMO-native 
 
 - A plot entered through a door (instanced, so it's cheap and mobile-friendly).
 - Place and rotate furniture, crafted decorations, boss trophies.
-- **Functional rooms** gate real benefits: workshop (Carpentry), forge (Smithing),
-  kitchen (Cooking), **garden** — which is where `FarmSystem` now lives.
+- **Functional rooms** provide private stations: workshop (Carpentry), forge
+  (Smithing), kitchen (Cooking), and garden. Free public stations and Sera's public
+  plots provide the same progression access; a home buys convenience (§42–43).
 - Construction skill gates room tiers; the skill finally has a clear purpose.
 - The trophy case is visible proof of the §4.2 arc.
 
@@ -510,7 +526,7 @@ muddies the identity.
 
 ## 10. Quests — story spine plus light side content
 
-- **A handcrafted main questline per act** (5 total), each a real designed
+- **A handcrafted main questline for Acts I–IV plus a short epilogue quest** (5 total), each a real designed
   experience with characters, a puzzle or set-piece, and a unique reward. These
   are the memorable ones.
 - **Light side quests** for pacing and world texture — shorter, but never "kill 10
@@ -544,14 +560,13 @@ if v1 is written for it. **Rules that cost almost nothing now:**
 
 1. **`Isoperia.Core` never references UnityEngine.** It already doesn't. Hold this
    line absolutely — it is the future server binary.
-2. **All state lives in `GameState`**, serializable and sanitized. Already true.
+2. **Authoritative gameplay state belongs in serializable Core state.** Existing `GameState` is the starting point; actor, movement and command migration is tracked in `docs/IMPLEMENTATION_STATUS.md`.
 3. **The client never decides an outcome.** Damage, loot, XP and gathering resolve
    in Core against the seeded RNG. In v1 the "server" is a local Core instance; in
    v2 it's a process on a machine. Same code path.
-4. **Everything is tick-quantized.** Already true — this is what makes
-   authoritative-with-prediction feasible.
+4. **Authoritative gameplay resolution uses integer ticks.** Legacy millisecond timers still need migration; rendering and input sampling remain frame-based.
 5. **Player input is a command, not a mutation.** `MoveTo(x,z)`,
-   `UseAbility(id,target)` — never `transform.position = ...`. Commands serialize
+   `UseAbility(id,target)` — never a presentation transform used as authoritative state. Commands serialize
    over a wire unchanged.
 6. **Instanced spaces from day one** (housing, dungeons). That boundary is painful
    to add later.
@@ -583,7 +598,7 @@ Milestones gate on *demonstrable quality*, not feature counts.
 | **M4** | Thornwood + housing | Region 3, housing, Farming, Act II boss, first dungeon | Region passes the §3.2 checklist |
 | **M5** | Kingsmoor | Region 4, second dungeon, Act III boss, clue trails | — |
 | **M6** | Coldreach + endgame | Region 5, Act IV, titles, fast-travel network complete | Content complete |
-| **M7** | Ship v1 | Polish, balance, device-matrix perf pass, store submission, audio mix | Shippable on iOS + Android + PC |
+| **M7** | Ship v1 | Polish, balance, device-matrix perf pass, itch.io packaging, audio mix | Verified Android APK and declared desktop builds on itch.io; public iOS/store release is optional (§22) |
 | **M8+** | MMO conversion | §12 | — |
 
 **M0 is the most important milestone in this document.** The prior project's
@@ -594,8 +609,10 @@ repeat it.
 (§20.4), which costs nothing. But an iPhone is far more powerful than the
 mid-range Android in §6's budget, so **the budget stays the spec and the iPhone is
 only the convenience target** — otherwise the game is tuned to hardware most of
-the market doesn't have. Use the free Android Studio emulator on the Mac mini as
-the lower-bound sanity check until real Android hardware is available.
+the market doesn't have. Use the Android Studio emulator for compatibility and UI checks only.
+It does not prove target-device performance. Record iPhone measurements as provisional
+until a real target-class Android device is profiled; do not mark the mobile budget
+passed using emulator or iPhone results alone.
 
 **Audio** (§ orchestral + ambience-forward): music used sparingly, rich
 environmental ambience carrying most moments — wind, birds, water, fire. This is
@@ -608,7 +625,7 @@ tracks are close to sufficient for v1. No voice acting.
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| **World authoring is the bottleneck** — one person, five beautiful regions | **High** | M0 measures true per-region cost before committing to five. Cut to three if M0 says so. Buy environment kits rather than authoring every prop. |
+| **World authoring is the bottleneck** — one person, five beautiful regions | **High** | M0 measures true per-region cost before committing to five. Cut to three if M0 says so. Use admitted free environment kits rather than authoring every prop. |
 | **Mobile budget kills the beauty** | **High** | Budget is fixed in §6 *before* art production, not discovered after. M0 gates on a real device. Style choice (painterly, low-poly) is already the mobile-friendly one. |
 | Character customization is thin on one mesh | Medium | v1: colour/hair/gear variety. Modular system budgeted at the MMO milestone. |
 | Scope creep back into settlement sim | Medium | Pillars. `LabourSystem` stays unwired. |
@@ -616,7 +633,7 @@ tracks are close to sufficient for v1. No voice acting.
 | Death penalty tuning drives players off | Medium | Tier is region data, not code — retune freely from playtest. Start forgiving. |
 | MMO conversion never happens | Medium | v1 must be complete and satisfying solo. It's designed to be. |
 | Art coherence drift over a long solo build | Medium | Palette lock per region; style lock in every generation prompt (already in `promptsfor3dmodels.md`). |
-| Store submission friction (first mobile ship) | Low | Budget two weeks in M7 for certification, store assets, age rating, privacy policy. |
+| Optional store submission | Low | Separate from the free itch.io v1 gate; verify requirements if a store release is chosen. |
 
 ---
 
@@ -643,7 +660,7 @@ in-app purchases, or any monetization in v1** (§22) · **remote telemetry** (§
 | Input | **Unity Input System 1.20** (installed) | One action map serves touch, gamepad and keyboard — required for mobile + PC parity. |
 | Streaming | **Addressables 2.11** (installed) | Region streaming and download-size control. |
 | Model import | **glTFast 6.19** (installed) | GLB import; the existing assets are GLB. |
-| Serialization | **Newtonsoft.Json 3.2** (installed) | Content and saves. |
+| Serialization | Core's `Save/Json.cs`; Newtonsoft.Json 3.2 is installed in Unity | Core content and saves currently use the custom parser; preserve its tested contract. |
 | Testing | **Unity Test Framework 1.4** + NUnit | The Core suite already runs on it. |
 | UI | **UI Toolkit (UIElements)** | Better than uGUI for resolution-independent mobile UI; retained `com.unity.ugui` for legacy. |
 | Version control | **Git + Git LFS** on GitHub | Already in place. See §20.3. |
@@ -682,8 +699,11 @@ and cooldowns all resolve inside Core against the seeded `Mulberry32` RNG.
 
 **Commands, not mutations.** Player intent enters Core as a command object —
 `MoveTo(x,z)`, `UseAbility(id, targetId)`, `Gather(nodeId)` — never as a direct
-state write and never as `transform.position = …`. Command objects serialize over
-a wire unchanged on the day there is a wire.
+state write. Unity may update transforms to display accepted Core state or approved
+prediction, but cannot write those transforms back as gameplay authority. The existing
+controller does so today; replacing that bridge is M1 work, not an implemented guarantee.
+Command objects are intended to serialize over a wire; sequencing and reconciliation
+must be specified and tested before claiming network readiness.
 
 ### 16.3 Content architecture — JSON is the source of truth
 
@@ -694,14 +714,14 @@ Content (items, monsters, recipes, quests, drop tables, buildings, XP) lives as
   filesystem: Unity passes one backed by `Resources`, tests pass one backed by
   `File.ReadAllText`, and a future server passes one backed by its own store.
   This is already correct and needs no change.
-- **Retire the TypeScript export step.** Content is currently generated by
-  `scripts/export-content.cjs` from `src/data/*.ts` — the dead prototype. The JSON
-  becomes hand-authored source of truth, and the exporter is deleted.
+- **TypeScript export is retired.** JSON is hand-authored source. The old
+  exporter now fails before writing, and legacy `npm test` no longer invokes it.
 - **Fail loudly.** `ContentException` is thrown on missing or malformed content and
   there is deliberately no fallback path. Keep this. The prior project shipped a
   fallback catalog that silently clamped a 2400-coin payout to 500.
-- A **schema validator runs in the test suite** (§20.1), so malformed content fails
-  CI rather than shipping.
+- **`ContentValidator` runs against the real content in the test suite** (§20.1).
+   It checks table shapes, selected item references and quantities. It is not a full
+   gameplay schema, balance or reachability proof; coverage is listed in the workflow.
 
 ### 16.4 Saves — local now, server-shaped
 
@@ -765,7 +785,7 @@ Locked. Each layer owns something the others physically cannot produce.
 | 3 | **Modular kit** | The built world — walls, roofs, stairs, ruins | CC0 + Blender | ~15 pieces, GPU-instanced |
 | 4 | **Scatter** | Grass, trees, rocks, undergrowth | CC0 + Unity detail system | ~40k tris, billboard LOD |
 
-**Fully dressed region: ~120k triangles, ~20–39 draw calls, 3 materials** — inside
+**Dressed-region target: ~120k visible triangles, ~20–39 draw calls, 3 material families** — inside
 the §6 budget with headroom for actors, VFX and UI.
 
 Layer 2 is the one that looks skippable and isn't. Unity Terrain is a heightfield:
@@ -800,9 +820,11 @@ and it solves three problems at once:
 
 - **Coherence.** Assets pulled from four different CC0 sources stop looking like
   they came from four different games, because they are all literally sampling the
-  same colours. This is what makes free-asset sourcing viable at all.
-- **Performance.** One material for the whole world. Hundreds of objects batch into
-  a handful of draw calls, and texture memory is nearly zero.
+  same palette. This is what makes free-asset sourcing viable at all.
+- **Performance.** Shared palette textures reduce material and texture variation.
+   They do not guarantee batching: mesh, shader, pass, lightmap and transparency
+   differences still need measured draw-call budgets. Terrain, water and vegetation
+   can require distinct shader/material families.
 - **Iteration.** Re-grading a whole region is editing one small image.
 
 **Sourcing:** adopt a proven CC0 stylized palette as the base and tune it, rather
@@ -839,10 +861,10 @@ This directly replaces the paid rigging pipeline.
 4. Download as FBX **"without skin"** for the clip set, and once **with skin** for
    the rigged mesh.
 5. Import to Unity, set the rig to **Humanoid**, and Unity's avatar system
-   retargets every clip across every humanoid automatically.
+   retargets compatible clips after the Avatar mapping is verified. A Mixamo rig is not automatically the existing 24-bone rig; check skinning and bone budgets on import.
 
 **The retargeting is the multiplier.** One animation set — roughly 12 clips —
-serves the player, every villager, every guard, every humanoid enemy. Non-humanoid
+can serve the player and humanoid NPCs after Avatar and clip validation. Non-humanoid
 creatures (wolf, imp, husk) need their own clips; keep those few and reuse them
 across variants.
 
@@ -859,8 +881,7 @@ Ambience-forward (§13). The 8 existing tracks cover v1 regions. New SFX come fr
 
 ### 20.1 CI — two workflows
 
-The repository's six existing workflows (Vite build, Lighthouse, WebGL, web
-deploy, site preview) target the dead three.js prototype. **Delete them.**
+The six legacy web workflows have been removed. Active validation uses the following two workflows; `unity-activation.yml` remains a manual setup helper.
 
 | Workflow | Runs | Why |
 |---|---|---|
@@ -871,28 +892,30 @@ GitHub Actions is free for public repositories, so runner minutes are not the
 constraint — Unity build *time* is. Keep `unity-build.yml` off the every-push path
 for feature branches.
 
-A **content schema validator** runs inside the Core suite, so malformed content
-JSON fails CI rather than shipping.
+The Core suite validates the actual `Resources/Content` JSON as well as synthetic
+error cases. Test results are preserved as CI artifacts even on failure. Use the
+SDK selected by root `global.json`; the .NET test project is a validation harness,
+not the target runtime for Unity gameplay code.
 
 ### 20.2 Build targets
 
 | Target | Built on | Purpose |
 |---|---|---|
 | **macOS (Apple Silicon)** | Mac mini | Daily iteration. No signing, no device, instant. The fastest loop you have. |
-| **iOS** | Mac mini → Xcode → iPhone | Real performance truth. Milestone gates. |
-| **Android** | Mac mini | The actual spec target (§6). No device — validated via the free Android Studio emulator, and on real hardware before ship. |
+| **iOS** | Mac mini → Xcode → iPhone | Development device and compatibility checks; measurements apply only to the tested iPhone. |
+| **Android** | CI or Mac mini | Spec target (§6). Emulator for compatibility; real target-class hardware required for performance acceptance. |
 
 ### 20.3 Asset storage
 
-Stay on **Git LFS**. The root `.gitattributes` is currently missing LFS rules —
-only `unity/.gitattributes` has them — so binaries outside `unity/` are being
-committed as raw blobs. Fix that first.
+Stay on **Git LFS**. Root and Unity attributes now exist. Existing raw blobs were
+not retroactively converted: a text-only checkout can report files that should be
+pointers. Do not stage incidental binary changes or rewrite shared history to fix
+this. Track a separate asset-storage cleanup with payload verification.
 
-GitHub's free LFS allowance is roughly **1 GB storage and 1 GB/month bandwidth**.
-That is a real ceiling for a 3D project. Mitigations, in order: commit only
-game-ready optimized assets (keep multi-hundred-MB `.blend` working files out of
-the repo), watch the quota, and migrate to Unity Version Control (5 GB free for
-solo use) if it fills.
+Storage and transfer allowances must be checked against the account before a
+large import; do not treat historical quota estimates as current. Commit optimized
+runtime assets and preserve editable sources in a durable, backed-up source-art
+location. Never discard the only editable source merely to reduce repository size.
 
 ### 20.4 Distribution — the honest picture
 
@@ -900,19 +923,16 @@ solo use) if it fills.
 own iPhone with a free Apple ID: 7-day signature expiry, up to 3 apps, re-sign by
 rebuilding. That covers the entire development period.
 
-**Shipping to iOS costs $99/year.** There is no legitimate way around it — TestFlight,
-the App Store and any distribution beyond your own device all require the paid
-Apple Developer Program.
+Public iOS distribution is outside the zero-cash v1 release gate. Verify the
+current Apple distribution options and fees before adding it to a release milestone.
 
-**On the browser/PWA idea:** it doesn't work for this game. Unity does not support
-WebGL on mobile browsers, and iOS Safari's memory ceiling and texture-compression
-gaps make a streamed 3D RPG unviable there. It was the right answer for the old
-three.js prototype and is the wrong one for Alderfell. Don't spend time on it.
+**Browser/PWA is out of scope for Alderfell v1.** Native builds are the chosen
+performance and distribution path. This is a scope decision, not a claim about
+all current Unity browser support. Keep the old prototype as reference only.
 
-**Therefore: ship Android first.** Google Play is a **$25 one-time** fee versus
-Apple's $99/year, and Android additionally permits free direct APK distribution
-with no store at all. Android is also the §6 spec target. iOS becomes the second
-platform, funded by the first if it earns anything.
+**Plan of record: free Android APK and desktop builds on itch.io (§22).** Choose
+and validate the desktop target matrix before M7. Store distribution is a separate
+optional decision; do not assume v1 revenue funds it.
 
 ---
 
@@ -981,10 +1001,11 @@ runs on**. You read it off your own test devices. Nothing is transmitted.
 Recorded: time per region, deaths per zone, skill XP rates, ability usage, combat
 duration, frame time percentiles, and where players stop playing.
 
-Because nothing leaves the device, there is **no privacy policy, no consent flow,
-no GDPR or COPPA surface, and no backend**. This is the correct trade at this
-scale: the balance signal from watching five people play in person, plus their
-device logs, is better than aggregate data from an audience you don't have yet.
+Nothing is transmitted by this telemetry feature. Collect only gameplay and
+performance counters; omit personal identifiers. Export tester logs only with their
+knowledge. Local-only logging reduces infrastructure needs but is not a blanket
+exemption from platform or privacy requirements; verify those for a chosen release.
+Watching a small set of testers remains the primary balance signal.
 
 If remote telemetry is ever wanted, it is additive — the same event stream gains a
 transmitter, behind consent.
@@ -1022,7 +1043,10 @@ world — which is the product.
 
 ### 23.3 Abilities — six per style at v1
 
-Unlocked by skill level. All damage resolves in
+Unlocked by skill level. **The mapping from the twelve inherited skills to Ranged
+and Arcane, plus unlock levels, remains open in Appendix A and blocks M2 content.**
+Do not silently add skills or assume one existing combat skill governs every style.
+All damage resolves in
 `CombatMath` — abilities supply multipliers and effects, never their own rolls.
 
 **Melee** — stamina, close range, built around committing.
@@ -1036,7 +1060,7 @@ Unlocked by skill level. All damage resolves in
 | Overhead | 30 | 12t | 2.2× damage, 2t wind-up the enemy can interrupt |
 | Execute | 25 | 10t | 3× damage to targets below 25% HP |
 
-**Ranged** — stamina, 5-tile reach, built around kiting.
+**Ranged** — stamina, 5m reach (starting value), built around kiting.
 
 | Ability | Cost | CD | Effect |
 |---|---|---|---|
@@ -1047,7 +1071,7 @@ Unlocked by skill level. All damage resolves in
 | Hunter's Mark | 10 | 20t | +25% damage taken by target for 15t |
 | Piercing Bolt | 30 | 14t | 1.8× damage, ignores 50% defence |
 
-**Arcane** — mana, 5-tile reach, built around control and burst.
+**Arcane** — mana, 5m reach (starting value), built around control and burst.
 
 | Ability | Cost | CD | Effect |
 |---|---|---|---|
@@ -1076,7 +1100,7 @@ Idle ──sees player──> Alert ──in range──> Engage ──lost play
 | Aggro radius | Per-monster `aggroRange` (already in content) |
 | Vision | Cone ~120°, blocked by terrain — never through a cliff |
 | Leash | 25m from spawn, then reset and heal fully |
-| Search | 5s at last known position before returning |
+| Search | 8 ticks (4.8s) at last known position before returning |
 | Telegraph | Every attack above 1.5× damage has a **≥1t wind-up** with a distinct animation and ground marker |
 | Pack behaviour | Aggro spreads to allies within 8m |
 
@@ -1087,7 +1111,7 @@ and tapping a health bar, and it must read at phone size.
 
 The math already works. What makes it *feel* good:
 
-- Hit-stop: 60–80ms freeze on a landed hit, 120ms on a crit
+- Hit-stop: 60–80ms presentation freeze on a landed hit, 120ms on a crit; never stop Core ticks or change gameplay timing
 - Floating damage numbers, crits larger and distinct in colour **and** shape
 - Screen shake on crits only, subtle, respecting a reduce-motion setting
 - Distinct impact SFX per weapon class and per material struck
@@ -1308,7 +1332,7 @@ a solo-built game, and it is the reason the collection log matters.
 **Explicitly not building** a raid, a season pass, or infinite scaling dungeons.
 Those need an audience and a live-service posture the project has ruled out (§22).
 
-**The ending:** the Act IV story beat closes the arc — the realm acknowledges you.
+**The ending:** Act IV closes the road-reopening arc; its short epilogue quest (§38) delivers the town's acknowledgement.
 Mastery content continues past it, so there is no "credits then nothing" wall.
 
 ---
@@ -1412,8 +1436,7 @@ never block an enemy's line of sight — a bush that hides you is a bug, not ste
 ### 30.5 Addressables
 
 One group per region, plus `Shared` (atlas, characters, UI) and `Audio`. Region
-groups load on approach and unload behind, which is what keeps the build under the
-§6 size budget.
+groups load on approach and unload behind to bound resident memory. This does not itself reduce total download/install size; profile both budgets separately.
 
 ---
 
@@ -1426,7 +1449,7 @@ rather than reaching into state.
 
 | Command | Fields | Effect |
 |---|---|---|
-| `MoveTo` | `x, z` | Path and walk. The only way position changes. |
+| `MoveTo` | `x, z` | Requests navigation; Core owns position changes, including accepted movement, abilities, respawns and travel. |
 | `StopMoving` | — | Cancels the path. |
 | `Interact` | `targetId` | Context-resolved: gather, talk, open, enter. |
 | `SetTarget` | `targetId` | Combat target selection. |
@@ -1441,6 +1464,11 @@ rather than reaching into state.
 | `AcceptQuest` / `AbandonQuest` | `questId` | |
 | `FastTravel` | `waypointId` | Rejected if the waypoint isn't unlocked. |
 
+**This catalogue is the target contract, not a list of implemented classes.**
+M1 must define joystick intent, movement integration, navigation/collision data,
+command ordering and presentation reconciliation before replacing the old controller.
+Add stable instance identifiers for non-stackable gear before quality/durability work.
+
 **Every command is validated inside Core.** The Unity layer never pre-checks
 whether a move is legal or an ability is off cooldown to decide whether to send it
 — it sends, and Core accepts or rejects. That is the same discipline an
@@ -1454,9 +1482,9 @@ nothing.
    `GameState`) — never a static singleton, or it can't be tested or run per-player
    on a server.
 3. All randomness through the injected `IRandom`, so a seeded run is reproducible.
-4. All timing in **ticks**, never seconds and never `Time.deltaTime`.
+4. Authoritative durations use **integer ticks**. Presentation may use frame time for camera, animation, audio and visual effects without feeding outcomes back into Core.
 5. Write the tests alongside. A system without tests doesn't get merged.
-6. If it changes saved state, bump `schemaVersion` and write the migration (§29).
+6. If it changes saved state, follow §29: bump the schema; migrations are mandatory from M3 onward, optional only for disposable pre-M3 saves.
 
 ### 31.3 Comment style
 
@@ -1483,7 +1511,7 @@ correctly in the collection log.
 licence recorded in the ledger, within budget, re-UV'd to the atlas, LODs present,
 scale and pivot correct, verified in a lit scene at phone size.
 
-**A region is done when:** all ten items of the §3.2 craft checklist pass, the
+**A region is done when:** all nine items of the §3.2 craft checklist pass, the
 three framed-reveal screenshots are worth keeping, and it holds 30 FPS on device
 inside the §18 budget.
 
@@ -1547,8 +1575,10 @@ for the procedure.
 | Performance | Frame time on device at each milestone gate | Manual, on the phone |
 | Feel | A person plays it | Manual — the M2 and M3 gates |
 
-**What must have a test:** anything with a number in it; anything that reads or
-writes the save; anything content-driven; every migration.
+**Automate meaningful invariants:** authoritative gameplay outcomes, invalid commands,
+content validation and save migrations. Test failure paths and state transitions.
+Documentation edits and cosmetic constants do not require artificial unit tests;
+visual and interaction changes require their applicable runtime/device evidence.
 
 **What can't be tested and needs a human:** whether the world is beautiful, whether
 combat feels good, whether onboarding works. Those are §13's gates and they are
@@ -1564,16 +1594,16 @@ and the cause needs finding immediately.
 
 | Term | Meaning |
 |---|---|
-| **Tick** | 600ms. The simulation's unit of time. All durations are in ticks. |
+| **Tick** | 600ms. Authoritative durations use integer ticks; presentation has an independent frame clock. |
 | **Core** | `Isoperia.Core` — the engine-agnostic simulation. The future server. |
 | **Command** | A serializable object expressing player intent (§31.1). |
 | **Framed reveal** | A hand-placed spot where cresting terrain presents a composed view. Three per region, screenshotted. |
 | **Hero landform** | A Blender-sculpted mesh providing silhouette a heightfield can't — cliff, arch, plateau. Layer 2 of §18. |
 | **The atlas** | The one shared gradient palette texture every world surface maps to (§19.1). |
-| **Craft checklist** | The ten rules in §3.2 a region must pass to ship. |
+| **Craft checklist** | The nine rules in §3.2 a region must pass to ship. |
 | **Mastery** | Per-item/recipe progression, separate from skill level. |
 | **Zone tier** | Safe / Settled / Wild / Deep — sets the death penalty (§4.4). Region data, not code. |
-| **Act** | One of five progression chapters (§4.2), each with its own region and tone. |
+| **Act** | A progression stage (§4.2); Act V reuses existing regions for mastery. |
 | **The gate** | A milestone's subjective pass condition (§13). |
 | **The budget** | §6's mobile performance limits. Art that misses it is rebuilt. |
 | **Retargeting** | Unity Humanoid remapping one animation set onto every humanoid rig (§19.3). |
@@ -1602,22 +1632,25 @@ design rescues the project — that is exactly how the previous one failed.
 | 9 | Sky, fog, directional light, time-of-day tint cycle | Local/Unity | ~48-min cycle, fog tinted to the region palette |
 | 10 | Third-person orbit camera to §23.1 spec | Remote + Local | Spring arm, collision, no auto-rotate |
 | 11 | Place the three framed reveals | Local | Screenshotted on the phone |
-| 12 | Build to the iPhone and profile | Local/Xcode | Frame time and draw calls recorded |
+| 12 | Build to the iPhone and profile; then profile target-class Android | Local | Device, build SHA, settings, resolution, frame-time percentiles, resident memory and draw calls recorded; iPhone-only evidence is provisional |
 
 ### 36.2 Acceptance criteria
 
 - [ ] Runs at **30 FPS** on device, inside §6's budget (~120k tris, ~40 draw calls,
-      3 materials for the dressed region)
-- [ ] All ten §3.2 craft-checklist items pass
+      3 material families for the dressed region; measured passes/draw calls remain authoritative)
+- [ ] All nine §3.2 craft-checklist items pass
 - [ ] Three framed-reveal screenshots that are **worth keeping**
 - [ ] Judged on the phone against the reference games in §0 — RuneScape, WoW, W101,
       Minecraft — and it holds up
 - [ ] Every asset in the licence ledger
+- [ ] Target-class Android performance evidence, or explicitly provisional M0 status
+- [ ] Region authoring hours recorded to inform the three-versus-five-region decision
 
 ### 36.3 What M0 must NOT contain
 
 No combat, no inventory, no UI beyond the joystick, no enemies, no quests, no
-saving. Every one of those is a way of avoiding the question M0 exists to ask.
+saving. A scene-local inspection rig may provide camera/joystick traversal; it does
+not mutate persistent game state or claim M1 command/movement completion. Every one of those is a way of avoiding the question M0 exists to ask.
 
 ### 36.4 The honest exit
 
@@ -1664,8 +1697,10 @@ Every craft rolls a quality from 1 to 5. The roll's ceiling is set by the crafte
 **Visual tiers cost one atlas band each**, not new meshes — trim colour and a
 material property. That is the whole art cost of the system.
 
-**The consequence worth noting:** a Masterwork Iron sword (×1.15 on tier 2) beats a
-Crude Steel one (×0.80 on tier 3). So a skilled crafter can stay competitive a tier
+**The consequence worth noting:** the balance target is that a Masterwork Iron sword (×1.30 on tier 2) beats a
+Crude Steel one (×0.80 on tier 3) on a defined comparable stat. Material base stats,
+rounding and quality-roll probabilities must be set and tested before gear implementation
+(Appendix A); the multipliers alone do not prove the comparison. So a skilled crafter can stay competitive a tier
 behind, and the answer to "how do I get stronger" is sometimes *get better at
 crafting* rather than *go somewhere more dangerous*. That's the loot model (§4.3)
 paying off.
@@ -1681,7 +1716,7 @@ relevant to the last hour of the game.
 
 ## 38. The story spine
 
-Five main quests, one per act. **Draft — edit freely.** Told environmentally with
+Five main quests: four act arcs and one short epilogue. **Draft — edit with a recorded design change.** Told environmentally with
 short dialogue (§8.2); no cutscenes, no walls of text.
 
 **The premise:** Alderfell was a kingdom. Something broke it — not a demon lord,
@@ -1696,7 +1731,7 @@ become the first person in a generation to go *back out* into it.
 | **II** | **The Thornwood Debt** | The town's timber crew stopped going into Thornwood. Wren won't say why. Following the old logging road, you find the crew's camp abandoned and a barrow opened — something came *out*. Clearing the barrow means facing the forest ogre that took up residence in it. | Thornwood safe for logging; your housing plot; the first fast-travel waypoint |
 | **III** | **What the Moor Keeps** | Old Tobias remembers Kingsmoor before it emptied. He wants one thing from the keep: a ledger that says why the mines were abandoned. The answer is unglamorous and true — they flooded, the crown lied about it, and people died believing a lie. The cave brute in the flooded lower workings is what's left guarding nothing. | The Kingsmoor recipes (steel and beyond); the truth, which changes what NPCs say |
 | **IV** | **The Road North** | Coldreach Pass has been shut since the collapse. Reopening it is a work of engineering, not heroism: clearing the road, rebuilding a bridge, surviving the cold. Doing it makes you the person who reconnected the realm. | Coldreach opened; the title **Kingsmoor's Bane**; Frostiron |
-| **V** | **The Long Reach** | No quest — an acknowledgement. The bell rings for you. Guards greet you by title. Tobias, if he lived, gives you the armoury's reforging recipe. The game continues into mastery (§28). | Kingsteel recipe; the ending, which is a beginning |
+| **V** | **The Long Reach** | A short epilogue quest after Act IV: return to the town for acknowledgement, hear the bell, and speak with Tobias for the armoury's reforging recipe. It opens the existing-world mastery phase (§28); no new region or boss. | Kingsteel recipe; the story ending and access to mastery goals |
 
 **Tone rules:** nobody is chosen. No prophecy. The villains are consequences, not
 antagonists — a flooded mine, a lie told by a dead government, an animal in a
@@ -1719,8 +1754,8 @@ player can always retreat but never fully disengage.
 | Phase | Trigger | Behaviour |
 |---|---|---|
 | 1 | Start | Slow melee. **Overhead Smash** every ~8t: 2t wind-up, ground marker, heavy damage — the teaching mechanic. Sidestep or eat it. |
-| 2 | 60% HP | Adds **Uproot**: hurls a stone, 1.5t wind-up, targets where you *are*, so it rewards moving. |
-| 3 | 30% HP | Enrages: attack speed +25%, and Smash leaves a lingering root patch that slows. The arena shrinks in practice, forcing commitment. |
+| 2 | 60% HP | Adds **Uproot**: hurls a stone, 2t wind-up, targets where you *are*, so it rewards moving. |
+| 3 | 30% HP | Enrages: attack interval reduced by 1 tick, minimum 1 tick, and Smash leaves a lingering root patch that slows. The arena shrinks in practice, forcing commitment. |
 
 **The lesson it teaches:** telegraphs are readable and worth respecting. It's the
 first real fight, so it is deliberately fair — every death is legible.
@@ -1737,7 +1772,7 @@ pump wheel. Water slows movement — the platforms are the mechanic.
 
 | Phase | Trigger | Behaviour |
 |---|---|---|
-| 1 | Start | Melee with a wide **Cleave**, 1.5t wind-up, arc marker. Punishes standing in front. |
+| 1 | Start | Melee with a wide **Cleave**, 2t wind-up, arc marker. Punishes standing in front. |
 | 2 | 70% HP | **Slam** floods a section: 2t wind-up, then a wave crossing the floor. Survivable only on a platform, so it forces repositioning under time pressure. |
 | 3 | 40% HP | Summons two cave slashers (`cave_slasher`, reused). The brute keeps attacking — the player must choose targets under pressure. |
 | 4 | 15% HP | **Collapse**: falling debris marks three zones in sequence. A damage race with a movement puzzle on top. |
@@ -1746,12 +1781,14 @@ pump wheel. Water slows movement — the platforms are the mechanic.
 ogre by design — it's the Act III capstone.
 
 **Drops:** brute's core (Kingsteel component), steel-tier weapon base, `pet_brute`
-at 1/750, the Kingsmoor ledger (quest item for §38 Act III).
+at 1/750. The Kingsmoor ledger is recovered from the Archive (§41), not rolled as loot; the main quest also requires defeating the brute.
 
 ### 39.3 Party scaling
 
-Boss HP ×1.6 per additional player; a third damage phase mechanic activates at
-3+ players. Wired now (§11), inert until multiplayer exists.
+Provisional boss HP multiplier: `1 + 0.6 × (partySize - 1)` (solo 1.0, duo 1.6,
+trio 2.2). Party size is snapshotted at encounter start. Extra mechanics and damage
+scaling must be specified before multiplayer; they are not wired now. v1 uses solo
+rules and must not depend on a future party system.
 
 ---
 
@@ -1791,7 +1828,7 @@ An old burial mound the logging crew broke open. Tight, dark, claustrophobic —
 tonal opposite of the forest above it.
 
 ```
-Entrance ─ Antechamber ─ Collapsed Gallery ─┬─ Flooded Cells ─ [barrow key]
+Entrance ─ Antechamber ─ Collapsed Gallery ─┬─ Flooded Cells [key required]
                                             └─ The Deep Barrow ─ OGRE ARENA
 ```
 
@@ -1819,7 +1856,7 @@ Great Hall ─ Barracks ─ Stair of Kings ─ Pump Room ─┬─ Archive [ledg
 | Barracks | Close-quarters fighting, several slashers. The armoury that later yields Kingsteel. |
 | Stair of Kings | A long descent. Light fails gradually. No combat — dread instead. |
 | Pump Room | The mechanism that failed. A lever puzzle that partially drains the level below, changing the boss arena. **Optional, and it makes the fight easier** — rewarding curiosity with advantage rather than loot. |
-| Archive *(optional)* | Tobias's ledger. The truth of §38 Act III. |
+| Archive | Tobias's ledger, required for the Act III main quest. Optional only on repeat dungeon runs after quest completion. |
 | Lower Workings | Flooded approach. Brute arena, §39.2. |
 
 **The design principle both share:** every optional room rewards *understanding*
@@ -1830,14 +1867,20 @@ rather than grinding — a key, a truth, or an easier fight.
 ## 42. Player housing — rooms and costs
 
 The plot is granted by the Act II quest (§38). Construction level gates the rooms.
+Public stations in Hearth's Landing offer the same recipe and quality access without
+a room purchase, subject to skill/mastery and material requirements. Sera provides
+public farming plots before a private garden is built. Public crafting also includes
+material-based repair, so paying gold is never required to keep playing (§43).
+Room unlocks below describe private access; bonuses and upper tiers require tuning
+before M4. Basic Construction training must be available before its first room gate.
 
 | Room | Con. level | Cost | Unlocks |
 |---|---|---|---|
 | **Hearth** (starting room) | — | Free | Rest point, save, the plot itself |
-| **Workshop** | 5 | 40 planks, 10 iron bars, 500g | Carpentry recipes above level 20 |
-| **Kitchen** | 8 | 30 planks, 20 stone, 400g | Cooking above level 20; no-burn at high mastery |
-| **Forge** | 12 | 60 stone, 25 iron bars, 1,200g | Smithing above level 20; quality-5 crafting |
-| **Garden** | 15 | 50 planks, 30 soil, 800g | Farming — six plots (`FarmSystem` lives here) |
+| **Workshop** | 5 | 40 planks, 10 iron bars, 500g | Private Carpentry station, including recipes above level 20 |
+| **Kitchen** | 8 | 30 planks, 20 stone, 400g | Private Cooking station; mastery rules match the public station |
+| **Forge** | 12 | 60 stone, 25 iron bars, 1,200g | Private Smithing station; quality-5 still requires recipe mastery |
+| **Garden** | 15 | 50 planks, 30 soil, 800g | Six private farming plots; public plots remain available |
 | **Trophy Hall** | 20 | 80 planks, 40 iron bars, 2,000g | Boss trophies, collection-log display |
 | **Cellar** | 25 | 100 stone, 30 steel bars, 3,500g | +100 storage; bulk material stockpile |
 | **Study** | 30 | 70 planks, 20 steel bars, 5,000g | Clue-trail bonuses; the codex, in-world |
@@ -1868,7 +1911,7 @@ taps and the drains.
 
 | Sink | Scale | Notes |
 |---|---|---|
-| **Repairs** | Constant | The primary sink. Death in Settled+ zones costs durability (§4.4) |
+| **Repairs** | Constant | Optional gold service; gathered-material repair is the free alternative. Death rules follow §4.4 |
 | **Housing** | Large, staged | ~13,000g for all rooms at tier 1, far more upgraded |
 | **Fast-travel unlocks** | Medium, one-time | Per waypoint; makes convenience a purchase |
 | **Buying materials** | Player's choice | Always more expensive than gathering. Buys time, never advantage |
@@ -1878,8 +1921,10 @@ taps and the drains.
 
 - **Vendors buy at ~40% and sell at ~130% of item value.** The spread is what stops
   buy-low-sell-high loops.
-- **Never sell a crafted item to a vendor for more than its material cost.** That is
-  the classic infinite-money bug, and `ContentValidator` should grow a check for it.
+- **Prevent positive-profit buy → craft → sell cycles using actual vendor purchase
+  prices, sale prices, yields and quality outcomes.** Gathered materials may gain value
+  through crafting. The cycle check is planned for M3; current reference validation
+  does not prove economic balance.
 - **Gold is never the bottleneck on progression** — skill level and materials are.
   Gold buys convenience: repairs, travel, a house.
 - **No gold sink is ever mandatory to progress.** A player who never fast-travels
@@ -1889,11 +1934,34 @@ taps and the drains.
 
 ## Appendix A — Open decisions
 
-**One decision remains open, and it cannot be closed from a desk.**
+Decisions block the milestone listed, not all work. Record the choice and rationale
+here before implementing the affected system. Do not silently substitute a guess.
 
-1. **Region count.** Five is the plan. **M0's measured authoring cost decides
-   three versus five** — that is one of the things M0 exists to find out (§14).
-   Five adequate regions would violate P1; three beautiful ones would not.
+| ID | Decision / evidence needed | Resolve before |
+|---|---|---|
+| D01 | Five regions versus three, using M0 authoring hours and measured quality | M4 region expansion |
+| D02 | Joystick command shape, movement integration, navigation/vision data, ordering and reconciliation | M1 movement implementation |
+| D03 | Which skills govern Melee/Ranged/Arcane; ability unlock levels, XP allocation and resource formulas | M2 combat implementation |
+| D04 | Durability, repair costs, corpse timer, suspension/reload and repeat-death recovery rules | M2 death implementation |
+| D05 | Material base stats, rounding, mastery thresholds, quality probabilities and stable gear-instance IDs | M3 gear/save implementation |
+| D06 | Pause/suspend/resume policy, including 25–40 minute dungeon sessions and offline-disabled timers | M3 save/runtime implementation |
+| D07 | Construction bootstrap, room upgrade bonuses/costs, and public/private station parity | M4 housing implementation |
+| D08 | Desktop OS/build matrix and current distribution requirements | M7 packaging |
+
+**M0 can begin without closing D02–D08.** It needs a connected Editor, admitted
+source assets and an inspection scene. Device acceptance remains evidence-based (§36).
+
+**v6.1 consolidation decisions:**
+
+- Preserve five main story beats as four act quests plus a short epilogue;
+  level 40–50 mastery is part of v1, with no extra region or boss.
+- Preserve the no-mandatory-gold rule through free public progression stations,
+  public plots and material-based repairs; private rooms buy convenience.
+- Place the unique Kingsmoor ledger in the Archive, with brute defeat also needed
+  for the main quest. No duplicate/random ledger drop.
+- Keep the free itch.io release gate; public iOS/store distribution is optional.
+- Keep integer simulation ticks and a separate presentation clock; example boss
+  timings remain provisional balance values.
 
 **Resolved, kept here so the reasoning isn't lost:**
 
@@ -1919,19 +1987,18 @@ taps and the drains.
 
 ## Appendix B — Immediate next steps
 
-**Repo groundwork (remote sessions — mostly done):**
+**Preparation and migration order (status is tracked in `docs/IMPLEMENTATION_STATUS.md`):**
 1. ~~`CLAUDE.md`, agent skills, asset admission gate, content schema + validator.~~
 2. ~~Replace the six web CI workflows with `core-tests.yml` and `unity-build.yml`.~~
 3. ~~Fix the root `.gitattributes` so binaries are LFS-tracked.~~
-4. Retire `scripts/export-content.cjs` and promote the content JSON to source of truth.
-5. Rescale `XpTable` to the level-50 curve and re-baseline the tests.
-6. Fill in the equipment stat tables (currently all zeros) against the §4.3 model.
-7. Strip `LabourSystem` and offline gathering from the active wiring (retain code).
+4. ~~Retire the exporter write path; validate hand-authored JSON in CI.~~
+5. ~~Align handoff/agent instructions and verify the Core checks on the working branch.~~ See the status board for the checked commit.
+6. **Start M0** (§36), keeping the inspection scene separate from legacy gameplay bootstrap.
+7. At M1–M3, migrate command authority, remove active labour/offline wiring, rescale XP,
+   and implement gear against D03/D05. These gameplay changes do not precede M0.
 
-**Then M0 — see §36 for the ordered task list and acceptance criteria.**
-
-Also outstanding, and cheap to do from a remote session:
+Also outstanding, assigned to later milestone tasks rather than M0 prerequisites:
 - Save `schemaVersion` and the migration harness (§29), before M3 makes it mandatory
-- The collection-log state (`HashSet` of obtained ids + counts) in `GameState` (§27.1)
+- Complete collection-log counts and acquisition hooks (§27.1); `GameState.CollectionLog` already contains a HashSet, not the complete feature
 - Locale extraction: move user-facing strings to `Resources/Locale/en.json` (§25.1)
 - Revise `docs/ART_BIBLE.md` against §3.2's craft rules and §6's budget

@@ -45,8 +45,8 @@ Silhouette is what reads at phone size; interior detail is not worth triangles.
 is how the world ends up incoherent.
 
 - Map every surface to the palette band for its material and region.
-- Delete the asset's original textures — they are not shipping.
-- Result: the asset shares the world material, so it batches with everything else.
+- Keep source textures with the editable source archive; exclude them from the runtime asset if replaced by the atlas.
+- Reuse the appropriate shader/material family. An atlas does not guarantee batching; inspect actual draw calls and passes.
 
 **Exception:** hero characters and bosses keep unique textures. That's where the
 player looks.
@@ -61,7 +61,7 @@ player looks.
 - **Normals:** recalculate outside. Flipped faces read as holes.
 - **LODs:** props and vegetation need at least LOD0/LOD1. Vegetation gets a
   billboard at the far LOD.
-- **Colliders:** simple primitives only. No mesh colliders on scatter.
+- **Colliders:** simple primitives where interaction/collision is required; decorative scatter has no collision per GDD §30.4.
 
 ## 5 — Characters: rig and animate via Mixamo
 
@@ -69,7 +69,7 @@ player looks.
 2. Upload to Mixamo → auto-rig (free, commercial use permitted).
 3. Download animations **"without skin"**; download the rigged mesh once **with skin**.
 4. In Unity, set the rig to **Humanoid** — the avatar system then retargets every
-   clip across every humanoid automatically.
+   clip across every humanoid after the Avatar mapping is verified. Validate bone/skin influence budgets; a Mixamo skeleton is not automatically the existing 24-bone rig.
 
 One ~12-clip set (idle, walk, run, attack ×2, hit, death, gather) serves the
 player, villagers, guards and every humanoid enemy. Non-humanoids need their own

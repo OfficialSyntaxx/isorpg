@@ -1,3 +1,5 @@
+> Historical reference: the current design and delivery rules are in `GDD_ALDERFELL.md` and `WORKFLOW.md`. Older camera, paid asset, exporter, branch and deployment instructions below are superseded. Use the implementation status board for current work.
+
 # Editor lane — dispatch runbook
 
 **For: an agent or person on a machine with Unity installed.** Everything else in

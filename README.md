@@ -39,8 +39,8 @@ modern tab-target combat with abilities on top.
 | **Progression** | 12 skills to level 50, per-item mastery, a five-act rise from castaway to legend |
 | **Combat** | Tap-target with abilities over a 600ms tick sim. Melee / Ranged / Arcane |
 | **Loot** | Drops are bases and components; crafting refines and enchants them |
-| **Death** | Tiered by region — from no penalty in town to full item drop in the deep wilds |
-| **Content** | 5 main quests, ~20 side quests, 3 clue-trail tiers, 2 dungeons, 3 bosses |
+| **Death** | Tiered by region — from no penalty in town to unequipped-inventory drops in dangerous zones |
+| **Content** | 5 main quests, ~20 side quests, 3 clue-trail tiers, 2 dungeons, 2 bosses |
 | **Housing** | A personal instanced home with functional rooms — workshop, forge, kitchen, garden |
 | **Controls** | Virtual joystick + tap-to-move for long travel, contextual interact, minimal HUD that fades out of combat |
 | **Release** | Free and unmonetized on itch.io. No ads, no IAP, no live service, no remote telemetry |
@@ -62,9 +62,9 @@ systems carry over**:
   needs, which is why P4 above is affordable.
 - **Art:** 8 rigged/static GLBs, ~80 item icons, 8 music tracks, SFX, and a
   vertex-color terrain shader.
-- **Pipeline:** a verified character pipeline (concept → mesh → rig → animation →
-  Unity import) with rotation-only retargeting, so one animation set serves every
-  humanoid. See `ASSETS_PIPELINE.md`.
+- **Pipeline:** shared free-asset procedures for licence tracking, atlas adaptation,
+  rig/animation verification and scene review. See `docs/ASSET_ADMISSION.md`;
+  the old production pipeline is historical.
 
 Cut deliberately: offline/idle progression, villager labour automation, the
 settlement management sim, the isometric camera, and procedural terrain.
@@ -98,7 +98,7 @@ Milestones gate on demonstrable quality, not feature counts.
 | **M2** | Combat feel — tap-target, abilities, feedback | Killing one wolf is satisfying 20 times |
 | **M3** | Vertical slice — Act I end to end | A stranger plays 45 minutes without guidance |
 | **M4–M6** | Remaining regions, housing, dungeons, endgame | Each region passes the craft checklist |
-| **M7** | Ship v1 — iOS, Android, PC | Shippable |
+| **M7** | Ship v1 — Android APK + declared desktop targets on itch.io | Verified release builds; public iOS optional |
 | **M8+** | MMO conversion | — |
 
 M0 is the most important milestone in the plan. The previous project's failure was
@@ -113,3 +113,16 @@ npm install
 npm run dev      # local dev server
 npm run build    # type-check + production build to dist/
 ```
+
+## Development workflow
+
+Read `AGENTS.md` or `CLAUDE.md`, then `docs/WORKFLOW.md` and
+`docs/IMPLEMENTATION_STATUS.md`. The GDD is design intent; the status board records
+implementation evidence. Repository preparation is complete; the next production task is M0-01 (palette and atlas).
+
+```bash
+dotnet test ci/CoreTests/CoreTests.csproj
+```
+
+Unity content JSON is hand-authored source. The legacy TypeScript exporter is
+retired. Use `HANDOFF.md` for the next task and known validation limits.

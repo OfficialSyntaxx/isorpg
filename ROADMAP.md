@@ -1,3 +1,5 @@
+> Historical reference: the current design and delivery rules are in `docs/GDD_ALDERFELL.md` and `docs/WORKFLOW.md`. Older camera, paid asset, exporter, branch and deployment instructions below are superseded. Use the implementation status board for current work.
+
 # Isoperia — Roadmap
 
 ## Visual reset — Phase 0 (in progress)

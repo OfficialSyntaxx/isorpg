@@ -7,7 +7,12 @@ budget**.
 **Read [`docs/GDD_ALDERFELL.md`](docs/GDD_ALDERFELL.md) before design work.** It is
 the bible, it is current, and its **"Start here"** section at the top is written
 for exactly this situation — a session picking the project up cold. This file is
-the operating summary.
+the operating summary. Read `docs/WORKFLOW.md`, `docs/IMPLEMENTATION_STATUS.md`
+and `HANDOFF.md` for delivery rules, actual implementation status and the next task.
+`AGENTS.md` sends Codex to the same sources.
+
+**Design intent versus fact:** command classes, locale coverage, save migrations
+and authored streaming are tracked work, not guaranteed by this summary.
 
 **Current milestone: M0 — the Shorelands beauty proof (GDD §36).** It has an
 ordered task list and acceptance criteria. M0 contains no combat, no inventory, no
@@ -50,8 +55,9 @@ exists to ask, which is whether the world looks beautiful on a phone.
 - **The Unity layer decides nothing.** Damage, loot, XP, gathering, growth and
   cooldowns resolve in Core against the seeded `Mulberry32` RNG. Presentation
   reads Core state and sends Core commands.
-- **Player intent is a command object**, never a direct state write and never
-  `transform.position = …`. Commands must serialize over a wire unchanged.
+- **New gameplay intent enters Core through commands.** Unity may render accepted
+  state using transforms; it must not write presentation positions back as authority.
+  The existing controller still does this and is tracked M1 migration work.
 - **Content is JSON**, loaded via `ContentDatabase`'s reader delegate. Not
   ScriptableObjects — those are a UnityEngine dependency the server can't share.
 - **No fallback content paths.** `ContentException` on missing or malformed content
@@ -61,21 +67,21 @@ exists to ask, which is whether the world looks beautiful on a phone.
 - **No monetization in v1.** No ads, no IAP, no store, no entitlement checks. The
   game ships free on itch.io (GDD §22). Cosmetics are revisited at the MMO
   milestone, where modular characters make them viable — not before.
-- **Telemetry is local-only.** Balance and performance data is written to a file on
-  the device and never transmitted. That is what keeps the game free of privacy
-  policies, consent flows and a backend.
+- **Telemetry is local-only.** Balance and performance data stays on the device.
+  No personal identifiers; tester exports require their knowledge. This is not a
+  blanket exemption from a chosen platform's release requirements.
 - **No user-facing string is a literal in code.** Every one is a key into a locale
   JSON (GDD §25.1). English is the only locale at v1; the discipline is what makes
   adding a second one a translation job rather than a refactor.
 - **Player intent uses the command catalogue** in GDD §31.1. Add a command rather
   than reaching into state. Core validates every command — the Unity layer never
   pre-checks legality to decide whether to send.
-- **All timing is in ticks (600ms), never seconds and never `Time.deltaTime`.** All
-  randomness goes through the injected `IRandom`, never `UnityEngine.Random`, so a
-  seeded run stays reproducible.
-- **Saves are versioned.** Changing saved state means bumping `schemaVersion` and
-  writing a migration with a test (GDD §29). Breaking saves freely is allowed until
-  M3 and not after.
+- **Authoritative durations use integer ticks (600ms).** Camera, animation and
+  visual effects use frame time without altering Core timing. Gameplay randomness
+  uses injected `IRandom`; cosmetic variation must not consume gameplay RNG.
+- **Saves follow GDD §29.** New schema infrastructure is planned, not complete.
+  Bump the schema on breaking changes; migrations/tests become mandatory from M3.
+  Only disposable pre-M3 saves may omit a migration.
 
 ## Performance budget — art that misses this is rebuilt, not shipped
 
@@ -90,8 +96,8 @@ Target: mid-range Android (~Snapdragon 7-series, 3 years old) at **30 FPS locked
 | Textures | ~500 MB, ASTC, atlased |
 | Build size | < 2 GB, Addressables-streamed |
 
-The iPhone used for testing is **far** more powerful than this. The budget is the
-spec; the iPhone is convenience.
+Record the exact device for every measurement. An iPhone pass is provisional
+for the target-class Android budget; emulator checks cannot establish performance.
 
 ## Architecture
 
@@ -136,8 +142,8 @@ Each owns something the others can't produce. Full detail in GDD §18.
 3. **Modular kit** — the built world, GPU-instanced (~15 pieces)
 4. **Scatter** — grass, trees, rocks, billboard LOD, fog-culled
 
-All four map to **one shared gradient atlas** — that's what makes CC0 assets from
-different sources look like one game, and the whole world resolve to 3 materials.
+All four use **one shared gradient atlas** to maintain a coherent palette.
+Distinct shader families still need measured batching and draw-call validation.
 
 ## Toolchain (all free)
 
@@ -151,7 +157,7 @@ Unity Asset Store free tier.
 
 ```bash
 # Core simulation tests — no Unity licence needed
-dotnet test unity/Assets/Isoperia/Core/Tests/
+dotnet test ci/CoreTests/CoreTests.csproj
 
 # Unity Editor tests and builds run on the Mac mini, or in unity-build.yml
 ```
@@ -161,5 +167,6 @@ dotnet test unity/Assets/Isoperia/Core/Tests/
 - Match the surrounding code's comment density. This codebase explains **why**,
   often citing the bug that motivated a rule — keep that habit, it's load-bearing.
 - Content and design changes go in the GDD first, then the code.
-- Never commit `.blend` working files or raw source art; only game-ready assets.
-  Git LFS free tier is ~1 GB.
+- Preserve editable source art in a durable backed-up location; commit optimized
+  runtime assets and maintain the source/licence ledger. Check account quotas before
+  large imports. Do not rewrite LFS history as incidental cleanup.

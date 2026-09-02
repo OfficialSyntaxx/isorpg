@@ -5,8 +5,10 @@ description: Add or edit Alderfell game content — items, monsters, drop tables
 
 # Add game content
 
-Content lives as **JSON**, not ScriptableObjects, and the JSON is the source of
-truth. This can be done from a remote session — no Unity needed.
+Content lives as **JSON**, not ScriptableObjects. Read `docs/WORKFLOW.md` and the
+applicable GDD section first. JSON records approved design; GDD defines intent.
+Editing and validating data can be done remotely; gameplay/visual acceptance still
+needs Unity when relevant.
 
 ## Where it lives
 
@@ -41,26 +43,37 @@ truth. This can be done from a remote session — no Unity needed.
 
 ## Steps
 
-1. Edit the relevant JSON file. Match the surrounding record shape exactly —
-   inputs and drops appear both as bare id strings and as `{id, qty}` /
-   `{id, weight}` objects depending on the table, and both are valid.
-2. If you added a new **file** or **table**, update `RequiredFiles` /
-   `RequiredTables` in `ContentDatabase.cs` in the same commit. The loader
-   deliberately fails on an unknown shape rather than quietly skipping it.
+1. Edit the relevant JSON file using GDD §33 and the actual consumer. `RECIPES`
+   and `QUESTS` are arrays; `ITEMS` and `MONSTERS` are objects keyed by ID.
+   Recipe inputs/output use `{itemId, qty}`. Monster main drops use
+   `{itemId, min, max, weight}`; tertiary drops use `chance` instead of `weight`;
+   pet drops use `{itemId, chance}`. Chances are fractions, not percentages.
+   Quest rewards use either `{itemId, qty}` or `{itemId, min, max}`. Do not
+   substitute a bare string or `id` for an `itemId` reference.
+2. For a new required **file/table**, update `RequiredFiles` / `RequiredTables`
+   in `ContentDatabase.cs`, `ContentValidator` shape/reference checks, consumers,
+   tests and GDD §33 together. The loader enforces presence and nonempty required
+   tables; it does not automatically discover new tables or validate every field.
 3. If you added an item, add its icon id to `ITEM_ICONS` and, if it needs art, to
    `ITEM_ICON_IMAGE_IDS`.
 4. **Validate:**
    ```bash
    dotnet test ci/CoreTests/CoreTests.csproj --filter ContentValidatorTests
    ```
-   `ContentValidator` checks referential integrity across items, recipes, drop
-   tables and shop stock, and reports every problem at once rather than the first.
-5. Run the full suite before committing — content changes can move balance tests.
+   This runs synthetic regressions **and `ShippingContentPassesValidation` against
+   actual repository JSON**. Current coverage includes table kinds, selected item
+   references, recipe quantities, drop probabilities/ranges and shop prices; see
+   `docs/WORKFLOW.md` for scope and limits. Fix invalid fixtures instead of weakening
+   the loader. Reachability, balance, icons and localization are separate checks.
+5. Run `dotnet test ci/CoreTests/CoreTests.csproj`, review the JSON diff, and
+   record the checked commit/results in the status board. Reachability and
+   collection-log acceptance apply when those gameplay features are implemented;
+   until then record the relevant validation as pending, not passed.
 
 ## Do not
 
 - Add content by writing C#. Content is data.
 - Introduce ScriptableObjects for content. They are a UnityEngine dependency, and
   the future server has to load the same content the client does (GDD §16.3).
-- Re-add `scripts/export-content.cjs` or author content in `src/data/*.ts`. That
-  pipeline belonged to the retired three.js prototype; the JSON is now the source.
+- Restore the retired exporter write path or author new Unity content in `src/data/*.ts`.
+  `scripts/export-content.cjs` is now only a fail-fast notice; the JSON is the source.
