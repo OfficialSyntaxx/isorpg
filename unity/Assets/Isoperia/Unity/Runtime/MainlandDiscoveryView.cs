@@ -17,6 +17,7 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
+            if (M0InspectionStartup.IsInspectionScene()) return;
             if (Object.FindAnyObjectByType<MainlandDiscoveryView>() == null)
                 new GameObject(nameof(MainlandDiscoveryView)).AddComponent<MainlandDiscoveryView>();
         }

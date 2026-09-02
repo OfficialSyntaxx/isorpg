@@ -18,6 +18,7 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
+            if (M0InspectionStartup.IsInspectionScene()) return;
             if (Object.FindAnyObjectByType<WorldAudioFeedback>() != null) return;
             new GameObject(nameof(WorldAudioFeedback)).AddComponent<WorldAudioFeedback>();
         }

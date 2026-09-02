@@ -23,6 +23,7 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateDecorationView()
         {
+            if (M0InspectionStartup.IsInspectionScene()) return;
             if (Object.FindAnyObjectByType<WorldDecorationView>() != null) return;
             new GameObject(nameof(WorldDecorationView)).AddComponent<WorldDecorationView>();
         }

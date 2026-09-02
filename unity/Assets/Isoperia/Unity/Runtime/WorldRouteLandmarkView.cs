@@ -12,6 +12,7 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
+            if (M0InspectionStartup.IsInspectionScene()) return;
             if (Object.FindAnyObjectByType<WorldRouteLandmarkView>() == null)
                 new GameObject(nameof(WorldRouteLandmarkView)).AddComponent<WorldRouteLandmarkView>();
         }

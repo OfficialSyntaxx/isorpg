@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Isoperia.Unity.M0
 {
-    /// <summary>Scene-local proof gate. It removes legacy auto-starts before they can own or save M0 state.</summary>
+    /// <summary>Scene-local M0 controls. Legacy startup is prevented at its source, never culled after startup.</summary>
     [DefaultExecutionOrder(-10000)]
     public sealed class M0InspectionBootstrap : MonoBehaviour
     {
@@ -11,7 +11,6 @@ namespace Isoperia.Unity.M0
 
         private void Awake()
         {
-            CullLegacyRuntime();
             if (inspectionPlayer != null && inspectionPlayer.GetComponent<M0InspectionMotor>() == null)
                 inspectionPlayer.gameObject.AddComponent<M0InspectionMotor>();
             if (inspectionCamera != null && inspectionCamera.GetComponent<M0InspectionCamera>() == null)
@@ -21,26 +20,6 @@ namespace Isoperia.Unity.M0
             }
         }
 
-        private void Update() => CullLegacyRuntime();
-
-        private static void CullLegacyRuntime()
-        {
-            // Legacy RuntimeInitialize callbacks can run in an unspecified order.
-            // Their components all live in Isoperia.Unity; this proof lives under
-            // Isoperia.Unity.M0 and therefore stays isolated without changing legacy startup.
-            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>())
-            {
-                string ns = behaviour.GetType().Namespace;
-                if (ns != "Isoperia.Unity") continue;
-                // A legacy callback can attach itself to the inspection camera.
-                // Remove that component without taking the M0 rig down with it;
-                // purpose-built legacy-only objects still disappear completely.
-                if (behaviour.gameObject.GetComponents<MonoBehaviour>().Length == 1)
-                    Destroy(behaviour.gameObject);
-                else
-                    Destroy(behaviour);
-            }
-        }
     }
 
     public sealed class M0InspectionMotor : MonoBehaviour

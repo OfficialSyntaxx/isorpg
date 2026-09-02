@@ -23,6 +23,7 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateController()
         {
+            if (M0InspectionStartup.IsInspectionScene()) return;
             if (Object.FindAnyObjectByType<WorldLightingController>() != null) return;
 
             var controller = new GameObject(nameof(WorldLightingController));

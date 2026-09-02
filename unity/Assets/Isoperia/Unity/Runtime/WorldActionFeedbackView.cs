@@ -18,6 +18,7 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
+            if (M0InspectionStartup.IsInspectionScene()) return;
             if (Object.FindAnyObjectByType<WorldActionFeedbackView>() != null) return;
             new GameObject(nameof(WorldActionFeedbackView)).AddComponent<WorldActionFeedbackView>();
         }

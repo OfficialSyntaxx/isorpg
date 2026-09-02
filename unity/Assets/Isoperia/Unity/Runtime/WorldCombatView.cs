@@ -21,6 +21,7 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateView()
         {
+            if (M0InspectionStartup.IsInspectionScene()) return;
             if (Object.FindAnyObjectByType<WorldCombatView>() != null) return;
             new GameObject(nameof(WorldCombatView)).AddComponent<WorldCombatView>();
         }
