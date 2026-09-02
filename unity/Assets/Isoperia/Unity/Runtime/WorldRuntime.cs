@@ -1,6 +1,5 @@
 using Isoperia.Core.World;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using CoreGrid = Isoperia.Core.World.Grid;
 
 namespace Isoperia.Unity
@@ -20,13 +19,10 @@ namespace Isoperia.Unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void CreateRuntime()
         {
-            SceneManager.sceneLoaded += CreateForLoadedScene;
-        }
-
-        private static void CreateForLoadedScene(Scene scene, LoadSceneMode mode)
-        {
-            SceneManager.sceneLoaded -= CreateForLoadedScene;
-            if (M0InspectionStartup.IsInspectionScene(scene)) return;
+            // Legacy scene Awake consumers (including SaveDriver) require Grid
+            // during scene loading. Only the editor M0 inspection start is
+            // excluded; normal and built-player startup remains unchanged.
+            if (M0InspectionStartup.IsInspectionPlayModeStart()) return;
             if (Instance != null) return;
 
             var runtime = new GameObject(nameof(WorldRuntime));
