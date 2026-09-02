@@ -156,3 +156,20 @@ user's current request and milestone. Update ownership when a task is started.
   finish startup validation/build-safe isolation, controls, materials and captures.
   M0-02/M0-03 remain In review. No new Unity runtime change or validation is claimed
   by this originating-chat review, and M0-04 remains outside the current scope.
+
+## Review of 6baaf7f — build-safe path committed
+
+- `6baaf7f5b73e9563e337ebdc9e501fe97e1845e2` adds the scoped Editor menu build
+  helper and `ISOPERIA_M0_INSPECTION` define. It builds only `ShorelandsM0` and
+  leaves normal Bootstrap initialization unchanged. The define is explicit and
+  absent from ordinary player builds.
+- The remote session persisted player/camera references and CharacterController,
+  reopened the six-root scene, and recorded clean M0 Play Mode with no world/save
+  services and zero project errors. Those observations remain Editor-only until
+  the inspection player is built and run.
+- M0-02/M0-03 remain In review. Touch controls, terrain/control-map visual proof,
+  visible foam, GPU wind, route traversal, render statistics, captures, and device
+  evidence remain open. M0-04 is not authorized by this checkpoint.
+- Next bounded task is `M0_VALIDATION_SESSION.md`, beginning with a stable bridge
+  probe and build/run of the scoped inspection player. Do not change gameplay
+  systems or recreate the scene while these checks are pending.

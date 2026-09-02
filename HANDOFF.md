@@ -31,6 +31,14 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+**Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
+path is committed, and normal Bootstrap still creates `WorldRuntime` before
+scene `Awake`. The remote Editor persisted and verified the six-root scene and
+clean M0 Play Mode, but reimport restarted MCP before remaining evidence was
+collected. Follow `docs/M0_VALIDATION_SESSION.md`: build/run the scoped
+inspection player, then finish touch controls, visual proofs, traversal,
+statistics and captures. Stop before M0-04.
+
 **Latest resume point: `b4d416d`** — CI `33676973783` passed. Follow the
 **Current resume point** in [`docs/M0_VALIDATION_SESSION.md`](docs/M0_VALIDATION_SESSION.md):
 diagnose the existing MCP bridge during reimport, establish stable read-only
