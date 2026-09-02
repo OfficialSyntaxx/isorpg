@@ -31,6 +31,14 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+**Latest resume point: `b4d416d`** — CI `33676973783` passed. Follow the
+**Current resume point** in [`docs/M0_VALIDATION_SESSION.md`](docs/M0_VALIDATION_SESSION.md):
+diagnose the existing MCP bridge during reimport, establish stable read-only
+probes, then validate the startup fix. The M0 exclusion currently works only
+under UNITY_EDITOR; a build-safe inspection path is required before phone tests.
+Rig fields are already wired. No scene recreation or further blind source edits
+while disconnected. Controls/materials/traversal/captures remain unfinished.
+
 **Current checkpoint after `f5d925a`:** execute
 [`docs/M0_VALIDATION_SESSION.md`](docs/M0_VALIDATION_SESSION.md). Six scene roots,
 Terrain Physics and source-level guards are committed; CI run `33675890206` passed.

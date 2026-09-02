@@ -5,6 +5,54 @@ the GDD, WORKFLOW and HANDOFF. Use the project-identity/reconnect safeguards in
 `M0_REMOTE_SESSION.md`. This sequence supersedes the earlier empty-scene repair
 sequence; preserve the reconstructed scene and existing GUIDs.
 
+## Current resume point — b4d416d
+
+Implementation `9fc7d6b` restored BeforeSceneLoad world creation. Final commit
+`b4d416d6f97cb16ebd94203d5d761ab676083e2f` is published;
+[CI run 33676973783](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33676973783)
+passed. The rig references persisted in the correct Editor. Reimport then caused
+repeated MCP timeouts, so fresh compilation/Play Mode and legacy regression results
+are not established. Do not repeat the already-completed scene recreation or wiring.
+
+**First task: diagnose and recover the existing bridge, without gameplay edits.**
+
+1. Use local process/project and Editor log evidence to distinguish active import,
+   compile errors, an approval/dialog stall, a stopped Editor, and a stale MCP port
+   or instance ID. Record the latest relevant log tail and exact failing tool/error;
+   do not include credentials or unrelated personal log content.
+2. If importing, allow it to complete and check progress in the log instead of
+   repeatedly issuing authoring calls. Preserve unsaved work. Do not kill the
+   Editor, clear Library, reinstall the bridge, or change packages as a workaround.
+3. Once the Editor is responsive, restart/reconnect its existing CoplayDev bridge
+   if needed, rediscover instances, and select the exact M0 checkout. Respect any
+   local client-approval prompt. Never fall back to the unrelated Editor.
+4. Require successful read-only project/scene and Console probes, followed by
+   another successful probe after an import/refresh cycle completes. Only then
+   resume source/scene work. If a controlled bridge reconnect still times out,
+   stop and return a connection-only diagnosis: process/import status, project,
+   bridge endpoint/instance (no secrets), last successful probe, failed tool,
+   relevant log error and the single required human action if tools cannot do it.
+   Do not produce another implementation checkpoint just to retry a disconnected
+   Editor. If a modal or approval needs the user, name that specific action.
+
+**Then validate the startup repair and close its player-build limitation.**
+`M0InspectionStartup.IsInspectionPlayModeStart()` currently checks an Editor scene
+under `UNITY_EDITOR` and returns false in a player. Thus M0 player startup would
+still create WorldRuntime. The comment calling M0 editor-only does not change the
+GDD's phone-validation requirement. Treat this as an Editor workaround until an
+explicit, build-safe inspection startup mechanism preserves both normal Bootstrap
+Awake ordering and M0 isolation. Do not infer safety from Editor-only tests or
+ship an M0 phone build with the current exclusion. Keep normal build configuration
+unchanged; any inspection build must be explicitly scoped and reproducible.
+
+Use disposable save storage for legacy checks. Verify fresh/repeated M0 entry,
+normal Bootstrap startup, domain-reload behavior and the actual play-start scene
+(including Editor play-mode start-scene overrides if configured). Then proceed
+through controls, materials, traversal and captures below. These remain active
+implementation tasks; they are not completed features waiting only for screenshots.
+
+## Earlier review context (historical)
+
 ## Reviewed baseline
 
 `f5d925abddd71f34b9ea8c54d075872a8d009195` contains implementation `3913cf1`.

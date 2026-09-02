@@ -142,3 +142,17 @@ user's current request and milestone. Update ownership when a task is started.
   Awake. Legacy compatibility remains unverified and likely regressed; prioritize
   controlled reproduction and correction before accepting the isolation change.
 - Current bounded next task: `M0_VALIDATION_SESSION.md`; no M0-04 authorization.
+
+## Review of b4d416d — connection recovery required
+
+- Published final `b4d416d6f97cb16ebd94203d5d761ab676083e2f`, implementation
+  `9fc7d6b`; [CI run 33676973783](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33676973783)
+  passed. Source restores BeforeSceneLoad initialization; fresh Unity regression
+  evidence is still absent because the exact Editor bridge timed out on reimport.
+- Rig references persisted. Do not recreate the scene or repeat that wiring.
+- M0 exclusion currently returns false outside UNITY_EDITOR. Player-build isolation
+  is unimplemented; phone acceptance cannot use the Editor result as a substitute.
+- Recover/diagnose the existing bridge first using `M0_VALIDATION_SESSION.md`, then
+  finish startup validation/build-safe isolation, controls, materials and captures.
+  M0-02/M0-03 remain In review. No new Unity runtime change or validation is claimed
+  by this originating-chat review, and M0-04 remains outside the current scope.
