@@ -43,6 +43,7 @@ modern tab-target combat with abilities on top.
 | **Content** | 5 main quests, ~20 side quests, 3 clue-trail tiers, 2 dungeons, 3 bosses |
 | **Housing** | A personal instanced home with functional rooms — workshop, forge, kitchen, garden |
 | **Controls** | Virtual joystick + tap-to-move for long travel, contextual interact, minimal HUD that fades out of combat |
+| **Release** | Free and unmonetized on itch.io. No ads, no IAP, no live service, no remote telemetry |
 
 ## Where this came from
 

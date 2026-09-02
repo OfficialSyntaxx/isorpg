@@ -41,6 +41,15 @@ the bible and it is current. This file is the operating summary.
   is deliberate; a fallback catalog once silently clamped a 2400-coin payout to 500.
 - **Nothing that costs money.** No paid asset stores, no paid generation services,
   no paid plugins. If a task seems to need one, say so rather than assuming spend.
+- **No monetization in v1.** No ads, no IAP, no store, no entitlement checks. The
+  game ships free on itch.io (GDD §22). Cosmetics are revisited at the MMO
+  milestone, where modular characters make them viable — not before.
+- **Telemetry is local-only.** Balance and performance data is written to a file on
+  the device and never transmitted. That is what keeps the game free of privacy
+  policies, consent flows and a backend.
+- **No user-facing string is a literal in code.** Every one is a key into a locale
+  JSON (GDD §25.1). English is the only locale at v1; the discipline is what makes
+  adding a second one a translation job rather than a refactor.
 
 ## Performance budget — art that misses this is rebuilt, not shipped
 

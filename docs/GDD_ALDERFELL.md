@@ -1,12 +1,19 @@
 # Alderfell — Game Design Document
 
-**Version** 3.0 · **Date** 2026-09-02 · **Status** Design lock, pre-production
+**Version** 4.0 · **Date** 2026-09-02 · **Status** Design lock, pre-production
 **Engine** Unity 6.0.5 (6000.5.8f1) URP · **Platform** Mobile-first (iOS/Android), PC parity from one build
 **Genre** Third-person high-fantasy action-RPG with skill progression
 **Scope posture** Solo dev + AI tooling, **zero cash budget**. Systems are costed
 in time and licence, not money. Cut lines are explicit.
 
-> **v3.0 changes:** this is the full bible. Added §16 tech stack and
+> **v4.0 changes:** the bible is complete. Added §22 business model,
+> distribution and telemetry (free and unmonetized, itch.io, local-only
+> analytics), §23 combat specification (camera, abilities, enemy AI, feedback —
+> the M1/M2 blockers), §24 the first ten minutes, §25 reach and polish
+> (localization, accessibility, audio, the 12-screen UI inventory), and §26
+> audience and community.
+>
+> **v3.0 changes:** the technical half. Added §16 tech stack and
 > architecture, §17 toolchain, §18 world construction, §19 art production,
 > §20 build/CI/distribution, §21 working with AI agents. The paid Meshy/
 > Higgsfield asset pipeline is **removed** throughout and replaced with a
@@ -570,7 +577,9 @@ tracks are close to sufficient for v1. No voice acting.
 Stated so it can't creep back in: offline/idle progression · villager labour
 automation · settlement management sim · isometric or fixed camera · procedurally
 generated terrain · 99-level grind curves · action combat with client-side dodging
-· voxel/destructible terrain · classes · voice acting · a launch MMO.
+· voxel/destructible terrain · classes · voice acting · a launch MMO · **ads,
+in-app purchases, or any monetization in v1** (§22) · **remote telemetry** (§22.3)
+· auto-rotating combat camera (§23.1) · tutorial text boxes (§24).
 
 ---
 
@@ -879,18 +888,317 @@ the same `CLAUDE.md` and skills, so they stay in agreement about what the game i
 
 ---
 
+## 22. Business model, distribution and telemetry
+
+### 22.1 The posture: free, unmonetized, portfolio-first
+
+**Alderfell v1 ships free with no monetization in the design.** No price, no ads,
+no in-app purchases, no live service.
+
+This is a decision, not a deferral, and it buys real things:
+
+- **No monetization pressure on design.** No armour piece is secretly a store SKU;
+  no progression curve is secretly a friction dial. Given P1 and P2, this matters
+  more here than in most projects.
+- **No compliance surface.** No payment processing, no entitlement server, no
+  receipt validation, no refunds, no purchase-related privacy obligations.
+- **No infrastructure.** Which is what "zero cash budget" actually requires.
+
+**Cosmetics are the eventual model, at the MMO milestone — not v1.** Cosmetic
+revenue needs three things this project won't have until then: an audience of
+meaningful size (a low single-digit share of players ever buy anything), *visible*
+customization to sell (the modular character system, §8.1, deferred to the MMO
+milestone), and purchase infrastructure. Building a store before any of those
+exist is work spent on an empty room. When modular characters arrive because
+multiplayer needs them, cosmetics become nearly free to add on top — that is the
+right moment, and the architecture doesn't need to anticipate it.
+
+### 22.2 What shipping actually costs
+
+| Route | Cost | Notes |
+|---|---|---|
+| **itch.io** | **$0** | No fee to publish. Hosts macOS/Windows/Linux builds and Android APKs, supports free and pay-what-you-want. **The v1 target.** |
+| Direct APK | $0 | Android permits installing outside a store. Good for testers. |
+| Google Play | $25 one-time | Optional. Worth it only if the game earns an audience. |
+| Apple App Store | $99/year | Development on your own iPhone stays free via Xcode provisioning (§20.4). Only pay this if iOS distribution becomes the point. |
+
+**So a portfolio ship costs nothing.** That is the plan of record: itch.io first,
+Google Play if it deserves it, Apple only if there's a reason.
+
+### 22.3 Telemetry — local only
+
+The game writes balance and performance data to a **local file on the device it
+runs on**. You read it off your own test devices. Nothing is transmitted.
+
+Recorded: time per region, deaths per zone, skill XP rates, ability usage, combat
+duration, frame time percentiles, and where players stop playing.
+
+Because nothing leaves the device, there is **no privacy policy, no consent flow,
+no GDPR or COPPA surface, and no backend**. This is the correct trade at this
+scale: the balance signal from watching five people play in person, plus their
+device logs, is better than aggregate data from an audience you don't have yet.
+
+If remote telemetry is ever wanted, it is additive — the same event stream gains a
+transmitter, behind consent.
+
+---
+
+## 23. Combat specification (M1–M2 blockers)
+
+M1 and M2 are the next milestones after M0, and neither can start from §5's
+summary. This section is the buildable detail.
+
+### 23.1 Camera
+
+| Property | Value |
+|---|---|
+| Type | Third-person orbit, spring-arm follow |
+| Default distance | 6m, pitch ~18° down |
+| Range | 3m (close) – 9m (wide), pinch or scroll |
+| Collision | Arm shortens on geometry; never clips through terrain |
+| Follow | Position lerp ~10/s; rotation only on player input, never auto-turn |
+| Combat framing | Distance eases to 7m so the target and telegraph both fit |
+| FOV | 60° vertical; portrait-height framing checked at 6" (§3.2 rule 9) |
+
+**Never auto-rotate the camera during play.** Auto-turn on a touchscreen fights
+the thumb that is already dragging it, and it steals the player's view of the
+world — which is the product.
+
+### 23.2 Resources and the tick
+
+- **Stamina** (melee/ranged) and **mana** (arcane). Out of combat both regenerate
+  fully in ~6s; in combat, slowly.
+- **Global cooldown: 1 tick (600ms).** Every ability respects it, so the hotbar
+  can never out-pace the simulation.
+- Auto-attack continues on its weapon speed underneath abilities.
+
+### 23.3 Abilities — six per style at v1
+
+Unlocked by skill level and guild rank. All damage resolves in
+`CombatMath` — abilities supply multipliers and effects, never their own rolls.
+
+**Melee** — stamina, close range, built around committing.
+
+| Ability | Cost | CD | Effect |
+|---|---|---|---|
+| Cleave | 15 | 3t | 1.4× damage to target + adjacent |
+| Sunder | 20 | 8t | 1.2× damage, −20% target defence for 10t |
+| Bulwark | 15 | 15t | +40% defence for 8t |
+| Rally | 25 | 20t | Heal 20% max HP |
+| Overhead | 30 | 12t | 2.2× damage, 2t wind-up the enemy can interrupt |
+| Execute | 25 | 10t | 3× damage to targets below 25% HP |
+
+**Ranged** — stamina, 5-tile reach, built around kiting.
+
+| Ability | Cost | CD | Effect |
+|---|---|---|---|
+| Aimed Shot | 15 | 3t | 1.5× damage |
+| Crippling Shot | 20 | 10t | 1.1× damage, −40% target move speed for 6t |
+| Volley | 25 | 12t | 0.7× damage to all enemies in a cone |
+| Disengage | 15 | 15t | Leap backwards 4m |
+| Hunter's Mark | 10 | 20t | +25% damage taken by target for 15t |
+| Piercing Bolt | 30 | 14t | 1.8× damage, ignores 50% defence |
+
+**Arcane** — mana, 5-tile reach, built around control and burst.
+
+| Ability | Cost | CD | Effect |
+|---|---|---|---|
+| Ember Bolt | 12 | 2t | 1.3× damage |
+| Frost Chain | 20 | 10t | 1.0× damage, roots target 3t |
+| Ward | 18 | 15t | Absorbs damage equal to 15% max HP for 10t |
+| Mend | 25 | 12t | Heal 25% max HP over 5t |
+| Arcane Surge | 30 | 18t | 2.4× damage |
+| Displace | 15 | 20t | Blink 5m in the facing direction |
+
+**Balance intent, not final numbers.** These are the starting point for M2's
+"killing one wolf is satisfying twenty times" gate; expect them to move.
+
+### 23.4 Enemy AI
+
+A small state machine per enemy, ticking in Core:
+
+```
+Idle ──sees player──> Alert ──in range──> Engage ──lost player──> Search ──> Idle
+                                             │
+                                        low HP + flees? ──> Flee
+```
+
+| Rule | Value |
+|---|---|
+| Aggro radius | Per-monster `aggroRange` (already in content) |
+| Vision | Cone ~120°, blocked by terrain — never through a cliff |
+| Leash | 25m from spawn, then reset and heal fully |
+| Search | 5s at last known position before returning |
+| Telegraph | Every attack above 1.5× damage has a **≥1t wind-up** with a distinct animation and ground marker |
+| Pack behaviour | Aggro spreads to allies within 8m |
+
+**The telegraph rule is not optional.** It is the whole difference between combat
+and tapping a health bar, and it must read at phone size.
+
+### 23.5 Combat feedback — where the M2 budget goes
+
+The math already works. What makes it *feel* good:
+
+- Hit-stop: 60–80ms freeze on a landed hit, 120ms on a crit
+- Floating damage numbers, crits larger and distinct in colour **and** shape
+- Screen shake on crits only, subtle, respecting a reduce-motion setting
+- Distinct impact SFX per weapon class and per material struck
+- Enemy flinch animation on hit; a real death animation, never a despawn
+- Ability VFX as flipbooks/sprites rather than particle systems (mobile budget)
+- Low-HP vignette and a heartbeat cue
+
+---
+
+## 24. The first ten minutes
+
+The diegetic onboarding (§7.4) as an actual beat sheet. This is the most
+important ten minutes in the game and the M3 gate depends on it.
+
+| Beat | Time | Teaches | How |
+|---|---|---|---|
+| Wake on the shore | 0:00 | Look and move | No UI but the joystick. Waves, gulls, wreckage. The camera opens facing the sea, then the player turns and finds land. |
+| The wreck | 0:30 | Interact | One crate, glinting. Yields a knife and a scrap of food. The contextual button appears only when close. |
+| Driftwood | 1:30 | Gathering + skills | Choppable driftwood on the beach. First XP popup. Woodcutting is now on the skills screen, which is now worth opening. |
+| The crab | 3:00 | Combat basics | One weak enemy, telegraphed attack, beatable with the knife. Death here is harmless (Safe tier). |
+| Cook it | 4:30 | Crafting + survival | A driftwood fire. Raw crab → cooked. Healing is now understood. |
+| The climb | 6:00 | Traversal and vista | A switchback up the cliff. Elevation reveals the bay behind you. **First framed reveal.** |
+| The clifftop | 7:30 | The goal | Hearth's Landing's bell tower and smoke, across the valley. Nothing tells you to go there. **This is the hook.** |
+| The road | 9:00 | The world is bigger | A signpost, a second path into Thornwood you're too weak for, and a wolf howl from it. |
+| Arrival | 10:00 | Act I proper | The town gate, a guard who greets a stranger, and the game opens up. |
+
+**Rules:** no tutorial text boxes; at most one contextual hint per system, once.
+Nothing is gated behind a "press X to continue". A player who ignores every hint
+and simply walks must still reach the clifftop.
+
+---
+
+## 25. Reach and polish
+
+### 25.1 Localization architecture — English only at v1, but built for more
+
+Retrofitting localization is expensive; building for it is nearly free.
+
+- **No user-facing string is ever a literal in code.** Every string is a key into a
+  locale JSON, loaded through the same reader delegate as content (§16.3).
+- Locale files live beside content: `Resources/Locale/en.json`.
+- **Never concatenate sentences.** Use positional placeholders (`"You gained {0}
+  {1}."`) — word order differs between languages.
+- UI must survive ~40% text expansion. German and Finnish are the usual killers.
+  Layouts wrap and grow; never fixed-width text boxes.
+- Fonts: pick a face with broad Latin + Cyrillic coverage now; CJK needs a separate
+  atlas and is out of scope for v1.
+- A test asserts **no orphaned or missing keys** — the same discipline as
+  `ContentValidator`.
+
+Ship English. Adding a language later is then a translation job, not a refactor.
+
+### 25.2 Accessibility
+
+| Area | Requirement |
+|---|---|
+| Colour | Never colour alone — damage type, rarity, threat all carry a shape or icon too |
+| Text | Scalable UI text, minimum 14pt at phone size, high-contrast option |
+| Motion | Reduce-motion setting disabling screen shake, hit-stop and camera sway |
+| Flashing | No flashing above 3Hz anywhere |
+| Input | Full one-handed play via tap-to-move; left-handed layout mirroring; remappable buttons |
+| Difficulty | Damage-taken multiplier in settings, no achievement penalty |
+| Subtitles | All dialogue readable and dismissible at the player's pace, never timed |
+| Audio | Independent music/SFX/ambience sliders; no information conveyed by sound alone |
+
+### 25.3 Audio design
+
+Ambience-forward (§13). The mix, in priority order:
+
+1. **Ambience bed** — per-region loop: wind, surf, forest, cave drip. Always present.
+2. **Diegetic detail** — birds, insects, creaking timber, distant bells. Randomized
+   one-shots with position, so the world sounds inhabited rather than looped.
+3. **Player feedback** — footsteps by surface, tool impacts, combat hits. Loudest.
+4. **Music** — sparing. Enters on discovery, combat and boss encounters; silent
+   often, so its arrival means something.
+
+The 8 existing tracks map onto the regions (§3.1). New SFX come from Freesound
+(CC0), edited in Audacity. **Silence is a tool** — a region that is quiet except
+for wind reads as vast.
+
+### 25.4 UI screen inventory
+
+Full-screen modal panels, summoned (§7.2). Everything the game needs:
+
+| Screen | Contents |
+|---|---|
+| HUD (in-world) | Joystick, contextual interact, health/resource, ability bar — fading per §7.2 |
+| Inventory | Grid, item detail, use/drop/equip |
+| Character | Equipment slots, derived stats, appearance |
+| Skills | 12 skills, levels, XP bars, mastery detail |
+| Map | Hand-drawn world map, discovered regions, fast-travel nodes |
+| Quest log | Active and completed, current objective, no auto-tracking arrows |
+| Crafting | Recipe list by skill, ingredient availability, quality preview |
+| Housing | Placement mode, furniture catalogue, room upgrades |
+| Shop | Buy/sell, price, stock |
+| Codex | Optional depth: mechanics reference, bestiary, lore found in the world |
+| Settings | Audio, graphics preset, accessibility, controls, save management |
+| Title / save select | New game, continue, settings |
+
+**Twelve screens is the real UI cost of this game.** It is routinely
+underestimated and it is a substantial fraction of M3–M7. Build them plain and
+consistent before making any of them beautiful.
+
+---
+
+## 26. Audience and community
+
+Free and unmonetized (§22) doesn't mean unseen. A portfolio project that nobody
+watches is worth less than one that a few hundred people follow.
+
+### 26.1 Who this is for
+
+Players who loved RuneScape's sense of *place* and progression but want it in a
+real 3D world they can hold — and who are underserved, because mobile RPGs are
+mostly gacha and idle games. The pitch that lands with them is precisely the one
+that motivated this project: **a world worth looking at, with systems worth
+learning, and nothing trying to sell them anything.**
+
+Secondary and honest: the game-dev audience, who reward exactly this kind of
+solo-with-AI build being shown openly.
+
+### 26.2 How they find it
+
+- **A devlog is the marketing.** Short, regular posts showing the world coming
+  together — screenshots of framed reveals, before/after terrain, the four-layer
+  stack. This project's most compelling asset is *watching a beautiful world get
+  built*, which is inherently visual and inherently shareable.
+- Post where these people are: r/gamedev, r/Unity3D, r/MMORPG, Bluesky/Mastodon
+  gamedev communities, and TikTok/Shorts for the visual moments.
+- **Screenshot Saturday**, every week, from M0 onward. It's free, it's a deadline,
+  and it forces the P1 test to actually happen.
+- An itch.io page from M3, updated with each milestone build.
+
+### 26.3 The discipline
+
+- Show the world, not the systems. A terrain sculpt timelapse outperforms a
+  combat-math explainer every time.
+- Post the honest version — including what got cut. That's the content people
+  actually engage with, and it costs nothing to be truthful.
+- **Never promise dates.** Solo timelines slip; a missed public date converts
+  goodwill into disappointment.
+- Do not announce the MMO. Announce the game you're actually shipping. The
+  multiplayer path is architecture, not a promise.
+
+---
+
 ## Appendix A — Open decisions
 
-1. **Business model** — deliberately deferred (§ "build it first"). Options and
-   their design implications: premium (no in-game design impact); cosmetic-only F2P
-   (needs a cosmetics pipeline, best combined with modular characters at the MMO
-   milestone); subscription/RuneScape model (free starting regions, subscription
-   unlocks the rest — proven for this genre and funds servers). **Decide before
-   M6**, because the region-gating shape has to be designed in if subscription wins.
-2. **Arcane style scope** — full third style, or a lighter utility/support kit?
+1. ~~**Business model**~~ — **resolved in §22.** Free and unmonetized at v1,
+   published on itch.io at zero cost; cosmetics revisited at the MMO milestone
+   where modular characters make them viable. No region gating is needed, so this
+   no longer constrains world layout.
+2. **Arcane style scope** — §23.3 specs a full six-ability third style. Confirm
+   that's wanted before the art cost (staff, VFX set, caster enemy) is committed.
 3. **Region count** — five is the plan; M0's measured cost decides three vs five.
 4. **Time-of-day gameplay effects** — cosmetic only, or do night spawns differ?
 5. **Whether the repo/package should be renamed** from `isorpg` to `alderfell`.
+6. **Ability numbers in §23.3** are a starting point, not balance. M2's gate is
+   feel, not spreadsheet correctness — expect these to move.
 
 ## Appendix B — Immediate next steps
 
