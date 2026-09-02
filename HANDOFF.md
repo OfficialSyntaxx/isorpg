@@ -1,8 +1,8 @@
 # Alderfell — current handoff
 
-**Current work:** repository workflow preparation complete for GDD 6.1.
-**Branch:** `claude/3d-rpg-gdd-creation-bqxgz7`.
-**Production milestone:** M0 — the Shorelands beauty proof, not yet built.
+**Current work:** M0-01 palette foundation implemented; Unity visual review pending.
+**Branch:** `codex/m0-shorelands-foundation`.
+**Production milestone:** M0 — Shorelands palette started; beauty-proof scene not yet built.
 
 ## Read first
 
@@ -31,7 +31,9 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
-Start **M0-01: Shorelands palette and atlas**.
+Review **M0-01** in `docs/M0_SHORELANDS_ART.md`, then begin **M0-02: atlas shaders**.
+The five-family atlas, editable JSON, generator and UV guide are committed.
+Run `python3 tools/build_shorelands_palette.py --check`; do not paint over its generated PNG.
 Before scene authoring, connect Unity/Blender to this checkout and verify project
 identity and dirty state. Then create the isolated inspection scene and greybox
 specified by GDD §36. Do not let the old runtime bootstrap populate the proof.

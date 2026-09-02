@@ -38,6 +38,9 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Check generated Shorelands palette
+        run: python3 tools/build_shorelands_palette.py --check
+
       - name: Restore
         run: dotnet restore ci/CoreTests/CoreTests.csproj
 

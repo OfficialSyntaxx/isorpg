@@ -48,3 +48,7 @@ Assets/WebGLTemplates/**/*.png -filter -diff -merge text=auto
 # The prototype environment models are kept in the Unity project as ordinary
 # repository assets so the playable Bootstrap scene works in a fresh checkout.
 Assets/Isoperia/Art/Models/**/*.glb -filter -diff -merge text=auto
+
+# Tiny, deterministically generated M0 palette (121 KiB), checked in non-LFS CI.
+# Keep only this exact asset inline; authored textures retain the LFS policy.
+Assets/Isoperia/Art/Textures/shorelands_atlas.png -filter -diff -merge -text

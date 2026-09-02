@@ -1,8 +1,17 @@
-# Isoperia Asset Credits and License Inventory
+# Alderfell Asset Credits and License Inventory
 
-This file is the acceptance record for art that is actually shipped in the
-Unity mainland build. Do not add an asset to `Resources/` or a live scene until
-there is a row here with a clear owner/source and license status.
+This ledger records provenance and admission state. Historical live-use rows below
+refer to the inherited Isoperia implementation; they do not certify Alderfell M0.
+New assets must pass `ASSET_ADMISSION.md` and current Unity/mobile checks before
+live use. WebGL references in legacy rows are historical evidence.
+
+## Alderfell M0 intake
+
+| Asset | Intended use / state | Owner/source | License / date | Evidence |
+|---|---|---|---|---|
+| `shorelands_atlas.png` | M0 Shorelands world albedo; in review, not wired into live scenes | Tuned from [Kenney Fantasy Town Kit 2.0](https://kenney.nl/assets/fantasy-town-kit); palette data and generator in this repo | CC0 base; source checked 2026-09-02; notice in `art/palettes/KENNEY_LICENSE.txt` | Exact source hash and samples in `art/palettes/shorelands.json`; 256×160 RGB, five hue families; Unity/lit-scene admission pending; `M0_SHORELANDS_ART.md` |
+
+## Inherited asset records
 
 | Asset | Live use | Owner/source | License status | Technical review |
 | --- | --- | --- | --- | --- |
@@ -26,7 +35,7 @@ there is a row here with a clear owner/source and license status.
 1. Record the source URL or owned-art provenance, license, and any attribution
    requirement before importing.
 2. Keep the source license text with the asset when it supplies one.
-3. Verify URP materials, scale, pivot, interaction collider, and a WebGL build
+3. Verify applicable URP materials, scale, pivot, colliders, and target-device appearance/performance
    before replacing a fallback in a live district.
 4. Reject paid, trial-only, or license-unclear assets. Blender-created glue art
    is recorded as `Isoperia original` with its source `.blend` path.

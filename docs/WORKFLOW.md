@@ -2,7 +2,7 @@
 
 This file governs delivery for Claude, Codex and human collaborators. Game intent
 is in `GDD_ALDERFELL.md`; current work and evidence are in
-`IMPLEMENTATION_STATUS.md`. Current branch: `claude/3d-rpg-gdd-creation-bqxgz7`.
+`IMPLEMENTATION_STATUS.md`. Current branch: `codex/m0-shorelands-foundation`.
 
 ## Start a session
 

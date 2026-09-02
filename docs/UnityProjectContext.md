@@ -2,7 +2,7 @@
 
 Design authority: `GDD_ALDERFELL.md` v6.1. Workflow and evidence:
 `WORKFLOW.md`, `IMPLEMENTATION_STATUS.md`, and `../HANDOFF.md`.
-Working branch: `claude/3d-rpg-gdd-creation-bqxgz7`.
+Working branch: `codex/m0-shorelands-foundation`.
 
 ## Verified by repository inspection
 

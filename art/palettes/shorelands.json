@@ -1,0 +1,108 @@
+{
+  "layout_version": 1,
+  "width": 256,
+  "band_height": 32,
+  "source": {
+    "name": "Kenney Fantasy Town Kit 2.0 colormap",
+    "author": "Kenney",
+    "url": "https://kenney.nl/assets/fantasy-town-kit",
+    "license": "CC0-1.0",
+    "download": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+    "archive_member": "Models/FBX format/Textures/colormap.png",
+    "sha256": "4aac939dc33195e35caf8c382ee3cb170054da763577f22d3c22692ec6afccdf",
+    "sample_origin": "top-left; coordinates in 512x512 source",
+    "verified_date": "2026-09-02"
+  },
+  "bands": [
+    {
+      "id": "sand",
+      "role": "Sand and sunlit limestone",
+      "source_xy": [
+        416,
+        288
+      ],
+      "source_rgb": [
+        250,
+        221,
+        186
+      ],
+      "tuned_hsv": [
+        38,
+        0.3,
+        0.82
+      ]
+    },
+    {
+      "id": "timber",
+      "role": "Wreck and weathered timber",
+      "source_xy": [
+        288,
+        288
+      ],
+      "source_rgb": [
+        164,
+        93,
+        65
+      ],
+      "tuned_hsv": [
+        22,
+        0.38,
+        0.48
+      ]
+    },
+    {
+      "id": "grass",
+      "role": "Coastal grass and foliage",
+      "source_xy": [
+        224,
+        416
+      ],
+      "source_rgb": [
+        73,
+        175,
+        127
+      ],
+      "tuned_hsv": [
+        95,
+        0.34,
+        0.5
+      ]
+    },
+    {
+      "id": "sea",
+      "role": "Sea and tidepools",
+      "source_xy": [
+        96,
+        416
+      ],
+      "source_rgb": [
+        92,
+        189,
+        166
+      ],
+      "tuned_hsv": [
+        169,
+        0.45,
+        0.52
+      ]
+    },
+    {
+      "id": "slate",
+      "role": "Cliffs and distant silhouettes",
+      "source_xy": [
+        480,
+        416
+      ],
+      "source_rgb": [
+        121,
+        127,
+        149
+      ],
+      "tuned_hsv": [
+        218,
+        0.21,
+        0.52
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Alderfell implementation status
 
-Design baseline: GDD 6.1. Current production milestone: **M0 — not started**.
+Design baseline: GDD 6.1. Current production milestone: **M0 — in progress**.
 This is the working board, not a claim that described gameplay already exists.
 
 ## Preparation gate
@@ -20,7 +20,7 @@ mobile acceptance, not atlas research or initial blockout.
 
 | ID | Work | State | Dependency / exit evidence |
 |---|---|---|---|
-| M0-01 | Palette reference and Shorelands atlas | Ready | ≤5-hue band, source/licence recorded, texture committed |
+| M0-01 | Palette reference and Shorelands atlas | In review | Codex, 2026-09-02: five-family CC0-derived atlas, reproducible generator and UV guide committed; Unity import/lit-scene review pending; see `M0_SHORELANDS_ART.md` |
 | M0-02 | Terrain/world, wind and water shaders | Planned | M0-01; compile and lit-scene visual check on Unity |
 | M0-03 | Isolated Shorelands scene and greybox | Planned | P04; 15m relief, switchback, walkable with inspection rig |
 | M0-04 | Hero landforms and admitted scatter | Planned | Blockout and art admission evidence |
@@ -73,3 +73,16 @@ user's current request and milestone. Update ownership when a task is started.
   Branch GitHub Actions is the executable C# validation source for this session.
 - Unity compilation, Play Mode, Blender, native builds and phone performance:
   **not run** in this preparation session. No claim of visual or release readiness.
+
+## M0 session — 2026-09-02
+
+- Branch: `codex/m0-shorelands-foundation`, based on `c370e61`.
+- Palette source download matches the existing Kenney LFS SHA-256. Five source
+  samples and tuned HSV families are recorded; generated atlas is 256×160 RGB.
+- `python3 tools/build_shorelands_palette.py --check`: passes locally; CI now
+  checks the generated PNG and review SVG alongside Core tests.
+- Source-pixel comparison, PNG decoding, band orientation and metadata/GUID
+  checks pass. These are asset-data checks, not Unity import or visual acceptance.
+- M0-02 is next; P04 still blocks connected scene work. Shader, Editor, phone
+  and Blender checks have not run. Measured hands-on region authoring hours
+  have not begun; do not substitute elapsed agent runtime for authoring effort.

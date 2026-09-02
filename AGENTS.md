@@ -11,7 +11,7 @@ Read `docs/GDD_ALDERFELL.md` (Start here, §1, §16, §36), then
 - Match the user's task to a tracked work item. Routine implementation choices
   can proceed; unresolved gameplay choices belong in GDD Appendix A before the
   affected system is implemented. Preserve the user's scope and authorization.
-- Work on `claude/3d-rpg-gdd-creation-bqxgz7` unless the user specifies another
+- Work on `codex/m0-shorelands-foundation` unless the user specifies another
   branch. Do not force-push. No PR or merge to main unless requested.
 - Keep `Isoperia.Core` independent of Unity. New gameplay authority belongs in
   Core; legacy exceptions are migration work, not patterns to copy.
