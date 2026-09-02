@@ -17,7 +17,12 @@ namespace Isoperia.Unity
         // during that phase rather than deferring normal runtime construction.
         public static bool IsInspectionPlayModeStart()
         {
-#if UNITY_EDITOR
+#if ISOPERIA_M0_INSPECTION
+            // M0 proof players are built through M0InspectionBuild with this
+            // define. This keeps the exclusion explicit and cannot affect a
+            // normal player build.
+            return true;
+#elif UNITY_EDITOR
             return UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path == ScenePath;
 #else
             return false;
