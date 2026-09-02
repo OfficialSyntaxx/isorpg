@@ -1,11 +1,17 @@
 # Alderfell — Game Design Document
 
-**Version** 5.0 · **Date** 2026-09-02 · **Status** Design lock, M0 ready to start
+**Version** 6.0 · **Date** 2026-09-02 · **Status** Complete. M0 ready to start.
 **Engine** Unity 6.0.5 (6000.5.8f1) URP · **Platform** Mobile-first (iOS/Android), PC parity from one build
 **Genre** Third-person high-fantasy action-RPG with skill progression
 **Scope posture** Solo dev + AI tooling, **zero cash budget**. Systems are costed
 in time and licence, not money. Cut lines are explicit.
 
+> **v6.0 changes:** the content half — the last real gaps. Added §37 gear
+> (material × quality tiers), §38 the story spine, §39 both boss encounters,
+> §40 the Hearth's Landing NPC roster, §41 dungeon layouts, §42 housing rooms
+> and costs, §43 economy sources and sinks. Guilds cut; abilities gate on skill
+> level alone. Appendix A is down to one open decision.
+>
 > **v5.0 changes:** made the document actionable by an agent working
 > unsupervised. Added a Start here index, §27 player goals (collection log,
 > achievements, titles), §28 endgame, §29 save versioning and migration, §30
@@ -82,7 +88,7 @@ Alderfell keeps the simulation and replaces the world. This is not a reskin; it
 changes the thing the player looks at for 100% of playtime.
 
 **Pitch:** *You wash up on the coast of a fallen realm with nothing, and you
-climb — through its forests, its ruins and its guilds — until the realm knows
+climb — through its forests, its ruins and its ruined halls — until the realm knows
 your name.*
 
 ---
@@ -212,7 +218,7 @@ by a ring index.
 | Region | Music track | Identity |
 |---|---|---|
 | **The Shorelands** | `title` / ambience | Where you wash up. Cliffs, tidepools, a wrecked hull, gulls, a switchback path climbing inland. First landmark: the smoke of Hearth's Landing seen from the clifftop. *The tutorial, with no tutorial UI.* |
-| **Hearth's Landing** | `village` | Hub town built into a hillside — tiered, a waterfall through the middle, a bell tower visible from all four neighbours. Bank, guilds, market, housing, quests. **Safe.** |
+| **Hearth's Landing** | `village` | Hub town built into a hillside — tiered, a waterfall through the middle, a bell tower visible from all four neighbours. Bank, market, trainers, housing, quests. **Safe.** |
 | **Thornwood** | `forest` / `swamp` | Dense forest, canopy light shafts, a sunken barrow. Elevation hidden by trees so the space feels bigger than it is. Woodcutting heartland. |
 | **Kingsmoor Ruins** | `dungeon` / `boss` | The fallen kingdom made literal. Broken keep on a plateau, visible from three regions. First dungeon and boss. |
 | **Coldreach Pass** | `snow` | A wall of mountain, one road, and the promise of everything beyond it in v2. Mining heartland. |
@@ -280,7 +286,7 @@ worth keeping; the economy around them is not.
 | Act | Levels | Where | The feeling |
 |---|---|---|---|
 | I — Castaway | 1–10 | Shorelands | Nothing. Fists, scavenged food, one road inland. |
-| II — Townsfolk | 10–20 | Hearth's Landing, Thornwood | Guild membership, first real gear, a home. |
+| II — Townsfolk | 10–20 | Hearth's Landing, Thornwood | A place in the town, first real gear, a home. |
 | III — Adventurer | 20–30 | Kingsmoor Ruins | First dungeon, first boss, the town notices you. |
 | IV — Named | 30–40 | Coldreach Pass | Titles, endgame gear, the realm reacts. |
 | V — Legend | 40–50 | Endgame | Reserved for v2 / the MMO milestone. |
@@ -333,7 +339,7 @@ the mobile-safe choice — precise timing on a touchscreen is a losing battle.
 - **Target** by tapping an enemy or cycling with a button. Auto-attack ticks at
   weapon speed.
 - **Abilities** on a hotbar, resource- and cooldown-gated. ~6 per style at v1,
-  unlocked by skill level and guild rank.
+  unlocked by skill level.
 - **Three styles** — Melee, Ranged and **Arcane** (new; a high-fantasy world needs
   magic). Weakness triangle, readable from enemy silhouette and VFX colour.
 - **Resources:** stamina (melee/ranged), mana (arcane). Regenerate out of combat.
@@ -458,7 +464,7 @@ abandoned camps, item descriptions, and NPCs who speak in a few strong lines.
 | Existing asset | Role in Alderfell |
 |---|---|
 | `hero_rigged` | Player character base |
-| `villager` | **All humanoid NPCs** — retint + prop swap per NPC. Guards, merchants, guild masters. |
+| `villager` | **All humanoid NPCs** — retint + prop swap per NPC. Guards, merchants, trainers. |
 | `dire_wolf` | Thornwood wolves, plus a rare alpha variant |
 | `bog_husk` | Thornwood barrow — undead/wood-corrupted |
 | `cave_slasher` | Kingsmoor Ruins dungeon |
@@ -552,8 +558,8 @@ if v1 is written for it. **Rules that cost almost nothing now:**
 7. **No client-side authoritative timers.** Cooldowns, respawns and crop growth all
    tick in Core.
 
-**MMO features deferred but designed-for:** chat, parties, guilds (guild buildings
-exist in the fiction from Act II — the shell is there), trading, a player market
+**MMO features deferred but designed-for:** chat, parties, player guilds (a social
+feature, unrelated to progression — v1 gates purely on skill level), trading, a player market
 (`ShopSystem` is the seed), shared world bosses, names and titles, modular
 character customization.
 
@@ -1016,7 +1022,7 @@ world — which is the product.
 
 ### 23.3 Abilities — six per style at v1
 
-Unlocked by skill level and guild rank. All damage resolves in
+Unlocked by skill level. All damage resolves in
 `CombatMath` — abilities supply multipliers and effects, never their own rolls.
 
 **Melee** — stamina, close range, built around committing.
@@ -1623,19 +1629,293 @@ pillar was wrong.
 
 ---
 
+## 37. Gear — material tiers × quality tiers
+
+Five material tiers, each craftable at five quality levels. **One sword base
+becomes 25 meaningful outcomes**, which is exactly the right shape for a project
+whose binding constraint is art rather than design.
+
+### 37.1 Material tiers, mapped to the acts and regions
+
+| Tier | Material | Act | Where its ore/wood comes from |
+|---|---|---|---|
+| 1 | **Bronze** | I | Shorelands — copper and tin on the beach and low cliffs |
+| 2 | **Iron** | II | Thornwood — iron in the forest's rock outcrops |
+| 3 | **Steel** | III | Kingsmoor — iron + coal from the ruins' old workings |
+| 4 | **Frostiron** | IV | Coldreach — cold-forged, pale blue, holds an edge |
+| 5 | **Kingsteel** | V | Endgame — reforged from Kingsmoor's fallen armoury; recipe found, not bought |
+
+Bronze, iron and steel already exist in the content tables. Frostiron and
+Kingsteel are new and mostly a retint plus a stat block — near-free given the atlas.
+
+### 37.2 Quality tiers, driven by mastery
+
+Every craft rolls a quality from 1 to 5. The roll's ceiling is set by the crafter's
+**mastery** on that recipe (§4.1), so quality is how mastery becomes visible.
+
+| Quality | Name | Stat multiplier | Visual |
+|---|---|---|---|
+| 1 | Crude | ×0.80 | Dull, chipped |
+| 2 | Plain | ×0.90 | Unadorned |
+| 3 | Fine | ×1.00 | The baseline — clean lines |
+| 4 | Superior | ×1.15 | Polished, subtle trim |
+| 5 | Masterwork | ×1.30 | Bright, with a faint glow at night |
+
+**Visual tiers cost one atlas band each**, not new meshes — trim colour and a
+material property. That is the whole art cost of the system.
+
+**The consequence worth noting:** a Masterwork Iron sword (×1.15 on tier 2) beats a
+Crude Steel one (×0.80 on tier 3). So a skilled crafter can stay competitive a tier
+behind, and the answer to "how do I get stronger" is sometimes *get better at
+crafting* rather than *go somewhere more dangerous*. That's the loot model (§4.3)
+paying off.
+
+### 37.3 How gear is actually acquired
+
+Drops supply **bases and components**; crafting finishes them (§4.3). A base
+dropped by a boss is a *pattern* — it does nothing in a bag until forged with the
+right bars at the right skill. This is what keeps the gathering and artisan skills
+relevant to the last hour of the game.
+
+---
+
+## 38. The story spine
+
+Five main quests, one per act. **Draft — edit freely.** Told environmentally with
+short dialogue (§8.2); no cutscenes, no walls of text.
+
+**The premise:** Alderfell was a kingdom. Something broke it — not a demon lord,
+but a slower failure: the mines flooded, the harvests failed, the king's hall was
+abandoned, and the people who stayed became villagers instead of subjects. Nobody
+is trying to restore it. They are just living here. You arrive with nothing and
+become the first person in a generation to go *back out* into it.
+
+| Act | Quest | Beats | Reward |
+|---|---|---|---|
+| **I** | **Landfall** | You wake on the shore. Survive it: fire, food, a blade. Climb the cliff, see the town, walk the road. Eldric the wayfinder meets you at the gate and asks nothing of you — he simply tells you where things are. | Entry to Hearth's Landing; the Wayfarer's Lantern |
+| **II** | **The Thornwood Debt** | The town's timber crew stopped going into Thornwood. Wren won't say why. Following the old logging road, you find the crew's camp abandoned and a barrow opened — something came *out*. Clearing the barrow means facing the forest ogre that took up residence in it. | Thornwood safe for logging; your housing plot; the first fast-travel waypoint |
+| **III** | **What the Moor Keeps** | Old Tobias remembers Kingsmoor before it emptied. He wants one thing from the keep: a ledger that says why the mines were abandoned. The answer is unglamorous and true — they flooded, the crown lied about it, and people died believing a lie. The cave brute in the flooded lower workings is what's left guarding nothing. | The Kingsmoor recipes (steel and beyond); the truth, which changes what NPCs say |
+| **IV** | **The Road North** | Coldreach Pass has been shut since the collapse. Reopening it is a work of engineering, not heroism: clearing the road, rebuilding a bridge, surviving the cold. Doing it makes you the person who reconnected the realm. | Coldreach opened; the title **Kingsmoor's Bane**; Frostiron |
+| **V** | **The Long Reach** | No quest — an acknowledgement. The bell rings for you. Guards greet you by title. Tobias, if he lived, gives you the armoury's reforging recipe. The game continues into mastery (§28). | Kingsteel recipe; the ending, which is a beginning |
+
+**Tone rules:** nobody is chosen. No prophecy. The villains are consequences, not
+antagonists — a flooded mine, a lie told by a dead government, an animal in a
+barrow that shouldn't have been opened. **The player's rise is the only heroic
+thing in the story**, which is what makes it land.
+
+---
+
+## 39. Boss encounters
+
+Both use existing meshes (§8.3). Both obey the telegraph rule (§23.4) and must read
+at phone size. Both are solo-beatable and party-scalable (§11).
+
+### 39.1 The Thornwood Ogre — Act II, level ~18
+
+**Mesh:** `forest_ogre`. **Arena:** the opened barrow mound — a bowl of packed
+earth ringed by root arches, with four standing stones. Roughly 20m across, so the
+player can always retreat but never fully disengage.
+
+| Phase | Trigger | Behaviour |
+|---|---|---|
+| 1 | Start | Slow melee. **Overhead Smash** every ~8t: 2t wind-up, ground marker, heavy damage — the teaching mechanic. Sidestep or eat it. |
+| 2 | 60% HP | Adds **Uproot**: hurls a stone, 1.5t wind-up, targets where you *are*, so it rewards moving. |
+| 3 | 30% HP | Enrages: attack speed +25%, and Smash leaves a lingering root patch that slows. The arena shrinks in practice, forcing commitment. |
+
+**The lesson it teaches:** telegraphs are readable and worth respecting. It's the
+first real fight, so it is deliberately fair — every death is legible.
+
+**Drops:** ogre's tooth (Masterwork crafting component), iron-tier weapon base,
+`pet_ogre` at 1/500, and the barrow key that opens the Thornwood dungeon's optional
+wing.
+
+### 39.2 The Cave Brute — Act III, level ~28
+
+**Mesh:** `cave_brute`. **Arena:** the flooded lower workings beneath Kingsmoor
+keep. Shin-deep water across the floor, three raised stone platforms, and a broken
+pump wheel. Water slows movement — the platforms are the mechanic.
+
+| Phase | Trigger | Behaviour |
+|---|---|---|
+| 1 | Start | Melee with a wide **Cleave**, 1.5t wind-up, arc marker. Punishes standing in front. |
+| 2 | 70% HP | **Slam** floods a section: 2t wind-up, then a wave crossing the floor. Survivable only on a platform, so it forces repositioning under time pressure. |
+| 3 | 40% HP | Summons two cave slashers (`cave_slasher`, reused). The brute keeps attacking — the player must choose targets under pressure. |
+| 4 | 15% HP | **Collapse**: falling debris marks three zones in sequence. A damage race with a movement puzzle on top. |
+
+**The lesson it teaches:** positioning matters as much as damage. Harder than the
+ogre by design — it's the Act III capstone.
+
+**Drops:** brute's core (Kingsteel component), steel-tier weapon base, `pet_brute`
+at 1/750, the Kingsmoor ledger (quest item for §38 Act III).
+
+### 39.3 Party scaling
+
+Boss HP ×1.6 per additional player; a third damage phase mechanic activates at
+3+ players. Wired now (§11), inert until multiplayer exists.
+
+---
+
+## 40. Hearth's Landing — the NPC roster
+
+The town needs people before it feels like a town. All use the `villager` mesh with
+retint and prop swaps (§8.3), so the roster is nearly free.
+
+Four names carry over from the previous project, deliberately — they were good.
+
+| NPC | Role | What they do | Where |
+|---|---|---|---|
+| **Eldric** | Wayfinder | Meets you at the gate in Act I. Explains the world without quest-giving. Marks fast-travel waypoints. | Gate |
+| **Bram** | Fisher | Sells rods and nets, buys fish, teaches Fishing. Talks about the sea like it owes him money. | Lower tier, by the water |
+| **Wren** | Woodcutter | Buys logs, sells axes, teaches Woodcutting. Knows why the timber crew stopped going into Thornwood, and won't say. | Sawmill, mid tier |
+| **Old Tobias** | Elder | Remembers Kingsmoor before it emptied. Gives the Act III quest. The town's memory. | Bell tower, upper tier |
+| **Halvard** | Smith | Sells bars and tools, buys ore, teaches Smithing. Will forge a base you bring him — for a fee. | Forge, mid tier |
+| **Mira** | Merchant | General goods, buys anything, sets the price floor. Stock rotates with your act. | Market square |
+| **Sera** | Farmer | Sells seeds, buys produce, teaches Farming. Runs the plots below the town. | Terraces, lower tier |
+| **Captain Ilse** | Guard captain | Gates nothing, but her greeting changes every act — the clearest signal of your standing. | Gate and walls |
+| **Rook** | Clue broker | Reads clue scrolls, pays out trails. Cheerfully evasive about where the scrolls come from. | Back alley, upper tier |
+
+**Act-reactive dialogue** is the whole recognition system (§4.2), and it is
+dialogue variants rather than mechanics: each NPC has one line set per act. Nine
+NPCs × five acts is 45 short line sets — a manageable writing job with an
+outsized effect on the world feeling alive.
+
+---
+
+## 41. Dungeon layouts
+
+Both instanced (§11). Both authored, not generated.
+
+### 41.1 The Thornwood Barrow — Act II, ~25 minutes
+
+An old burial mound the logging crew broke open. Tight, dark, claustrophobic — the
+tonal opposite of the forest above it.
+
+```
+Entrance ─ Antechamber ─ Collapsed Gallery ─┬─ Flooded Cells ─ [barrow key]
+                                            └─ The Deep Barrow ─ OGRE ARENA
+```
+
+| Room | Content |
+|---|---|
+| Antechamber | Two bog husks. Teaches that this place is not empty. |
+| Collapsed Gallery | Branching choice; a lit path and a dark one. The dark one is optional and better. |
+| Flooded Cells *(optional)* | Harder husks, a chest, and the lore that says who was buried here. Needs the barrow key from the ogre — so it's a second visit, which is deliberate. |
+| The Deep Barrow | A held-breath corridor. No enemies. The pacing beat before the fight. |
+| Ogre Arena | §39.1 |
+
+### 41.2 Kingsmoor Keep — Act III, ~40 minutes
+
+The fallen kingdom, entered. Vertical: you descend from a ruined great hall into
+the flooded workings, and the descent is the story.
+
+```
+Great Hall ─ Barracks ─ Stair of Kings ─ Pump Room ─┬─ Archive [ledger]
+                                                     └─ Lower Workings ─ BRUTE ARENA
+```
+
+| Room | Content |
+|---|---|
+| Great Hall | Open, roofless, daylight through a collapsed ceiling. Cave slashers. Establishes scale. |
+| Barracks | Close-quarters fighting, several slashers. The armoury that later yields Kingsteel. |
+| Stair of Kings | A long descent. Light fails gradually. No combat — dread instead. |
+| Pump Room | The mechanism that failed. A lever puzzle that partially drains the level below, changing the boss arena. **Optional, and it makes the fight easier** — rewarding curiosity with advantage rather than loot. |
+| Archive *(optional)* | Tobias's ledger. The truth of §38 Act III. |
+| Lower Workings | Flooded approach. Brute arena, §39.2. |
+
+**The design principle both share:** every optional room rewards *understanding*
+rather than grinding — a key, a truth, or an easier fight.
+
+---
+
+## 42. Player housing — rooms and costs
+
+The plot is granted by the Act II quest (§38). Construction level gates the rooms.
+
+| Room | Con. level | Cost | Unlocks |
+|---|---|---|---|
+| **Hearth** (starting room) | — | Free | Rest point, save, the plot itself |
+| **Workshop** | 5 | 40 planks, 10 iron bars, 500g | Carpentry recipes above level 20 |
+| **Kitchen** | 8 | 30 planks, 20 stone, 400g | Cooking above level 20; no-burn at high mastery |
+| **Forge** | 12 | 60 stone, 25 iron bars, 1,200g | Smithing above level 20; quality-5 crafting |
+| **Garden** | 15 | 50 planks, 30 soil, 800g | Farming — six plots (`FarmSystem` lives here) |
+| **Trophy Hall** | 20 | 80 planks, 40 iron bars, 2,000g | Boss trophies, collection-log display |
+| **Cellar** | 25 | 100 stone, 30 steel bars, 3,500g | +100 storage; bulk material stockpile |
+| **Study** | 30 | 70 planks, 20 steel bars, 5,000g | Clue-trail bonuses; the codex, in-world |
+
+Each room upgrades twice more (tiers 2 and 3) at roughly ×2.5 and ×6 cost, raising
+its bonus. **Furniture is cosmetic only** — deliberately, so that decorating is
+self-expression rather than an optimization chore (and so that if cosmetics ever
+become the monetization at the MMO milestone, §22.1, the ground is already clean).
+
+---
+
+## 43. Economy — sources and sinks
+
+A closed economy with no auction house is easy to break by accident. These are the
+taps and the drains.
+
+### 43.1 Sources
+
+| Source | Scale | Notes |
+|---|---|---|
+| Monster coin drops | Small, constant | Scales with monster level |
+| Selling to NPCs | Medium | At ~40% of item value — the spread is the point |
+| Clue trails | Large, occasional | The single best gold source; rewards exploration |
+| Quest rewards | Fixed, one-time | Paces early progression |
+| Selling crafted goods | Medium | Higher quality sells for more, so mastery pays |
+
+### 43.2 Sinks
+
+| Sink | Scale | Notes |
+|---|---|---|
+| **Repairs** | Constant | The primary sink. Death in Settled+ zones costs durability (§4.4) |
+| **Housing** | Large, staged | ~13,000g for all rooms at tier 1, far more upgraded |
+| **Fast-travel unlocks** | Medium, one-time | Per waypoint; makes convenience a purchase |
+| **Buying materials** | Player's choice | Always more expensive than gathering. Buys time, never advantage |
+| **Tools and gear from NPCs** | Early only | Vendors stop being competitive with crafting by Act II |
+
+### 43.3 The rules that keep it stable
+
+- **Vendors buy at ~40% and sell at ~130% of item value.** The spread is what stops
+  buy-low-sell-high loops.
+- **Never sell a crafted item to a vendor for more than its material cost.** That is
+  the classic infinite-money bug, and `ContentValidator` should grow a check for it.
+- **Gold is never the bottleneck on progression** — skill level and materials are.
+  Gold buys convenience: repairs, travel, a house.
+- **No gold sink is ever mandatory to progress.** A player who never fast-travels
+  and never buys anything can still finish the game.
+
+---
+
 ## Appendix A — Open decisions
 
-1. ~~**Business model**~~ — **resolved in §22.** Free and unmonetized at v1,
-   published on itch.io at zero cost; cosmetics revisited at the MMO milestone
-   where modular characters make them viable. No region gating is needed, so this
-   no longer constrains world layout.
-2. **Arcane style scope** — §23.3 specs a full six-ability third style. Confirm
-   that's wanted before the art cost (staff, VFX set, caster enemy) is committed.
-3. **Region count** — five is the plan; M0's measured cost decides three vs five.
-4. **Time-of-day gameplay effects** — cosmetic only, or do night spawns differ?
-5. **Whether the repo/package should be renamed** from `isorpg` to `alderfell`.
-6. **Ability numbers in §23.3** are a starting point, not balance. M2's gate is
-   feel, not spreadsheet correctness — expect these to move.
+**One decision remains open, and it cannot be closed from a desk.**
+
+1. **Region count.** Five is the plan. **M0's measured authoring cost decides
+   three versus five** — that is one of the things M0 exists to find out (§14).
+   Five adequate regions would violate P1; three beautiful ones would not.
+
+**Resolved, kept here so the reasoning isn't lost:**
+
+- ~~Business model~~ → §22. Free and unmonetized on itch.io at zero cost;
+  cosmetics revisited at the MMO milestone where modular characters make them
+  viable. No region gating needed, so world layout is unconstrained by it.
+- ~~Arcane style scope~~ → confirmed as a **full six-ability third style**
+  (§23.3). The staff, VFX set and caster enemy are committed art costs.
+- ~~Time-of-day gameplay effects~~ → **cosmetic only.** Lighting and mood, no
+  mechanical difference. A ten-minute session must never be the wrong time to play.
+- ~~Repo/namespace rename~~ → **no rename.** The game is Alderfell; the codebase
+  stays `Isoperia` (§35). Zero churn, no risk to asmdef references or `.meta` files.
+- ~~Guilds~~ → **cut.** Abilities gate on skill level alone. Player guilds remain a
+  deferred *social* MMO feature (§12), unrelated to progression.
+
+**Not decisions, but standing caveats:**
+
+- **Ability numbers (§23.3), boss timings (§39) and all costs (§42, §43) are
+  starting points, not balance.** M2's gate is feel, not spreadsheet correctness.
+  Expect every number in this document to move once something is playable.
+- **The story (§38) is a draft** written to fit the regions, the bosses and the
+  arc. It is meant to be edited.
 
 ## Appendix B — Immediate next steps
 
