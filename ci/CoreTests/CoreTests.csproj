@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Compiles Isoperia.Core and its NUnit suite with a plain .NET SDK, no Unity
+    licence and no Unity install.
+
+    THIS IS ONLY POSSIBLE BECAUSE Isoperia.Core.asmdef DECLARES
+    noEngineReferences: true. The simulation — tick, RNG, combat math, skills,
+    crafting, quests, A*, saves, content — has no UnityEngine dependency, so the
+    same sources that Unity compiles into the game also compile here in seconds.
+    That property is what makes CI free and what makes an authoritative server
+    possible later (GDD §12, §16.2). If someone adds `using UnityEngine` to Core,
+    this project stops building, which is exactly the alarm we want.
+
+    The sources are globbed rather than listed so new systems and tests are
+    picked up without touching this file.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Isoperia.Core</RootNamespace>
+    <AssemblyName>Isoperia.Core.Tests</AssemblyName>
+    <!-- Unity generates its own; ours would collide on InternalsVisibleTo etc. -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../unity/Assets/Isoperia/Core/Runtime/**/*.cs" />
+    <Compile Include="../../unity/Assets/Isoperia/Core/Tests/**/*.cs" />
+    <Compile Include="../../unity/Assets/Isoperia/Core/AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
+</Project>

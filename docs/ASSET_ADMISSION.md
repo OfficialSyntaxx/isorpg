@@ -1,48 +1,124 @@
-# Isoperia asset admission gate
+# Asset admission gate
 
-## Renovation validation tools
+Alderfell is built with **no cash budget**, so its art supply line is free
+assets — CC0 libraries, Unity Asset Store free packs, Mixamo rigs — plus what we
+author in Blender. That is a genuine advantage and it has two failure modes:
 
-- `npm run verify:world-assets` checks model payload headers, GLB structure,
-  unresolved LFS pointers, duplicate GUIDs/model resource keys, missing model
-  metadata, and discoverable runtime resource paths. It does not approve art.
-- `Isoperia > Validation > Audit world assets` inspects imported models and
-  prefabs in a disposable Unity preview scene. Read
-  `unity/Artifacts/world-asset-import-audit.json` for meshes, submesh materials,
-  shader compatibility flags, bounds, embedded cameras/lights, missing scripts,
-  and imported clip names. It does not modify any asset or admission rule.
-- Run EditMode filter `Isoperia.Unity.Tests` for resource selection and
-  interaction regressions. `npm run verify:world-resources` runs the same three
-  selection tests with Mono outside Unity and fails explicitly if Mono is absent.
+1. **Incoherence.** Assets from four sources look like four different games.
+2. **Licensing.** An unlicensed asset discovered at ship is a rebuild, not a fix.
 
-The screenshot and actor-motion checks below remain required after these tools.
+This gate exists to stop both. Nothing enters the project without passing it.
+The procedural version, for agents, is `.claude/skills/import-asset/`.
 
-No FBX, GLB, prefab, material, or Asset Store package is allowed into a live
-world scene just because it imports successfully.
+---
 
-## Required review path
+## 1 · Licence — checked first, always
 
-1. Keep the source under its provenance folder and record its license.
-2. Open it alone in the Unity asset-review scene at
-   `Assets/Scenes/AssetReview.unity`.
-3. Verify scale at player height, grounded pivot, forward axis, visible bounds,
-   URP materials, collider, and no helper meshes/cameras/lights.
-4. Inspect idle, walk, actions, and root motion for actors.
-5. Capture a review screenshot at gameplay camera distance.
-6. Add the resource path to `WorldAssetAdmission.IsApproved` only after review.
-7. Integrate one approved prefab at a time, then capture the live world again.
+Re-UV'ing an asset you cannot legally ship is wasted work, so licence is the
+first gate, not the last.
 
-## Phase 0 quarantine
+**Accepted**
 
-All `Art/OwnedModels/` assets are quarantined from runtime placement. They
-produced oversized panels, invalid silhouettes, and material failures in the
-2026-08-28 live capture. The CC0 Kenney town kit remains the temporary safe
-baseline while replacement content is reviewed.
+| Licence | Terms we must honour |
+|---|---|
+| CC0 / public domain | None. Preferred. |
+| CC-BY | Attribution in `ASSET_CREDITS.md` and in-game credits. |
+| Unity Asset Store Free | Usable in this project; cannot be redistributed as an asset. |
+| Mixamo | Free for commercial use with an Adobe account. Rigs and animations only. |
 
-## Rejection criteria
+**Rejected, without exception**
 
-- visible helper/camera/light geometry
-- bounds or pivot that prevents coherent gameplay placement
-- missing, incompatible, or flat fallback materials
-- T-pose, bind pose, incorrect animation mapping, or unexpected root motion
-- poor silhouette or unreadable detail at third-person camera distance
-- collision or performance cost unsuitable for WebGL
+- No stated licence, or a licence you cannot locate in writing
+- Non-commercial clauses (`CC-BY-NC`) — this project intends to ship
+- No-derivatives clauses (`CC-BY-ND`) — we re-UV everything, which is a derivative
+- Share-alike where it would infect the project (`CC-BY-SA`) — case by case, default no
+- Anything scraped from a game, film or another studio's work
+
+**Record every asset** in `docs/ASSET_CREDITS.md`: name, source URL, author,
+licence, date admitted, where it's used. An asset that isn't in the ledger isn't
+in the project — that ledger is what makes a licence audit a five-minute job
+instead of an archaeology project.
+
+---
+
+## 2 · Budget
+
+Against GDD §6 (150k tris, 120 draw calls on screen) and §18's per-layer budgets.
+
+| Asset kind | Target triangles |
+|---|---|
+| Prop, rock, small tree | 200 – 1,500 |
+| Kit piece | 300 – 2,000 |
+| Hero landform | 2,000 – 5,000 |
+| Humanoid character | 3,000 – 6,000 |
+| Boss | 8,000 – 10,000 |
+
+Over budget → decimate in Blender and confirm the silhouette survived, or reject.
+**Silhouette is what reads at phone size**; interior detail is not worth triangles.
+
+---
+
+## 3 · Re-UV to the shared gradient atlas
+
+Every prop, kit piece, landform and terrain surface maps to the one shared
+gradient palette texture (GDD §19.1).
+
+This is the step that makes mixed-source assets look like one game, and it is the
+step people skip. Assets from different authors stop clashing because they are
+all sampling the same colours — and the whole world resolves to three materials,
+so it batches.
+
+- Map each surface to the palette band for its material and region.
+- **Delete the asset's original textures.** They are not shipping.
+
+**Exception:** hero characters and bosses keep unique textures. That's where the
+player actually looks.
+
+---
+
+## 4 · Geometry hygiene
+
+| Check | Requirement |
+|---|---|
+| Scale | 1 Unity unit = 1 metre. A door is ~2m. Apply scale in Blender before export. |
+| Pivot | Base for props and buildings; feet for characters; centre for anything that rotates. |
+| Axis | Blender is Z-up, Unity is Y-up. Export FBX as `-Z forward, Y up`. |
+| Normals | Recalculated outside. Flipped faces read as holes in the mesh. |
+| LODs | LOD0/LOD1 minimum on props and vegetation; vegetation gets a far billboard. |
+| Colliders | Simple primitives. Never a mesh collider on scatter. |
+| Naming | `snake_case`, descriptive: `oak_tree_a`, `cliff_shore_arch`. |
+
+---
+
+## 5 · Characters — rig and animate via Mixamo
+
+1. Export from Blender as FBX in **T-pose**.
+2. Upload to Mixamo → auto-rig.
+3. Download clips **"without skin"**; download the rigged mesh once **with skin**.
+4. In Unity set the rig to **Humanoid** — the avatar system then retargets every
+   clip onto every humanoid automatically.
+
+One ~12-clip set (idle, walk, run, attack ×2, hit, death, gather) serves the
+player, villagers, guards and every humanoid enemy. **That retargeting is what
+makes a populated world affordable solo.** Non-humanoids (wolf, imp, husk) need
+their own clips — keep those few and reuse them across variants.
+
+---
+
+## 6 · Verify in scene
+
+- Place it in a lit scene beside an existing asset. Compare style and scale.
+- Check silhouette readability at third-person distance **on the phone**.
+- Confirm draw calls didn't jump — if they did, the atlas step was missed.
+
+---
+
+## Reject when
+
+- The licence is unclear, non-commercial, or no-derivatives
+- Style can't be reconciled by the atlas — realistic detail, wrong proportions
+- Over budget, and decimation destroys the silhouette
+- It duplicates something already in the project
+
+**Rejecting is cheap.** A bad asset costs every frame it is on screen, for the
+life of the project.

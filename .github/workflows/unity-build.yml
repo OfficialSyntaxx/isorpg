@@ -1,0 +1,98 @@
+name: Unity build
+
+# Unity Editor tests and player builds for the mobile targets.
+#
+# WHY THIS IS SEPARATE FROM core-tests.yml, AND NOT ON EVERY PUSH
+# A Unity job needs a licence, a multi-gigabyte editor image and many minutes per
+# target. The simulation is already covered in seconds by core-tests.yml, so this
+# job exists only for what genuinely requires the editor: that the project still
+# opens, that scenes and prefabs resolve, and that the players actually build.
+# Running that on every feature-branch push would spend most of the day waiting.
+#
+# SETUP REQUIRED BEFORE THIS PASSES
+#   1. Activate a free Unity Personal licence and add these repository secrets:
+#      UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD.
+#      (`unity-activation.yml` in this repo's history generated the .alf/.ulf pair.)
+#   2. Until those exist the job fails on the licence step, which is honest —
+#      it is not configured yet, rather than silently passing.
+#
+# Android is built here because it is the actual spec target (GDD §6) and there
+# is no Android device on hand. iOS produces an Xcode project rather than an .ipa:
+# signing happens locally on the Mac mini with free provisioning (GDD §20.4), so
+# no paid Apple account is needed for development.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: unity-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Editor tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Player builds and asset validation must see real payloads, not
+          # 130-byte LFS pointers.
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: unity/Library
+          key: Library-test-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
+          restore-keys: Library-test-
+
+      - uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity
+          testMode: editmode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build ${{ matrix.targetPlatform }}
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform:
+          - Android
+          - iOS
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: unity/Library
+          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ matrix.targetPlatform }}-
+            Library-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity
+          targetPlatform: ${{ matrix.targetPlatform }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.targetPlatform }}
+          path: build
+          retention-days: 7

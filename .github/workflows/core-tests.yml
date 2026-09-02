@@ -1,0 +1,42 @@
+name: Core tests
+
+# The simulation's unit tests, run with a plain .NET SDK on every push.
+#
+# WHY THIS IS NOT A UNITY JOB
+# Isoperia.Core is declared `noEngineReferences: true`, so the entire simulation
+# compiles and tests without Unity, without a licence, and in seconds rather than
+# the many minutes a Unity job takes. That covers the ~80% of this project that
+# is game logic — combat math, skills, crafting, quests, A*, saves, content
+# validation. The Unity job (unity-build.yml) exists for what only Unity can
+# check, and deliberately does not run on every push.
+#
+# If this job ever fails to compile because of a UnityEngine reference, that is
+# not a CI problem to work around: something has broken the architecture rule
+# that makes a future authoritative server possible. Fix the reference.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: core-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        # No LFS: this job compiles C# and never reads a model or a texture.
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore ci/CoreTests/CoreTests.csproj
+
+      - name: Test
+        run: dotnet test ci/CoreTests/CoreTests.csproj --no-restore --verbosity normal

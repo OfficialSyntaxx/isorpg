@@ -1,14 +1,20 @@
 # Alderfell — Game Design Document
 
-**Version** 2.0 · **Date** 2026-09-02 · **Status** Design lock, pre-production
-**Engine** Unity 6 URP · **Platform** Mobile-first (iOS/Android), PC parity from one build
+**Version** 3.0 · **Date** 2026-09-02 · **Status** Design lock, pre-production
+**Engine** Unity 6.0.5 (6000.5.8f1) URP · **Platform** Mobile-first (iOS/Android), PC parity from one build
 **Genre** Third-person high-fantasy action-RPG with skill progression
-**Scope posture** Solo dev + AI tooling. Systems are costed. Cut lines are explicit.
+**Scope posture** Solo dev + AI tooling, **zero cash budget**. Systems are costed
+in time and licence, not money. Cut lines are explicit.
 
-> **v2.0 changes:** platform reversed to mobile-first (was PC-first) — this
-> re-scoped §3, §5, §8 and added §6 (performance budget) and §7 (UX/controls).
-> Title locked. Death, loot, quests, character, narrative, travel and group
-> content all resolved.
+> **v3.0 changes:** this is the full bible. Added §16 tech stack and
+> architecture, §17 toolchain, §18 world construction, §19 art production,
+> §20 build/CI/distribution, §21 working with AI agents. The paid Meshy/
+> Higgsfield asset pipeline is **removed** throughout and replaced with a
+> zero-cost Blender + Mixamo + CC0 pipeline.
+>
+> **v2.0 changes:** platform reversed to mobile-first; added the performance
+> budget and UX sections. Title, death, loot, quests, character, narrative,
+> travel and group content resolved.
 
 ---
 
@@ -114,16 +120,22 @@ correct answer for the mobile budget (§6).
 | Concept art | 4 monster concepts | Keep as style reference. |
 | Terrain vertex-color shader | `IsoperiaTerrainVertexColor.shader` | **Keep and extend** — vertex-painted terrain is both the correct painterly base *and* cheap on mobile. |
 
-### 2.3 Pipeline — the multiplier
+### 2.3 Pipeline — replaced, not inherited
 
-`ASSETS_PIPELINE.md` and `promptsfor3dmodels.md` document a **verified** pipeline:
-Meshy/Higgsfield `3d_rigging` accepts an existing GLB URL, all rigs share a
-24-bone humanoid, rotation-only retargeting lets one clip serve many characters,
-and costs are known (5 credits to rig, 8 with a clip).
+The previous project's asset pipeline ran on **paid Meshy/Higgsfield credits**
+(5 to rig a mesh, 8 with an animation clip). That account is on the free tier with
+a zero balance, so the pipeline cannot produce a single asset. Under a zero-cash
+constraint it is **removed from the plan entirely** — see §19 for the replacement
+(Blender + Mixamo + CC0 libraries, all free and commercially licensed).
 
-This is the most valuable non-code asset in the repo. A solo dev with a verified
-character pipeline can populate a world; one without cannot. **Keep and formalize
-it** as the content factory (§8.4).
+Two things from it survive, and they're the valuable parts:
+
+- **The 24-bone humanoid rig standard**, shared across every existing character.
+  Mixamo's rig maps onto Unity's Humanoid system, which gives the same benefit:
+  one animation set retargeted across every humanoid.
+- **The style-lock prompt discipline** in `promptsfor3dmodels.md` — a fixed style
+  paragraph appended to every asset request. That principle now governs CC0 asset
+  selection and Blender authoring instead of text-to-3D generation.
 
 ---
 
@@ -418,10 +430,9 @@ encounters.**
 5. Housing furniture set (~20 pieces).
 
 ### 8.4 The content factory
-Formalize the Meshy/Higgsfield pipeline into a repeatable loop: concept image →
-mesh → rig → clip → Unity import via `IsoperiaOwnedModelPreparation.cs`. Budget
-credits per milestone. Rotation-only retargeting means one animation set serves
-every humanoid — this is what makes a populated world affordable solo.
+See §19. In short: CC0 and Unity Asset Store free packs supply the bulk, Blender
+authors what must be unique, Mixamo rigs and animates every humanoid, and one
+shared gradient atlas makes assets from a dozen sources look like one game.
 
 ---
 
@@ -522,8 +533,14 @@ Milestones gate on *demonstrable quality*, not feature counts.
 
 **M0 is the most important milestone in this document.** The prior project's
 failure was building systems on top of a world nobody wanted to look at. Do not
-repeat it. Buy a cheap test Android device before M0 starts — mobile-first without
-a target device is a guess.
+repeat it.
+
+**On the test device:** builds go to your iPhone via Xcode free provisioning
+(§20.4), which costs nothing. But an iPhone is far more powerful than the
+mid-range Android in §6's budget, so **the budget stays the spec and the iPhone is
+only the convenience target** — otherwise the game is tuned to hardware most of
+the market doesn't have. Use the free Android Studio emulator on the Mac mini as
+the lower-bound sanity check until real Android hardware is available.
 
 **Audio** (§ orchestral + ambience-forward): music used sparingly, rich
 environmental ambience carrying most moments — wind, birds, water, fire. This is
@@ -557,6 +574,311 @@ generated terrain · 99-level grind curves · action combat with client-side dod
 
 ---
 
+## 16. Tech stack and architecture
+
+### 16.1 The stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Engine | **Unity 6000.5.8f1, URP 17.5** | Already the project's version. URP is the mobile-appropriate pipeline. |
+| Language | **C#** | The whole simulation is already written in it. |
+| Rendering | URP Forward+, baked lightmaps, single directional light | §6 budget |
+| Input | **Unity Input System 1.20** (installed) | One action map serves touch, gamepad and keyboard — required for mobile + PC parity. |
+| Streaming | **Addressables 2.11** (installed) | Region streaming and download-size control. |
+| Model import | **glTFast 6.19** (installed) | GLB import; the existing assets are GLB. |
+| Serialization | **Newtonsoft.Json 3.2** (installed) | Content and saves. |
+| Testing | **Unity Test Framework 1.4** + NUnit | The Core suite already runs on it. |
+| UI | **UI Toolkit (UIElements)** | Better than uGUI for resolution-independent mobile UI; retained `com.unity.ugui` for legacy. |
+| Version control | **Git + Git LFS** on GitHub | Already in place. See §20.3. |
+
+### 16.2 The architecture rule that everything else hangs off
+
+```
+┌──────────────────────────────────────────────────┐
+│  Isoperia.Core   (asmdef: noEngineReferences)    │
+│  ─────────────────────────────────────────────   │
+│  Tick · RNG · combat math · skills · inventory   │
+│  crafting · quests · clues · A* · save · content │
+│                                                  │
+│  Knows nothing about Unity. Runs in any C#       │
+│  runtime. THIS IS THE FUTURE SERVER.             │
+└──────────────────────────────────────────────────┘
+             ▲ commands            │ state
+             │                     ▼
+┌──────────────────────────────────────────────────┐
+│  Isoperia.Unity   (presentation only)            │
+│  Rendering · animation · input · audio · UI      │
+│  Reads Core state, sends Core commands.          │
+│  Decides nothing.                                │
+└──────────────────────────────────────────────────┘
+```
+
+`Isoperia.Core.asmdef` is declared `noEngineReferences: true`. **This line is the
+most valuable asset in the repository** and must never be removed. It is what
+allows: the whole simulation to be tested with no Unity licence (so CI is free —
+§20.1), and the same binary to become an authoritative server later (§12) instead
+of being rewritten.
+
+**The one-way rule:** the Unity layer may read Core state and send Core commands.
+It may never compute an outcome. Damage, loot, XP, gathering success, crop growth
+and cooldowns all resolve inside Core against the seeded `Mulberry32` RNG.
+
+**Commands, not mutations.** Player intent enters Core as a command object —
+`MoveTo(x,z)`, `UseAbility(id, targetId)`, `Gather(nodeId)` — never as a direct
+state write and never as `transform.position = …`. Command objects serialize over
+a wire unchanged on the day there is a wire.
+
+### 16.3 Content architecture — JSON is the source of truth
+
+Content (items, monsters, recipes, quests, drop tables, buildings, XP) lives as
+**JSON files loaded by `ContentDatabase`**, not as ScriptableObjects.
+
+- `ContentDatabase` already takes a **reader delegate** rather than touching the
+  filesystem: Unity passes one backed by `Resources`, tests pass one backed by
+  `File.ReadAllText`, and a future server passes one backed by its own store.
+  This is already correct and needs no change.
+- **Retire the TypeScript export step.** Content is currently generated by
+  `scripts/export-content.cjs` from `src/data/*.ts` — the dead prototype. The JSON
+  becomes hand-authored source of truth, and the exporter is deleted.
+- **Fail loudly.** `ContentException` is thrown on missing or malformed content and
+  there is deliberately no fallback path. Keep this. The prior project shipped a
+  fallback catalog that silently clamped a 2400-coin payout to 500.
+- A **schema validator runs in the test suite** (§20.1), so malformed content fails
+  CI rather than shipping.
+
+### 16.4 Saves — local now, server-shaped
+
+Keep the existing sanitized-JSON save with rollback recovery. Route every read and
+write through a single `ISaveStore` interface with a device-storage implementation
+today; a server-backed implementation later replaces one class. Sanitization on
+load is non-negotiable and already implemented — it is also exactly the validation
+an authoritative server needs against hostile clients.
+
+---
+
+## 17. Toolchain — what we have, and what it costs
+
+**Everything below is free.** Nothing in this project requires a purchase until
+store submission (§20.4).
+
+| Tool | Cost | Role |
+|---|---|---|
+| **Unity 6 Personal** | Free under the revenue threshold | Engine |
+| **Blender** | Free | Hero landforms, kit pieces, unique assets, retopo, UV, bakes |
+| **Mixamo** | Free, commercial use permitted | Auto-rigging + ~2,500 mocap animations |
+| **Xcode** | Free | iOS builds and on-device install (§20.4) |
+| **Mac mini M4** | Owned | Build machine. Apple Silicon builds Unity and Xcode fast. |
+| **iPhone** | Owned | On-device testing |
+| **GIMP / Krita** | Free | Texture and atlas work |
+| **Audacity** | Free | SFX editing |
+| **CC0 asset libraries** | Free | Quaternius, Kenney, Poly Haven, ambientCG, OpenGameArt, Freesound |
+| **Unity Asset Store free tier** | Free | Unity-ready packs with prefabs and LODs |
+| **Claude Code (remote)** | Subscription owned | Design, C# systems, content JSON, tooling, docs — this repo |
+| **Claude Code (local) + Unity MCP** | Subscription owned | Driving the Unity Editor: scenes, prefabs, terrain, tests |
+| **Claude Code (local) + Blender MCP** | Subscription owned | Driving Blender: landforms, kit pieces, exports |
+| **GitHub + Actions** | Free for public repos | Hosting and CI |
+
+**Removed from the plan:** Meshy, Higgsfield, Tripo and every other paid
+generation service. They are not required and the account has no balance.
+
+### 17.1 The two-machine split
+
+This matters for how work is assigned:
+
+- **Remote sessions (this repo)** have no Unity and no Blender. They do design,
+  architecture, C# systems, content JSON, shaders, CI, tooling and documentation.
+- **Local sessions on the Mac mini** have the Unity MCP and Blender MCP bridges.
+  They do everything that requires an editor: sculpting terrain, placing assets,
+  building prefabs, wiring scenes, importing and atlasing meshes, running builds.
+
+The repo is set up so a local session can pick up work without re-deriving the
+design — see §21.
+
+---
+
+## 18. World construction — the four-layer method
+
+Locked. Each layer owns something the others physically cannot produce.
+*Visual reference: the four-layer landscape diagram.*
+
+| # | Layer | Owns | Tool | Budget/region |
+|---|---|---|---|---|
+| 1 | **Unity Terrain** | Walkable ground, collision, LOD, streaming | Unity | ~25k tris, 2–4 draw calls |
+| 2 | **Hero landforms** | Silhouette — cliffs, arches, plateaus, cave mouths | Blender | 4–8 meshes, 2–5k tris each |
+| 3 | **Modular kit** | The built world — walls, roofs, stairs, ruins | CC0 + Blender | ~15 pieces, GPU-instanced |
+| 4 | **Scatter** | Grass, trees, rocks, undergrowth | CC0 + Unity detail system | ~40k tris, billboard LOD |
+
+**Fully dressed region: ~120k triangles, ~20–39 draw calls, 3 materials** — inside
+the §6 budget with headroom for actors, VFX and UI.
+
+Layer 2 is the one that looks skippable and isn't. Unity Terrain is a heightfield:
+it can undulate but never overhang, so it cannot make a cliff face, a sea arch or
+a pierced rock. Those are the shapes that give a region a readable skyline, and
+§3.2's rule that every region needs a landmark visible from its neighbour is
+satisfied at layer 2 or not at all.
+
+### 18.1 The region build order
+
+1. **Block out the heightfield** in Unity Terrain — masses and paths only, no
+   detail. Walk it. If the shape is boring in grey, it will be boring in green.
+2. **Sculpt the hero landforms** in Blender against that blockout and place them.
+   The region's skyline, and the neighbouring region's view of it, is decided here.
+3. **Flatten the terraces** the built world needs, then assemble structures from
+   the kit. The landmark goes up first; everything else composes around it.
+4. **Paint and scatter** — ground textures, then vegetation, then props. Jitter
+   rotation and scale on everything.
+5. **Light and fog it**, then stand at each of the three framed reveals (§3.2 rule
+   4) and screenshot **on the phone**. If a shot isn't worth keeping, the region
+   isn't finished.
+
+---
+
+## 19. Art production — zero-budget pipeline
+
+### 19.1 The shared gradient atlas — the keystone decision
+
+Every prop, landform, kit piece and terrain texture UV-maps to **one small
+gradient palette texture**. This is standard practice for stylized mobile games
+and it solves three problems at once:
+
+- **Coherence.** Assets pulled from four different CC0 sources stop looking like
+  they came from four different games, because they are all literally sampling the
+  same colours. This is what makes free-asset sourcing viable at all.
+- **Performance.** One material for the whole world. Hundreds of objects batch into
+  a handful of draw calls, and texture memory is nearly zero.
+- **Iteration.** Re-grading a whole region is editing one small image.
+
+**Sourcing:** adopt a proven CC0 stylized palette as the base and tune it, rather
+than authoring from scratch. Each region gets a ≤5-hue lock (§3.2 rule 7) drawn as
+a band of that atlas, so regions read as distinct without needing separate
+materials.
+
+**Characters are the exception** — heroes and bosses get their own textures,
+because that's where the player actually looks.
+
+### 19.2 Models
+
+Priority order, cheapest first:
+
+1. **Unity Asset Store free packs** — already Unity-ready with prefabs, LODs and
+   colliders. Fastest route to a populated scene.
+2. **CC0 libraries** — Quaternius (stylized low-poly fantasy sets), Kenney, Poly
+   Haven, ambientCG. Verify licence, then re-UV to the atlas.
+3. **Blender** — for anything that must be unique or must sit on a silhouette:
+   hero landforms, Hearth's Landing's landmark buildings, key props.
+
+Every incoming asset passes the **asset admission gate** (`docs/ASSET_ADMISSION.md`):
+licence recorded, triangle count checked, re-UV'd to the atlas, LODs present,
+scale and pivot corrected. An asset that fails the gate doesn't enter the project.
+
+### 19.3 Rigging and animation — Mixamo
+
+This directly replaces the paid rigging pipeline.
+
+1. Export the mesh from Blender as FBX in T-pose.
+2. Upload to **Mixamo** → auto-rig (free, commercial use permitted).
+3. Pick animations from Mixamo's library — idle, walk, run, attack variants, hit
+   reaction, death, gather.
+4. Download as FBX **"without skin"** for the clip set, and once **with skin** for
+   the rigged mesh.
+5. Import to Unity, set the rig to **Humanoid**, and Unity's avatar system
+   retargets every clip across every humanoid automatically.
+
+**The retargeting is the multiplier.** One animation set — roughly 12 clips —
+serves the player, every villager, every guard, every humanoid enemy. Non-humanoid
+creatures (wolf, imp, husk) need their own clips; keep those few and reuse them
+across variants.
+
+**Existing GLBs:** re-export through Blender to FBX before Mixamo, and re-role per
+§8.3. Their existing 24-bone rig maps onto Humanoid.
+
+### 19.4 Audio
+Ambience-forward (§13). The 8 existing tracks cover v1 regions. New SFX come from
+**Freesound** (filter to CC0) edited in Audacity. No voice acting.
+
+---
+
+## 20. Build, CI and distribution
+
+### 20.1 CI — two workflows
+
+The repository's six existing workflows (Vite build, Lighthouse, WebGL, web
+deploy, site preview) target the dead three.js prototype. **Delete them.**
+
+| Workflow | Runs | Why |
+|---|---|---|
+| **`core-tests.yml`** | Every push | Builds `Isoperia.Core` with plain `dotnet` and runs the NUnit suite. **No Unity licence needed** because Core is `noEngineReferences`. Seconds, not minutes. This protects the 80% of the project that carries over. |
+| **`unity-build.yml`** | Every push to main + manual | GameCI: Unity Editor tests, then iOS and Android player builds. Needs a Unity licence in repository secrets. Slow, but catches project-level breakage the C# tests can't see. |
+
+GitHub Actions is free for public repositories, so runner minutes are not the
+constraint — Unity build *time* is. Keep `unity-build.yml` off the every-push path
+for feature branches.
+
+A **content schema validator** runs inside the Core suite, so malformed content
+JSON fails CI rather than shipping.
+
+### 20.2 Build targets
+
+| Target | Built on | Purpose |
+|---|---|---|
+| **macOS (Apple Silicon)** | Mac mini | Daily iteration. No signing, no device, instant. The fastest loop you have. |
+| **iOS** | Mac mini → Xcode → iPhone | Real performance truth. Milestone gates. |
+| **Android** | Mac mini | The actual spec target (§6). No device — validated via the free Android Studio emulator, and on real hardware before ship. |
+
+### 20.3 Asset storage
+
+Stay on **Git LFS**. The root `.gitattributes` is currently missing LFS rules —
+only `unity/.gitattributes` has them — so binaries outside `unity/` are being
+committed as raw blobs. Fix that first.
+
+GitHub's free LFS allowance is roughly **1 GB storage and 1 GB/month bandwidth**.
+That is a real ceiling for a 3D project. Mitigations, in order: commit only
+game-ready optimized assets (keep multi-hundred-MB `.blend` working files out of
+the repo), watch the quota, and migrate to Unity Version Control (5 GB free for
+solo use) if it fills.
+
+### 20.4 Distribution — the honest picture
+
+**Development costs nothing.** Xcode free provisioning installs builds onto your
+own iPhone with a free Apple ID: 7-day signature expiry, up to 3 apps, re-sign by
+rebuilding. That covers the entire development period.
+
+**Shipping to iOS costs $99/year.** There is no legitimate way around it — TestFlight,
+the App Store and any distribution beyond your own device all require the paid
+Apple Developer Program.
+
+**On the browser/PWA idea:** it doesn't work for this game. Unity does not support
+WebGL on mobile browsers, and iOS Safari's memory ceiling and texture-compression
+gaps make a streamed 3D RPG unviable there. It was the right answer for the old
+three.js prototype and is the wrong one for Alderfell. Don't spend time on it.
+
+**Therefore: ship Android first.** Google Play is a **$25 one-time** fee versus
+Apple's $99/year, and Android additionally permits free direct APK distribution
+with no store at all. Android is also the §6 spec target. iOS becomes the second
+platform, funded by the first if it earns anything.
+
+---
+
+## 21. Working with AI agents
+
+This project is built by a solo dev with AI assistance across two machines, so the
+repository is deliberately set up to be agent-legible.
+
+| Artifact | Purpose |
+|---|---|
+| **`CLAUDE.md`** | Project context loaded automatically by every session: pillars, the architecture rules, the performance budget, what must never be touched. Stops a session re-deriving the design or breaking `noEngineReferences`. |
+| **`.claude/skills/build-region/`** | The §18.1 region build order as a repeatable procedure, ending in the §3.2 craft checklist. |
+| **`.claude/skills/import-asset/`** | The §19.2 admission gate as a procedure: licence, tris, atlas re-UV, LODs, scale, pivot. |
+| **`.claude/skills/add-content/`** | Adding an item, monster, recipe or quest to the content JSON against the schema, with the validator run. |
+| **`docs/ASSET_ADMISSION.md`** | The gate itself, in prose, with the licence ledger. |
+| **Content schema + validator** | Machine-checked content, failing in CI. |
+
+**Division of labour:** remote sessions do design, C#, content and tooling; local
+sessions with the Unity and Blender MCP bridges do editor work (§17.1). Both read
+the same `CLAUDE.md` and skills, so they stay in agreement about what the game is.
+
+---
+
 ## Appendix A — Open decisions
 
 1. **Business model** — deliberately deferred (§ "build it first"). Options and
@@ -572,10 +894,17 @@ generated terrain · 99-level grind curves · action combat with client-side dod
 
 ## Appendix B — Immediate next steps
 
-1. Buy a mid-range Android test device.
-2. Build **M0**: the Shorelands beauty proof. Terrain, water, grass, sky, camera.
-   Nothing else. Judge it on the phone, against the games named in §0.
-3. Revise `docs/ART_BIBLE.md` against §3.2's craft rules and §6's budget.
-4. Strip `LabourSystem` and offline gathering from the active wiring (retain code).
+**Repo groundwork (remote sessions — mostly done):**
+1. ~~`CLAUDE.md`, agent skills, asset admission gate, content schema + validator.~~
+2. ~~Replace the six web CI workflows with `core-tests.yml` and `unity-build.yml`.~~
+3. ~~Fix the root `.gitattributes` so binaries are LFS-tracked.~~
+4. Retire `scripts/export-content.cjs` and promote the content JSON to source of truth.
 5. Rescale `XpTable` to the level-50 curve and re-baseline the tests.
 6. Fill in the equipment stat tables (currently all zeros) against the §4.3 model.
+7. Strip `LabourSystem` and offline gathering from the active wiring (retain code).
+
+**Then M0 (local sessions, Mac mini):**
+8. Adopt and tune the CC0 base palette into the shared gradient atlas (§19.1).
+9. Build the Shorelands beauty proof — terrain, hero landforms, water, grass, sky,
+   camera. **Nothing else.** Judge it on the iPhone against the games named in §0.
+10. Revise `docs/ART_BIBLE.md` against §3.2's craft rules and §6's budget.
