@@ -31,6 +31,15 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+**Current checkpoint after `f5d925a`:** execute
+[`docs/M0_VALIDATION_SESSION.md`](docs/M0_VALIDATION_SESSION.md). Six scene roots,
+Terrain Physics and source-level guards are committed; CI run `33675890206` passed.
+The originating review wired the null player/camera references. Validate legacy
+startup ordering first, then finish controls, route, material proofs and captures.
+This supersedes the earlier repair sequences below; stop before M0-04.
+
+### Earlier checkpoint history (not the current task)
+
 **Priority after partial checkpoint `a751c69`:** execute
 [`docs/M0_CHECKPOINT_REPAIR.md`](docs/M0_CHECKPOINT_REPAIR.md) before continuing the
 original M0 sequence. The committed scene has an empty root list despite the

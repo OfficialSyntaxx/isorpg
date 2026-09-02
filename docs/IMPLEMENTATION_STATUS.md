@@ -22,7 +22,7 @@ mobile acceptance, not atlas research or initial blockout.
 |---|---|---|---|
 | M0-01 | Palette reference and Shorelands atlas | In review | Codex, 2026-09-02: five-family CC0-derived atlas, reproducible generator and UV guide committed; Unity import/lit-scene review pending; see `M0_SHORELANDS_ART.md` |
 | M0-02 | Terrain/world, wind and water shaders | In review | Shader/material sources committed; reported import passes. Terrain control mapping, atlas-UV mesh usage, water depth and lit runtime evidence remain unresolved; see `M0_CHECKPOINT_REPAIR.md`. |
-| M0-03 | Isolated Shorelands scene and greybox | Blocked | Review of `a751c69`: committed scene has no roots/objects. Recover and save hierarchy, replace namespace culling with startup prevention, restore Terrain collision; see `M0_CHECKPOINT_REPAIR.md`. |
+| M0-03 | Isolated Shorelands scene and greybox | In review | `f5d925a` has six saved roots; remote Play Mode reports no legacy behaviours and surviving TerrainCollider. Review wired null rig fields; legacy startup-order regression, controls, route and captures still require checks in `M0_VALIDATION_SESSION.md`. |
 | M0-04 | Hero landforms and admitted scatter | Planned | Blockout and art admission evidence |
 | M0-05 | Dress, light and compose three reveals | Planned | Prior art tasks; three phone captures |
 | M0-06 | Profile and review the beauty proof | Planned | GDD §36; measured device evidence and authoring hours |
@@ -129,3 +129,16 @@ user's current request and milestone. Update ownership when a task is started.
   claims describe Editor observations, not reproducible committed scene content.
 - Repair scope and evidence are in `M0_CHECKPOINT_REPAIR.md`. M0-04 remains blocked
   by the unfinished checkpoint. Preserve partial assets and prior return evidence.
+
+## Review of published repair f5d925a
+
+- Final SHA `f5d925abddd71f34b9ea8c54d075872a8d009195`, implementation `3913cf1`;
+  [CI run 33675890206](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33675890206) passed.
+- Saved scene and Terrain Physics dependency confirmed in repository. Remote report
+  records one clean M0 startup/collider check; no traversal/captures/device proof.
+- Wired existing player/camera references in M0 bootstrap (two scene fields only).
+  Static fileID/type/ownership checks pass; Editor reimport/Play Mode still required.
+- `WorldRuntime` now initializes on sceneLoaded, later than Bootstrap SaveDriver
+  Awake. Legacy compatibility remains unverified and likely regressed; prioritize
+  controlled reproduction and correction before accepting the isolation change.
+- Current bounded next task: `M0_VALIDATION_SESSION.md`; no M0-04 authorization.

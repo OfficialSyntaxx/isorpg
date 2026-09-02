@@ -575,8 +575,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab1929a3f954e4fc3a468cbcbc81e060, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Isoperia.Unity::Isoperia.Unity.M0.M0InspectionBootstrap
-  inspectionPlayer: {fileID: 0}
-  inspectionCamera: {fileID: 0}
+  inspectionPlayer: {fileID: 509399182}
+  inspectionCamera: {fileID: 1324392517}
 --- !u!4 &1480769607
 Transform:
   m_ObjectHideFlags: 0
