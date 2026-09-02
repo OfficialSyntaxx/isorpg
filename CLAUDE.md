@@ -11,6 +11,9 @@ the operating summary. Read `docs/WORKFLOW.md`, `docs/IMPLEMENTATION_STATUS.md`
 and `HANDOFF.md` for delivery rules, actual implementation status and the next task.
 `AGENTS.md` sends Codex to the same sources.
 
+Connected M0 execution and return contract: [`docs/M0_REMOTE_SESSION.md`](docs/M0_REMOTE_SESSION.md).
+Follow its bounded checkpoint and stop conditions when resuming in another session.
+
 **Design intent versus fact:** command classes, locale coverage, save migrations
 and authored streaming are tracked work, not guaranteed by this summary.
 

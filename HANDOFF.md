@@ -31,6 +31,12 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+For a connected Unity/Blender session, execute
+[`docs/M0_REMOTE_SESSION.md`](docs/M0_REMOTE_SESSION.md). It defines the startup
+probes, M0-01 review, M0-02 shaders, M0-03 isolated greybox, validation and return
+report. Stop before M0-04 and return the branch/SHA/evidence to the originating
+chat. This handoff is prepared; no external session has been launched here.
+
 Review **M0-01** in `docs/M0_SHORELANDS_ART.md`, then begin **M0-02: atlas shaders**.
 The five-family atlas, editable JSON, generator and UV guide are committed.
 Checkpoint `0de6470` passed the palette consistency check and **411/411 Core tests**
