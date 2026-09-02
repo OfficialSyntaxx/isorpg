@@ -1,12 +1,19 @@
 # Alderfell — Game Design Document
 
-**Version** 4.0 · **Date** 2026-09-02 · **Status** Design lock, pre-production
+**Version** 5.0 · **Date** 2026-09-02 · **Status** Design lock, M0 ready to start
 **Engine** Unity 6.0.5 (6000.5.8f1) URP · **Platform** Mobile-first (iOS/Android), PC parity from one build
 **Genre** Third-person high-fantasy action-RPG with skill progression
 **Scope posture** Solo dev + AI tooling, **zero cash budget**. Systems are costed
 in time and licence, not money. Cut lines are explicit.
 
-> **v4.0 changes:** the bible is complete. Added §22 business model,
+> **v5.0 changes:** made the document actionable by an agent working
+> unsupervised. Added a Start here index, §27 player goals (collection log,
+> achievements, titles), §28 endgame, §29 save versioning and migration, §30
+> Unity project conventions, §31 code conventions and the command catalogue,
+> §32 definition of done, §33 the verified content schema reference, §34 testing
+> strategy, §35 glossary, and §36 the M0 task breakdown.
+>
+> **v4.0 changes:** added §22 business model,
 > distribution and telemetry (free and unmonetized, itch.io, local-only
 > analytics), §23 combat specification (camera, abilities, enemy AI, feedback —
 > the M1/M2 blockers), §24 the first ten minutes, §25 reach and polish
@@ -22,6 +29,41 @@ in time and licence, not money. Cut lines are explicit.
 > **v2.0 changes:** platform reversed to mobile-first; added the performance
 > budget and UX sections. Title, death, loot, quests, character, narrative,
 > travel and group content resolved.
+
+---
+
+## Start here
+
+**If you are an agent or a new collaborator picking this project up cold, read
+this section, then §1 (pillars), §16 (architecture), and §36 (the current
+milestone). That is enough to start work. Read the rest as it becomes relevant.**
+
+| I need to… | Read |
+|---|---|
+| Understand what game this is | §0, §1 |
+| Know what to build next | §36 (M0), then §13 |
+| Write C# in Core | §16.2, §31, §34 |
+| Add or edit game content | §33, §16.3, `.claude/skills/add-content/` |
+| Build or dress a region | §3.2, §18, `.claude/skills/build-region/` |
+| Bring in an asset | §19, `docs/ASSET_ADMISSION.md`, `.claude/skills/import-asset/` |
+| Know if something is finished | §32 |
+| Understand a term | §35 |
+| Know what we deliberately don't do | §15 |
+
+**The five rules that override everything else:**
+
+1. `Isoperia.Core` must never reference `UnityEngine` (§16.2).
+2. The Unity layer decides nothing — Core resolves every outcome (§16.2).
+3. Art that misses the performance budget is rebuilt, not shipped (§6).
+4. A region that fails the craft checklist is not finished (§3.2).
+5. Nothing in this project costs money (§17).
+
+**When this document and the code disagree,** the document is the intent and the
+code is the fact. Say so rather than silently following either — the mismatch is
+usually the interesting information.
+
+**When something here is ambiguous,** prefer the reading that serves the pillars in
+§1, and flag the ambiguity rather than inventing a resolution.
 
 ---
 
@@ -1186,6 +1228,401 @@ solo-with-AI build being shown openly.
 
 ---
 
+## 27. Player goals — the collection log and achievements
+
+Levels and quests tell a player what they *can* do. Neither tells them what to aim
+for on a given evening. That scaffolding is the collection log, and it is the
+cheapest real content in the project because it adds no systems — it reads state
+that already exists.
+
+### 27.1 The collection log
+
+Every obtainable item has a slot. Obtained slots show the item and the count;
+unobtained ones show a silhouette and **where it comes from**.
+
+Organized by source, because "where do I go" is the question it answers:
+
+| Category | Entries |
+|---|---|
+| Monsters | One page per monster, its full drop table, kill count |
+| Bosses | The Act II and III bosses, their unique drops, kill count |
+| Gathering | Every log, ore and fish, with the node that yields it |
+| Crafting | Every craftable, at every quality tier |
+| Clue trails | Rewards per tier |
+| Quests | Unique quest rewards |
+| Housing | Furniture, trophies |
+
+**Why it works here:** it turns the authored world into a checklist without a
+single quest marker on screen (§7.2 keeps the minimap off). A player who wants
+`wolf_pelt` learns they need Thornwood, and goes and looks at Thornwood — which is
+the point of building Thornwood.
+
+**Mechanically:** a `HashSet` of obtained item ids plus per-item counts in
+`GameState`, written on every item acquisition, read by the UI. That is the whole
+feature. Milestone rewards at completion percentages (25/50/75/100 per category)
+give it teeth.
+
+### 27.2 Achievements
+
+`ACHIEVEMENTS` already exists in content as `{id, name, desc}`. Alderfell keeps it
+and adds an act-scoped structure: a handful per act, granted for the things the act
+is *about* rather than arbitrary counters.
+
+Examples: reach the clifftop; craft your first quality-3 item; kill the Thornwood
+ogre without eating; reach level 25 in any gathering skill; discover all three
+framed reveals in a region.
+
+**Never award an achievement for something the player can't see the shape of.** A
+counter-based achievement with no visible counter is noise.
+
+### 27.3 Titles
+
+Titles are the diegetic half of §4.2's recognition. Earned from achievements and
+act progress, displayed by NPCs and (later) other players. They are the answer to
+"the realm knows your name" — Castaway, Of the Landing, Barrow-Breaker, Kingsmoor's
+Bane, and so on.
+
+---
+
+## 28. Endgame — mastery and completion
+
+Act V (levels 40–50) is not new content. It is the point at which the content you
+have becomes the thing you're mastering. This is the honest and correct endgame for
+a solo-built game, and it is the reason the collection log matters.
+
+| Pillar | What it asks of the player |
+|---|---|
+| **The log** | Complete categories. Rare drops, every crafting quality tier, every clue reward. |
+| **Skills to 50** | The remaining skills, at the reduced curve (§4.1). |
+| **Clue trails** | The hard tier, which spans every region and rewards world knowledge. |
+| **Elite variants** | Named/elite versions of existing enemies at higher tiers, in the Deep zones. Reuses meshes with scaling and tinting (§8.3) — near-free content. |
+| **The house** | Every functional room at max tier, the trophy case filled. |
+| **Titles** | The final ones require completion across several pillars. |
+
+**Explicitly not building** a raid, a season pass, or infinite scaling dungeons.
+Those need an audience and a live-service posture the project has ruled out (§22).
+
+**The ending:** the Act IV story beat closes the arc — the realm acknowledges you.
+Mastery content continues past it, so there is no "credits then nothing" wall.
+
+---
+
+## 29. Save versioning and migration
+
+Content changes constantly during development and the schema must survive it.
+
+### 29.1 The rules
+
+- **Every save carries `schemaVersion`.** An integer, bumped whenever the shape of
+  saved state changes in a way old saves can't be read as-is.
+- **Migrations are ordered and cumulative.** A save at v3 loading into a v7 build
+  runs migrations 3→4→5→6→7. Each migration is a small pure function, and each gets
+  a test with a real fixture of the old shape.
+- **Never migrate in place destructively.** Back up the original save first — the
+  rollback path already exists in `SaveSystem` and this rides on it.
+- **A save from a newer build than the running one is refused**, with a clear
+  message. Downgrading silently corrupts.
+- **Sanitize after migrating, not before.** The sanitizer's job is hostile or
+  corrupt data; the migration's job is old-but-valid data. Running them the other
+  way round makes the sanitizer discard fields the migration was about to use.
+- **Content ids are the fragile part.** Renaming an item id breaks every save
+  holding it. Either don't rename, or add a migration that remaps the old id.
+
+### 29.2 The policy through development
+
+Versioning and migration infrastructure is built **now** — it is much harder to
+retrofit. But the *policy* changes at M3:
+
+| Phase | Policy |
+|---|---|
+| M0–M2 | Breaking changes allowed. Bump the version, write the migration only if a save is worth keeping. |
+| **M3 onward** | The vertical slice is playable by other people. Every schema change gets a migration and a test. No exceptions. |
+| Post-release | As above, plus: never remove a migration, however old. |
+
+---
+
+## 30. Unity project conventions
+
+So that two sessions on two machines produce a project that looks like one person
+built it.
+
+### 30.1 Folder layout
+
+```
+unity/Assets/Isoperia/
+  Core/          simulation + tests (noEngineReferences — see §16.2)
+  Unity/         presentation: MonoBehaviours, views, input, UI
+  Art/
+    Models/      meshes (.fbx, .glb)
+    Materials/   the shared world material + character materials
+    Textures/    the gradient atlas, terrain textures
+    Shaders/     terrain, vegetation wind, water
+  Audio/         Music/ SFX/ Ambience/
+  Prefabs/       Actors/ Props/ Kit/ UI/ VFX/
+  Scenes/        Bootstrap + one per region
+  Resources/
+    Content/     the content JSON (§16.3)
+    Locale/      locale JSON (§25.1)
+  Settings/      URP assets, quality tiers
+  Editor/        build and asset-prep tooling
+```
+
+### 30.2 Naming
+
+| Thing | Convention | Example |
+|---|---|---|
+| C# types | PascalCase | `CombatMath`, `RegionStreamer` |
+| C# private fields | `_camelCase` | `_currentTick` |
+| Content ids | snake_case | `oak_plank`, `dire_wolf` |
+| Assets | snake_case, category-prefixed | `tree_oak_a`, `kit_wall_stone_02` |
+| Prefabs | PascalCase | `DireWolf`, `OakTree` |
+| Scenes | PascalCase region name | `Shorelands`, `HearthsLanding` |
+| Locale keys | dotted namespace | `ui.inventory.title` |
+
+### 30.3 Scenes
+
+- **`Bootstrap`** is the only scene in build settings that runs first. It creates
+  the Core simulation, loads content, restores the save, then loads a region scene
+  additively.
+- **One scene per region**, loaded and unloaded additively by the streamer.
+  Regions never reference each other's objects directly.
+- **Nothing gameplay-critical is placed in a scene by hand** where content JSON
+  could describe it. Scenes hold the world; JSON holds the rules.
+
+### 30.4 Layers and physics
+
+| Layer | Use |
+|---|---|
+| `Terrain` | Ground collision, camera collision |
+| `Actor` | Player and NPCs |
+| `Interactable` | Nodes, doors, chests — what the contextual button finds |
+| `Landform` | Hero landforms; camera-collides, blocks vision |
+| `Scatter` | No collision at all |
+| `UI` | Canvas |
+
+Vision checks (§23.4) raycast against `Terrain | Landform` only. Scatter must
+never block an enemy's line of sight — a bush that hides you is a bug, not stealth.
+
+### 30.5 Addressables
+
+One group per region, plus `Shared` (atlas, characters, UI) and `Audio`. Region
+groups load on approach and unload behind, which is what keeps the build under the
+§6 size budget.
+
+---
+
+## 31. Code conventions and the command catalogue
+
+### 31.1 The command catalogue
+
+Player intent enters Core as one of these. This list is the contract; add to it
+rather than reaching into state.
+
+| Command | Fields | Effect |
+|---|---|---|
+| `MoveTo` | `x, z` | Path and walk. The only way position changes. |
+| `StopMoving` | — | Cancels the path. |
+| `Interact` | `targetId` | Context-resolved: gather, talk, open, enter. |
+| `SetTarget` | `targetId` | Combat target selection. |
+| `UseAbility` | `abilityId, targetId` | Resolved on the next tick, GCD-gated. |
+| `EquipItem` / `UnequipItem` | `itemId, slot` | |
+| `UseItem` | `itemId` | Eat, drink, read. |
+| `DropItem` | `itemId, qty` | |
+| `CraftRecipe` | `recipeId, qty` | |
+| `PlantSeed` / `HarvestPlot` | `seedId, plotId` | |
+| `PlaceFurniture` / `RemoveFurniture` | `itemId, position, rotation` | Housing. |
+| `BuyItem` / `SellItem` | `itemId, qty` | |
+| `AcceptQuest` / `AbandonQuest` | `questId` | |
+| `FastTravel` | `waypointId` | Rejected if the waypoint isn't unlocked. |
+
+**Every command is validated inside Core.** The Unity layer never pre-checks
+whether a move is legal or an ability is off cooldown to decide whether to send it
+— it sends, and Core accepts or rejects. That is the same discipline an
+authoritative server needs against a hostile client, and building it now costs
+nothing.
+
+### 31.2 Adding a system to Core
+
+1. Create `Core/Runtime/Systems/<Name>System.cs`. No `using UnityEngine`.
+2. Take dependencies as constructor parameters (`IRandom`, `ContentDatabase`,
+   `GameState`) — never a static singleton, or it can't be tested or run per-player
+   on a server.
+3. All randomness through the injected `IRandom`, so a seeded run is reproducible.
+4. All timing in **ticks**, never seconds and never `Time.deltaTime`.
+5. Write the tests alongside. A system without tests doesn't get merged.
+6. If it changes saved state, bump `schemaVersion` and write the migration (§29).
+
+### 31.3 Comment style
+
+This codebase explains **why**, frequently citing the bug that motivated a rule —
+see `ContentDatabase`'s note about the fallback catalog that clamped a 2400-coin
+payout to 500. Keep that habit. A comment restating what the line does is noise; a
+comment recording what went wrong last time is the most valuable text in the file.
+
+---
+
+## 32. Definition of done
+
+Nothing is "done" because it works once on the machine that made it.
+
+**A Core system is done when:** it has tests covering the failure cases as well as
+the happy path; it has no `UnityEngine` reference; all randomness goes through
+`IRandom`; all timing is in ticks; `core-tests.yml` is green.
+
+**A content addition is done when:** `ContentValidator` passes; every referenced id
+exists; it's reachable in game (obtainable, craftable, or dropped); it appears
+correctly in the collection log.
+
+**An asset is done when:** it passes every gate in `docs/ASSET_ADMISSION.md` —
+licence recorded in the ledger, within budget, re-UV'd to the atlas, LODs present,
+scale and pivot correct, verified in a lit scene at phone size.
+
+**A region is done when:** all ten items of the §3.2 craft checklist pass, the
+three framed-reveal screenshots are worth keeping, and it holds 30 FPS on device
+inside the §18 budget.
+
+**A UI screen is done when:** it works at 6" one-handed; text scales; it survives
+40% string expansion; no colour-only information; it opens and closes without
+disturbing world state.
+
+**A milestone is done when** its gate in §13 passes — and those gates are
+deliberately subjective ("killing one wolf is satisfying twenty times"), because
+the failure mode this project is guarding against is shipping something that
+technically works and isn't worth looking at.
+
+---
+
+## 33. Content schema reference
+
+The real shapes, as they exist in `unity/Assets/Isoperia/Resources/Content/`.
+**Verified against the shipping files** — note that some tables are objects keyed
+by id and others are arrays, which is inconsistent but is what the code expects.
+
+| File | Table | Shape |
+|---|---|---|
+| `items` | `ITEMS` | **object** keyed by id → `{id, name, value, stack, type, desc}`. Key and `id` must match. |
+| `items` | `ITEM_ICONS` | object: id → emoji/glyph |
+| `items` | `ITEM_ICON_IMAGE_IDS` | array of item ids that have PNG icons |
+| `combat` | `MONSTERS` | **object** → `{id, name, hp, level, maxHit, attackRoll, defenseRoll, attackTick, aggroRange, respawnMs, ranged, xp, main[], tertiary[], petTable[]}` |
+| `combat` | `WEAPONS` | **object** → `{id, name, itemId, kind, accuracy, maxHit, ticks, requiredAttack}`. `itemId` may be `null` (unarmed). |
+| `combat` | `FOODS` | object → `{heal, tier}` |
+| `combat` | `ATTACK_STYLES` | object → `{id, name, description, trains, accuracyBonus, maxHitBonus, defenseBonus}` |
+| `recipes` | `RECIPES` | **array** → `{id, name, skill, levelReq, ticks, xp, inputs:[{itemId, qty}], output:{itemId, qty}, burnable?}` |
+| `skills` | `SKILLS` | object → `{id, name, short, icon, kind}` |
+| `skills` | `RESOURCES` | object → `{nodeType, skill, levelReq, ticksPerAction, maxUses, depletes, toolTier, yield, masteryKey, drops:[{itemId,min,max,weight}]}` |
+| `buildings` | `BUILDINGS` | object keyed by UPPERCASE → `{name, desc, effect, icon, levelReq, maxCount, buildXp, baseCost:[{itemId,qty}]}` |
+| `farming` | `SEEDS` | object → `{id, name, levelReq, growMs, xp, masteryKey, produce:{itemId,min,max}}` |
+| `clues` | `CLUE_TIERS` | object → `{name, itemId, minRing, maxRing, coins:{min,max}, loot:[{itemId,min,max}]}` |
+| `quests` | `QUESTS` | **array** → `{id, title, summary, doneText, starterType, target, count, reward…}` |
+| `achievements` | `ACHIEVEMENTS` | **array** → `{id, name, desc}` |
+| `npcs` | `VILLAGERS` | **array** → `{id, kind, home:{x,y}, lines:{context:[…]}}` |
+| `xp` | `XP_TABLE` | array of cumulative XP thresholds |
+| `shop` | `STOCK` | **array** → `{itemId, price}` |
+
+**Drop table shapes differ by table and this matters:**
+`main` entries are `{itemId, min, max, weight}` and are rolled once per kill against
+the summed weights. `tertiary` entries are `{itemId, min, max, chance}` and
+`petTable` entries are `{itemId, chance}` — both independent rolls, with `chance` a
+fraction between 0 and 1, never a percentage.
+
+`ContentValidator` enforces the referential rules; see `.claude/skills/add-content/`
+for the procedure.
+
+---
+
+## 34. Testing strategy
+
+| Layer | How it's tested | Where |
+|---|---|---|
+| Core systems | NUnit, every failure case | `Core/Tests/`, CI on every push |
+| Content | `ContentValidator` | Same suite |
+| Saves | Round-trip, corruption, every migration with a real old fixture | Same suite |
+| Determinism | Same seed + same commands → identical state | Same suite |
+| Performance | Frame time on device at each milestone gate | Manual, on the phone |
+| Feel | A person plays it | Manual — the M2 and M3 gates |
+
+**What must have a test:** anything with a number in it; anything that reads or
+writes the save; anything content-driven; every migration.
+
+**What can't be tested and needs a human:** whether the world is beautiful, whether
+combat feels good, whether onboarding works. Those are §13's gates and they are
+deliberately not automatable.
+
+**The determinism test is load-bearing for the MMO path.** If the same seed and the
+same command sequence stop producing identical state, server authority is broken
+and the cause needs finding immediately.
+
+---
+
+## 35. Glossary
+
+| Term | Meaning |
+|---|---|
+| **Tick** | 600ms. The simulation's unit of time. All durations are in ticks. |
+| **Core** | `Isoperia.Core` — the engine-agnostic simulation. The future server. |
+| **Command** | A serializable object expressing player intent (§31.1). |
+| **Framed reveal** | A hand-placed spot where cresting terrain presents a composed view. Three per region, screenshotted. |
+| **Hero landform** | A Blender-sculpted mesh providing silhouette a heightfield can't — cliff, arch, plateau. Layer 2 of §18. |
+| **The atlas** | The one shared gradient palette texture every world surface maps to (§19.1). |
+| **Craft checklist** | The ten rules in §3.2 a region must pass to ship. |
+| **Mastery** | Per-item/recipe progression, separate from skill level. |
+| **Zone tier** | Safe / Settled / Wild / Deep — sets the death penalty (§4.4). Region data, not code. |
+| **Act** | One of five progression chapters (§4.2), each with its own region and tone. |
+| **The gate** | A milestone's subjective pass condition (§13). |
+| **The budget** | §6's mobile performance limits. Art that misses it is rebuilt. |
+| **Retargeting** | Unity Humanoid remapping one animation set onto every humanoid rig (§19.3). |
+| **Isoperia** | The previous project. Its name survives in namespaces and paths; the game is Alderfell. |
+
+---
+
+## 36. M0 — the Shorelands beauty proof
+
+The next milestone, broken down. **Nothing here is a game system.** M0 answers one
+question: does this look beautiful on a phone? If it doesn't, no amount of combat
+design rescues the project — that is exactly how the previous one failed.
+
+### 36.1 Tasks, in order
+
+| # | Task | Where | Done when |
+|---|---|---|---|
+| 1 | Adopt and tune the CC0 base palette into the gradient atlas | Remote + GIMP | One texture, ≤5 hues for the Shorelands band, committed to `Art/Textures/` |
+| 2 | Write the world material and terrain shader against the atlas | Remote | Vertex-colour blend, atlas sample, one material |
+| 3 | Vegetation wind shader | Remote | Vertex wind, cheap, no per-frame CPU cost |
+| 4 | Stylized water with shoreline foam | Remote | Animated, no reflections (§6 forbids SSR) |
+| 5 | Terrain blockout of the Shorelands | Local/Unity | ≥15m relief, the switchback path, walkable in grey and interesting |
+| 6 | Sculpt 4–6 hero landforms — cliffs, a sea arch, the wreck's rock shelf | Local/Blender | 2–5k tris each, atlas-UV'd, admitted per `import-asset` |
+| 7 | Admit CC0 scatter: 2 tree species, 4 rocks, grass, beach debris | Local | Each passes the admission gate |
+| 8 | Paint and scatter the region | Local/Unity | Jittered, nothing tiling visibly |
+| 9 | Sky, fog, directional light, time-of-day tint cycle | Local/Unity | ~48-min cycle, fog tinted to the region palette |
+| 10 | Third-person orbit camera to §23.1 spec | Remote + Local | Spring arm, collision, no auto-rotate |
+| 11 | Place the three framed reveals | Local | Screenshotted on the phone |
+| 12 | Build to the iPhone and profile | Local/Xcode | Frame time and draw calls recorded |
+
+### 36.2 Acceptance criteria
+
+- [ ] Runs at **30 FPS** on device, inside §6's budget (~120k tris, ~40 draw calls,
+      3 materials for the dressed region)
+- [ ] All ten §3.2 craft-checklist items pass
+- [ ] Three framed-reveal screenshots that are **worth keeping**
+- [ ] Judged on the phone against the reference games in §0 — RuneScape, WoW, W101,
+      Minecraft — and it holds up
+- [ ] Every asset in the licence ledger
+
+### 36.3 What M0 must NOT contain
+
+No combat, no inventory, no UI beyond the joystick, no enemies, no quests, no
+saving. Every one of those is a way of avoiding the question M0 exists to ask.
+
+### 36.4 The honest exit
+
+If M0 doesn't look good, **iterate inside M0**. Do not proceed to M1 hoping the art
+improves later — it doesn't, and that is the specific mistake this whole document
+exists to prevent. If after real iteration it still doesn't hold, the scope
+conclusion is that five regions is wrong and three is right (§14), not that the
+pillar was wrong.
+
+---
+
 ## Appendix A — Open decisions
 
 1. ~~**Business model**~~ — **resolved in §22.** Free and unmonetized at v1,
@@ -1211,8 +1648,10 @@ solo-with-AI build being shown openly.
 6. Fill in the equipment stat tables (currently all zeros) against the §4.3 model.
 7. Strip `LabourSystem` and offline gathering from the active wiring (retain code).
 
-**Then M0 (local sessions, Mac mini):**
-8. Adopt and tune the CC0 base palette into the shared gradient atlas (§19.1).
-9. Build the Shorelands beauty proof — terrain, hero landforms, water, grass, sky,
-   camera. **Nothing else.** Judge it on the iPhone against the games named in §0.
-10. Revise `docs/ART_BIBLE.md` against §3.2's craft rules and §6's budget.
+**Then M0 — see §36 for the ordered task list and acceptance criteria.**
+
+Also outstanding, and cheap to do from a remote session:
+- Save `schemaVersion` and the migration harness (§29), before M3 makes it mandatory
+- The collection-log state (`HashSet` of obtained ids + counts) in `GameState` (§27.1)
+- Locale extraction: move user-facing strings to `Resources/Locale/en.json` (§25.1)
+- Revise `docs/ART_BIBLE.md` against §3.2's craft rules and §6's budget

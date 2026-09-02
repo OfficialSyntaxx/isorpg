@@ -5,7 +5,24 @@ parity, built in Unity 6 URP by a solo dev with AI assistance and **zero cash
 budget**.
 
 **Read [`docs/GDD_ALDERFELL.md`](docs/GDD_ALDERFELL.md) before design work.** It is
-the bible and it is current. This file is the operating summary.
+the bible, it is current, and its **"Start here"** section at the top is written
+for exactly this situation — a session picking the project up cold. This file is
+the operating summary.
+
+**Current milestone: M0 — the Shorelands beauty proof (GDD §36).** It has an
+ordered task list and acceptance criteria. M0 contains no combat, no inventory, no
+UI beyond the joystick, no saving — those are ways of avoiding the one question M0
+exists to ask, which is whether the world looks beautiful on a phone.
+
+| I need to… | Read |
+|---|---|
+| Know what to build next | GDD §36, then §13 |
+| Write C# in Core | GDD §16.2, §31 (command catalogue), §34 |
+| Add or edit content | GDD §33 (schema), skill `add-content` |
+| Build a region | GDD §3.2, §18, skill `build-region` |
+| Bring in an asset | GDD §19, `docs/ASSET_ADMISSION.md`, skill `import-asset` |
+| Know if something is finished | GDD §32 (definition of done) |
+| Understand a term | GDD §35 (glossary) |
 
 > This repo previously held **Isoperia**, a 2.5D isometric web RPG. Its simulation
 > was good; its flat procedural tile world was not. Alderfell keeps the simulation
@@ -50,6 +67,15 @@ the bible and it is current. This file is the operating summary.
 - **No user-facing string is a literal in code.** Every one is a key into a locale
   JSON (GDD §25.1). English is the only locale at v1; the discipline is what makes
   adding a second one a translation job rather than a refactor.
+- **Player intent uses the command catalogue** in GDD §31.1. Add a command rather
+  than reaching into state. Core validates every command — the Unity layer never
+  pre-checks legality to decide whether to send.
+- **All timing is in ticks (600ms), never seconds and never `Time.deltaTime`.** All
+  randomness goes through the injected `IRandom`, never `UnityEngine.Random`, so a
+  seeded run stays reproducible.
+- **Saves are versioned.** Changing saved state means bumping `schemaVersion` and
+  writing a migration with a test (GDD §29). Breaking saves freely is allowed until
+  M3 and not after.
 
 ## Performance budget — art that misses this is rebuilt, not shipped
 
