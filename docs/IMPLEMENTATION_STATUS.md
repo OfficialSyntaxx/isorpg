@@ -10,7 +10,7 @@ This is the working board, not a claim that described gameplay already exists.
 | P01 | Repair validator fixtures and add shipping-JSON gate | Verified | `740a776`, 411/411 tests; run `33653573403` |
 | P02 | Retire the legacy exporter write path | Verified | Direct invocation exits 1; SHA-256 snapshots of all 13 content JSON files unchanged; npm test export call removed |
 | P03 | Align GDD, Claude/Codex entry points, workflow and handoff | Verified | Active Markdown links resolve; all three skills pass quick_validate; diff reviewed |
-| P04 | Connect local Unity and Blender to the correct checkout | Blocked | 2026-09-02 connected-session probe found two Unity 6000.5.8f1 Editors, but neither targets the session checkout (`/Users/syntaxx/isorpg-m0/unity`): `/Users/syntaxx/isoRpg` and `/private/tmp/isorpg_work`. Blender bridge was not exposed. See `M0_REMOTE_RETURN.md`; do not author M0 assets until the intended checkout is opened and selected. |
+| P04 | Connect local Unity and Blender to the correct checkout | In review | 2026-09-02 recovery opened `/Users/syntaxx/isorpg-m0/unity` in Unity 6000.5.8f1 and selected `unity@931634bd`; project identity and atlas check passed. Its MCP instance disappeared on entering Play Mode, preventing required runtime evidence. Blender bridge was not exposed; see `M0_REMOTE_RETURN.md`. |
 | P05 | Establish target-device evidence | Planned | iPhone for iteration; target-class Android performance remains unverified |
 
 P01–P03 prepare repository work. P04 gates scene authoring. P05 gates final M0
@@ -21,8 +21,8 @@ mobile acceptance, not atlas research or initial blockout.
 | ID | Work | State | Dependency / exit evidence |
 |---|---|---|---|
 | M0-01 | Palette reference and Shorelands atlas | In review | Codex, 2026-09-02: five-family CC0-derived atlas, reproducible generator and UV guide committed; Unity import/lit-scene review pending; see `M0_SHORELANDS_ART.md` |
-| M0-02 | Terrain/world, wind and water shaders | Planned | M0-01; compile and lit-scene visual check on Unity |
-| M0-03 | Isolated Shorelands scene and greybox | Planned | P04; 15m relief, switchback, walkable with inspection rig |
+| M0-02 | Terrain/world, wind and water shaders | In review | Atlas surface, GPU wind and depth-foam water shaders/materials authored in scoped M0 assets. Import completed without shader errors, but MCP disconnected at Play Mode; lit render/capture still required. |
+| M0-03 | Isolated Shorelands scene and greybox | In review | `ShorelandsM0` has Unity Terrain (20m vertical size; authored height range ~17m), terrain collider, shore/water edge, grey placeholders and scene-local camera/player gate. Runtime isolation/traversal/capture evidence is blocked by MCP disconnect. |
 | M0-04 | Hero landforms and admitted scatter | Planned | Blockout and art admission evidence |
 | M0-05 | Dress, light and compose three reveals | Planned | Prior art tasks; three phone captures |
 | M0-06 | Profile and review the beauty proof | Planned | GDD §36; measured device evidence and authoring hours |

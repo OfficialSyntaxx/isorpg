@@ -31,6 +31,13 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+Recovery session: Unity 6000.5.8f1 was opened at the correct
+`/Users/syntaxx/isorpg-m0/unity` checkout and the atlas check passed. M0-02/M0-03
+now have a scoped checkpoint, but their Editor MCP instance disappeared after
+Play Mode started (the bridge fell back from port 6400 to 6403). Read
+`docs/M0_REMOTE_RETURN.md`; reconnect the exact project and complete runtime
+isolation, render, traversal and capture checks before beginning any M0-04 work.
+
 Resume via **Recovery from the first blocked session** in
 [`docs/M0_REMOTE_SESSION.md`](docs/M0_REMOTE_SESSION.md). Open the intended
 `/Users/syntaxx/isorpg-m0/unity` checkout, rediscover/select its MCP instance,
