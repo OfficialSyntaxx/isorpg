@@ -21,8 +21,8 @@ namespace Isoperia.Core.Content
     }
 
     /// <summary>
-    /// The game's content tables, loaded from the JSON that
-    /// <c>scripts/export-content.cjs</c> generates from <c>src/data/*.ts</c>.
+    /// The game's hand-authored content tables, loaded from
+    /// <c>Resources/Content/*.json</c>. These files are the source of truth.
     ///
     /// WHY THIS IS IN Isoperia.Core AND TAKES A DELEGATE:
     /// Core is declared <c>noEngineReferences</c>, which is what lets the whole
@@ -88,7 +88,7 @@ namespace Isoperia.Core.Content
                 {
                     throw new ContentException(
                         $"content file \"{name}\" is missing or empty. Run " +
-                        "`npm run export:content` and make sure the result is in the build.");
+                        "content validation and make sure Resources/Content is included in the build.");
                 }
 
                 // JsonValue.Parse RETURNS NULL on malformed input rather than
@@ -112,7 +112,7 @@ namespace Isoperia.Core.Content
                     {
                         throw new ContentException(
                             $"content file \"{name}\" has no table \"{table}\". It was renamed or " +
-                            "removed in src/data — update EXPORTS in scripts/export-content.cjs " +
+                            "removed in the authored JSON — update the content, validator " +
                             "and RequiredTables here together.");
                     }
 

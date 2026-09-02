@@ -28,3 +28,8 @@ dist-site/
 # them would embed a repository inside itself.
 .claude/worktrees/
 lighthouse-reports/
+
+# Standalone Core test builds and validation artifacts
+ci/**/bin/
+ci/**/obj/
+TestResults/

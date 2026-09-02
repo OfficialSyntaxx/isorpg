@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Isoperia.Core.Save;
 using System.Linq;
 using NUnit.Framework;
 using Isoperia.Core.Content;
@@ -41,8 +43,8 @@ namespace Isoperia.Core.Tests
                                 ""bronze_dagger"":{""id"":""bronze_dagger"",""name"":""Bronze Dagger"",""stack"":false,""value"":7}},
                               ""ITEM_ICONS"":{""coins"":""C""},""ITEM_ICON_IMAGE_IDS"":[""coins""]}",
                 ["skills"] = @"{""SKILLS"":{""woodcutting"":{""name"":""Woodcutting""}},""SKILL_IDS"":[""woodcutting""],
-                               ""CRAFT_SKILLS"":[],""COMBAT_SKILLS"":[],""RESOURCES"":{}}",
-                ["combat"] = @"{""ATTACK_STYLES"":{},""BUFFS"":{},""WEAPON_SPECIALS"":{},""AFFIXES"":{},
+                               ""CRAFT_SKILLS"":[""carpentry""],""COMBAT_SKILLS"":[""attack""],""RESOURCES"":{""tree"":{""drops"":[{""itemId"":""oak_log"",""min"":1,""max"":1,""weight"":1}]}}}",
+                ["combat"] = @"{""ATTACK_STYLES"":{""fixture"":{}},""BUFFS"":{""fixture"":{}},""WEAPON_SPECIALS"":{""fixture"":{}},""AFFIXES"":{""fixture"":{}},
                                ""WEAPONS"":{
                                  ""fists"":{""id"":""fists"",""name"":""Fists"",""itemId"":null,""maxHit"":1,""ticks"":2},
                                  ""dagger"":{""id"":""dagger"",""name"":""Bronze Dagger"",""itemId"":""bronze_dagger"",""maxHit"":4,""ticks"":3}},
@@ -51,18 +53,18 @@ namespace Isoperia.Core.Tests
                                            {""itemId"":""coins"",""min"":4,""max"":16,""weight"":40}],
                                  ""tertiary"":[{""itemId"":""wolf_pelt"",""min"":1,""max"":1,""chance"":0.08}],
                                  ""petTable"":[{""itemId"":""pet_wolf"",""chance"":0.004}]}},
-                               ""FOODS"":{}}",
+                               ""FOODS"":{""oak_plank"":{""heal"":1}}}",
                 ["recipes"] = @"{""RECIPES"":[{""id"":""saw_oak"",""name"":""Saw Oak"",""skill"":""carpentry"",
                                  ""levelReq"":1,""ticks"":3,""xp"":25,
                                  ""inputs"":[{""itemId"":""oak_log"",""qty"":1}],
                                  ""output"":{""itemId"":""oak_plank"",""qty"":1}}]}",
-                ["buildings"] = @"{""BUILDINGS"":{""sawmill"":{}},""BUILDING_TYPES"":[""sawmill""],""MAX_BUILD_LEVEL"":3}",
-                ["achievements"] = @"{""ACHIEVEMENTS"":{""first_log"":{}}}",
+                ["buildings"] = @"{""BUILDINGS"":{""sawmill"":{""baseCost"":[{""itemId"":""oak_log"",""qty"":1}]}},""BUILDING_TYPES"":[""sawmill""],""MAX_BUILD_LEVEL"":3}",
+                ["achievements"] = @"{""ACHIEVEMENTS"":[{""id"":""first_log""}]}",
                 ["xp"] = @"{""XP_TABLE"":[0,83,174]}",
-                ["npcs"] = @"{""VILLAGERS"":{""bram"":{}},""CRITTERS"":{},""VETERAN_TIERS"":[],""VILLAGER_SPECS"":{}}",
-                ["quests"] = @"{""QUESTS"":{""landfall"":{}}}",
-                ["farming"] = @"{""SEEDS"":{""cabbage_seed"":{}},""SEED_IDS"":[""cabbage_seed""]}",
-                ["clues"] = @"{""CLUE_TIERS"":{""simple"":{}},""CLUE_TIER_LIST"":[""simple""]}",
+                ["npcs"] = @"{""VILLAGERS"":[{""id"":""bram""}],""CRITTERS"":[{""id"":""bird""}],""VETERAN_TIERS"":[{}],""VILLAGER_SPECS"":{""fixture"":{}}}",
+                ["quests"] = @"{""QUESTS"":[{""id"":""landfall"",""rewards"":[{""itemId"":""coins"",""qty"":1}]}]}",
+                ["farming"] = @"{""SEEDS"":{""oak_log"":{""produce"":{""itemId"":""oak_plank"",""min"":1,""max"":1}}},""SEED_IDS"":[""oak_log""]}",
+                ["clues"] = @"{""CLUE_TIERS"":{""simple"":{""itemId"":""oak_log"",""loot"":[{""itemId"":""oak_plank"",""min"":1,""max"":1}]}},""CLUE_TIER_LIST"":[""simple""]}",
                 ["shop"] = @"{""STOCK"":[{""itemId"":""oak_plank"",""price"":15}]}",
             };
         }
@@ -93,11 +95,11 @@ namespace Isoperia.Core.Tests
         // a single field without restating the whole combat file.
         private static string CombatWith(string main, string tertiary, string pets)
         {
-            return @"{""ATTACK_STYLES"":{},""BUFFS"":{},""WEAPON_SPECIALS"":{},""AFFIXES"":{},
+            return @"{""ATTACK_STYLES"":{""fixture"":{}},""BUFFS"":{""fixture"":{}},""WEAPON_SPECIALS"":{""fixture"":{}},""AFFIXES"":{""fixture"":{}},
                      ""WEAPONS"":{""fists"":{""id"":""fists"",""name"":""Fists"",""itemId"":null}},
                      ""MONSTERS"":{""dire_wolf"":{""id"":""dire_wolf"",""name"":""Dire Wolf"",
                        ""main"":[" + main + @"],""tertiary"":[" + tertiary + @"],""petTable"":[" + pets + @"]}},
-                     ""FOODS"":{}}";
+                     ""FOODS"":{""oak_plank"":{""heal"":1}}}";
         }
 
         [Test]
@@ -174,9 +176,9 @@ namespace Isoperia.Core.Tests
         public void WeaponPointingAtUnknownItemIsCaught()
         {
             IReadOnlyList<string> errors = ValidateWith("combat",
-                @"{""ATTACK_STYLES"":{},""BUFFS"":{},""WEAPON_SPECIALS"":{},""AFFIXES"":{},
+                @"{""ATTACK_STYLES"":{""fixture"":{}},""BUFFS"":{""fixture"":{}},""WEAPON_SPECIALS"":{""fixture"":{}},""AFFIXES"":{""fixture"":{}},
                   ""WEAPONS"":{""dagger"":{""id"":""dagger"",""itemId"":""rune_dagger""}},
-                  ""MONSTERS"":{},""FOODS"":{}}");
+                  ""MONSTERS"":{""dire_wolf"":{""main"":[],""tertiary"":[],""petTable"":[]}},""FOODS"":{""oak_plank"":{""heal"":1}}}");
 
             AssertMentions(errors, "dagger", "rune_dagger");
         }
@@ -217,7 +219,7 @@ namespace Isoperia.Core.Tests
         {
             IReadOnlyList<string> errors = ValidateWith("items",
                 @"{""ITEMS"":{""oak_plank"":{""id"":""oak_planks"",""name"":""Oak Plank"",""value"":12}},
-                  ""ITEM_ICONS"":{},""ITEM_ICON_IMAGE_IDS"":[]}");
+                  ""ITEM_ICONS"":{""oak_plank"":""P""},""ITEM_ICON_IMAGE_IDS"":[""oak_plank""]}");
 
             AssertMentions(errors, "oak_plank", "oak_planks");
         }
@@ -227,7 +229,7 @@ namespace Isoperia.Core.Tests
         {
             IReadOnlyList<string> errors = ValidateWith("items",
                 @"{""ITEMS"":{""oak_plank"":{""id"":""oak_plank"",""value"":12}},
-                  ""ITEM_ICONS"":{},""ITEM_ICON_IMAGE_IDS"":[]}");
+                  ""ITEM_ICONS"":{""oak_plank"":""P""},""ITEM_ICON_IMAGE_IDS"":[""oak_plank""]}");
 
             AssertMentions(errors, "oak_plank", "no name");
         }
@@ -237,7 +239,7 @@ namespace Isoperia.Core.Tests
         {
             IReadOnlyList<string> errors = ValidateWith("items",
                 @"{""ITEMS"":{""oak_plank"":{""id"":""oak_plank"",""name"":""Oak Plank"",""value"":-5}},
-                  ""ITEM_ICONS"":{},""ITEM_ICON_IMAGE_IDS"":[]}");
+                  ""ITEM_ICONS"":{""oak_plank"":""P""},""ITEM_ICON_IMAGE_IDS"":[""oak_plank""]}");
 
             AssertMentions(errors, "oak_plank", "negative");
         }
@@ -272,6 +274,104 @@ namespace Isoperia.Core.Tests
 
             Assert.That(ex.Message, Does.Contain("ghost_one"));
             Assert.That(ex.Message, Does.Contain("ghost_two"));
+        }
+
+        // Unlike the isolated fixtures, this is the shipping-data CI gate.
+        [Test]
+        public void ShippingContentPassesValidation()
+        {
+            Assert.DoesNotThrow(() => ContentValidator.ValidateOrThrow(TestContent.Real()));
+        }
+
+        private static IReadOnlyList<string> Mutate(Action<ContentDatabase> change)
+        {
+            ContentDatabase db = Load(Clean());
+            change(db);
+            return ContentValidator.Validate(db);
+        }
+
+        [Test]
+        public void ObjectShapedRecipesCannotSilentlySkipValidation()
+        {
+            AssertMentions(Mutate(db => db.File("recipes").Set("RECIPES",
+                JsonValue.Parse(@"{""bad"":{}}"))), "recipes.RECIPES", "Array");
+        }
+
+        [Test]
+        public void MissingItemIdIsCaught()
+        {
+            AssertMentions(Mutate(db => db.Items["oak_log"].Members.Remove("id")), "oak_log", "id");
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        [TestCase(1.5)]
+        public void InvalidRecipeQuantityIsCaught(double qty)
+        {
+            AssertMentions(Mutate(db => db.Recipes[0]["inputs"][0].Set("qty", JsonValue.Number(qty))),
+                "saw_oak", "qty");
+        }
+
+        [Test]
+        public void NegativeShopPriceIsCaught()
+        {
+            AssertMentions(Mutate(db => db.ShopStock[0].Set("price", JsonValue.Number(-1))), "shop", "price");
+        }
+
+        [Test]
+        public void DuplicateRecipeIdIsCaught()
+        {
+            AssertMentions(Mutate(db => db.Recipes.Add(db.Recipes[0])), "saw_oak", "duplicate");
+        }
+
+        [Test]
+        public void MalformedNestedDropTableIsCaught()
+        {
+            AssertMentions(Mutate(db => db.Monsters["dire_wolf"].Set("main",
+                JsonValue.Parse(@"{""itemId"":""coins""}"))), "dire_wolf", "Array");
+        }
+
+        [TestCase("quests", "QUESTS")]
+        public void UnknownQuestRewardIsCaught(string file, string table)
+        {
+            AssertMentions(Mutate(db => db.Table(file, table)[0]["rewards"][0].Set("itemId",
+                JsonValue.String("missing_reward"))), "landfall", "missing_reward");
+        }
+
+        [Test]
+        public void UnknownBuildingMaterialIsCaught()
+        {
+            AssertMentions(Mutate(db => db.Buildings["sawmill"]["baseCost"][0].Set("itemId",
+                JsonValue.String("missing_stone"))), "sawmill", "missing_stone");
+        }
+
+        [Test]
+        public void UnknownFarmProduceIsCaught()
+        {
+            AssertMentions(Mutate(db => db.Seeds["oak_log"]["produce"].Set("itemId",
+                JsonValue.String("missing_crop"))), "oak_log", "missing_crop");
+        }
+
+        [Test]
+        public void UnknownResourceDropIsCaught()
+        {
+            AssertMentions(Mutate(db => db.Resources["tree"]["drops"][0].Set("itemId",
+                JsonValue.String("missing_log"))), "tree", "missing_log");
+        }
+
+        [Test]
+        public void UnknownClueRewardIsCaught()
+        {
+            AssertMentions(Mutate(db => db.Table("clues", "CLUE_TIERS")["simple"]["loot"][0].Set("itemId",
+                JsonValue.String("missing_treasure"))), "simple", "missing_treasure");
+        }
+
+        [Test]
+        public void ShippingContentMutationIsRejected()
+        {
+            ContentDatabase db = TestContent.Real();
+            db.Quests[0]["rewards"][0].Set("itemId", JsonValue.String("missing_reward"));
+            AssertMentions(ContentValidator.Validate(db), "missing_reward");
         }
     }
 }

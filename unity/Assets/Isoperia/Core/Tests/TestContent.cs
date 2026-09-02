@@ -3,7 +3,7 @@ using Isoperia.Core.Content;
 namespace Isoperia.Core.Tests
 {
     /// <summary>
-    /// Loads the REAL exported content for tests that need it.
+    /// Loads the REAL authored content for tests that need it.
     ///
     /// Some behaviour is only worth testing against the actual tables — which
     /// resource a level-1 miner idles on, what a villager's specialisation pays,
@@ -47,7 +47,7 @@ namespace Isoperia.Core.Tests
             throw new ContentException(
                 "could not find Assets/Isoperia/Resources/Content from " +
                 System.IO.Directory.GetCurrentDirectory() +
-                ". Run `npm run export:content`.");
+                ". Ensure the repository includes Resources/Content/*.json.");
         }
     }
 }
