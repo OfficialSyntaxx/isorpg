@@ -33,6 +33,8 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 Review **M0-01** in `docs/M0_SHORELANDS_ART.md`, then begin **M0-02: atlas shaders**.
 The five-family atlas, editable JSON, generator and UV guide are committed.
+Checkpoint `0de6470` passed the palette consistency check and **411/411 Core tests**
+in [CI run 33661510739](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33661510739).
 Run `python3 tools/build_shorelands_palette.py --check`; do not paint over its generated PNG.
 Before scene authoring, connect Unity/Blender to this checkout and verify project
 identity and dirty state. Then create the isolated inspection scene and greybox

@@ -86,3 +86,8 @@ user's current request and milestone. Update ownership when a task is started.
 - M0-02 is next; P04 still blocks connected scene work. Shader, Editor, phone
   and Blender checks have not run. Measured hands-on region authoring hours
   have not begun; do not substitute elapsed agent runtime for authoring effort.
+
+- M0 palette checkpoint `0de647029393360d1d08c014002cdf78eda859c2`: [CI run
+  33661510739](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33661510739)
+  passed the generated-atlas check and **411/411 Core tests**. Unity import and
+  lit-scene review remain pending.
