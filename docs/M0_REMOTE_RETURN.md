@@ -38,3 +38,12 @@
 - A dedicated macOS inspection player was built from only `ShorelandsM0.unity` with the explicit `ISOPERIA_M0_INSPECTION` define. Its `Player.log` recorded: `M0_INSPECTION_PLAYER world=False save=False motor=True controller=True orbit=True collider=True`.
 - This is player evidence for M0 startup isolation and rig/collider attachment. The player launched on Metal with PhysX and its new log section contained no project errors or exceptions.
 - The build helper is Editor-only and the runtime source has no `UnityEditor` references. Normal Bootstrap/disposable-save regression, touch interaction, terrain palette/foam/wind visuals, full-route traversal, render statistics, labelled captures, and phone validation remain NOT RUN. M0-04 remains blocked.
+
+## Input lifecycle and renderer-dependency validation (2026-09-03)
+
+- Baseline `5c60102719553a65dd2a7185fc44902282929744`: exact Editor `/Users/syntaxx/isorpg-m0/unity`, Unity `6000.5.8f1`, sole MCP `unity@931634bd`, clean saved six-root scene.
+- Two distinct M0 Play Mode entries each created exactly one `M0 Inspection Joystick`; no persistent canvas remained. Motor/touch components and desktop axes were present. The corrected pinch code tracks two non-movement right-zone touches by frame-to-frame distance, but MCP could not inject multi-touch state, so actual pinch gesture evidence remains NOT RUN.
+- Rebuilt macOS inspection player launched on Metal/PhysX at 1920×1080 and logged `M0_INSPECTION_PLAYER world=False save=False motor=True controller=True orbit=True touch=True collider=True`, with no player errors/exceptions.
+- URP depth texture was disabled even though ShorelandsWater reads scene depth; it is now enabled in `Assets/Isoperia/Settings/IsoperiaURP.asset`. The scene still has zero TerrainLayers/control maps and no wind-shader renderer, so terrain blend, visible foam and wind are NOT RUN rather than inferred.
+- The four assertions reproduce in `UnityEditor.BuildPipeline.BuildPlayer` at `BuildPipeline.bindings.cs:267` immediately after Unity's uncompiled-code warning. Bee/Tundra reports build success, and no project/player stack frame is present. Forced compilation did not remove the external-change condition; clean Editor Console remains unresolved.
+- Full route/camera proof, rendering statistics, labelled captures, target Android validation and authoring hours: NOT RUN. M0-04 remains blocked.

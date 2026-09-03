@@ -43,6 +43,8 @@ persists across scene exit, and pinch zoom now compares the two non-movement
 fingers. Rebuild/re-run the scoped player and verify no duplicate canvas after
 re-entry before collecting the remaining M0 evidence.
 
+At `5c60102`, two M0 Play Mode entries each had exactly one joystick and no persistent canvas; desktop axes remained available. MCP cannot inject a genuine multi-touch gesture, so pinch proof remains device work. URP depth texture is now enabled explicitly for ShorelandsWater, but this scene has zero TerrainLayers/control maps and no wind renderer. Bootstrap assertions reproduce in Unity BuildPlayer after its uncompiled-code warning even though the Bee build succeeds. M0-04 remains blocked.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and

@@ -194,3 +194,9 @@ user's current request and milestone. Update ownership when a task is started.
   measures the two non-movement touch positions. Rebuild/player validation,
   scene-exit cleanup and pinch-direction checks remain required.
 - No visual, traversal, statistics or device evidence is added by this correction.
+
+## Input lifecycle and depth-texture correction — 2026-09-03
+
+- Two M0 Play Mode entries had exactly one scene-local joystick each and no persistent canvas; desktop axes remained available. Pinch distance tracking is corrected in source, but MCP cannot provide a real multi-touch gesture.
+- `IsoperiaURP.asset` now explicitly enables the camera depth texture required by ShorelandsWater. The scene still has zero TerrainLayers/control maps and no wind renderer, so M0-02 remains In review and visual proof is not accepted.
+- Rebuilt inspection player passed on macOS Metal/PhysX. Bootstrap assertions reproduce inside Unity BuildPlayer after an uncompiled-code warning; the build artifact succeeds but the clean Editor Console gate remains unresolved.
