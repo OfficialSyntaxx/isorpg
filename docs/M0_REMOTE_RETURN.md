@@ -47,3 +47,11 @@
 - URP depth texture was disabled even though ShorelandsWater reads scene depth; it is now enabled in `Assets/Isoperia/Settings/IsoperiaURP.asset`. The scene still has zero TerrainLayers/control maps and no wind-shader renderer, so terrain blend, visible foam and wind are NOT RUN rather than inferred.
 - The four assertions reproduce in `UnityEditor.BuildPipeline.BuildPlayer` at `BuildPipeline.bindings.cs:267` immediately after Unity's uncompiled-code warning. Bee/Tundra reports build success, and no project/player stack frame is present. Forced compilation did not remove the external-change condition; clean Editor Console remains unresolved.
 - Full route/camera proof, rendering statistics, labelled captures, target Android validation and authoring hours: NOT RUN. M0-04 remains blocked.
+
+## TerrainLayer and wind-test validation (2026-09-03)
+
+- Saved `ShorelandsM0` retains six roots. `ShorelandsM0Terrain.asset` now has five TerrainLayers (`ShorelandsSand`, `Timber`, `Grass`, `Sea`, `Slate`) and two alpha-control textures. Every layer references the existing Shorelands atlas, with a band-specific offset; the Terrain and TerrainCollider still reference the same TerrainData.
+- `ShorelandsTerrainLit.mat` explicitly uses `Universal Render Pipeline/Terrain/Lit`. This was required because the implicit TerrainLit fallback rendered magenta in Play Mode despite no Console errors. Lit Play Mode now visibly distinguishes authored sand, timber and grass control regions.
+- `M0 Wind Test` is a 54-vertex crossed-blade mesh under `M0 Inspection Mode`, using `ShorelandsWind.mat` / `Isoperia/M0/Shorelands Wind`. Two time-separated Editor captures show the vertex-shader displacement; no CPU mesh mutation script exists. This is a scene-local shader test, not scatter admission.
+- At the actual low-corner shoreline, ShorelandsWater renders with depth texture enabled. The foam band was not visually distinguishable in the captured view, so shoreline foam remains NOT RUN rather than claimed. No SSR or reflections were added.
+- Capture outputs were generated under `Assets/Screenshots/` during inspection and intentionally remain unstaged until a labelled evidence set exists. Traversal, statistics, labelled reveals, real touch/device checks and authoring hours remain NOT RUN. M0-04 remains blocked.

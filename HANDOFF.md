@@ -45,6 +45,8 @@ re-entry before collecting the remaining M0 evidence.
 
 At `5c60102`, two M0 Play Mode entries each had exactly one joystick and no persistent canvas; desktop axes remained available. MCP cannot inject a genuine multi-touch gesture, so pinch proof remains device work. URP depth texture is now enabled explicitly for ShorelandsWater, but this scene has zero TerrainLayers/control maps and no wind renderer. Bootstrap assertions reproduce in Unity BuildPlayer after its uncompiled-code warning even though the Bee build succeeds. M0-04 remains blocked.
 
+Follow-up terrain work added five atlas-backed TerrainLayers/two alpha-control maps to the existing M0 TerrainData and a minimal scene-local `M0 Wind Test` under the existing M0 root. Explicit URP Terrain/Lit fixed a magenta implicit TerrainLit fallback; lit Play Mode now shows terrain regions and GPU wind movement. Water is visible at the real shoreline but foam is still not visibly proven. Captures remain unstaged and unlabelled; route, stats and device validation remain open. M0-04 stays blocked.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and
