@@ -206,3 +206,8 @@ user's current request and milestone. Update ownership when a task is started.
 - M0 TerrainData now has five atlas-backed TerrainLayers and two alpha-control textures; Terrain and TerrainCollider retain the same TerrainData. Explicit URP Terrain/Lit material fixed the magenta implicit fallback, and lit Play Mode shows distinct authored terrain regions.
 - A 54-vertex scene-local `M0 Wind Test` uses the existing ShorelandsWind material/shader and visibly changes across time-separated Editor captures. This is shader proof only, not M0-04 scatter admission.
 - Water renders at the real low-corner shoreline, but visible foam, labelled captures, route/statistics and device validation remain in review.
+
+## Control-map revalidation — 2026-09-03
+
+- All five M0 TerrainLayer indices (sand, timber, grass, sea, slate) are now represented in the saved two-alpha-texture control map and verified in lit Editor Play Mode. This remains Editor evidence only.
+- Shoreline foam is still not discernible in the actual-edge capture; M0-02/M0-03 are not complete. Bootstrap BuildPipeline assertions remain an unresolved Unity Editor condition.

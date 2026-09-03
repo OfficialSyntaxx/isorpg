@@ -47,6 +47,8 @@ At `5c60102`, two M0 Play Mode entries each had exactly one joystick and no pers
 
 Follow-up terrain work added five atlas-backed TerrainLayers/two alpha-control maps to the existing M0 TerrainData and a minimal scene-local `M0 Wind Test` under the existing M0 root. Explicit URP Terrain/Lit fixed a magenta implicit TerrainLit fallback; lit Play Mode now shows terrain regions and GPU wind movement. Water is visible at the real shoreline but foam is still not visibly proven. Captures remain unstaged and unlabelled; route, stats and device validation remain open. M0-04 stays blocked.
 
+The control map now paints all five indices (sand, timber, grass, sea, slate), verified in lit Play Mode with the shared TerrainCollider data. The low-corner shoreline capture still has no discernible foam despite depth texture use, so M0 visual proof is not accepted. The four BuildPipeline assertions remain an unresolved Editor external-change condition; do not claim a clean Console. Resume with actual foam proof, route/camera traversal, labelled captures, Editor statistics clearly labelled as such, and target Android validation. M0-04 stays blocked.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and
