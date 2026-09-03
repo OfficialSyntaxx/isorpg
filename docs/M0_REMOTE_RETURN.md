@@ -71,3 +71,9 @@
 - Lit Play Mode again verified all five painted control-map indices, explicit URP Terrain/Lit, and shared Terrain/TerrainCollider data. The existing 54-vertex wind renderer remains active and GPU-only by source inspection; time-separated captures remain Editor-only evidence.
 - A deliberately narrow ShorelandsWater material/shader adjustment added `_FoamTint`, blended with the established atlas foam band. Depth texture stayed enabled; no reflection or SSR code/path was added. The actual-edge retry `Assets/Screenshots/M0_Shoreline_Foam_ActualEdge.png` still has no discernible foam. This confirms the visual gate remains failed rather than a color-only issue; the screenshot is intentionally unstaged.
 - No fresh player build, full beach/switchback/clifftop traversal, three labelled reveals, statistics, real multi-touch, iPhone/Android validation or authoring-hours record was available in this session: NOT RUN. The four preserved BuildPipeline assertions remain Editor-only BuildPipeline evidence, not suppressed; their underlying external-change trigger is unresolved.
+
+## Depth-path inspection retry (2026-09-03)
+
+- Terrain sampling confirms a real water crossing: water is at 1.8 m; along the inspected corner, terrain rises from 1.756 m at z=15 m to 2.304 m at z=20 m. The absence of foam is therefore not caused by a missing geometric shoreline.
+- A URP depth-helper substitution was tried and immediately rendered ShorelandsWater magenta in Play Mode. It was reverted without committing. The known-working raw depth path remains, but its actual-edge output has no visible foam. This is unresolved scene-depth/transparent-water behavior, not a tint-only issue.
+- Preserve the four existing BuildPipeline assertions and prior stack evidence. They occur in the Editor-only BuildPipeline helper after Unity's external/uncompiled-change warning; no player log has project errors. Classification remains Editor-only/unresolved, not proven project regression.

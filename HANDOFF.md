@@ -51,6 +51,8 @@ The control map now paints all five indices (sand, timber, grass, sea, slate), v
 
 The material-controlled foam-tint retry also failed to make foam discernible at the actual water edge. It preserves scene-depth handling and adds neither SSR nor reflections; investigate depth sampling/opaque-depth participation before further presentation work. M0 remains PARTIAL and M0-04 stays blocked.
 
+Depth inspection verifies the terrain genuinely crosses the 1.8 m water plane around z=15--20 m. A URP depth-helper experiment produced magenta water and was reverted, so do not treat it as a repair. Resume by diagnosing transparent-water scene-depth availability; retain the existing BuildPipeline assertion evidence. M0-04 stays blocked.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and

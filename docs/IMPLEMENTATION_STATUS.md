@@ -215,3 +215,7 @@ user's current request and milestone. Update ownership when a task is started.
 ### Foam diagnostic retry (2026-09-03)
 
 - A `_FoamTint` material control was added while retaining scene-depth foam computation and excluding reflections/SSR. The actual-edge Play Mode capture still lacks discernible foam, so the M0 visual acceptance gate remains failed rather than inferred from shader compilation.
+
+### Depth-path inspection retry (2026-09-03)
+
+- Terrain sampling proves the water plane intersects terrain at the inspected edge. The URP depth-helper experiment rendered the water magenta and was reverted; the remaining issue is unresolved transparent-water/depth behavior. M0 remains PARTIAL.
