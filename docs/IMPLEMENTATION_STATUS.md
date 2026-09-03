@@ -211,3 +211,7 @@ user's current request and milestone. Update ownership when a task is started.
 
 - All five M0 TerrainLayer indices (sand, timber, grass, sea, slate) are now represented in the saved two-alpha-texture control map and verified in lit Editor Play Mode. This remains Editor evidence only.
 - Shoreline foam is still not discernible in the actual-edge capture; M0-02/M0-03 are not complete. Bootstrap BuildPipeline assertions remain an unresolved Unity Editor condition.
+
+### Foam diagnostic retry (2026-09-03)
+
+- A `_FoamTint` material control was added while retaining scene-depth foam computation and excluding reflections/SSR. The actual-edge Play Mode capture still lacks discernible foam, so the M0 visual acceptance gate remains failed rather than inferred from shader compilation.

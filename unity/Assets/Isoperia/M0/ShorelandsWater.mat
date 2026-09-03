@@ -31,6 +31,7 @@ Material:
     m_Floats:
     - _FoamDistance: 1.5
     - _WaveScale: 0.18
-    m_Colors: []
+    m_Colors:
+    - _FoamTint: {r: 0.9, g: 0.95, b: 0.84, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

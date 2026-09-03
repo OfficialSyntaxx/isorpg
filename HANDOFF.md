@@ -49,6 +49,8 @@ Follow-up terrain work added five atlas-backed TerrainLayers/two alpha-control m
 
 The control map now paints all five indices (sand, timber, grass, sea, slate), verified in lit Play Mode with the shared TerrainCollider data. The low-corner shoreline capture still has no discernible foam despite depth texture use, so M0 visual proof is not accepted. The four BuildPipeline assertions remain an unresolved Editor external-change condition; do not claim a clean Console. Resume with actual foam proof, route/camera traversal, labelled captures, Editor statistics clearly labelled as such, and target Android validation. M0-04 stays blocked.
 
+The material-controlled foam-tint retry also failed to make foam discernible at the actual water edge. It preserves scene-depth handling and adds neither SSR nor reflections; investigate depth sampling/opaque-depth participation before further presentation work. M0 remains PARTIAL and M0-04 stays blocked.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and
