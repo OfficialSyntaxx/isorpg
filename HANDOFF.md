@@ -57,6 +57,12 @@ An M0-local GPU shoreline foam ribbon now supplies successful actual-edge visual
 
 Route probes show water MeshCollider interception at the beach and player-CharacterController interception at center. Do not claim a TerrainCollider route, switchback, camera-collision proof, or labelled reveals until these probes are isolated and the saved greybox landmarks exist. M0 remains PARTIAL; M0-04 stays blocked.
 
+Repository refinement pending Unity validation: the scene-local water MeshCollider
+is disabled so shoreline probes and the inspection camera cannot treat the visual
+water plane as walkable/occluding geometry. Confirm the saved scene imports with
+the collider disabled before collecting route evidence; keep the player collider
+excluded from diagnostic raycasts as well.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and

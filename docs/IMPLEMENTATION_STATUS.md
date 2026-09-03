@@ -74,6 +74,16 @@ user's current request and milestone. Update ownership when a task is started.
 - Unity compilation, Play Mode, Blender, native builds and phone performance:
   **not run** in this preparation session. No claim of visual or release readiness.
 
+## M0 route-probe refinement — pending Unity validation
+
+- The saved M0 water visual plane had an enabled MeshCollider, causing the beach
+  diagnostic ray to hit water at y=1.8 m before TerrainCollider. The inspection
+  player also intercepted center probes with its CharacterController.
+- Disabled only the scene-local water MeshCollider in `ShorelandsM0.unity` so the
+  visual plane cannot block terrain/camera validation. This does not change the
+  TerrainCollider or the six-root hierarchy. Exact Unity import, Play Mode route,
+  and camera-collision checks are still required before marking M0-03 verified.
+
 ## M0 session — 2026-09-02
 
 - Branch: `codex/m0-shorelands-foundation`, based on `c370e61`.
