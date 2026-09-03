@@ -5,6 +5,15 @@ the GDD, WORKFLOW and HANDOFF. Use the project-identity/reconnect safeguards in
 `M0_REMOTE_SESSION.md`. This sequence supersedes the earlier empty-scene repair
 sequence; preserve the reconstructed scene and existing GUIDs.
 
+## Input lifecycle correction pending validation
+
+Static review found two focused issues in the inspection controls: the generated
+joystick canvas was marked `DontDestroyOnLoad` despite being scene-local, and pinch
+measurement included the look finger itself. The correction keeps the canvas owned
+by M0 and compares the two non-movement fingers only. Rebuild/re-run the scoped
+player and verify scene exit leaves no canvas or duplicate joystick, while
+two-finger pinch changes zoom in the expected direction. This is not phone evidence.
+
 ## Current resume point — b4d416d
 
 Implementation `9fc7d6b` restored BeforeSceneLoad world creation. Final commit

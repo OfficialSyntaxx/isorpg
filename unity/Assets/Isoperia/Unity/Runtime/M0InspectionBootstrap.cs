@@ -108,8 +108,10 @@ namespace Isoperia.Unity.M0
         private Vector2 movement;
         private Vector2 lookDelta;
         private float zoomDelta;
+        private float previousPinchDistance = -1f;
         private Image knob;
         private RectTransform joystickRoot;
+        private GameObject canvasObject;
 
         public Transform Player { get; set; }
         public Vector2 Movement => movement;
@@ -125,7 +127,6 @@ namespace Isoperia.Unity.M0
             if (Touchscreen.current == null) return;
 
             int activeTouches = 0;
-            Vector2 firstRight = Vector2.zero;
             foreach (var control in Touchscreen.current.touches)
             {
                 if (!control.press.isPressed) continue;
@@ -156,19 +157,29 @@ namespace Isoperia.Unity.M0
                 else if (id == lookFinger)
                 {
                     lookDelta += state.delta;
-                    firstRight = position;
                 }
             }
 
             if (activeTouches >= 2 && lookFinger >= 0)
             {
+                Vector2 first = Vector2.zero;
+                Vector2 second = Vector2.zero;
+                int pinchCount = 0;
                 foreach (var control in Touchscreen.current.touches)
                 {
                     if (!control.press.isPressed || control.ReadValue().touchId == movementFinger) continue;
-                    Vector2 other = control.ReadValue().position;
-                    zoomDelta += Vector2.Dot(other - firstRight, control.ReadValue().delta.normalized);
+                    if (pinchCount++ == 0) first = control.ReadValue().position;
+                    else if (pinchCount == 2) second = control.ReadValue().position;
                 }
+                if (pinchCount >= 2)
+                {
+                    float pinchDistance = Vector2.Distance(first, second);
+                    if (previousPinchDistance >= 0f) zoomDelta = pinchDistance - previousPinchDistance;
+                    previousPinchDistance = pinchDistance;
+                }
+                else previousPinchDistance = -1f;
             }
+            else previousPinchDistance = -1f;
 
             ReleaseEndedTouches();
         }
@@ -212,20 +223,24 @@ namespace Isoperia.Unity.M0
 
         private void CreateJoystick()
         {
-            var canvasGo = new GameObject("M0 Inspection Joystick", typeof(Canvas), typeof(CanvasScaler));
-            DontDestroyOnLoad(canvasGo);
-            var canvas = canvasGo.GetComponent<Canvas>();
+            canvasObject = new GameObject("M0 Inspection Joystick", typeof(Canvas), typeof(CanvasScaler));
+            var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 100;
-            var root = canvasGo.GetComponent<RectTransform>();
+            var root = canvasObject.GetComponent<RectTransform>();
             root.anchorMin = Vector2.zero;
             root.anchorMax = Vector2.one;
             root.offsetMin = root.offsetMax = Vector2.zero;
 
-            joystickRoot = CreateCircle(canvasGo.transform, "Movement Zone", 230f,
+            joystickRoot = CreateCircle(canvasObject.transform, "Movement Zone", 230f,
                 new Vector2(140f, 140f), new Color(.7f, .82f, .95f, .16f));
             knob = CreateCircle(joystickRoot, "Thumb", 92f, Vector2.zero,
                 new Color(.85f, .93f, 1f, .38f)).GetComponent<Image>();
+        }
+
+        private void OnDestroy()
+        {
+            if (canvasObject != null) Destroy(canvasObject);
         }
 
         private static RectTransform CreateCircle(Transform parent, string name, float size,

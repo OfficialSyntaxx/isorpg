@@ -185,3 +185,12 @@ user's current request and milestone. Update ownership when a task is started.
 - M0-02/M0-03 remain In review: touch controls, terrain/foam/wind visual proof,
   full traversal, statistics, labelled captures and phone validation are not run.
   M0-04 remains blocked; generated build/test artifacts remain excluded.
+
+## Input review correction — pending remote validation
+
+- Static review found the M0 joystick canvas incorrectly used `DontDestroyOnLoad`
+  despite being scene-local, and the pinch calculation counted the look finger as
+  its own comparison point. The focused fix keeps the canvas owned by M0 and
+  measures the two non-movement touch positions. Rebuild/player validation,
+  scene-exit cleanup and pinch-direction checks remain required.
+- No visual, traversal, statistics or device evidence is added by this correction.

@@ -38,6 +38,11 @@ scoped macOS player confirmed world/save isolation, rig/collider attachment and
 zero project errors. Continue with visual, traversal, touch and capture evidence;
 the player build alone does not complete M0. Stop before M0-04.
 
+Static input review added a pending correction: the scene-local joystick no longer
+persists across scene exit, and pinch zoom now compares the two non-movement
+fingers. Rebuild/re-run the scoped player and verify no duplicate canvas after
+re-entry before collecting the remaining M0 evidence.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and
