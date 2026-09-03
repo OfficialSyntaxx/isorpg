@@ -219,3 +219,7 @@ user's current request and milestone. Update ownership when a task is started.
 ### Depth-path inspection retry (2026-09-03)
 
 - Terrain sampling proves the water plane intersects terrain at the inspected edge. The URP depth-helper experiment rendered the water magenta and was reverted; the remaining issue is unresolved transparent-water/depth behavior. M0 remains PARTIAL.
+
+### M0 shoreline ribbon proof (2026-09-03)
+
+- A scene-local 8-triangle foam ribbon follows the measured shoreline and visibly renders in Play Mode. Its `_Time` animation is GPU vertex work only; no SSR/reflections or CPU mesh mutation were added. This closes the visual foam-band proof only, not remaining route/device acceptance.

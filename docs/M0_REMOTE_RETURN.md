@@ -77,3 +77,10 @@
 - Terrain sampling confirms a real water crossing: water is at 1.8 m; along the inspected corner, terrain rises from 1.756 m at z=15 m to 2.304 m at z=20 m. The absence of foam is therefore not caused by a missing geometric shoreline.
 - A URP depth-helper substitution was tried and immediately rendered ShorelandsWater magenta in Play Mode. It was reverted without committing. The known-working raw depth path remains, but its actual-edge output has no visible foam. This is unresolved scene-depth/transparent-water behavior, not a tint-only issue.
 - Preserve the four existing BuildPipeline assertions and prior stack evidence. They occur in the Editor-only BuildPipeline helper after Unity's external/uncompiled-change warning; no player log has project errors. Classification remains Editor-only/unresolved, not proven project regression.
+
+## M0 shoreline ribbon proof (2026-09-03)
+
+- Transparent depth inspection found a genuine terrain/water crossing at z=15--20 m but an unreliable transparent-pass depth path. The temporary URP-helper attempt was reverted and is not committed.
+- Added `M0 Shoreline Foam Ribbon`, a static 10-vertex/8-triangle mesh parented to `M0 Inspection Mode` at the authored water edge. `ShorelandsFoamRibbon` animates its vertices with `_Time`; it has no script or per-frame CPU mesh mutation, no SSR and no reflections. Play Mode capture `Assets/Screenshots/M0_Shoreline_Foam_Ribbon_ActualEdge.png` visibly shows the distinct foam band. It is intentionally left unstaged until the required labelled reveal set exists.
+- One Editor-only instrumentation sample: 693x390 Game View, Metal, 0.499 ms / 2005 FPS instantaneous sample, 6,002 triangles, 15 draw calls, 420,454,986 B allocated. It is not a frame-time percentile or device-performance result.
+- Full route/camera collision, exactly three labelled reveals, genuine pinch, iPhone/Android validation, frame-time percentiles and authoring hours remain NOT RUN. M0 remains PARTIAL and M0-04 stays blocked.

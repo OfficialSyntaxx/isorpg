@@ -53,6 +53,8 @@ The material-controlled foam-tint retry also failed to make foam discernible at 
 
 Depth inspection verifies the terrain genuinely crosses the 1.8 m water plane around z=15--20 m. A URP depth-helper experiment produced magenta water and was reverted, so do not treat it as a repair. Resume by diagnosing transparent-water scene-depth availability; retain the existing BuildPipeline assertion evidence. M0-04 stays blocked.
 
+An M0-local GPU shoreline foam ribbon now supplies successful actual-edge visual proof where transparent depth was unreliable. It is a static 8-triangle mesh under the existing M0 root, with `_Time` vertex animation and no reflections/SSR or CPU deformation. Route/camera proof, three labelled reveals, percentiles/device validation and authoring hours remain open; M0-04 stays blocked.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and
