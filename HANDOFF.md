@@ -55,6 +55,8 @@ Depth inspection verifies the terrain genuinely crosses the 1.8 m water plane ar
 
 An M0-local GPU shoreline foam ribbon now supplies successful actual-edge visual proof where transparent depth was unreliable. It is a static 8-triangle mesh under the existing M0 root, with `_Time` vertex animation and no reflections/SSR or CPU deformation. Route/camera proof, three labelled reveals, percentiles/device validation and authoring hours remain open; M0-04 stays blocked.
 
+Route probes show water MeshCollider interception at the beach and player-CharacterController interception at center. Do not claim a TerrainCollider route, switchback, camera-collision proof, or labelled reveals until these probes are isolated and the saved greybox landmarks exist. M0 remains PARTIAL; M0-04 stays blocked.
+
 **Latest checkpoint: `6baaf7f`**. The explicit `ISOPERIA_M0_INSPECTION` build
 path is committed, and normal Bootstrap still creates `WorldRuntime` before
 scene `Awake`. The remote Editor persisted and verified the six-root scene and

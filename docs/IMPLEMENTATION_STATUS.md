@@ -223,3 +223,7 @@ user's current request and milestone. Update ownership when a task is started.
 ### M0 shoreline ribbon proof (2026-09-03)
 
 - A scene-local 8-triangle foam ribbon follows the measured shoreline and visibly renders in Play Mode. Its `_Time` animation is GPU vertex work only; no SSR/reflections or CPU mesh mutation were added. This closes the visual foam-band proof only, not remaining route/device acceptance.
+
+### Route-probe limitation (2026-09-03)
+
+- Beach raycasts first hit the water MeshCollider and center raycasts first hit the player controller. TerrainCollider shares TerrainData but full-route walkability and camera collision are not accepted. Required landmarks/reveals, device input and performance evidence remain open.

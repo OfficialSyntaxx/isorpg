@@ -84,3 +84,9 @@
 - Added `M0 Shoreline Foam Ribbon`, a static 10-vertex/8-triangle mesh parented to `M0 Inspection Mode` at the authored water edge. `ShorelandsFoamRibbon` animates its vertices with `_Time`; it has no script or per-frame CPU mesh mutation, no SSR and no reflections. Play Mode capture `Assets/Screenshots/M0_Shoreline_Foam_Ribbon_ActualEdge.png` visibly shows the distinct foam band. It is intentionally left unstaged until the required labelled reveal set exists.
 - One Editor-only instrumentation sample: 693x390 Game View, Metal, 0.499 ms / 2005 FPS instantaneous sample, 6,002 triangles, 15 draw calls, 420,454,986 B allocated. It is not a frame-time percentile or device-performance result.
 - Full route/camera collision, exactly three labelled reveals, genuine pinch, iPhone/Android validation, frame-time percentiles and authoring hours remain NOT RUN. M0 remains PARTIAL and M0-04 stays blocked.
+
+## Route-probe limitation (2026-09-03)
+
+- Reverified the exact saved six-root scene and the foam ribbon in Play Mode: renderer enabled, 10-vertex mesh, `Isoperia/M0/Shorelands Foam Ribbon` shader. No foam-ribbon change was made.
+- Collision probes found the actual limitation preventing a traversal claim: at beach sample (10,10), downward raycast first hits the water `MeshCollider` at y=1.8; the center probe first hits the player's own `CharacterController`; only the clifftop probe (110,110) reaches `TerrainCollider` at y=18.253. TerrainCollider does share the saved TerrainData and the M0 orbit-camera component exists, but full-route walkability/spring-arm no-clipping is NOT RUN.
+- ShorelandsM0 currently lacks verified Beach/Wreck, Switchback and Clifftop landmark views, so no generic screenshots were relabelled as the required three reveals. Frame-time percentiles, genuine pinch, iPhone, Android and authoring hours remain NOT RUN. BuildPipeline assertion classification is unchanged: Editor-only/unresolved.
