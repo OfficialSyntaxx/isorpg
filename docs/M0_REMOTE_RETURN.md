@@ -1,5 +1,17 @@
 # M0 checkpoint-repair return
 
+## Follow-up validation (2026-09-02)
+
+- Result: PARTIAL — startup isolation and scoped player paths are now evidenced; visual proof, full traversal, labelled captures, statistics and real-device validation remain open. Stopped before M0-04.
+- Unity / MCP: `/Users/syntaxx/isorpg-m0/unity`, Unity `6000.5.8f1`, sole selected CoplayDev instance `unity@931634bd`. Active M0 scene was clean and saved with six roots.
+- Startup isolation: rebuilt scoped inspection player launched on macOS Metal/PhysX at 1920×1080. Fresh Player.log: `M0_INSPECTION_PLAYER world=False save=False motor=True controller=True orbit=True touch=True collider=True`; no player errors/exceptions were present.
+- Normal Bootstrap regression: a separate macOS validation player used `ISOPERIA_BOOTSTRAP_VALIDATION` plus `ISOPERIA_DISPOSABLE_SAVE`. Fresh Player.log: `[Isoperia] save loaded from: Fresh` and `M0_BOOTSTRAP_VALIDATION world=True save=True disposableStore=True`. Its FileSaveStore root is under `Application.temporaryCachePath`; no real save was read or written.
+- Touch controls: M0-only Input System component creates an inspection joystick and handles independent movement/look ownership, release/focus/pause reset, pinch zoom, desktop input preservation and player-collider exclusion in camera collision. Editor Play Mode found touch and joystick attached. This is not phone interaction evidence.
+- Rendering/traversal/device: NOT RUN to acceptance. Terrain control blend, mesh atlas bands, visible foam/wind, full route, statistics, three labelled captures and target Android validation remain unclaimed. Authoring hours: NOT RECORDED.
+- Console: no C# compile errors after refresh. Unity emitted four unstacked internal `Assertion failed on expression: 'false'` messages during the Bootstrap player build and MCP port-reload warnings; neither appeared in fresh Player logs. Diagnose before a clean-Console claim.
+- Checks: palette `--check` and `git diff --check` passed. Local `dotnet` is unavailable (`command not found`), so Core tests require CI after push.
+- Exact next task: diagnose Bootstrap-build assertions, then complete actual lit terrain/atlas/wind/foam, route/camera proof, captures/statistics and target-class Android evidence. Keep M0-04 blocked.
+
 - Result: PARTIAL — repair blockers are closed, but M0-02/M0-03 acceptance remains open pending visual traversal/captures and mobile-input implementation. Stopped before M0-04.
 - Final pushed SHA: `6b0ffb7580c9a9b6e206ed969f71ccfa8d7d9b9f`.
 - Final CI: [run 33682290635](https://github.com/OfficialSyntaxx/isorpg/actions/runs/33682290635) passed Core tests and both palette portability jobs.

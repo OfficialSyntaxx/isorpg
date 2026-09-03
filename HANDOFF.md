@@ -31,6 +31,8 @@ See the status board for evidence; a configured Unity workflow is not a passed b
 
 ## Next work
 
+Latest local validation adds scoped Bootstrap disposable-save evidence and scene-local Input System touch wiring (not yet pushed). The M0 player logs `world=False save=False motor=True controller=True orbit=True touch=True collider=True`; the normal Bootstrap validation logs `world=True save=True disposableStore=True`. Four unstacked Unity internal assertion messages appeared during the Bootstrap build, so do not claim a clean Console until they are diagnosed. Visual terrain/foam/wind proof, full traversal, captures/statistics and device evidence remain open; M0-04 stays blocked.
+
 Latest player validation is published at `6b0ffb7`; CI `33682290635` passed. The
 scoped macOS player confirmed world/save isolation, rig/collider attachment and
 zero project errors. Continue with visual, traversal, touch and capture evidence;

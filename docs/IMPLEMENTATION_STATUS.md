@@ -22,7 +22,7 @@ mobile acceptance, not atlas research or initial blockout.
 |---|---|---|---|
 | M0-01 | Palette reference and Shorelands atlas | In review | Codex, 2026-09-02: five-family CC0-derived atlas, reproducible generator and UV guide committed; Unity import/lit-scene review pending; see `M0_SHORELANDS_ART.md` |
 | M0-02 | Terrain/world, wind and water shaders | In review | Shader/material sources committed; reported import passes. Terrain control mapping, atlas-UV mesh usage, water depth and lit runtime evidence remain unresolved; see `M0_CHECKPOINT_REPAIR.md`. |
-| M0-03 | Isolated Shorelands scene and greybox | In review | `f5d925a` has six saved roots; remote Play Mode reports no legacy behaviours and surviving TerrainCollider. Review wired null rig fields; legacy startup-order regression, controls, route and captures still require checks in `M0_VALIDATION_SESSION.md`. |
+| M0-03 | Isolated Shorelands scene and greybox | In review | Six roots and rig persist. Scoped macOS players now prove M0 has no WorldRuntime/SaveDriver while normal Bootstrap has both before SaveDriver against a disposable store; Input System inspection controls attach. Lit visual proof, route, captures, statistics and device evidence remain required. |
 | M0-04 | Hero landforms and admitted scatter | Planned | Blockout and art admission evidence |
 | M0-05 | Dress, light and compose three reveals | Planned | Prior art tasks; three phone captures |
 | M0-06 | Profile and review the beauty proof | Planned | GDD §36; measured device evidence and authoring hours |

@@ -47,8 +47,21 @@ namespace Isoperia.Unity
             bool motor = player != null && player.GetComponent<M0.M0InspectionMotor>() != null;
             bool controller = player != null && player.GetComponent<CharacterController>() != null;
             bool orbit = camera != null && camera.GetComponent<M0.M0InspectionCamera>() != null;
+            bool touch = camera != null && camera.GetComponent<M0.M0InspectionTouchControls>() != null;
             bool collider = terrain != null && terrain.GetComponent<TerrainCollider>() != null;
-            Debug.Log("M0_INSPECTION_PLAYER world=" + world + " save=" + save + " motor=" + motor + " controller=" + controller + " orbit=" + orbit + " collider=" + collider);
+            Debug.Log("M0_INSPECTION_PLAYER world=" + world + " save=" + save + " motor=" + motor +
+                " controller=" + controller + " orbit=" + orbit + " touch=" + touch + " collider=" + collider);
+        }
+#endif
+
+#if ISOPERIA_BOOTSTRAP_VALIDATION
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void LogBootstrapValidationState()
+        {
+            bool world = Object.FindAnyObjectByType<WorldRuntime>() != null;
+            bool save = Object.FindAnyObjectByType<SaveDriver>() != null;
+            Debug.Log("M0_BOOTSTRAP_VALIDATION world=" + world + " save=" + save +
+                " disposableStore=True");
         }
 #endif
     }

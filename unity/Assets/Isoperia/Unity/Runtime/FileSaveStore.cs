@@ -31,8 +31,17 @@ namespace Isoperia.Unity
 
         public FileSaveStore()
         {
+#if ISOPERIA_DISPOSABLE_SAVE
+            // The explicit M0 Bootstrap validation player must exercise the
+            // real Awake path without ever discovering an author's save.
+            string root = Path.Combine(Application.temporaryCachePath, "M0BootstrapValidation");
+            Directory.CreateDirectory(root);
+            _primaryPath = Path.Combine(root, PrimaryFile);
+            _backupPath = Path.Combine(root, BackupFile);
+#else
             _primaryPath = Path.Combine(Application.persistentDataPath, PrimaryFile);
             _backupPath = Path.Combine(Application.persistentDataPath, BackupFile);
+#endif
         }
 
         public bool WritePrimary(string payload)

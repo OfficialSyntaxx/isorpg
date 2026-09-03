@@ -22,5 +22,24 @@ namespace Isoperia.EditorTools
             if (report.summary.result != BuildResult.Succeeded)
                 Debug.LogError("M0 inspection player build failed: " + report.summary.result);
         }
+
+        [MenuItem("Isoperia/M0/Build Bootstrap Startup Validation")]
+        public static void BuildBootstrapStartupValidation()
+        {
+            var options = new BuildPlayerOptions
+            {
+                scenes = new[] { "Assets/Isoperia/Scenes/Bootstrap.unity" },
+                locationPathName = "Builds/M0BootstrapValidation/M0BootstrapValidation.app",
+                target = BuildTarget.StandaloneOSX,
+                options = BuildOptions.None,
+                extraScriptingDefines = new[]
+                {
+                    "ISOPERIA_BOOTSTRAP_VALIDATION", "ISOPERIA_DISPOSABLE_SAVE"
+                }
+            };
+            BuildReport report = BuildPipeline.BuildPlayer(options);
+            if (report.summary.result != BuildResult.Succeeded)
+                Debug.LogError("M0 Bootstrap validation player build failed: " + report.summary.result);
+        }
     }
 }
