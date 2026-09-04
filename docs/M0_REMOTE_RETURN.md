@@ -138,3 +138,9 @@
 
 - Terrain and TerrainCollider were active/enabled with bounds centered `(60,9.8,60)`, extents `(60,8.8,60)`, and valid `ShorelandsM0Terrain` data. Player layer was 0, `detectCollisions=True`, radius 0.35, height 1.7, center `(0,0.85,0)`, and terrain-layer collision was enabled.
 - Only `M0InspectionMotor` owned movement. Manual downward `CharacterController.Move` grounded correctly at beach samples; the active motor/startup path still fell through. Delayed placement and controller re-registration did not resolve it and were removed. The failure is isolated to the motor lifecycle, not missing TerrainCollider data.
+## Motor lifecycle fix and route evidence (2026-09-04)
+
+- Temporary first-120-frame instrumentation was removed after validation. Frames 1–10 at terrain-derived beach spawn `(10.50,1.40,10.50)` recorded zero input/displacement, `grounded=True`, `CollisionFlags.Below`, enabled controller, and gravity `(0,-9.81,0)`.
+- Controlled CharacterController route reached Beach `(10.50,1.43,10.50)`, Wreck `(11.95,3.42,27.44)`, Switchback `(41.61,4.85,35.81)`, Plateau `(71.79,10.51,62.81)`, and Clifftop `(102.62,16.80,95.60)`, all grounded with `CollisionFlags.Below`. Six-metre spring-arm raycasts found no terrain/hero obstruction; water MeshCollider stayed disabled.
+- Exactly three labelled captures were visually inspected and staged: `unity/Assets/Screenshots/Beach_Wreck.png`, `unity/Assets/Screenshots/Switchback.png`, and `unity/Assets/Screenshots/Clifftop.png`.
+- Editor/macOS sample: `0.502 ms` / `1,990 FPS`, `12,530` triangles, `17` draw calls, `29,230,362` render-texture bytes. This is instantaneous Editor instrumentation, not phone performance or percentile data. Console showed only CoplayDev port warnings and non-project URP memoryless-depth messages.

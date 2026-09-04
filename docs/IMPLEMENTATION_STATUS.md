@@ -256,3 +256,7 @@ user's current request and milestone. Update ownership when a task is started.
 ### CharacterController diagnostics — 2026-09-04
 
 - Terrain/data and collision matrix are valid. Manual downward CharacterController.Move grounds at beach samples, while the active M0InspectionMotor path falls through. Delay/re-registration instrumentation was removed; the remaining defect is isolated to motor/startup movement lifecycle.
+### Motor lifecycle and route evidence — 2026-09-04
+
+- First-frame diagnostics (removed after use) show zero input/displacement and `grounded=True`/`CollisionFlags.Below` at the terrain-derived beach spawn. Controlled traversal reached Beach, Wreck, Switchback, Plateau, and Clifftop grounded; spring-arm raycasts found no terrain/hero obstruction.
+- Three labelled Editor captures are present: `Beach_Wreck.png`, `Switchback.png`, and `Clifftop.png`. Phone, pinch, percentile, and authoring-hour evidence remain open.
