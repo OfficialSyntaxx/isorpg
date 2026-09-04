@@ -7,7 +7,10 @@ A **third-person high-fantasy action-RPG** with deep skill progression, built
 **mobile-first** in Unity 6 (URP) and shipping to PC from the same build.
 Single-player at launch, architected from day one to become an MMO.
 
-**Status:** pre-production. Design is locked; see **[the GDD](docs/GDD_ALDERFELL.md)**.
+**Status:** M0 — Shorelands beauty proof is in review. The design authority is
+**[the GDD](docs/GDD_ALDERFELL.md)**; the implementation evidence and current
+handoff are kept in **[the status board](docs/IMPLEMENTATION_STATUS.md)** and
+**[HANDOFF.md](HANDOFF.md)**.
 
 ---
 
@@ -93,7 +96,7 @@ Milestones gate on demonstrable quality, not feature counts.
 
 | | Milestone | Gate |
 |---|---|---|
-| **M0** | Beauty proof — the Shorelands, no systems | Does it look beautiful **on a real phone** at 30 FPS? |
+| **M0** | Beauty proof — the Shorelands, no systems | M0-04 landforms, traversal and labelled Editor captures are evidenced. Real-phone quality/performance and final review remain open. |
 | **M1** | Character in world — movement, camera, navigation | Movement feels good for 5 minutes straight |
 | **M2** | Combat feel — tap-target, abilities, feedback | Killing one wolf is satisfying 20 times |
 | **M3** | Vertical slice — Act I end to end | A stranger plays 45 minutes without guidance |
@@ -118,11 +121,18 @@ npm run build    # type-check + production build to dist/
 
 Read `AGENTS.md` or `CLAUDE.md`, then `docs/WORKFLOW.md` and
 `docs/IMPLEMENTATION_STATUS.md`. The GDD is design intent; the status board records
-implementation evidence. Repository preparation is complete; the next production task is M0-01 (palette and atlas).
+implementation evidence.
+
+The current checkpoint is M0-04: original hero landforms and admitted scatter have
+been imported and validated in the isolated Shorelands scene; the grounded route
+reaches Beach, Wreck, Switchback, Plateau and Clifftop; and three labelled Editor
+captures are committed. Overall M0 is **not** complete: genuine pinch testing,
+iPhone/Android validation, mobile frame-time percentiles, recorded authoring hours,
+and final M0 review remain open. See `HANDOFF.md` before beginning any new task.
 
 ```bash
 dotnet test ci/CoreTests/CoreTests.csproj
 ```
 
 Unity content JSON is hand-authored source. The legacy TypeScript exporter is
-retired. Use `HANDOFF.md` for the next task and known validation limits.
+retired. Use `HANDOFF.md` for the next authorized task and known validation limits.

@@ -20,9 +20,9 @@ mobile acceptance, not atlas research or initial blockout.
 
 | ID | Work | State | Dependency / exit evidence |
 |---|---|---|---|
-| M0-01 | Palette reference and Shorelands atlas | In review | Codex, 2026-09-02: five-family CC0-derived atlas, reproducible generator and UV guide committed; Unity import/lit-scene review pending; see `M0_SHORELANDS_ART.md` |
-| M0-02 | Terrain/world, wind and water shaders | In review | Shader/material sources committed; reported import passes. Terrain control mapping, atlas-UV mesh usage, water depth and lit runtime evidence remain unresolved; see `M0_CHECKPOINT_REPAIR.md`. |
-| M0-03 | Isolated Shorelands scene and greybox | In review | Six roots and rig persist. Scoped macOS players now prove M0 has no WorldRuntime/SaveDriver while normal Bootstrap has both before SaveDriver against a disposable store; Input System inspection controls attach. Lit visual proof, route, captures, statistics and device evidence remain required. |
+| M0-01 | Palette reference and Shorelands atlas | Evidence complete | Five-family atlas, reproducible generator and UV guide are committed; regenerated M0 FBXs carry palette weights and centre-band UVs, and the Unity import scan found no missing materials. Device review remains an overall M0 gate. |
+| M0-02 | Terrain/world, wind and water shaders | Evidence complete | Lit Play Mode verified painted TerrainLayers, shared TerrainData/TerrainCollider, GPU wind and the scene-local foam ribbon; no SSR/reflections were added. Device visual review remains an overall M0 gate. |
+| M0-03 | Isolated Shorelands scene and greybox | Evidence complete | Six roots persist; scoped macOS player proves no WorldRuntime/SaveDriver, normal Bootstrap disposable-save validation passes, and inspection controls/camera/route are evidenced. Device controls and overall M0 review remain open. |
 | M0-04 | Hero landforms and admitted scatter | Evidence complete | 2026-09-04 at `1d9e9a7`: five original atlas-mapped heroes and admitted LOD scatter imported with palette weights, metre scale, materials, colliders and LODGroups verified; grounded Beach→Wreck→Switchback→Plateau→Clifftop route and spring-arm probes passed; exactly three labelled captures staged. Device validation, mobile performance and authoring hours remain M0-06/P05 work. |
 | M0-05 | Dress, light and compose three reveals | Planned | Prior art tasks; three phone captures |
 | M0-06 | Profile and review the beauty proof | Planned | GDD §36; measured device evidence and authoring hours |
