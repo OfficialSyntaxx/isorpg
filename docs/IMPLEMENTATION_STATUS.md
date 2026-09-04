@@ -260,3 +260,7 @@ user's current request and milestone. Update ownership when a task is started.
 
 - First-frame diagnostics (removed after use) show zero input/displacement and `grounded=True`/`CollisionFlags.Below` at the terrain-derived beach spawn. Controlled traversal reached Beach, Wreck, Switchback, Plateau, and Clifftop grounded; spring-arm raycasts found no terrain/hero obstruction.
 - Three labelled Editor captures are present: `Beach_Wreck.png`, `Switchback.png`, and `Clifftop.png`. Phone, pinch, percentile, and authoring-hour evidence remain open.
+### M0-05 composition pass — 2026-09-04
+
+- Added three deterministic scene-local reveal anchors and a warmer Sun balance without new assets or atlas changes. Captures `Beach_Wreck.png`, `Switchback.png`, and `Clifftop.png` were visually inspected as Editor evidence; the inspection UI overlay remains visible.
+- Device/pinch/percentile/authoring-hour evidence remains open; M0-06 not started.

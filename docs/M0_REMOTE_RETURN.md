@@ -153,3 +153,9 @@
 - Remaining M0 gates are genuine multi-touch pinch, iPhone/Android validation,
   mobile/percentile performance data, and recorded authoring hours. The known
   Unity BuildPipeline assertions remain editor-only/unresolved.
+## M0-05 composition pass (2026-09-04)
+
+- Exact Unity project/instance verified: `/Users/syntaxx/isorpg-m0/unity`, Unity `6000.5.8f1`, `unity@931634bd`; saved `ShorelandsM0` retained six roots and all M0-04 art/collider health checks.
+- Added only scene-local composition anchors under `M0 Inspection Mode/M0-05 Composition`: Beach_Wreck, Switchback, and Clifftop. Directional Sun was adjusted to `(48,-32,0)`, intensity `1.15`, warm tint `(1,.93,.82)`. Terrain, water, atlas, foam, wind, hero and scatter assets were not replaced.
+- Captures were generated from the three anchors and visually inspected: `unity/Assets/Screenshots/Beach_Wreck.png`, `Switchback.png`, `Clifftop.png`. They remain Editor captures and include the inspection UI overlay; no phone or percentile performance claim is made.
+- Play Mode/Console remained free of project exceptions; only CoplayDev/URP memoryless-depth messages were observed. Genuine pinch, iPhone/Android, mobile performance, percentile samples and authoring hours remain NOT RUN. M0-06 was not started.
