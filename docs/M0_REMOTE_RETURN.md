@@ -114,3 +114,11 @@
 
 - The exact Unity process remained alive at `/Users/syntaxx/isorpg-m0/unity` with TCP port 6400 listening. The stale MCP transport was terminated and the exact instance was reselected, but `execute_code` continued to time out and editor state remained stale. No Unity process was killed and no project state was discarded.
 - Per the stop condition, no fresh Unity import, Inspector, Play Mode, traversal, capture, or device evidence is claimed. Required human action: bring the exact Unity Editor to the foreground, toggle/restart CoplayDev MCP for Unity, and confirm the bridge responds before resuming validation.
+
+## MCP recovery and Unity reimport probe (2026-09-04)
+
+- The exact CoplayDev instance recovered: `unity@931634bd`, Unity `6000.5.8f1`, project `/Users/syntaxx/isorpg-m0/unity`; the saved active scene is `ShorelandsM0` with six persistent roots. A direct version probe returned `6000.5.8f1`.
+- All 21 regenerated models were force-reimported. Inspector-level scan returned `bad=0`, five TerrainLayers, shared Terrain/TerrainCollider TerrainData, 24 LODGroups, 53 renderers, zero missing materials, 27 atlas-material slots, 26 wind-material slots, and zero decorative-scatter colliders. Imported mesh color arrays were present and all ModelImporters retained `globalScale=100`.
+- Lit Play Mode probe returned `art=True heroes=5 scatter=24 ribbon=True wind=True player=True camera=True terrainShared=True lod=24 colliders=3`; Console error query returned zero errors. Camera FOV is 60 degrees, TerrainCollider is enabled, and the Shorelands Water MeshCollider is disabled.
+- An Editor instrumentation sample during Play Mode was `0.502 ms` / `1,990 FPS`, `12,530` triangles, `17` draw calls, `29,230,362` render-texture bytes. This is an instantaneous Editor sample, not phone evidence or percentile data.
+- Camera-position screenshot attempts were generic/unverified and were moved out of `Assets/Screenshots/`; no captures are claimed or staged. Full route traversal, spring-arm no-clipping proof, three labelled reveals, genuine pinch, iPhone/Android testing, and authoring hours remain NOT RUN.
