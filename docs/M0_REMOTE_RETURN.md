@@ -128,3 +128,8 @@
 - Unity MCP was responsive and Play Mode entered on the exact saved ShorelandsM0 scene. A CharacterController waypoint probe attempted Beach `(10,10)` → Wreck `(12,28)` → Switchback `(42,36)` → Plateau `(72,63)` → Clifftop `(103,96)`.
 - Results: beach remained ungrounded at `(10.00,3.00,10.00)` over terrain height `1.35`; the Wreck segment was diverted by collision geometry and ended at `(39.68,7.47,48.89)` rather than reaching `(12,28)`. Subsequent samples were grounded with `CollisionFlags.Below` near `(39.57,38.71)`, `(47.67,45.92)`, and `(102.83,95.84)`.
 - Camera component fields match the GDD defaults (`pitch=18`, `distance=6`); camera FOV is 60. The probe does not prove spring-arm no-clipping across the route. Because the complete route and verified landmark views failed, no screenshots were captured or relabelled. Exact captures remain NOT RUN.
+
+## Grounded spawn and beach collision probe (2026-09-04)
+
+- `M0InspectionBootstrap.Start` now derives player Y from `Terrain.SampleHeight` while preserving authored X/Z. The scene was saved and reopened with spawn `(10.5, 0, 10.5)`.
+- In Play Mode the startup sample was correct, but the controller fell to approximately `y=-316` and remained ungrounded at the beach, despite a downward raycast hitting `Shorelands Terrain` at `y=1.381`. No collider was disabled or bypassed. Complete route traversal and camera proof remain blocked.

@@ -248,3 +248,7 @@ user's current request and milestone. Update ownership when a task is started.
 
 - The exact Unity Play Mode bridge was responsive. A CharacterController waypoint run reached grounded terrain at later switchback/plateau/clifftop samples, but the beach start was ungrounded and the Wreck waypoint was diverted to `(39.68,7.47,48.89)` by collision geometry. Complete Beach→Wreck→Switchback→Clifftop traversal and camera spring-arm/no-clipping acceptance remain blocked.
 - Camera defaults inspected: 6 m distance, 18° pitch, 60° FOV. No labelled captures were created because landmark views were not verified.
+
+### Grounded spawn / beach collision probe — 2026-09-04
+
+- Inspection spawn now samples Terrain height at startup; persistence was verified after reopening the scene. At the authored beach X/Z, a TerrainCollider raycast hits y=1.381, but the CharacterController falls to approximately y=-316. No collision bypass was applied; route and capture acceptance remain blocked.

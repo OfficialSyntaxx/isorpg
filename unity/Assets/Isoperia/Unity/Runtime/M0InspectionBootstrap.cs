@@ -30,6 +30,19 @@ namespace Isoperia.Unity.M0
             }
         }
 
+        private void Start()
+        {
+            if (inspectionPlayer == null) return;
+            var terrain = Object.FindAnyObjectByType<Terrain>();
+            if (terrain == null || terrain.terrainData == null) return;
+
+            // Keep the authored X/Z spawn, but derive Y from the saved terrain
+            // so the CharacterController starts with its feet on the surface.
+            Vector3 spawn = inspectionPlayer.position;
+            spawn.y = terrain.SampleHeight(spawn) + 0.02f;
+            inspectionPlayer.position = spawn;
+        }
+
     }
 
     public sealed class M0InspectionMotor : MonoBehaviour
