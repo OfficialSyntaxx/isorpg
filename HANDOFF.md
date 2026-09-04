@@ -176,3 +176,9 @@ quests or persistence belongs in M0.
 - No main merge or PR is requested. Main builds artifacts; the retired web
   deployment workflows are not the release process.
 - Leave incidental LFS changes and legacy assets untouched. Preserve GUIDs.
+
+## Latest M0-04 asset regeneration checkpoint (2026-09-04)
+
+The exact Blender 5.2.0 LTS source at `art/blender/m0_shorelands_landforms.blend` was regenerated with the corrected palette-weight exporter. All 21 FBXs now carry `ShorelandsPaletteWeights` and the intended atlas-band UV centers; hero and scatter triangle budgets remain admitted. The exact Unity project is `/Users/syntaxx/isorpg-m0/unity` on Unity 6000.5.8f1 with CoplayDev `unity@931634bd`.
+
+The Unity bridge went stale during the external asset refresh, so do not claim a fresh Unity reimport, Play Mode, route traversal, captures, or device/performance evidence from this checkpoint. Reconnect the exact instance, reimport the generated assets, scan Console/import metadata, then run the remaining M0-04 review. Keep the result PARTIAL/In review, preserve the four editor-only/unresolved BuildPipeline assertions, and do not start M0-05/M0-06.

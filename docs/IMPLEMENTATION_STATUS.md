@@ -237,3 +237,9 @@ user's current request and milestone. Update ownership when a task is started.
 ### Route-probe limitation (2026-09-03)
 
 - Beach raycasts first hit the water MeshCollider and center raycasts first hit the player controller. TerrainCollider shares TerrainData but full-route walkability and camera collision are not accepted. Required landmarks/reveals, device input and performance evidence remain open.
+
+### M0-04 regenerated payload validation — 2026-09-04
+
+- Blender 5.2.0 LTS regenerated the exact editable Shorelands source and all 21 hero/scatter FBX payloads. Every payload reimported in Blender with `ShorelandsPaletteWeights`; UV band centers remained slate 0.9, grass 0.5, or timber 0.3, and triangle budgets stayed within the admitted ranges.
+- The Unity MCP instance became stale during the external asset refresh, so Unity reimport and fresh Play Mode checks are pending. Existing scene placement, globalScale=100 metadata, atlas-family materials, LODGroups, and non-colliding decorative scatter remain the prior checkpoint evidence.
+- M0-04 remains In review; route/captures/device/performance/authoring-hour evidence is not claimed.

@@ -125,7 +125,7 @@ def assign_palette_weights(obj, channel):
             name="ShorelandsPaletteWeights", type="FLOAT_COLOR", domain="CORNER"
         )
     for item in colors.data:
-        item.color = (*rgba, 1.0)
+        item.color = rgba
 
 
 def export_selected(obj, filename):
