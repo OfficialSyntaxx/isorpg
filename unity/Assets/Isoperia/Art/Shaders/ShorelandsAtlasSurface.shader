@@ -23,7 +23,10 @@ Shader "Isoperia/M0/Shorelands Atlas Surface"
             {
                 half4 w=max(i.color, 0); half total=max(.0001h, w.r+w.g+w.b+w.a); w/=total;
                 // Sample each palette band independently, then blend colours. Never interpolate atlas V.
-                half3 albedo=w.r*Band(.55h,0)+w.g*Band(.48h,2)+w.b*Band(.50h,3)+w.a*Band(.43h,4);
+                // The four vertex-colour weights cover the non-water surface
+                // families. Water has its own shader, so retain the timber band
+                // here instead of skipping it for the sea band.
+                half3 albedo=w.r*Band(.55h,0)+w.g*Band(.48h,1)+w.b*Band(.50h,2)+w.a*Band(.43h,4);
                 Light l=GetMainLight(TransformWorldToShadowCoord(i.positionWS));
                 half diffuse=saturate(dot(normalize(i.normalWS),l.direction))*l.shadowAttenuation;
                 return half4(albedo*(_Ambient+l.color*(diffuse*.65h)),1);
