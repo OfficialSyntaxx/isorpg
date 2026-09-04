@@ -1,5 +1,22 @@
 # M0 checkpoint-repair return
 
+## WebGL browser runtime follow-up (2026-09-04)
+
+- Result: **NOT RUN / PROVISIONAL**. Existing `unity/Builds/M0InspectionWeb`
+  remains unchanged from the completed Unity WebGL build at SHA
+  `83f77e630d8fb60f39fe00f9103f09fdd55bf709`.
+- A local HTTP server was started for that directory, but the available browser
+  control surface returned **“No browser is available.”** Consequently no
+  actual desktop-browser load, browser console capture, runtime exception
+  check, rendering/input/route test, or labelled browser screenshot was
+  collected. The prior HTTP 200 index/loader checks are transport checks only,
+  not WebGL runtime evidence.
+- Netlify preview was not attempted: no existing authorized site/credentials
+  were available. Native Android/iPhone and genuine pinch evidence remain NOT
+  RUN as recorded below. M0 remains PROVISIONAL; no Unity scene or native
+  behavior was modified.
+
+
 ## M0-06 emulator and Web smoke pass (2026-09-04)
 
 - Result: **PROVISIONAL**. No physical Android/iPhone device evidence was
