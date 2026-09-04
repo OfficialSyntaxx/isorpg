@@ -1,6 +1,6 @@
 # Alderfell — current handoff
 
-**Current work:** M0-05 composition is complete; M0-06 device/profile review is in progress. M0 remains incomplete.
+**Current work:** M0-05 composition is complete; M0-06 emulator/Web smoke review is recorded as provisional. M0 remains incomplete.
 **Branch:** `codex/m0-shorelands-foundation`.
 **Production milestone:** M0 — Shorelands beauty proof remains in progress; M0-05/M0-06 require explicit authorization.
 
@@ -30,6 +30,19 @@ The exporter safely refuses writes, and documentation/skill checks pass.
 See the status board for evidence; a configured Unity workflow is not a passed build. No Unity scene, imported model or gameplay migration is certified here.
 
 ## Next work
+
+### M0-06 emulator/Web smoke pass — 2026-09-04
+
+- Exact Unity project and selected MCP were verified: `/Users/syntaxx/isorpg-m0/unity`,
+  Unity `6000.5.8f1`, `unity@931634bd`; saved ShorelandsM0 retained six roots.
+- Android emulator and Unity Device Simulator were unavailable (no AndroidPlayer,
+  SDK/ADB/AVD tools or simulator package). Mark Android/iPhone, pinch, route and
+  phone-performance evidence NOT RUN.
+- WebGLSupport built `Builds/M0InspectionWeb` successfully; local HTTP checks for
+  the index and loader returned 200. MCP timed out during Brotli, but Editor.log
+  confirms output completion. Browser runtime and Netlify deployment were not run.
+- Known BuildPipeline assertions remain editor-only/unresolved. Full evidence and
+  limitations are in `docs/M0_REMOTE_RETURN.md`; do not claim M0 complete.
 
 ### M0-04 intake update — 2026-09-04
 

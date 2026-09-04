@@ -1,5 +1,41 @@
 # M0 checkpoint-repair return
 
+## M0-06 emulator and Web smoke pass (2026-09-04)
+
+- Result: **PROVISIONAL**. No physical Android/iPhone device evidence was
+  available; M0-06 native acceptance remains open and M0-04/M0-05 are
+  unchanged.
+- Exact baseline: `/Users/syntaxx/isorpg-m0/unity`, Unity `6000.5.8f1`, URP
+  `17.5.0`, selected CoplayDev instance `unity@931634bd`. The bridge responded
+  after the build completed. `ShorelandsM0` was saved with exactly six roots:
+  Shorelands Terrain, Shorelands Water, Inspection Player, Inspection Camera,
+  Sun and M0 Inspection Mode.
+- Android emulator: **NOT RUN**. This Unity installation has WebGLSupport but
+  no AndroidPlayer module; `adb`, `emulator` and `sdkmanager` are absent, and
+  no AVD/SDK/NDK/OpenJDK toolchain was available. No APK/AAB, install, launch,
+  joystick/look/pinch, route, collision, captures or Android statistics can be
+  claimed.
+- iPhone simulation: **NOT RUN**. The Unity Device Simulator package is not
+  present in `Packages/manifest.json` or `packages-lock.json`; no simulated
+  safe-area/layout result was collected.
+- Web build: Unity `BuildPipeline.BuildPlayer` for `ShorelandsM0` targeting
+  WebGL produced `unity/Builds/M0InspectionWeb/` (loader, Brotli data/framework
+  and index files). A local Python HTTP server returned HTTP 200 for
+  `index.html` and `Build/M0InspectionWeb.loader.js`. The MCP request timed out
+  while Bee/Brotli was still running; Editor.log shows completion of the output
+  files, but no browser runtime/touch/traversal/shader/memory test was run.
+  Builds are generated evidence only and remain unstaged. No authorized Netlify
+  site or credentials were available, so no deployment was attempted.
+- Console after completion contained no project compile/runtime errors; the
+  four pre-existing `Assertion failed on expression: 'false'` messages remain
+  classified as editor-only/unresolved BuildPipeline assertions following the
+  uncompiled-code warning. WebGL emitted only the Unity WebGPU browser warning.
+- Genuine pinch, iPhone, target-class Android, phone performance percentiles,
+  authoring hours and mobile captures: **NOT RUN**. Editor/macOS statistics are
+  not substituted for device evidence. No M0 scene or native behavior was
+  modified in this pass.
+
+
 ## Follow-up validation (2026-09-02)
 
 - Result: PARTIAL — startup isolation and scoped player paths are now evidenced; visual proof, full traversal, labelled captures, statistics and real-device validation remain open. Stopped before M0-04.
