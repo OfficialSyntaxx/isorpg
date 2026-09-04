@@ -1,8 +1,8 @@
 # Alderfell — current handoff
 
-**Current work:** M0-04 hero-landform and scatter intake is in review; M0 remains incomplete.
+**Current work:** M0-04 hero-landform/scatter implementation and route evidence are complete; M0 remains incomplete.
 **Branch:** `codex/m0-shorelands-foundation`.
-**Production milestone:** M0 — Shorelands beauty proof remains in progress; do not begin M0-05/M0-06 or M1 work.
+**Production milestone:** M0 — Shorelands beauty proof remains in progress; M0-05/M0-06 require explicit authorization.
 
 ## Read first
 
@@ -55,11 +55,20 @@ See the status board for evidence; a configured Unity workflow is not a passed b
   external bridge noise. Do not use incidental `Assets/Screenshots/` outputs as
   M0 evidence and do not relabel them as M0-05 reveals.
 
-M0-04 is **In review**, not verified. Required next task is a lit Play Mode
-silhouette/terrain-alignment review on a real device, then M0-05’s composition
-and phone reveal work; preserve the five source meshes and admission ledger.
+M0-04 implementation and evidence are now complete at `1d9e9a7`: the grounded
+route reached Beach, Wreck, Switchback, Plateau and Clifftop; spring-arm probes
+found no route obstruction; and exactly three labelled captures were visually
+inspected and staged. This does not close overall M0: device validation,
+percentile performance, genuine pinch and authoring hours remain open. Do not
+begin M0-05/M0-06 without explicit authorization.
 
-Latest local validation adds scoped Bootstrap disposable-save evidence and scene-local Input System touch wiring (not yet pushed). The M0 player logs `world=False save=False motor=True controller=True orbit=True touch=True collider=True`; the normal Bootstrap validation logs `world=True save=True disposableStore=True`. Four unstacked Unity internal assertion messages appeared during the Bootstrap build, so do not claim a clean Console until they are diagnosed. Visual terrain/foam/wind proof, full traversal, captures/statistics and device evidence remain open; M0-04 stays blocked.
+Historical checkpoint: scoped Bootstrap disposable-save evidence and scene-local
+Input System touch wiring were validated before M0-04. The M0 player logged
+`world=False save=False motor=True controller=True orbit=True touch=True collider=True`;
+the normal Bootstrap validation logged `world=True save=True disposableStore=True`.
+The four Unity BuildPipeline assertions remain editor-only/unresolved; do not
+claim a clean BuildPipeline Console. M0-04 route/capture evidence is now recorded
+below; device and final M0 gates remain open.
 
 Latest player validation is published at `6b0ffb7`; CI `33682290635` passed. The
 scoped macOS player confirmed world/save isolation, rig/collider attachment and

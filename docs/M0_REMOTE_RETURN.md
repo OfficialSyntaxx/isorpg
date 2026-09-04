@@ -144,3 +144,12 @@
 - Controlled CharacterController route reached Beach `(10.50,1.43,10.50)`, Wreck `(11.95,3.42,27.44)`, Switchback `(41.61,4.85,35.81)`, Plateau `(71.79,10.51,62.81)`, and Clifftop `(102.62,16.80,95.60)`, all grounded with `CollisionFlags.Below`. Six-metre spring-arm raycasts found no terrain/hero obstruction; water MeshCollider stayed disabled.
 - Exactly three labelled captures were visually inspected and staged: `unity/Assets/Screenshots/Beach_Wreck.png`, `unity/Assets/Screenshots/Switchback.png`, and `unity/Assets/Screenshots/Clifftop.png`.
 - Editor/macOS sample: `0.502 ms` / `1,990 FPS`, `12,530` triangles, `17` draw calls, `29,230,362` render-texture bytes. This is instantaneous Editor instrumentation, not phone performance or percentile data. Console showed only CoplayDev port warnings and non-project URP memoryless-depth messages.
+
+## M0-04 evidence checkpoint (originating-chat review)
+
+- M0-04 implementation and route evidence are accepted as complete for the
+  current checkpoint. Overall M0 remains In Review; this is not M0-05/M0-06
+  authorization or a device-performance claim.
+- Remaining M0 gates are genuine multi-touch pinch, iPhone/Android validation,
+  mobile/percentile performance data, and recorded authoring hours. The known
+  Unity BuildPipeline assertions remain editor-only/unresolved.
