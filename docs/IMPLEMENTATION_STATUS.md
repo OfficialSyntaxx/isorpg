@@ -24,8 +24,8 @@ mobile acceptance, not atlas research or initial blockout.
 | M0-02 | Terrain/world, wind and water shaders | Evidence complete | Lit Play Mode verified painted TerrainLayers, shared TerrainData/TerrainCollider, GPU wind and the scene-local foam ribbon; no SSR/reflections were added. Device visual review remains an overall M0 gate. |
 | M0-03 | Isolated Shorelands scene and greybox | Evidence complete | Six roots persist; scoped macOS player proves no WorldRuntime/SaveDriver, normal Bootstrap disposable-save validation passes, and inspection controls/camera/route are evidenced. Device controls and overall M0 review remain open. |
 | M0-04 | Hero landforms and admitted scatter | Evidence complete | 2026-09-04 at `1d9e9a7`: five original atlas-mapped heroes and admitted LOD scatter imported with palette weights, metre scale, materials, colliders and LODGroups verified; grounded Beach→Wreck→Switchback→Plateau→Clifftop route and spring-arm probes passed; exactly three labelled captures staged. Device validation, mobile performance and authoring hours remain M0-06/P05 work. |
-| M0-05 | Dress, light and compose three reveals | Planned | Prior art tasks; three phone captures |
-| M0-06 | Profile and review the beauty proof | Planned | GDD §36; measured device evidence and authoring hours |
+| M0-05 | Dress, light and compose three reveals | Evidence complete | 2026-09-04: scene-local composition anchors and three inspected Editor captures; device evidence remains open |
+| M0-06 | Profile and review the beauty proof | In review | Device profiling, genuine pinch, percentile performance and authoring hours remain required |
 | M1-01 | Specify command/movement ownership contract | Planned | M0 gate, D02; serialized intents, ordering, spatial adapter and reconciliation tests |
 | M1-02 | Replace transform-to-state movement bridge | Planned | M1-01; Core owns position; Unity input/animation and traversal validated |
 | M1-03 | Isolate old world bootstrap and offline/labour wiring | Planned | Keep legacy source; new gameplay bootstrap cannot invoke idle rewards |

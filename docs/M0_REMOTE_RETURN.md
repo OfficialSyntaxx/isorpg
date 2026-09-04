@@ -159,3 +159,9 @@
 - Added only scene-local composition anchors under `M0 Inspection Mode/M0-05 Composition`: Beach_Wreck, Switchback, and Clifftop. Directional Sun was adjusted to `(48,-32,0)`, intensity `1.15`, warm tint `(1,.93,.82)`. Terrain, water, atlas, foam, wind, hero and scatter assets were not replaced.
 - Captures were generated from the three anchors and visually inspected: `unity/Assets/Screenshots/Beach_Wreck.png`, `Switchback.png`, `Clifftop.png`. They remain Editor captures and include the inspection UI overlay; no phone or percentile performance claim is made.
 - Play Mode/Console remained free of project exceptions; only CoplayDev/URP memoryless-depth messages were observed. Genuine pinch, iPhone/Android, mobile performance, percentile samples and authoring hours remain NOT RUN. M0-06 was not started.
+
+## M0-06 profile/review checkpoint (2026-09-04)
+
+- Exact Unity project/instance and saved six-root scene were rechecked. M0-04 route/collision evidence and M0-05 composition were preserved; no terrain, atlas, asset, collider, or route changes were made.
+- The current environment has no connected physical iPhone or target-class Android device. No device build/install, genuine pinch, device captures, frame-time percentiles, resident-memory measurements, or thermal observations were performed. M0-06 is therefore In review/PROVISIONAL, not a mobile pass.
+- Existing Editor/macOS instrumentation remains context-only: 0.502 ms instantaneous sample, 12,530 triangles, 17 draw calls, 29,230,362 render-texture bytes. Authoring hours are NOT RECORDED. BuildPipeline assertions remain editor-only/unresolved.

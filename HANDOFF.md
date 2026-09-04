@@ -1,6 +1,6 @@
 # Alderfell — current handoff
 
-**Current work:** M0-04 hero-landform/scatter implementation and route evidence are complete; M0 remains incomplete.
+**Current work:** M0-05 composition is complete; M0-06 device/profile review is in progress. M0 remains incomplete.
 **Branch:** `codex/m0-shorelands-foundation`.
 **Production milestone:** M0 — Shorelands beauty proof remains in progress; M0-05/M0-06 require explicit authorization.
 
