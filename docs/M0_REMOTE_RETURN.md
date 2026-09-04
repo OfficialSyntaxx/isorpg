@@ -122,3 +122,9 @@
 - Lit Play Mode probe returned `art=True heroes=5 scatter=24 ribbon=True wind=True player=True camera=True terrainShared=True lod=24 colliders=3`; Console error query returned zero errors. Camera FOV is 60 degrees, TerrainCollider is enabled, and the Shorelands Water MeshCollider is disabled.
 - An Editor instrumentation sample during Play Mode was `0.502 ms` / `1,990 FPS`, `12,530` triangles, `17` draw calls, `29,230,362` render-texture bytes. This is an instantaneous Editor sample, not phone evidence or percentile data.
 - Camera-position screenshot attempts were generic/unverified and were moved out of `Assets/Screenshots/`; no captures are claimed or staged. Full route traversal, spring-arm no-clipping proof, three labelled reveals, genuine pinch, iPhone/Android testing, and authoring hours remain NOT RUN.
+
+## Controlled route traversal probe (2026-09-04)
+
+- Unity MCP was responsive and Play Mode entered on the exact saved ShorelandsM0 scene. A CharacterController waypoint probe attempted Beach `(10,10)` → Wreck `(12,28)` → Switchback `(42,36)` → Plateau `(72,63)` → Clifftop `(103,96)`.
+- Results: beach remained ungrounded at `(10.00,3.00,10.00)` over terrain height `1.35`; the Wreck segment was diverted by collision geometry and ended at `(39.68,7.47,48.89)` rather than reaching `(12,28)`. Subsequent samples were grounded with `CollisionFlags.Below` near `(39.57,38.71)`, `(47.67,45.92)`, and `(102.83,95.84)`.
+- Camera component fields match the GDD defaults (`pitch=18`, `distance=6`); camera FOV is 60. The probe does not prove spring-arm no-clipping across the route. Because the complete route and verified landmark views failed, no screenshots were captured or relabelled. Exact captures remain NOT RUN.

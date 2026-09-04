@@ -243,3 +243,8 @@ user's current request and milestone. Update ownership when a task is started.
 - Blender 5.2.0 LTS regenerated the exact editable Shorelands source and all 21 hero/scatter FBX payloads. Every payload reimported in Blender with `ShorelandsPaletteWeights`; UV band centers remained slate 0.9, grass 0.5, or timber 0.3, and triangle budgets stayed within the admitted ranges.
 - The Unity MCP instance became stale during the external asset refresh, so Unity reimport and fresh Play Mode checks are pending. Existing scene placement, globalScale=100 metadata, atlas-family materials, LODGroups, and non-colliding decorative scatter remain the prior checkpoint evidence.
 - M0-04 remains In review; route/captures/device/performance/authoring-hour evidence is not claimed.
+
+### Controlled route traversal probe — 2026-09-04
+
+- The exact Unity Play Mode bridge was responsive. A CharacterController waypoint run reached grounded terrain at later switchback/plateau/clifftop samples, but the beach start was ungrounded and the Wreck waypoint was diverted to `(39.68,7.47,48.89)` by collision geometry. Complete Beach→Wreck→Switchback→Clifftop traversal and camera spring-arm/no-clipping acceptance remain blocked.
+- Camera defaults inspected: 6 m distance, 18° pitch, 60° FOV. No labelled captures were created because landmark views were not verified.
