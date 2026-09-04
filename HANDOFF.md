@@ -1,8 +1,8 @@
 # Alderfell — current handoff
 
-**Current work:** M0-01 palette foundation implemented; Unity visual review pending.
+**Current work:** M0-04 hero-landform and scatter intake is in review; M0 remains incomplete.
 **Branch:** `codex/m0-shorelands-foundation`.
-**Production milestone:** M0 — Shorelands palette started; beauty-proof scene not yet built.
+**Production milestone:** M0 — Shorelands beauty proof remains in progress; do not begin M0-05/M0-06 or M1 work.
 
 ## Read first
 
@@ -30,6 +30,34 @@ The exporter safely refuses writes, and documentation/skill checks pass.
 See the status board for evidence; a configured Unity workflow is not a passed build. No Unity scene, imported model or gameplay migration is certified here.
 
 ## Next work
+
+### M0-04 intake update — 2026-09-04
+
+- Exact Unity project was reopened at `/Users/syntaxx/isorpg-m0/unity` in Unity
+  `6000.5.8f1` and selected via CoplayDev `unity@931634bd`. The clean saved
+  `ShorelandsM0` scene retained all six roots.
+- Original editable source is `art/blender/m0_shorelands_landforms.blend` in the
+  same checkout; `tools/blender/generate_m0_shorelands.py` regenerates every M0
+  asset and its FBX output. No external model entered this intake.
+- Five hero landforms were admitted and grounded against existing TerrainData:
+  cliff wall (3,840 tris), sea arch (2,688), plateau/overhang (3,840), wreck rock
+  shelf (2,560), and cave mouth (2,688). Their shared atlas material is
+  `ShorelandsAtlasSurface`; only cliff, plateau, and shelf have fitted simple
+  BoxColliders.
+- The admitted, non-colliding scatter family is two trees, four rocks, grass and
+  beach debris. Each has LOD0/LOD1 FBXs and scene LODGroup wiring; deterministic
+  rotation/scale jittered placements live under
+  `M0 Inspection Mode/M0-04 Shorelands Art`.
+- Unity's initial FBX import was centimetre-scaled. All generated ModelImporters
+  now explicitly use `globalScale=100`, giving metre-sized scene bounds; do not
+  remove that setting without changing the Blender export contract.
+- Console had no project errors after placement. MCP port-reload warnings remain
+  external bridge noise. Do not use incidental `Assets/Screenshots/` outputs as
+  M0 evidence and do not relabel them as M0-05 reveals.
+
+M0-04 is **In review**, not verified. Required next task is a lit Play Mode
+silhouette/terrain-alignment review on a real device, then M0-05’s composition
+and phone reveal work; preserve the five source meshes and admission ledger.
 
 Latest local validation adds scoped Bootstrap disposable-save evidence and scene-local Input System touch wiring (not yet pushed). The M0 player logs `world=False save=False motor=True controller=True orbit=True touch=True collider=True`; the normal Bootstrap validation logs `world=True save=True disposableStore=True`. Four unstacked Unity internal assertion messages appeared during the Bootstrap build, so do not claim a clean Console until they are diagnosed. Visual terrain/foam/wind proof, full traversal, captures/statistics and device evidence remain open; M0-04 stays blocked.
 
