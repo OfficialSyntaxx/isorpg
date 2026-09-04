@@ -252,3 +252,7 @@ user's current request and milestone. Update ownership when a task is started.
 ### Grounded spawn / beach collision probe — 2026-09-04
 
 - Inspection spawn now samples Terrain height at startup; persistence was verified after reopening the scene. At the authored beach X/Z, a TerrainCollider raycast hits y=1.381, but the CharacterController falls to approximately y=-316. No collision bypass was applied; route and capture acceptance remain blocked.
+
+### CharacterController diagnostics — 2026-09-04
+
+- Terrain/data and collision matrix are valid. Manual downward CharacterController.Move grounds at beach samples, while the active M0InspectionMotor path falls through. Delay/re-registration instrumentation was removed; the remaining defect is isolated to motor/startup movement lifecycle.

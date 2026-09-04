@@ -133,3 +133,8 @@
 
 - `M0InspectionBootstrap.Start` now derives player Y from `Terrain.SampleHeight` while preserving authored X/Z. The scene was saved and reopened with spawn `(10.5, 0, 10.5)`.
 - In Play Mode the startup sample was correct, but the controller fell to approximately `y=-316` and remained ungrounded at the beach, despite a downward raycast hitting `Shorelands Terrain` at `y=1.381`. No collider was disabled or bypassed. Complete route traversal and camera proof remain blocked.
+
+## CharacterController diagnostic retry (2026-09-04)
+
+- Terrain and TerrainCollider were active/enabled with bounds centered `(60,9.8,60)`, extents `(60,8.8,60)`, and valid `ShorelandsM0Terrain` data. Player layer was 0, `detectCollisions=True`, radius 0.35, height 1.7, center `(0,0.85,0)`, and terrain-layer collision was enabled.
+- Only `M0InspectionMotor` owned movement. Manual downward `CharacterController.Move` grounded correctly at beach samples; the active motor/startup path still fell through. Delayed placement and controller re-registration did not resolve it and were removed. The failure is isolated to the motor lifecycle, not missing TerrainCollider data.
